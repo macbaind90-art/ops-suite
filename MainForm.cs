@@ -17,8 +17,8 @@ namespace PWADC.SecurityOperationsSuite
 
         private const string DefaultRoot = @"\\pig-fs\Security\Security Operations Suite";
         private const string SettingsFileName = "suite-settings.json";
-
         private SuiteSettings settings = new SuiteSettings();
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, WriteIndented = true };
 
         public MainForm()
         {
@@ -27,13 +27,10 @@ namespace PWADC.SecurityOperationsSuite
             Height = 950;
             StartPosition = FormStartPosition.CenterScreen;
             WindowState = FormWindowState.Maximized;
-
             appFolder = Path.Combine(AppContext.BaseDirectory, "app");
             indexPath = Path.Combine(appFolder, "index.html");
-
             webView = new WebView2 { Dock = DockStyle.Fill };
             Controls.Add(webView);
-
             Load += MainForm_Load;
             FormClosing += MainForm_FormClosing;
         }
@@ -45,16 +42,13 @@ namespace PWADC.SecurityOperationsSuite
                 settings = LoadSettingsFromDisk();
                 EnsureFolders();
                 CreateSuiteLockFile();
-
                 await webView.EnsureCoreWebView2Async();
                 webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
-
                 if (!File.Exists(indexPath))
                 {
                     MessageBox.Show("Missing app\\index.html. The suite interface was not found.", "PWADC Security Operations Suite", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-
                 webView.Source = new Uri(indexPath);
             }
             catch (Exception ex)
@@ -63,10 +57,7 @@ namespace PWADC.SecurityOperationsSuite
             }
         }
 
-        private void MainForm_FormClosing(object? sender, FormClosingEventArgs e)
-        {
-            TryDeleteSuiteLockFile();
-        }
+        private void MainForm_FormClosing(object? sender, FormClosingEventArgs e) => TryDeleteSuiteLockFile();
 
         private async void CoreWebView2_WebMessageReceived(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
         {
@@ -77,17 +68,15 @@ namespace PWADC.SecurityOperationsSuite
                 JsonElement root = doc.RootElement;
                 requestId = root.TryGetProperty("id", out JsonElement idElement) ? idElement.GetString() ?? "" : "";
                 string type = root.TryGetProperty("type", out JsonElement typeElement) ? typeElement.GetString() ?? "" : "";
-
                 switch (type)
                 {
                     case "suite:getSettings":
                         await Respond(requestId, true, new { settings, environment = GetEnvironmentInfo() });
                         break;
-
                     case "suite:saveSettings":
                         if (root.TryGetProperty("payload", out JsonElement settingsPayload))
                         {
-                            settings = JsonSerializer.Deserialize<SuiteSettings>(settingsPayload.GetRawText()) ?? new SuiteSettings();
+                            settings = JsonSerializer.Deserialize<SuiteSettings>(settingsPayload.GetRawText(), JsonOptions) ?? new SuiteSettings();
                             if (string.IsNullOrWhiteSpace(settings.DataRoot)) settings.DataRoot = DefaultRoot;
                             EnsureFolders();
                             SaveSettingsToDisk();
@@ -95,30 +84,25 @@ namespace PWADC.SecurityOperationsSuite
                         }
                         else await Respond(requestId, false, new { error = "Missing settings payload." });
                         break;
-
                     case "suite:healthCheck":
                         await Respond(requestId, true, RunHealthCheck());
                         break;
-
                     case "suite:loadModuleData":
                         string loadModule = root.TryGetProperty("module", out JsonElement lm) ? lm.GetString() ?? "" : "";
                         await Respond(requestId, true, new { module = loadModule, data = LoadModuleData(loadModule) });
                         break;
-
                     case "suite:saveModuleData":
                         string saveModule = root.TryGetProperty("module", out JsonElement sm) ? sm.GetString() ?? "" : "";
                         string json = root.TryGetProperty("payload", out JsonElement dataPayload) ? dataPayload.GetRawText() : "{}";
                         SaveModuleData(saveModule, json);
                         await Respond(requestId, true, new { module = saveModule, savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") });
                         break;
-
                     case "suite:createBackup":
                         string backupModule = root.TryGetProperty("module", out JsonElement bm) ? bm.GetString() ?? "" : "";
                         string backupJson = root.TryGetProperty("payload", out JsonElement bp) ? bp.GetRawText() : "{}";
                         string backupPath = CreateBackup(backupModule, backupJson);
                         await Respond(requestId, true, new { module = backupModule, path = backupPath });
                         break;
-
                     case "suite:writeExport":
                         string exportModule = root.TryGetProperty("module", out JsonElement em) ? em.GetString() ?? "" : "";
                         string fileName = root.TryGetProperty("fileName", out JsonElement fn) ? fn.GetString() ?? "export.txt" : "export.txt";
@@ -126,23 +110,18 @@ namespace PWADC.SecurityOperationsSuite
                         string exportPath = WriteExport(exportModule, fileName, content);
                         await Respond(requestId, true, new { module = exportModule, path = exportPath });
                         break;
-
                     default:
                         await Respond(requestId, false, new { error = "Unknown message type: " + type });
                         break;
                 }
             }
-            catch (Exception ex)
-            {
-                await Respond(requestId, false, new { error = ex.Message });
-            }
+            catch (Exception ex) { await Respond(requestId, false, new { error = ex.Message }); }
         }
 
         private async Task Respond(string requestId, bool ok, object payload)
         {
             if (webView.CoreWebView2 == null) return;
-            var response = new { id = requestId, ok, payload };
-            string json = JsonSerializer.Serialize(response);
+            string json = JsonSerializer.Serialize(new { id = requestId, ok, payload });
             await webView.CoreWebView2.ExecuteScriptAsync("window.SuiteBridge && window.SuiteBridge.receive(" + json + ");");
         }
 
@@ -153,8 +132,7 @@ namespace PWADC.SecurityOperationsSuite
             {
                 if (File.Exists(path))
                 {
-                    string json = File.ReadAllText(path);
-                    SuiteSettings? loaded = JsonSerializer.Deserialize<SuiteSettings>(json);
+                    SuiteSettings? loaded = JsonSerializer.Deserialize<SuiteSettings>(File.ReadAllText(path), JsonOptions);
                     if (loaded != null)
                     {
                         if (string.IsNullOrWhiteSpace(loaded.DataRoot)) loaded.DataRoot = DefaultRoot;
@@ -170,9 +148,7 @@ namespace PWADC.SecurityOperationsSuite
         {
             string dataFolder = Path.Combine(settings.DataRoot, "Data");
             Directory.CreateDirectory(dataFolder);
-            string path = Path.Combine(dataFolder, SettingsFileName);
-            string json = JsonSerializer.Serialize(settings, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(path, json);
+            File.WriteAllText(Path.Combine(dataFolder, SettingsFileName), JsonSerializer.Serialize(settings, JsonOptions));
         }
 
         private void EnsureFolders()
@@ -182,7 +158,6 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Locks"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports"));
-
             foreach (string module in ModuleNames())
             {
                 Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module)));
@@ -210,8 +185,17 @@ namespace PWADC.SecurityOperationsSuite
 
         private string LoadModuleData(string module)
         {
+            EnsureFolders();
             string path = Path.Combine(settings.DataRoot, "Data", ModuleFileName(module));
-            return File.Exists(path) ? File.ReadAllText(path) : "{}";
+            if (File.Exists(path)) return File.ReadAllText(path);
+            string seedPath = Path.Combine(appFolder, "seed", ModuleFileName(module));
+            if (File.Exists(seedPath))
+            {
+                string seedJson = File.ReadAllText(seedPath);
+                File.WriteAllText(path, seedJson);
+                return seedJson;
+            }
+            return "{}";
         }
 
         private void SaveModuleData(string module, string json)
@@ -251,8 +235,8 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.0.0" };
-                File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, new JsonSerializerOptions { WriteIndented = true }));
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.1.0" };
+                File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
         }
@@ -267,32 +251,15 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo()
-        {
-            return new { user = Environment.UserName, machine = Environment.MachineName, version = "2.0.0", baseDirectory = AppContext.BaseDirectory };
-        }
-
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.1.0", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "badge-audit", "amag-audit", "access-audit", "suite-settings" };
-
         private static string ModuleFileName(string module) => module switch
         {
-            "attendance" => "attendance-data.json",
-            "roster" => "roster-data.json",
-            "badge-audit" => "badge-audit-data.json",
-            "amag-audit" => "amag-audit-data.json",
-            "access-audit" => "access-audit-data.json",
-            _ => module + ".json"
+            "attendance" => "attendance-data.json", "roster" => "roster-data.json", "badge-audit" => "badge-audit-data.json", "amag-audit" => "amag-audit-data.json", "access-audit" => "access-audit-data.json", _ => module + ".json"
         };
-
         private static string ModuleFolder(string module) => module switch
         {
-            "attendance" => "Attendance",
-            "roster" => "Roster",
-            "badge-audit" => "Badge Audit",
-            "amag-audit" => "AMAG Audit",
-            "access-audit" => "Access Audit",
-            "suite-settings" => "Suite Settings",
-            _ => module
+            "attendance" => "Attendance", "roster" => "Roster", "badge-audit" => "Badge Audit", "amag-audit" => "AMAG Audit", "access-audit" => "Access Audit", "suite-settings" => "Suite Settings", _ => module
         };
     }
 

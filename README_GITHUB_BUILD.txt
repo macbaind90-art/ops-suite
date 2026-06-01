@@ -1,6 +1,6 @@
-PWADC SECURITY OPERATIONS SUITE v2.0 BUILD KIT
+PWADC SECURITY OPERATIONS SUITE v2.1 BUILD KIT
 
-This is the clean rebuild foundation. It is not a stitched bundle of the old standalone HTML apps.
+This is the clean v2 suite with the first real rebuilt module: Attendance.
 
 WHAT THIS VERSION INCLUDES
 - C# WinForms + WebView2 EXE shell
@@ -11,34 +11,25 @@ WHAT THIS VERSION INCLUDES
 - Health Check
 - Shared data root support
 - Backup / Export / Data / Lock folder creation
-- Attendance v2 Daily Entry fast-entry screen foundation
-- Roster v2 module placeholder
-- Badge Audit / AMAG Audit / Access Audit module placeholders
-
-DEFAULT DATA ROOT
-\\pig-fs\Security\Security Operations Suite
-
-FOLDERS CREATED
-Data
-Backups
-Exports
-Locks
-
-GITHUB BUILD
-Upload the contents of this folder to GitHub. If .github is hidden, manually create:
-.github/workflows/build-windows.yml
-
-Then run:
-Actions -> Build PWADC Security Operations Suite v2 EXE -> Run workflow
-
-ARTIFACT NAME
-PWADC-Security-Operations-Suite-v2-0-Windows
+- Attendance v2.1 live module using the provided 2026-06-01 attendance JSON as the seed data
+- Attendance Daily Entry fast-entry workflow
+- Attendance 90-Day Grid with newest date on the left
+- Attendance Exceptions grouped by person and code buckets
+- Clear individual exception, clear code, and clear person
+- Attendance CSV export
+- Attendance audit log
 
 DEFAULT PIN
 1234
 
-NEXT BUILD PHASES
-v2.1 Attendance live data migration and full exceptions workflow
-v2.2 Roster live data migration and full schedule/training/uniform workflow
-v2.3 Badge Audit rebuild
-v2.4 AMAG and Access Audit rebuild with offline XLSX support
+DEFAULT DATA ROOT
+\\pig-fs\Security\Security Operations Suite
+
+BUILD ON GITHUB
+Create .github/workflows/build-windows.yml if the hidden folder does not upload.
+Run the Actions workflow named: Build PWADC Security Operations Suite v2.1
+Download artifact: PWADC-Security-Operations-Suite-v2-1-Windows
+
+NOTES
+The first time Attendance opens in the EXE, the C# shell will create Data\attendance-data.json from app\seed\attendance-data.json if the shared data file does not already exist.
+Future saves go to the shared JSON file, with backup copies created before saves.
