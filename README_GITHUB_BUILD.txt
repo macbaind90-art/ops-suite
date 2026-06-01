@@ -33,3 +33,6 @@ Download artifact: PWADC-Security-Operations-Suite-v2-1-Windows
 NOTES
 The first time Attendance opens in the EXE, the C# shell will create Data\attendance-data.json from app\seed\attendance-data.json if the shared data file does not already exist.
 Future saves go to the shared JSON file, with backup copies created before saves.
+
+
+v2.1.1 patch: Daily Entry now groups employees by shift and the desktop bridge replaces an empty/stub attendance-data.json with the seeded live attendance backup.

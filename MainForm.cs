@@ -187,8 +187,30 @@ namespace PWADC.SecurityOperationsSuite
         {
             EnsureFolders();
             string path = Path.Combine(settings.DataRoot, "Data", ModuleFileName(module));
-            if (File.Exists(path)) return File.ReadAllText(path);
             string seedPath = Path.Combine(appFolder, "seed", ModuleFileName(module));
+
+            if (File.Exists(path))
+            {
+                string existingJson = File.ReadAllText(path);
+                if (!ShouldReplaceWithSeed(module, existingJson))
+                {
+                    return existingJson;
+                }
+
+                if (File.Exists(seedPath))
+                {
+                    string backupDir = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
+                    Directory.CreateDirectory(backupDir);
+                    string backupName = ModuleFileName(module).Replace(".json", "-replaced-empty-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json");
+                    File.WriteAllText(Path.Combine(backupDir, backupName), existingJson);
+                    string seedJson = File.ReadAllText(seedPath);
+                    File.WriteAllText(path, seedJson);
+                    return seedJson;
+                }
+
+                return existingJson;
+            }
+
             if (File.Exists(seedPath))
             {
                 string seedJson = File.ReadAllText(seedPath);
@@ -196,6 +218,26 @@ namespace PWADC.SecurityOperationsSuite
                 return seedJson;
             }
             return "{}";
+        }
+
+        private bool ShouldReplaceWithSeed(string module, string json)
+        {
+            if (module != "attendance") return false;
+            if (string.IsNullOrWhiteSpace(json) || json.Trim() == "{}") return true;
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(json);
+                JsonElement root = doc.RootElement;
+                if (!root.TryGetProperty("employees", out JsonElement employees) || employees.ValueKind != JsonValueKind.Array || employees.GetArrayLength() == 0) return true;
+                if (!root.TryGetProperty("attendance", out JsonElement att) || att.ValueKind != JsonValueKind.Object) return true;
+                int employeeRecords = 0;
+                foreach (JsonProperty _ in att.EnumerateObject()) employeeRecords++;
+                return employeeRecords == 0;
+            }
+            catch
+            {
+                return true;
+            }
         }
 
         private void SaveModuleData(string module, string json)
