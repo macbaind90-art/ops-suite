@@ -91,6 +91,11 @@ namespace PWADC.SecurityOperationsSuite
                         string loadModule = root.TryGetProperty("module", out JsonElement lm) ? lm.GetString() ?? "" : "";
                         await Respond(requestId, true, new { module = loadModule, data = LoadModuleData(loadModule) });
                         break;
+                    case "suite:resetModuleFromSeed":
+                        string resetModule = root.TryGetProperty("module", out JsonElement rm) ? rm.GetString() ?? "" : "";
+                        string resetJson = ResetModuleFromSeed(resetModule);
+                        await Respond(requestId, true, new { module = resetModule, data = resetJson });
+                        break;
                     case "suite:saveModuleData":
                         string saveModule = root.TryGetProperty("module", out JsonElement sm) ? sm.GetString() ?? "" : "";
                         string json = root.TryGetProperty("payload", out JsonElement dataPayload) ? dataPayload.GetRawText() : "{}";
@@ -192,7 +197,8 @@ namespace PWADC.SecurityOperationsSuite
             if (File.Exists(path))
             {
                 string existingJson = File.ReadAllText(path);
-                if (!ShouldReplaceWithSeed(module, existingJson))
+                string seedJsonForCompare = File.Exists(seedPath) ? File.ReadAllText(seedPath) : "";
+                if (!ShouldReplaceWithSeed(module, existingJson, seedJsonForCompare))
                 {
                     return existingJson;
                 }
@@ -220,7 +226,7 @@ namespace PWADC.SecurityOperationsSuite
             return "{}";
         }
 
-        private bool ShouldReplaceWithSeed(string module, string json)
+        private bool ShouldReplaceWithSeed(string module, string json, string seedJson = "")
         {
             if (module != "attendance") return false;
             if (string.IsNullOrWhiteSpace(json) || json.Trim() == "{}") return true;
@@ -232,12 +238,41 @@ namespace PWADC.SecurityOperationsSuite
                 if (!root.TryGetProperty("attendance", out JsonElement att) || att.ValueKind != JsonValueKind.Object) return true;
                 int employeeRecords = 0;
                 foreach (JsonProperty _ in att.EnumerateObject()) employeeRecords++;
-                return employeeRecords == 0;
+                if (employeeRecords == 0) return true;
+                if (!string.IsNullOrWhiteSpace(seedJson))
+                {
+                    using JsonDocument seedDoc = JsonDocument.Parse(seedJson);
+                    JsonElement seedRoot = seedDoc.RootElement;
+                    string existingSaved = root.TryGetProperty("lastSaved", out JsonElement exLast) ? exLast.GetString() ?? "" : "";
+                    string seedSaved = seedRoot.TryGetProperty("lastSaved", out JsonElement seedLast) ? seedLast.GetString() ?? "" : "";
+                    if (DateTime.TryParse(seedSaved, out DateTime seedDt) && DateTime.TryParse(existingSaved, out DateTime existingDt))
+                    {
+                        if (seedDt > existingDt) return true;
+                    }
+                }
+                return false;
             }
             catch
             {
                 return true;
             }
+        }
+
+        private string ResetModuleFromSeed(string module)
+        {
+            EnsureFolders();
+            string seedPath = Path.Combine(appFolder, "seed", ModuleFileName(module));
+            if (!File.Exists(seedPath)) throw new FileNotFoundException("Packaged seed file not found for module: " + module);
+            string seedJson = File.ReadAllText(seedPath);
+            JsonDocument.Parse(seedJson).Dispose();
+            string path = Path.Combine(settings.DataRoot, "Data", ModuleFileName(module));
+            if (File.Exists(path))
+            {
+                string backupName = Path.GetFileNameWithoutExtension(path) + "-before-seed-restore-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json";
+                File.Copy(path, Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module), backupName), true);
+            }
+            File.WriteAllText(path, seedJson);
+            return seedJson;
         }
 
         private void SaveModuleData(string module, string json)
@@ -277,7 +312,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.1.0" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.1.3" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -293,7 +328,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.1.0", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.1.3", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "badge-audit", "amag-audit", "access-audit", "suite-settings" };
         private static string ModuleFileName(string module) => module switch
         {
