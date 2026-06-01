@@ -228,17 +228,24 @@ namespace PWADC.SecurityOperationsSuite
 
         private bool ShouldReplaceWithSeed(string module, string json, string seedJson = "")
         {
-            if (module != "attendance") return false;
+            if (module != "attendance" && module != "roster") return false;
             if (string.IsNullOrWhiteSpace(json) || json.Trim() == "{}") return true;
             try
             {
                 using JsonDocument doc = JsonDocument.Parse(json);
                 JsonElement root = doc.RootElement;
                 if (!root.TryGetProperty("employees", out JsonElement employees) || employees.ValueKind != JsonValueKind.Array || employees.GetArrayLength() == 0) return true;
-                if (!root.TryGetProperty("attendance", out JsonElement att) || att.ValueKind != JsonValueKind.Object) return true;
-                int employeeRecords = 0;
-                foreach (JsonProperty _ in att.EnumerateObject()) employeeRecords++;
-                if (employeeRecords == 0) return true;
+                if (module == "attendance")
+                {
+                    if (!root.TryGetProperty("attendance", out JsonElement att) || att.ValueKind != JsonValueKind.Object) return true;
+                    int employeeRecords = 0;
+                    foreach (JsonProperty _ in att.EnumerateObject()) employeeRecords++;
+                    if (employeeRecords == 0) return true;
+                }
+                if (module == "roster")
+                {
+                    if (!root.TryGetProperty("schedule", out JsonElement schedule) || schedule.ValueKind != JsonValueKind.Array) return true;
+                }
                 if (!string.IsNullOrWhiteSpace(seedJson))
                 {
                     using JsonDocument seedDoc = JsonDocument.Parse(seedJson);
@@ -312,7 +319,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.1.3" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.2.0" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -328,7 +335,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.1.3", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.2.0", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "badge-audit", "amag-audit", "access-audit", "suite-settings" };
         private static string ModuleFileName(string module) => module switch
         {

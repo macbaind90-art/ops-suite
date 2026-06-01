@@ -1,4 +1,4 @@
-PWADC SECURITY OPERATIONS SUITE v2.1.3 BUILD KIT
+PWADC SECURITY OPERATIONS SUITE v2.2.0 BUILD KIT
 
 This is the clean v2 suite with the first real rebuilt module: Attendance.
 
@@ -11,7 +11,7 @@ WHAT THIS VERSION INCLUDES
 - Health Check
 - Shared data root support
 - Backup / Export / Data / Lock folder creation
-- Attendance v2.1.3 live module using the provided 2026-06-01 attendance JSON as the seed data
+- Attendance v2.2.0 live module using the provided 2026-06-01 attendance JSON as the seed data
 - Attendance Daily Entry fast-entry workflow
 - Attendance 90-Day Grid with newest date on the left
 - Attendance Exceptions grouped by person and code buckets
@@ -27,12 +27,12 @@ DEFAULT DATA ROOT
 
 BUILD ON GITHUB
 Create .github/workflows/build-windows.yml if the hidden folder does not upload.
-Run the Actions workflow named: Build PWADC Security Operations Suite v2.1.3
-Download artifact: PWADC-Security-Operations-Suite-v2-1-3-2-Windows
+Run the Actions workflow named: Build PWADC Security Operations Suite v2.2.0
+Download artifact: PWADC-Security-Operations-Suite-v2-2-3-2-Windows
 
 NOTES
 The first time Attendance opens in the EXE, the C# shell will create Data\attendance-data.json from app\seed\attendance-data.json if the shared data file does not already exist.
 Future saves go to the shared JSON file, with backup copies created before saves.
 
 
-v2.1.3 patch: Daily Entry now groups employees by shift and the desktop bridge replaces an empty/stub attendance-data.json with the seeded live attendance backup.
+v2.2.0 patch: Daily Entry now groups employees by shift and the desktop bridge replaces an empty/stub attendance-data.json with the seeded live attendance backup.
