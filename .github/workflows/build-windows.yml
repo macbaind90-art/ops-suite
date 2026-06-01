@@ -1,0 +1,33 @@
+name: Build PWADC Security Operations Suite v2.0
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - v2-suite-rebuild
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore SecurityOperationsSuite.csproj
+
+      - name: Publish single-file EXE
+        run: dotnet publish SecurityOperationsSuite.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PWADC-Security-Operations-Suite-v2-0-Windows
+          path: bin/Release/net8.0-windows/win-x64/publish/
