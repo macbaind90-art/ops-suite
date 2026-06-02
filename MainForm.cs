@@ -228,7 +228,7 @@ namespace PWADC.SecurityOperationsSuite
 
         private bool ShouldReplaceWithSeed(string module, string json, string seedJson = "")
         {
-            if (module != "attendance" && module != "roster") return false;
+            if (module != "attendance" && module != "roster" && module != "tasks") return false;
             if (string.IsNullOrWhiteSpace(json) || json.Trim() == "{}") return true;
             try
             {
@@ -245,6 +245,10 @@ namespace PWADC.SecurityOperationsSuite
                 if (module == "roster")
                 {
                     if (!root.TryGetProperty("schedule", out JsonElement schedule) || schedule.ValueKind != JsonValueKind.Array) return true;
+                }
+                if (module == "tasks")
+                {
+                    if (!root.TryGetProperty("tasks", out JsonElement taskArray) || taskArray.ValueKind != JsonValueKind.Array || taskArray.GetArrayLength() == 0) return true;
                 }
                 if (!string.IsNullOrWhiteSpace(seedJson))
                 {
@@ -319,7 +323,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.2.2" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.4.0" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -335,15 +339,15 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.2.2", baseDirectory = AppContext.BaseDirectory };
-        private static string[] ModuleNames() => new[] { "attendance", "roster", "badge-audit", "amag-audit", "access-audit", "suite-settings" };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.4.0", baseDirectory = AppContext.BaseDirectory };
+        private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "badge-audit", "amag-audit", "access-audit", "suite-settings" };
         private static string ModuleFileName(string module) => module switch
         {
-            "attendance" => "attendance-data.json", "roster" => "roster-data.json", "badge-audit" => "badge-audit-data.json", "amag-audit" => "amag-audit-data.json", "access-audit" => "access-audit-data.json", _ => module + ".json"
+            "attendance" => "attendance-data.json", "roster" => "roster-data.json", "tasks" => "tasks-data.json", "badge-audit" => "badge-audit-data.json", "amag-audit" => "amag-audit-data.json", "access-audit" => "access-audit-data.json", _ => module + ".json"
         };
         private static string ModuleFolder(string module) => module switch
         {
-            "attendance" => "Attendance", "roster" => "Roster", "badge-audit" => "Badge Audit", "amag-audit" => "AMAG Audit", "access-audit" => "Access Audit", "suite-settings" => "Suite Settings", _ => module
+            "attendance" => "Attendance", "roster" => "Roster", "tasks" => "Task Tracker", "badge-audit" => "Badge Audit", "amag-audit" => "AMAG Audit", "access-audit" => "Access Audit", "suite-settings" => "Suite Settings", _ => module
         };
     }
 
