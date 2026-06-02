@@ -1,267 +1,1266 @@
-
-'use strict';
-const MODULES=[{id:'home',label:'Home'},{id:'attendance',label:'Attendance'},{id:'roster',label:'Roster'},{id:'badge-audit',label:'Badge Audit'},{id:'amag-audit',label:'AMAG Audit'},{id:'access-audit',label:'Access Audit'}];
-const SHIFT_ORDER=['3rd Shift','1st Shift','2nd Shift','Gate','Dock','Reception'];
-const DEFAULT_SETTINGS={theme:'dark',defaultModule:'home',pin:'1234',dataRoot:'\\\\pig-fs\\Security\\Security Operations Suite',backupRetentionDays:60};
-let settings={...DEFAULT_SETTINGS},env={},unlocked=false,pinInput='',activeModule='home',activeAttView='daily',activeCode='P',saveTimer=null,showBlanks=false,entryDate=new Date().toISOString().slice(0,10),entryShift='All',gridEnd=new Date().toISOString().slice(0,10),selectedEntryEmpId='',activeRosterView='roster',rosterSearch='',rosterShiftFilter='all',rosterRankFilter='all',rosterTypeFilter='all',scheduleEditContext=null,attendance={employees:[],attendance:{},notes:{},audit:[],flagActions:{},settings:{weekThreshold:3,monthThreshold:5,rollingThreshold:6,patternThreshold:3}},roster={employees:[],schedule:[],trainingTopics:[],trainingRecords:[],audit:[],nextId:1,nextTrainingTopicId:1,nextTrainingRecordId:1};
-const CODES=[['P','Present'],['T','Late'],['AL','Approved Late'],['LE','Left Early'],['UE','Unauthorized Early'],['E','Excused'],['U','Unexcused'],['V','Vacation'],['O','Off/RDO'],['FL','Protected Leave'],['NE','Not Employed']];
-const PATTERN_CODES=new Set(['T','AL','LE','E','U','V','UE']);const OCC_CODES=new Set(['T','U','LE','UE']);const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const SuiteBridge={seq:0,pending:{},send(type,payload={},extra={}){return new Promise((resolve,reject)=>{const id='r'+(++this.seq);this.pending[id]={resolve,reject};if(window.chrome&&chrome.webview){chrome.webview.postMessage({id,type,payload,...extra});}else{setTimeout(()=>resolve(mockResponse(type,payload,extra)),150);}})},receive(res){const p=this.pending[res.id];if(!p)return;delete this.pending[res.id];res.ok?p.resolve(res.payload):p.reject(new Error((res.payload&&res.payload.error)||'Bridge error'));}};window.SuiteBridge=SuiteBridge;
-async function mockResponse(type,payload,extra){if(type==='suite:getSettings')return{settings:{...DEFAULT_SETTINGS},environment:{user:'Preview',machine:'Browser',version:'2.3.1'}};if(type==='suite:loadModuleData'&&extra.module==='attendance'){let r=await fetch('seed/attendance-data.json');return{module:'attendance',data:await r.text()}};if(type==='suite:loadModuleData'&&extra.module==='roster'){let r=await fetch('seed/roster-data.json');return{module:'roster',data:await r.text()}};if(type==='suite:healthCheck')return{dataRoot:settings.dataRoot,checks:[{name:'Preview mode',ok:true,error:''},{name:'Desktop bridge unavailable in browser',ok:false,error:'Run EXE for real checks'}]};return{ok:true}}
-function esc(s){const str=String(s??'');let out='';for(let i=0;i<str.length;i++){const ch=str[i];if(ch==='&')out+='&amp;';else if(ch==='<')out+='&lt;';else if(ch==='>')out+='&gt;';else if(ch==='\"')out+='&quot;';else if(ch==="'")out+='&#39;';else out+=ch;}return out;}function parseISO(s){const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d)}function toISO(d){return d.toISOString().slice(0,10)}function addDays(iso,n){const d=parseISO(iso);d.setDate(d.getDate()+n);return toISO(d)}function fmt(iso){const d=parseISO(iso);return (d.getMonth()+1)+'/'+d.getDate()}function weekKey(d){let x=new Date(d);x.setDate(x.getDate()-x.getDay());return toISO(x)}
-function toast(msg){const el=document.getElementById('toast');el.textContent=msg;el.classList.add('show');setTimeout(()=>el.classList.remove('show'),2800)}function applyTheme(){document.documentElement.setAttribute('data-theme',settings.theme||'dark')}
-function renderPin(){document.getElementById('pinDots').innerHTML=Array.from({length:4},(_,i)=>`<div class="pin-dot ${pinInput.length>i?'on':''}"></div>`).join('');document.getElementById('pinPad').innerHTML=[1,2,3,4,5,6,7,8,9,'C',0,'X'].map(x=>`<button onclick="pinPress('${x}')">${x==='C'?'CLR':x==='X'?'⌫':x}</button>`).join('')}function checkPin(){if(pinInput.length===0)return;if(pinInput===(settings.pin||'1234'))unlockSuite();else{document.getElementById('pinError').textContent='Invalid PIN';pinInput='';setTimeout(renderPin,250)}}function pinPress(x){if(x==='C')pinInput='';else if(x==='X')pinInput=pinInput.slice(0,-1);else if(pinInput.length<8)pinInput+=x;renderPin();if(pinInput.length>=(settings.pin||'1234').length)checkPin();}function unlockSuite(){unlocked=true;document.getElementById('lockScreen').classList.add('hidden');document.getElementById('app').classList.remove('hidden');navigate(settings.defaultModule||'home')}function lockSuite(){unlocked=false;pinInput='';renderPin();document.getElementById('pinError').textContent='';document.getElementById('app').classList.add('hidden');document.getElementById('lockScreen').classList.remove('hidden')}
-function normalizeSettings(x){return {...DEFAULT_SETTINGS,theme:x.theme||x.Theme||DEFAULT_SETTINGS.theme,defaultModule:x.defaultModule||x.DefaultModule||DEFAULT_SETTINGS.defaultModule,pin:x.pin||x.Pin||DEFAULT_SETTINGS.pin,dataRoot:x.dataRoot||x.DataRoot||DEFAULT_SETTINGS.dataRoot,backupRetentionDays:x.backupRetentionDays||x.BackupRetentionDays||DEFAULT_SETTINGS.backupRetentionDays}}
-async function init(){
-  try{
-    document.getElementById('saveStatus').textContent='Loading settings...';
-    const res=await SuiteBridge.send('suite:getSettings');
-    settings=normalizeSettings(res.settings||{});env=res.environment||{};
-    applyTheme();renderPin();renderShell();
-    if(MODULES.some(m=>m.id===settings.defaultModule)) activeModule=settings.defaultModule;
-    document.getElementById('saveStatus').textContent='Loading attendance...';
-    await loadAttendance();
-    document.getElementById('saveStatus').textContent='Loading roster...';
-    await loadRoster();
-    safeRenderPages();
-    document.getElementById('saveStatus').textContent='Ready';
-    document.getElementById('moduleStatus').textContent=MODULES.find(m=>m.id===activeModule)?.label||activeModule;
-  }catch(e){showStartupError(e);}
+{
+  "employees": [
+    {
+      "id": 1,
+      "last": "Jones",
+      "first": "Kaylan",
+      "eid": "2655",
+      "doh": "2025-02-10",
+      "dop": "2026-05-30",
+      "rank": "SSO",
+      "shift": "DOCK",
+      "gateShift": "",
+      "rate": 19.54,
+      "type": "Hourly",
+      "shirt": "XS",
+      "pants": "0",
+      "jacket": "XS",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 2,
+      "last": "Williams",
+      "first": "Kyesha",
+      "eid": "2778",
+      "doh": "2025-11-10",
+      "dop": "2025-11-15",
+      "rank": "SSO",
+      "shift": "Crosswalk",
+      "gateShift": "",
+      "rate": 19.5,
+      "type": "Hourly",
+      "shirt": "XS",
+      "pants": "2",
+      "jacket": "XS",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 3,
+      "last": "Mack",
+      "first": "Danielle",
+      "eid": "2799",
+      "doh": "2026-01-05",
+      "dop": "2026-03-29",
+      "rank": "LSO",
+      "shift": "GATE",
+      "gateShift": "1200-2000",
+      "rate": 19.5,
+      "type": "Hourly",
+      "shirt": "M",
+      "pants": "8",
+      "jacket": "M",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 4,
+      "last": "Cave",
+      "first": "Jalisa",
+      "eid": "2820",
+      "doh": "2026-02-16",
+      "dop": "2026-05-16",
+      "rank": "LSO",
+      "shift": "2nd",
+      "gateShift": "",
+      "rate": 19.5,
+      "type": "Hourly",
+      "shirt": "M",
+      "pants": "14",
+      "jacket": "M",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "ordered",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 5,
+      "last": "Perry",
+      "first": "Elizabeth",
+      "eid": "2567",
+      "doh": "2024-09-10",
+      "dop": "2025-08-09",
+      "rank": "SSO",
+      "shift": "3rd",
+      "gateShift": "",
+      "rate": 19.54,
+      "type": "Hourly",
+      "shirt": "L",
+      "pants": "14",
+      "jacket": "L",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Mon"
+      ]
+    },
+    {
+      "id": 6,
+      "last": "Alvarez",
+      "first": "Raina",
+      "eid": "2851",
+      "doh": "2026-04-01",
+      "dop": "2026-05-31",
+      "rank": "SO",
+      "shift": "3rd",
+      "gateShift": "",
+      "rate": 18,
+      "type": "Hourly",
+      "shirt": "XL",
+      "pants": "18",
+      "jacket": "XL",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "ordered",
+      "jacketStatus": "ordered",
+      "rdo": [
+        "Thu",
+        "Fri"
+      ]
+    },
+    {
+      "id": 7,
+      "last": "King",
+      "first": "Faith",
+      "eid": "2843",
+      "doh": "2026-03-23",
+      "dop": "2026-05-15",
+      "rank": "SO",
+      "shift": "3rd",
+      "gateShift": "",
+      "rate": 18,
+      "type": "Hourly",
+      "shirt": "3X",
+      "pants": "22",
+      "jacket": "3X",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "ordered",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Tue",
+        "Wed"
+      ]
+    },
+    {
+      "id": 8,
+      "last": "Birdsong",
+      "first": "Tiffany",
+      "eid": "2760",
+      "doh": "2025-10-13",
+      "dop": "2025-10-25",
+      "rank": "LSO",
+      "shift": "1st",
+      "gateShift": "",
+      "rate": 19.5,
+      "type": "Hourly",
+      "shirt": "4X",
+      "pants": "24",
+      "jacket": "4X",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Fri",
+        "Sat"
+      ]
+    },
+    {
+      "id": 9,
+      "last": "Brewer",
+      "first": "Jazmine",
+      "eid": "2659",
+      "doh": "2025-02-24",
+      "dop": "2025-08-16",
+      "rank": "SUPV",
+      "shift": "1st",
+      "gateShift": "",
+      "rate": 22.02,
+      "type": "Salary",
+      "shirt": "L",
+      "pants": "38/34",
+      "jacket": "L",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 10,
+      "last": "Paul",
+      "first": "Danillo",
+      "eid": "2784",
+      "doh": "2025-11-24",
+      "dop": "2025-11-24",
+      "rank": "SSO",
+      "shift": "GATE",
+      "gateShift": "0400-1200",
+      "rate": 19,
+      "type": "Hourly",
+      "shirt": "S",
+      "pants": "28/30",
+      "jacket": "S",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 11,
+      "last": "Wilson",
+      "first": "Damyn",
+      "eid": "2839",
+      "doh": "2026-03-18",
+      "dop": "2026-03-19",
+      "rank": "SO",
+      "shift": "2nd",
+      "gateShift": "",
+      "rate": 18,
+      "type": "Hourly",
+      "shirt": "S",
+      "pants": "28/30",
+      "jacket": "S",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "ordered",
+      "rdo": [
+        "Tue",
+        "Wed"
+      ]
+    },
+    {
+      "id": 12,
+      "last": "Reese",
+      "first": "Javontae",
+      "eid": "2805",
+      "doh": "2026-01-19",
+      "dop": "2026-05-16",
+      "rank": "SSO",
+      "shift": "1st",
+      "gateShift": "",
+      "rate": 19,
+      "type": "Hourly",
+      "shirt": "S",
+      "pants": "29/30",
+      "jacket": "S",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Tue",
+        "Wed"
+      ]
+    },
+    {
+      "id": 13,
+      "last": "Anderson",
+      "first": "Shaun",
+      "eid": "2701",
+      "doh": "2025-06-02",
+      "dop": "2025-10-18",
+      "rank": "SUPV",
+      "shift": "3rd",
+      "gateShift": "",
+      "rate": 22,
+      "type": "Salary",
+      "shirt": "M",
+      "pants": "32/34",
+      "jacket": "M",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Thu",
+        "Fri"
+      ]
+    },
+    {
+      "id": 14,
+      "last": "Bennett",
+      "first": "Jasmine",
+      "eid": "2837",
+      "doh": "2026-03-10",
+      "dop": "2026-03-10",
+      "rank": "SO",
+      "shift": "1st",
+      "gateShift": "",
+      "rate": 18,
+      "type": "Hourly",
+      "shirt": "L",
+      "pants": "36/28",
+      "jacket": "L",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 15,
+      "last": "Aiken",
+      "first": "Don",
+      "eid": "2716",
+      "doh": "2025-06-29",
+      "dop": "2025-08-16",
+      "rank": "SUPV",
+      "shift": "1st",
+      "gateShift": "",
+      "rate": 21.63,
+      "type": "Salary",
+      "shirt": "L",
+      "pants": "36/32",
+      "jacket": "L",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Thu",
+        "Fri"
+      ]
+    },
+    {
+      "id": 16,
+      "last": "Lancaster",
+      "first": "Kettrin",
+      "eid": "2785",
+      "doh": "2025-11-24",
+      "dop": "2025-11-24",
+      "rank": "SO",
+      "shift": "GATE",
+      "gateShift": "1200-2000",
+      "rate": 18,
+      "type": "Hourly",
+      "shirt": "XL",
+      "pants": "36/32",
+      "jacket": "XL",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 17,
+      "last": "Bennett",
+      "first": "Zachary",
+      "eid": "2759",
+      "doh": "2025-10-13",
+      "dop": "2025-10-13",
+      "rank": "SO",
+      "shift": "3rd",
+      "gateShift": "",
+      "rate": 18.5,
+      "type": "Hourly",
+      "shirt": "XL",
+      "pants": "38/30",
+      "jacket": "XL",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 18,
+      "last": "Parker",
+      "first": "Lacey",
+      "eid": "2591",
+      "doh": "2024-10-21",
+      "dop": "2025-07-12",
+      "rank": "SUPV",
+      "shift": "2nd",
+      "gateShift": "",
+      "rate": 22.02,
+      "type": "Salary",
+      "shirt": "2X",
+      "pants": "40/30",
+      "jacket": "2X",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Thu",
+        "Fri"
+      ]
+    },
+    {
+      "id": 19,
+      "last": "Small",
+      "first": "Kendarius",
+      "eid": "ONIN",
+      "doh": "",
+      "dop": "",
+      "rank": "ONIN",
+      "shift": "1st",
+      "gateShift": "",
+      "rate": 17,
+      "type": "Onin",
+      "shirt": "XL",
+      "pants": "40/32",
+      "jacket": "",
+      "notes": "",
+      "shirtStatus": "",
+      "pantsStatus": "",
+      "jacketStatus": "",
+      "rdo": [
+        "Sun",
+        "Mon"
+      ]
+    },
+    {
+      "id": 20,
+      "last": "Summerhill",
+      "first": "Rickey",
+      "eid": "2686",
+      "doh": "2025-04-28",
+      "dop": "2026-02-28",
+      "rank": "SUPV",
+      "shift": "3rd",
+      "gateShift": "",
+      "rate": 21.52,
+      "type": "Salary",
+      "shirt": "4X",
+      "pants": "40/32",
+      "jacket": "4X",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 21,
+      "last": "Ferguson",
+      "first": "Matt",
+      "eid": "2683",
+      "doh": "2025-04-28",
+      "dop": "2025-04-28",
+      "rank": "SUPV",
+      "shift": "2nd",
+      "gateShift": "",
+      "rate": 27.1,
+      "type": "Salary",
+      "shirt": "2X",
+      "pants": "40/32",
+      "jacket": "2X",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 22,
+      "last": "Nelson",
+      "first": "Addison",
+      "eid": "2818",
+      "doh": "2026-02-09",
+      "dop": "2026-03-29",
+      "rank": "SSO",
+      "shift": "3rd",
+      "gateShift": "",
+      "rate": 19,
+      "type": "Hourly",
+      "shirt": "4X",
+      "pants": "42/30",
+      "jacket": "4X",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Fri",
+        "Sat"
+      ]
+    },
+    {
+      "id": 23,
+      "last": "Westbrook",
+      "first": "Sharon",
+      "eid": "2827",
+      "doh": "2026-03-02",
+      "dop": "2026-05-26",
+      "rank": "SSO",
+      "shift": "2nd",
+      "gateShift": "",
+      "rate": 19,
+      "type": "Onin",
+      "shirt": "3X",
+      "pants": "42/30",
+      "jacket": "3X",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Mon"
+      ]
+    },
+    {
+      "id": 24,
+      "last": "Mack",
+      "first": "Gilbert",
+      "eid": "2743",
+      "doh": "2025-09-15",
+      "dop": "2025-11-01",
+      "rank": "SSO",
+      "shift": "DOCK",
+      "gateShift": "",
+      "rate": 19.51,
+      "type": "Hourly",
+      "shirt": "4X",
+      "pants": "42/32",
+      "jacket": "4X",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 25,
+      "last": "Smathers",
+      "first": "Raymond",
+      "eid": "2697",
+      "doh": "2025-05-26",
+      "dop": "2025-07-05",
+      "rank": "LSO",
+      "shift": "2nd",
+      "gateShift": "",
+      "rate": 20.54,
+      "type": "Hourly",
+      "shirt": "3X",
+      "pants": "48/32",
+      "jacket": "3X",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Thu",
+        "Fri"
+      ]
+    },
+    {
+      "id": 26,
+      "last": "Abernathy",
+      "first": "Davetta",
+      "eid": "2871",
+      "doh": "2026-05-06",
+      "dop": "2026-05-21",
+      "rank": "PSO",
+      "shift": "W/E Gate",
+      "gateShift": "0400-1600",
+      "rate": 17,
+      "type": "Hourly",
+      "shirt": "L",
+      "pants": "16",
+      "jacket": "XL",
+      "notes": "pt",
+      "shirtStatus": "ordered",
+      "pantsStatus": "ordered",
+      "jacketStatus": "ordered",
+      "rdo": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ]
+    },
+    {
+      "id": 27,
+      "last": "Cleveland",
+      "first": "Kenyetta",
+      "eid": "2842",
+      "doh": "2026-03-20",
+      "dop": "2026-03-20",
+      "rank": "PSO",
+      "shift": "1st",
+      "gateShift": "",
+      "rate": 17,
+      "type": "Hourly",
+      "shirt": "M",
+      "pants": "",
+      "jacket": "M",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "needed",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Thu",
+        "Fri"
+      ]
+    },
+    {
+      "id": 28,
+      "last": "De La Torre",
+      "first": "Nelli",
+      "eid": "2299",
+      "doh": "2023-01-30",
+      "dop": "2023-01-30",
+      "rank": "Receptionist",
+      "shift": "RECP",
+      "gateShift": "",
+      "rate": 20.04,
+      "type": "Hourly",
+      "shirt": "M",
+      "pants": "",
+      "jacket": "",
+      "notes": "",
+      "shirtStatus": "issued",
+      "pantsStatus": "issued",
+      "jacketStatus": "issued",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 29,
+      "last": "Hightower",
+      "first": "Kendrick",
+      "eid": "Automation",
+      "doh": "",
+      "dop": "",
+      "rank": "APS",
+      "shift": "GATE",
+      "gateShift": "2000-0400",
+      "rate": 17,
+      "type": "APS",
+      "shirt": "",
+      "pants": "",
+      "jacket": "",
+      "notes": "",
+      "shirtStatus": "",
+      "pantsStatus": "",
+      "jacketStatus": "",
+      "rdo": [
+        "Sun",
+        "Sat"
+      ]
+    },
+    {
+      "id": 30,
+      "last": "Howard",
+      "first": "Tamika",
+      "eid": "2877",
+      "doh": "2026-05-17",
+      "dop": "2026-05-17",
+      "rank": "PSO",
+      "shift": "2nd",
+      "gateShift": "",
+      "rate": 17,
+      "type": "Hourly",
+      "shirt": "2X",
+      "pants": "20",
+      "jacket": "2X",
+      "notes": "",
+      "shirtStatus": "ordered",
+      "pantsStatus": "ordered",
+      "jacketStatus": "ordered",
+      "rdo": [
+        "Wed",
+        "Sat"
+      ]
+    },
+    {
+      "id": 34,
+      "last": "Edwards",
+      "first": "Derriana",
+      "eid": "",
+      "doh": "2026-06-04",
+      "dop": "2026-06-04",
+      "rank": "PSO",
+      "shift": "3rd",
+      "gateShift": "",
+      "rate": 17,
+      "type": "Hourly",
+      "shirt": "XL",
+      "pants": "18",
+      "jacket": "XL",
+      "notes": "",
+      "shirtStatus": "ordered",
+      "pantsStatus": "ordered",
+      "jacketStatus": "ordered",
+      "rdo": [
+        "Tue",
+        "Wed"
+      ]
+    },
+    {
+      "id": 35,
+      "last": "Daniels",
+      "first": "Dominique",
+      "eid": "APS",
+      "doh": "",
+      "dop": "",
+      "rank": "APS",
+      "shift": "W/E Gate",
+      "gateShift": "1600-0400",
+      "rate": 17,
+      "type": "APS",
+      "shirt": "",
+      "pants": "",
+      "jacket": "",
+      "notes": "",
+      "shirtStatus": "",
+      "pantsStatus": "",
+      "jacketStatus": "",
+      "rdo": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ]
+    }
+  ],
+  "schedule": [
+    {
+      "section": "1st Shift — 0800-1600",
+      "post": "Supervisor",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "SUPV Aiken, Don",
+        "SUPV Brewer, Jazmine",
+        "SUPV Brewer, Jazmine",
+        "SUPV Brewer, Jazmine",
+        "SUPV Brewer, Jazmine",
+        "SUPV Brewer, Jazmine",
+        "SUPV Aiken, Don"
+      ]
+    },
+    {
+      "section": "1st Shift — 0800-1600",
+      "post": "Supervisor",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "SUPV Aiken, Don",
+        "SUPV Aiken, Don",
+        "SUPV Aiken, Don",
+        "None",
+        "None",
+        "None"
+      ]
+    },
+    {
+      "section": "1st Shift — 0800-1600",
+      "post": "Base",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "LSO Birdsong, Tiffany",
+        "LSO Birdsong, Tiffany",
+        "LSO Birdsong, Tiffany",
+        "LSO Birdsong, Tiffany",
+        "LSO Birdsong, Tiffany",
+        "SSO Reese, Javontae",
+        "SSO Reese, Javontae"
+      ]
+    },
+    {
+      "section": "1st Shift — 0800-1600",
+      "post": "Response",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "SSO Reese, Javontae",
+        "SSO Reese, Javontae",
+        "SO Bennett, Jasmine",
+        "SO Bennett, Jasmine",
+        "SSO Reese, Javontae",
+        "SO Bennett, Jasmine",
+        "PSO Cleveland, Kenyetta"
+      ]
+    },
+    {
+      "section": "1st Shift — 0800-1600",
+      "post": "Response",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "PSO Cleveland, Kenyetta",
+        "SO Bennett, Jasmine",
+        "PSO Cleveland, Kenyetta",
+        "PSO Cleveland, Kenyetta",
+        "SO Bennett, Jasmine",
+        "ONIN Small, Kendarius",
+        "ONIN Small, Kendarius"
+      ]
+    },
+    {
+      "section": "1st Shift — 0800-1600",
+      "post": "Floater",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "PSO Cleveland, Kenyetta",
+        "ONIN Small, Kendarius",
+        "ONIN Small, Kendarius",
+        "ONIN Small, Kendarius",
+        "None",
+        "None"
+      ]
+    },
+    {
+      "section": "2nd Shift — 1600-2400",
+      "post": "Supervisor",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "SUPV Parker, Lacey",
+        "SUPV Ferguson, Matt",
+        "SUPV Ferguson, Matt",
+        "SUPV Ferguson, Matt",
+        "SUPV Ferguson, Matt",
+        "SUPV Ferguson, Matt",
+        "SUPV Parker, Lacey"
+      ]
+    },
+    {
+      "section": "2nd Shift — 1600-2400",
+      "post": "Supervisor",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "SUPV Parker, Lacey",
+        "SUPV Parker, Lacey",
+        "SUPV Parker, Lacey",
+        "None",
+        "None",
+        "None"
+      ]
+    },
+    {
+      "section": "2nd Shift — 1600-2400",
+      "post": "Base",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "LSO Smathers, Raymond",
+        "LSO Cave, Jalisa",
+        "LSO Cave, Jalisa",
+        "LSO Cave, Jalisa",
+        "LSO Cave, Jalisa",
+        "LSO Cave, Jalisa",
+        "LSO Smathers, Raymond"
+      ]
+    },
+    {
+      "section": "2nd Shift — 1600-2400",
+      "post": "Response",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "SO Wilson, Damyn",
+        "LSO Smathers, Raymond",
+        "LSO Smathers, Raymond",
+        "LSO Smathers, Raymond",
+        "SSO Westbrook, Sharon",
+        "SSO Westbrook, Sharon",
+        "SSO Westbrook, Sharon"
+      ]
+    },
+    {
+      "section": "2nd Shift — 1600-2400",
+      "post": "Response",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "PSO Howard, Tamika",
+        "SO Wilson, Damyn",
+        "SSO Westbrook, Sharon",
+        "SSO Westbrook, Sharon",
+        "SO Wilson, Damyn",
+        "SO Wilson, Damyn",
+        "SO Wilson, Damyn"
+      ]
+    },
+    {
+      "section": "2nd Shift — 1600-2400",
+      "post": "Floater",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "Open",
+        "PSO Howard, Tamika",
+        "PSO Howard, Tamika",
+        "Open",
+        "PSO Howard, Tamika",
+        "PSO Howard, Tamika",
+        "Open"
+      ]
+    },
+    {
+      "section": "3rd Shift — 0000-0800",
+      "post": "Supervisor",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "SUPV Anderson, Shaun",
+        "SUPV Summerhill, Rickey",
+        "SUPV Summerhill, Rickey",
+        "SUPV Summerhill, Rickey",
+        "SUPV Summerhill, Rickey",
+        "SUPV Summerhill, Rickey",
+        "SUPV Anderson, Shaun"
+      ]
+    },
+    {
+      "section": "3rd Shift — 0000-0800",
+      "post": "Supervisor",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "SUPV Anderson, Shaun",
+        "SUPV Anderson, Shaun",
+        "SUPV Anderson, Shaun",
+        "None",
+        "None",
+        "None"
+      ]
+    },
+    {
+      "section": "3rd Shift — 0000-0800",
+      "post": "Base",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "SSO Nelson, Addison",
+        "SSO Nelson, Addison",
+        "SSO Nelson, Addison",
+        "SSO Nelson, Addison",
+        "SSO Nelson, Addison",
+        "SSO Perry, Elizabeth",
+        "SSO Perry, Elizabeth"
+      ]
+    },
+    {
+      "section": "3rd Shift — 0000-0800",
+      "post": "Response",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "SO Alvarez, Raina",
+        "SO Alvarez, Raina",
+        "SSO Perry, Elizabeth",
+        "SSO Perry, Elizabeth",
+        "SSO Perry, Elizabeth",
+        "SO Bennett, Zachary",
+        "SO Alvarez, Raina"
+      ]
+    },
+    {
+      "section": "3rd Shift — 0000-0800",
+      "post": "Response",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "SO King, Faith",
+        "SO Bennett, Zachary",
+        "SO Alvarez, Raina",
+        "SO Alvarez, Raina",
+        "SO Bennett, Zachary",
+        "SO King, Faith",
+        "SO King, Faith"
+      ]
+    },
+    {
+      "section": "3rd Shift — 0000-0800",
+      "post": "Floater",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "PSO Edwards, Derriana",
+        "SO King, Faith",
+        "SO Bennett, Zachary",
+        "SO Bennett, Zachary",
+        "SO King, Faith",
+        "PSO Edwards, Derriana",
+        "PSO Edwards, Derriana"
+      ]
+    },
+    {
+      "section": "3rd Shift — 0000-0800",
+      "post": "Floater",
+      "shiftLabel": "",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "PSO Edwards, Derriana",
+        "None",
+        "None",
+        "PSO Edwards, Derriana",
+        "None",
+        "None"
+      ]
+    },
+    {
+      "section": "Gate",
+      "post": "Gate",
+      "shiftLabel": "0400-1200",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "SSO Paul, Danillo",
+        "SSO Paul, Danillo",
+        "SSO Paul, Danillo",
+        "SSO Paul, Danillo",
+        "SSO Paul, Danillo",
+        "None"
+      ]
+    },
+    {
+      "section": "Gate",
+      "post": "Gate",
+      "shiftLabel": "1200-2000",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "LSO Mack, Danielle",
+        "LSO Mack, Danielle",
+        "LSO Mack, Danielle",
+        "LSO Mack, Danielle",
+        "LSO Mack, Danielle",
+        "None"
+      ]
+    },
+    {
+      "section": "Gate",
+      "post": "Gate",
+      "shiftLabel": "1200-2000",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "SO Lancaster, Kettrin",
+        "SO Lancaster, Kettrin",
+        "SO Lancaster, Kettrin",
+        "SO Lancaster, Kettrin",
+        "SO Lancaster, Kettrin",
+        "None"
+      ]
+    },
+    {
+      "section": "Gate",
+      "post": "Gate",
+      "shiftLabel": "2000-0400",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "ONIN Hightower, Kendrick",
+        "ONIN Hightower, Kendrick",
+        "ONIN Hightower, Kendrick",
+        "ONIN Hightower, Kendrick",
+        "ONIN Hightower, Kendrick",
+        "None"
+      ]
+    },
+    {
+      "section": "Gate",
+      "post": "Gate",
+      "shiftLabel": "0400-1600",
+      "hrs": 12,
+      "autoAdded": false,
+      "days": [
+        "PSO Abernathy, Davetta",
+        "None",
+        "None",
+        "None",
+        "None",
+        "None",
+        "PSO Abernathy, Davetta"
+      ]
+    },
+    {
+      "section": "Gate",
+      "post": "Gate",
+      "shiftLabel": "1600-0400",
+      "hrs": 12,
+      "autoAdded": false,
+      "days": [
+        "ONIN Daniels, Dominique",
+        "None",
+        "None",
+        "None",
+        "None",
+        "None",
+        "ONIN Daniels, Dominique"
+      ]
+    },
+    {
+      "section": "Dock & Support",
+      "post": "Grocery",
+      "shiftLabel": "0600-1400",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "SSO Jones, Kaylan",
+        "SSO Jones, Kaylan",
+        "SSO Jones, Kaylan",
+        "SSO Jones, Kaylan",
+        "SSO Jones, Kaylan",
+        "None"
+      ]
+    },
+    {
+      "section": "Dock & Support",
+      "post": "Grocery",
+      "shiftLabel": "0600-1400",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "SSO Mack, Gilbert",
+        "SSO Mack, Gilbert",
+        "SSO Mack, Gilbert",
+        "SSO Mack, Gilbert",
+        "SSO Mack, Gilbert",
+        "None"
+      ]
+    },
+    {
+      "section": "Dock & Support",
+      "post": "Crosswalk",
+      "shiftLabel": "0500-1300",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "SSO Williams, Kyesha",
+        "SSO Williams, Kyesha",
+        "SSO Williams, Kyesha",
+        "SSO Williams, Kyesha",
+        "SSO Williams, Kyesha",
+        "None"
+      ]
+    },
+    {
+      "section": "Dock & Support",
+      "post": "Reception",
+      "shiftLabel": "0800-1700",
+      "hrs": 8,
+      "autoAdded": false,
+      "days": [
+        "None",
+        "De La Torre, Nelli",
+        "De La Torre, Nelli",
+        "De La Torre, Nelli",
+        "De La Torre, Nelli",
+        "De La Torre, Nelli",
+        "None"
+      ]
+    }
+  ],
+  "nextId": 36,
+  "trainingTopics": [
+    {
+      "id": 1,
+      "name": "Post Orders Review",
+      "intervalDays": 365,
+      "required": true,
+      "notes": "Annual review of assigned post orders"
+    },
+    {
+      "id": 3,
+      "name": "Gate Procedures",
+      "intervalDays": 365,
+      "required": true,
+      "notes": "Gate traffic, visitor/vendor flow, escalation"
+    }
+  ],
+  "trainingRecords": [],
+  "nextTrainingTopicId": 4,
+  "nextTrainingRecordId": 1,
+  "exportedAt": "2026-06-01T22:15:30.803Z",
+  "version": 2
 }
-function safeRenderPages(){
-  try{renderPages();}
-  catch(e){showStartupError(e,'Page render failed');}
-}
-function showStartupError(e,title='Startup failed'){
-  const msg=(e&&e.message)?e.message:String(e||'Unknown error');
-  const stack=(e&&e.stack)?e.stack:'';
-  const save=document.getElementById('saveStatus'); if(save) save.textContent=title;
-  const app=document.getElementById('app'); if(app) app.classList.remove('hidden');
-  const lock=document.getElementById('lockScreen'); if(lock) lock.classList.add('hidden');
-  const pages=document.getElementById('pages');
-  if(pages){pages.innerHTML=`<section class="page active"><div class="startup-error"><h2>${esc(title)}</h2><p>The suite opened, but a module failed while loading or rendering. This screen is designed so we can see the real problem instead of a blank “Initializing” screen.</p><br><strong>Error:</strong><pre>${esc(msg+'\n'+stack)}</pre><div class="toolbar"><button class="primary" onclick="forceSeedAndReload()">Use Packaged Latest Data</button><button onclick="openSettings()">Open Settings</button><button onclick="location.reload()">Reload App</button></div><div class="notice">If this happened after updating versions, the shared JSON file may be stale or malformed. The packaged data button resets Attendance and Roster from the build seed after the bridge responds.</div></div></section>`;}
-  try{toast(title+': '+msg)}catch(_){ }
-}
-async function forceSeedAndReload(){
-  try{
-    document.getElementById('saveStatus').textContent='Resetting packaged data...';
-    await SuiteBridge.send('suite:resetModuleFromSeed',{}, {module:'attendance'});
-    await SuiteBridge.send('suite:resetModuleFromSeed',{}, {module:'roster'});
-    location.reload();
-  }catch(e){showStartupError(e,'Seed reset failed');}
-}
-async function loadAttendance(){try{const res=await SuiteBridge.send('suite:loadModuleData',{}, {module:'attendance'});let raw=res.data;if(typeof raw==='string')attendance=JSON.parse(raw||'{}');else attendance=raw||{};normalizeAttendance();}catch(e){toast('Attendance load failed: '+e.message);normalizeAttendance()}}
-function normalizeAttendance(){attendance.employees=Array.isArray(attendance.employees)?attendance.employees:[];attendance.attendance=attendance.attendance&&typeof attendance.attendance==='object'?attendance.attendance:{};attendance.notes=attendance.notes&&typeof attendance.notes==='object'?attendance.notes:{};attendance.audit=Array.isArray(attendance.audit)?attendance.audit:[];attendance.flagActions=attendance.flagActions&&typeof attendance.flagActions==='object'?attendance.flagActions:{};attendance.settings={weekThreshold:3,monthThreshold:5,rollingThreshold:6,patternThreshold:3,...(attendance.settings||{})}}
-async function loadRoster(){try{const res=await SuiteBridge.send('suite:loadModuleData',{}, {module:'roster'});let raw=res.data;if(typeof raw==='string')roster=JSON.parse(raw||'{}');else roster=raw||{};normalizeRoster();}catch(e){toast('Roster load failed: '+e.message);normalizeRoster();}}
-function normalizeRoster(){roster.employees=Array.isArray(roster.employees)?roster.employees:[];roster.schedule=Array.isArray(roster.schedule)?roster.schedule:[];roster.trainingTopics=Array.isArray(roster.trainingTopics)?roster.trainingTopics:[];roster.trainingRecords=Array.isArray(roster.trainingRecords)?roster.trainingRecords:[];roster.audit=Array.isArray(roster.audit)?roster.audit:[];roster.nextId=Number(roster.nextId||0)||((roster.employees.reduce((m,e)=>Math.max(m,Number(e.id)||0),0))+1);roster.nextTrainingTopicId=Number(roster.nextTrainingTopicId||0)||((roster.trainingTopics.reduce((m,t)=>Math.max(m,Number(t.id)||0),0))+1);roster.nextTrainingRecordId=Number(roster.nextTrainingRecordId||0)||1;}
-function saveRoster(reason='autosave'){clearTimeout(rosterSaveTimer);document.getElementById('saveStatus').textContent='Saving roster...';rosterSaveTimer=setTimeout(async()=>{try{roster.lastSaved=new Date().toISOString();await SuiteBridge.send('suite:saveModuleData',roster,{module:'roster'});document.getElementById('saveStatus').textContent='Saved '+new Date().toLocaleTimeString();}catch(e){document.getElementById('saveStatus').textContent='Roster save failed';toast('Roster save failed: '+e.message)}},350)}
-
-function saveAttendance(reason='autosave'){clearTimeout(saveTimer);document.getElementById('saveStatus').textContent='Saving...';saveTimer=setTimeout(async()=>{try{attendance.lastSaved=new Date().toISOString();await SuiteBridge.send('suite:saveModuleData',attendance,{module:'attendance'});document.getElementById('saveStatus').textContent='Saved '+new Date().toLocaleTimeString();}catch(e){document.getElementById('saveStatus').textContent='Save failed';toast('Save failed: '+e.message)}},350)}
-function audit(action,detail){attendance.audit.unshift({at:new Date().toISOString(),user:env.user||'',machine:env.machine||'',action,detail});attendance.audit=attendance.audit.slice(0,1000)}
-function renderShell(){document.getElementById('nav').innerHTML=MODULES.map(m=>`<button data-module="${m.id}" onclick="navigate('${m.id}')">${m.label}</button>`).join('')}function navigate(id){activeModule=id;document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.dataset.module===id));document.getElementById('moduleStatus').textContent=MODULES.find(m=>m.id===id)?.label||id;safeRenderPages()}
-function renderPages(){const p=document.getElementById('pages');p.innerHTML=MODULES.map(m=>`<section class="page ${activeModule===m.id?'active':''}" id="page-${m.id}">${renderModule(m.id)}</section>`).join('')}
-function renderModule(id){if(id==='home')return renderHome();if(id==='attendance')return renderAttendance();if(id==='roster')return renderRoster();return `<div class="page-head"><div><div class="page-title">${MODULES.find(m=>m.id===id).label}</div><div class="page-sub">v2 module placeholder</div></div></div><div class="card"><div class="card-title">Coming Next</div><div class="notice">This module will be rebuilt as a native v2 suite module after Attendance and Roster are complete.</div></div>`}
-function renderHome(){const flags=computeFlags();return `<div class="page-head"><div><div class="page-title">Security Operations Dashboard</div><div class="page-sub">${env.user||'User'} @ ${env.machine||'Machine'} · v2.3.6</div></div></div><div class="grid cols-3"><div class="kpi"><div class="num">${attendance.employees.length}</div><div class="lbl">Attendance Employees</div></div><div class="kpi"><div class="num">${roster.employees.length}</div><div class="lbl">Roster Employees</div></div><div class="kpi"><div class="num">${flags.filter(f=>!f.addressed).length}</div><div class="lbl">Open Attendance Exceptions</div></div><div class="kpi"><div class="num">${attendance.lastSaved?new Date(attendance.lastSaved).toLocaleDateString():'-'}</div><div class="lbl">Attendance Last Saved</div></div></div><div class="grid cols-2">${['attendance','roster','badge-audit','amag-audit','access-audit'].map(id=>`<div class="card module-card" onclick="navigate('${id}')"><h3>${MODULES.find(m=>m.id===id).label}</h3><p>${id==='attendance'?'Daily entry, 90-day grid, exceptions, clear by person/code, and shared JSON storage.':id==='roster'?'Staff records, master schedule, uniforms, training, print/export, and shared JSON storage.':'Ready for clean v2 rebuild.'}</p></div>`).join('')}</div>`}
-
-function fullName(e){return ((e.last||'')+', '+(e.first||'')).replace(/^,\s*/,'').replace(/,\s*$/,'')}
-function rosterShift(e){return (e.shift||'').toString()}
-function rosterRanks(){return [...new Set(roster.employees.map(e=>e.rank||'').filter(Boolean))].sort()}
-function rosterShifts(){return [...new Set(roster.employees.map(e=>e.shift||'').filter(Boolean))].sort()}
-function filteredRoster(){let q=(rosterSearch||'').toLowerCase();return roster.employees.filter(e=>{let blob=[fullName(e),e.eid,e.rank,e.shift,e.gateShift,e.type,e.notes].join(' ').toLowerCase();return (!q||blob.includes(q))&&(rosterShiftFilter==='all'||e.shift===rosterShiftFilter)&&(rosterRankFilter==='all'||e.rank===rosterRankFilter)}).sort((a,b)=>rosterShift(a).localeCompare(rosterShift(b))||fullName(a).localeCompare(fullName(b)))}
-function renderRoster(){return `<div class="page-head roster-page-head"><div><div class="page-title">Roster</div><div class="page-sub">Staff records, schedule, training, uniforms, and labor analytics. This module uses the shared roster JSON and keeps the original Staff Manager workflow as the blueprint.</div></div><div class="roster-utility-actions"><button onclick="document.getElementById('rosterImportFile').click()">Import JSON</button><button onclick="reloadPackagedRosterData()">Use Packaged Latest JSON</button><button onclick="createRosterBackup()">Backup Now</button><button onclick="exportRosterCSV()">Export CSV</button><input id="rosterImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importRosterJSON(this)"></div></div><div class="subnav">${['roster','schedule','training','uniforms','analytics'].map(v=>`<button class="${activeRosterView===v?'active':''}" onclick="activeRosterView='${v}';safeRenderPages()">${v==='roster'?'Roster':v==='schedule'?'Schedule':v==='training'?'Training':v==='uniforms'?'Uniforms':'Analytics'}</button>`).join('')}</div>${activeRosterView==='roster'?renderRosterList():activeRosterView==='schedule'?renderRosterSchedule():activeRosterView==='training'?renderRosterTraining():activeRosterView==='uniforms'?renderRosterUniforms():renderRosterAnalytics()}`}
-function renderRosterList(){const list=filteredRoster();const total=roster.employees.length;const hourly=roster.employees.filter(e=>(e.type||'')==='Hourly').length;const salary=roster.employees.filter(e=>(e.type||'')==='Salary').length;const openUni=roster.employees.reduce((n,e)=>n+['shirt','pants','jacket'].filter(k=>(e[k+'Status']||'')&&e[k+'Status']!=='issued').length,0);return `<div class="grid cols-4 roster-summary"><div class="kpi"><div class="num">${total}</div><div class="lbl">Employees</div></div><div class="kpi"><div class="num">${hourly}</div><div class="lbl">Hourly</div></div><div class="kpi"><div class="num">${salary}</div><div class="lbl">Salary</div></div><div class="kpi"><div class="num">${openUni}</div><div class="lbl">Uniform Needs / Orders</div></div></div><div class="card roster-workbar-card"><div class="card-title">Roster Controls</div><div class="roster-filters roster-workbar"><div><label>Search</label><input value="${esc(rosterSearch)}" placeholder="Name, EID, rank, shift..." oninput="rosterSearch=this.value;safeRenderPages()"></div><div><label>Shift</label><select onchange="rosterShiftFilter=this.value;safeRenderPages()"><option value="all">All Shifts</option>${rosterShifts().map(x=>`<option value="${esc(x)}" ${rosterShiftFilter===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div><div><label>Rank</label><select onchange="rosterRankFilter=this.value;safeRenderPages()"><option value="all">All Ranks</option>${rosterRanks().map(x=>`<option value="${esc(x)}" ${rosterRankFilter===x?'selected':''}>${esc(rankLong(x))}</option>`).join('')}</select></div><div><label>Type</label><select onchange="rosterTypeFilter=this.value;safeRenderPages()"><option value="all">All Types</option>${rosterTypes().map(x=>`<option value="${esc(x)}" ${rosterTypeFilter===x?'selected':''}>${esc(x)}</option>`).join('')}</select></div><div class="top-actions"><button class="primary" onclick="openEmployeeModal()">+ Add Employee</button><button onclick="openRosterPrintModal()">Print Roster</button><button onclick="exportRosterCSV()">Export CSV</button></div></div><div class="mini-note">Showing ${list.length} of ${total}. Showing live roster records from shared JSON. Employee management, promote, merit, remove, import/export, and custom print are active. Schedule, uniforms, analytics, and training continue in staged rebuilds.</div></div><div class="table-wrap"><table class="wide-table roster-table"><thead><tr><th>Name</th><th>EID</th><th>Rank</th><th>Shift</th><th>Gate Shift</th><th>Rate</th><th>Type</th><th>RDO</th><th>Uniform</th><th>DOH</th><th>DOP</th><th>Notes</th><th>Actions</th></tr></thead><tbody>${list.map(e=>`<tr><td><strong>${esc(fullName(e))}</strong></td><td>${esc(e.eid||'')}</td><td>${rankBadge(e.rank)}</td><td>${esc(e.shift||'')}</td><td>${esc(e.gateShift||'')}</td><td>${money(e.rate)}</td><td>${esc(e.type||'')}</td><td>${esc((e.rdo||[]).join('/'))}</td><td>${uniformSummary(e)}</td><td>${esc(fmtDate(e.doh))}</td><td>${esc(fmtDate(e.dop))}</td><td class="notes-cell">${esc(e.notes||'')}</td><td><div class="td-actions"><button class="sm" onclick="openEmployeeModal('${esc(e.id)}')">Edit</button><button class="sm gold" onclick="openPromoteModal('${esc(e.id)}')">Promote</button><button class="sm" onclick="openMeritModal('${esc(e.id)}')">Merit</button><button class="sm danger" onclick="removeRosterEmployee('${esc(e.id)}')">Remove</button></div></td></tr>`).join('')||'<tr><td colspan="13">No roster records match the current filters.</td></tr>'}</tbody></table></div>`}
-function rosterTypes(){return [...new Set(roster.employees.map(e=>e.type||'').filter(Boolean))].sort()}
-function rankLong(rank){return ({PSO:'Security Trainee',SO:'Security Officer',SSO:'Senior Security Officer',LSO:'Lead Security Officer',SUPV:'Supervisor',ONIN:'ONIN',APS:'APS',Receptionist:'Receptionist'}[rank]||rank||'')}
-function rankBadge(rank){let cls=String(rank||'').toLowerCase().replace(/[^a-z0-9]/g,'');return `<span class="rank-badge ${cls}">${esc(rank||'')}</span>`}
-function money(v){let n=Number(v);return Number.isFinite(n)&&n>0?'$'+n.toFixed(2):''}
-function fmtDate(d){if(!d)return '';let x=new Date(d+'T00:00:00');return isNaN(x)?d:x.toLocaleDateString()}
-function uniformSummary(e){let chips=[];for(const k of ['shirt','pants','jacket']){let st=e[k+'Status']||'';let size=e[k]||'';if(st)chips.push(`<span class="uniform-chip ${esc(st)}">${k[0].toUpperCase()} ${esc(size)} ${esc(st)}</span>`)}return `<div class="uniform-needs">${chips.join('')||'<span class="mini-note">Not set</span>'}</div>`}
-function filteredRoster(){let q=(rosterSearch||'').toLowerCase();return roster.employees.filter(e=>{let blob=[fullName(e),e.eid,e.rank,e.shift,e.gateShift,e.type,e.notes].join(' ').toLowerCase();return (!q||blob.includes(q))&&(rosterShiftFilter==='all'||e.shift===rosterShiftFilter)&&(rosterRankFilter==='all'||e.rank===rosterRankFilter)&&(rosterTypeFilter==='all'||e.type===rosterTypeFilter)}).sort((a,b)=>rosterShift(a).localeCompare(rosterShift(b))||fullName(a).localeCompare(fullName(b)))}
-function openEmployeeModal(id=''){let e=id?roster.employees.find(x=>String(x.id)===String(id)):null;e=e||{last:'',first:'',eid:'',doh:'',dop:'',rank:'PSO',shift:'1st',gateShift:'',rate:17,type:'Hourly',shirt:'',pants:'',jacket:'',shirtStatus:'',pantsStatus:'',jacketStatus:'',notes:'',rdo:[]};let days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];showModal(`<div class="modal-head"><div class="modal-title">${id?'Edit Employee':'Add Employee'}</div><button onclick="closeModal()">Close</button></div><div class="form-grid"><div><label>Last Name</label><input id="empLast" value="${esc(e.last||'')}"></div><div><label>First Name</label><input id="empFirst" value="${esc(e.first||'')}"></div><div><label>EID</label><input id="empEid" value="${esc(e.eid||'')}"></div><div><label>Date of Hire</label><input id="empDoh" type="date" value="${esc(e.doh||'')}"></div><div><label>Date of Promotion</label><input id="empDop" type="date" value="${esc(e.dop||'')}"></div><div><label>Current Rank</label><select id="empRank">${['PSO','SO','SSO','LSO','SUPV','Receptionist','ONIN','APS'].map(r=>`<option value="${r}" ${e.rank===r?'selected':''}>${rankLong(r)}</option>`).join('')}</select></div><div><label>Shift</label><select id="empShift" onchange="updateGateShiftControls()">${['1st','2nd','3rd','GATE','DOCK','RECP','Crosswalk','W/E Gate'].map(x=>`<option ${e.shift===x?'selected':''}>${x}</option>`).join('')}</select></div><div id="gateShiftGroup"><label>Gate Shift Assignment</label><select id="empGateShift">${['','0400-1200','1200-2000','2000-0400','0400-1600','1600-0400'].map(x=>`<option value="${x}" ${(e.gateShift||'')===x?'selected':''}>${x?((x==='0400-1600'||x==='1600-0400')?'W/E only: ':'Gate: ')+x:'None'}</option>`).join('')}</select></div><div><label>Pay Rate</label><input id="empRate" type="number" step="0.01" min="0" value="${esc(e.rate??'')}"></div><div><label>Employment Type</label><select id="empType">${['Hourly','Salary','Onin','APS'].map(t=>`<option ${e.type===t?'selected':''}>${t}</option>`).join('')}</select></div><div><label>Shirt Size</label><select id="empShirt">${['','XS','S','M','L','XL','2X','3X','4X','5X'].map(x=>`<option value="${x}" ${(e.shirt||'')===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Shirt Status</label><select id="empShirtStatus">${['','needed','ordered','issued'].map(t=>`<option value="${t}" ${(e.shirtStatus||'')===t?'selected':''}>${t||'Not Set'}</option>`).join('')}</select></div><div><label>Pants Size</label><input id="empPants" value="${esc(e.pants||'')}" placeholder="32/34 or 14"></div><div><label>Pants Status</label><select id="empPantsStatus">${['','needed','ordered','issued'].map(t=>`<option value="${t}" ${(e.pantsStatus||'')===t?'selected':''}>${t||'Not Set'}</option>`).join('')}</select></div><div><label>Jacket Size</label><select id="empJacket">${['','XS','S','M','L','XL','2X','3X','4X','5X'].map(x=>`<option value="${x}" ${(e.jacket||'')===x?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Jacket Status</label><select id="empJacketStatus">${['','needed','ordered','issued'].map(t=>`<option value="${t}" ${(e.jacketStatus||'')===t?'selected':''}>${t||'Not Set'}</option>`).join('')}</select></div><div class="full"><label>Regular Days Off</label><div class="day-grid">${days.map(d=>`<label class="day-check"><input type="checkbox" class="rdoBox" value="${d}" ${(e.rdo||[]).includes(d)?'checked':''}> ${d}</label>`).join('')}</div></div><div class="full"><label>Notes</label><textarea id="empNotes">${esc(e.notes||'')}</textarea></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="saveEmployeeModal('${esc(id)}')">Save Employee</button></div>`);setTimeout(updateGateShiftControls,0)}
-function updateGateShiftControls(){let sh=document.getElementById('empShift'),g=document.getElementById('gateShiftGroup');if(!sh||!g)return;g.style.display=(sh.value==='GATE'||sh.value==='W/E Gate')?'block':'none'}
-function saveEmployeeModal(id=''){let existing=id?roster.employees.find(e=>String(e.id)===String(id)):null;let e=existing||{id:roster.nextId++};Object.assign(e,{last:val('empLast'),first:val('empFirst'),eid:val('empEid'),rank:val('empRank'),shift:val('empShift'),gateShift:val('empGateShift'),rate:Number(val('empRate')||0),type:val('empType'),doh:val('empDoh'),dop:val('empDop'),shirt:val('empShirt'),pants:val('empPants'),jacket:val('empJacket'),shirtStatus:val('empShirtStatus'),pantsStatus:val('empPantsStatus'),jacketStatus:val('empJacketStatus'),notes:val('empNotes'),rdo:[...document.querySelectorAll('.rdoBox:checked')].map(x=>x.value)});if(!existing)roster.employees.push(e);roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:id?'Employee updated':'Employee added',detail:fullName(e)});saveRoster();closeModal();safeRenderPages();toast('Roster employee saved')}
-function removeRosterEmployee(id){let e=roster.employees.find(x=>String(x.id)===String(id));if(!e)return;if(!confirm('Remove '+fullName(e)+' from roster? This does not delete attendance history.'))return;roster.employees=roster.employees.filter(x=>String(x.id)!==String(id));roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:'Employee removed',detail:fullName(e)});saveRoster();safeRenderPages()}
-function openPromoteModal(id){let e=roster.employees.find(x=>String(x.id)===String(id));if(!e)return;let ranks=['PSO','SO','SSO','LSO','SUPV','Receptionist','ONIN','APS'];let idx=Math.max(0,ranks.indexOf(e.rank));let suggested=ranks[Math.min(idx+1,ranks.length-1)]||e.rank;showModal(`<div class="modal-head"><div class="modal-title">Promote Employee</div><button onclick="closeModal()">Close</button></div><div class="notice"><strong>${esc(fullName(e))}</strong><br>Current rank: ${esc(e.rank||'')}</div><div class="form-grid"><div><label>New Rank</label><select id="promoRank">${ranks.map(r=>`<option value="${r}" ${r===suggested?'selected':''}>${rankLong(r)}</option>`).join('')}</select></div><div><label>Effective Date</label><input id="promoDate" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div><label>New Rate</label><input id="promoRate" type="number" step="0.01" value="${esc(e.rate??'')}"></div><div><label>Update Schedule Labels</label><select id="promoSchedule"><option value="yes">Yes</option><option value="no">No</option></select></div><div class="full"><label>Note</label><textarea id="promoNote">Promoted from ${esc(e.rank||'')} to ${esc(suggested)}.</textarea></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="gold" onclick="confirmPromote('${esc(id)}')">Confirm Promotion</button></div>`)}
-function confirmPromote(id){let e=roster.employees.find(x=>String(x.id)===String(id));if(!e)return;let oldRank=e.rank,newRank=val('promoRank');let oldLabel=(oldRank?oldRank+' ':'')+fullName(e),newLabel=(newRank?newRank+' ':'')+fullName(e);e.rank=newRank;e.dop=val('promoDate')||e.dop;e.rate=Number(val('promoRate')||e.rate||0);if(val('promoSchedule')==='yes'){for(const r of roster.schedule||[]){r.days=(r.days||[]).map(d=>d===oldLabel?newLabel:d)}}roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:'Employee promoted',detail:fullName(e)+' '+oldRank+' -> '+newRank});saveRoster();closeModal();safeRenderPages();toast('Promotion applied')}
-function openMeritModal(id){let e=roster.employees.find(x=>String(x.id)===String(id));if(!e)return;showModal(`<div class="modal-head"><div class="modal-title">Merit Increase</div><button onclick="closeModal()">Close</button></div><div class="notice"><strong>${esc(fullName(e))}</strong><br>Current rate: ${money(e.rate)}</div><div class="form-grid"><div><label>Increase Type</label><select id="meritType" onchange="calcMeritPreview('${esc(id)}')"><option value="dollar">Dollar Amount</option><option value="percent">Percent</option></select></div><div><label>Increase</label><input id="meritAmt" type="number" step="0.01" value="0.00" oninput="calcMeritPreview('${esc(id)}')"></div><div><label>Effective Date</label><input id="meritDate" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div><label>New Rate Preview</label><input id="meritPreview" readonly value="${money(e.rate)}"></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="confirmMerit('${esc(id)}')">Apply Increase</button></div>`)}
-function calcMeritPreview(id){let e=roster.employees.find(x=>String(x.id)===String(id));if(!e)return;let base=Number(e.rate||0),amt=Number(val('meritAmt')||0),type=val('meritType');let next=type==='percent'?base+(base*amt/100):base+amt;let out=document.getElementById('meritPreview');if(out)out.value=money(next)}
-function confirmMerit(id){let e=roster.employees.find(x=>String(x.id)===String(id));if(!e)return;let base=Number(e.rate||0),amt=Number(val('meritAmt')||0),type=val('meritType');let next=type==='percent'?base+(base*amt/100):base+amt;e.rate=Number(next.toFixed(2));e.dop=val('meritDate')||e.dop;roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:'Merit increase',detail:fullName(e)+' '+money(base)+' -> '+money(e.rate)});saveRoster();closeModal();safeRenderPages();toast('Merit increase applied')}
-function openRosterPrintModal(){let cols=['Name','EID','Rank','Shift','Gate Shift','Rate','Type','RDO','Uniform','DOH','DOP','Notes'];showModal(`<div class="modal-head"><div class="modal-title">Print Roster</div><button onclick="closeModal()">Close</button></div><div class="notice">Choose columns for a printable roster. Current filters are respected unless you choose all employees.</div><div class="form-grid"><div class="full"><label>Rows to Print</label><select id="rpScope"><option value="filtered">Current filtered roster</option><option value="all">All employees</option></select></div><div class="full"><label>Columns</label><div class="day-grid">${cols.map(c=>`<label class="day-check"><input type="checkbox" class="rpCol" value="${c}" checked> ${c}</label>`).join('')}</div></div></div><div class="modal-actions"><button onclick="setRosterPrintCols(false)">Basic</button><button onclick="setRosterPrintCols(true)">All Columns</button><button onclick="closeModal()">Cancel</button><button class="primary" onclick="printRosterCustom()">Print</button></div>`)}
-function setRosterPrintCols(all){let basic=['Name','EID','Rank','Shift','Rate','RDO'];document.querySelectorAll('.rpCol').forEach(x=>x.checked=all||basic.includes(x.value))}
-function printRosterCustom(){let scope=val('rpScope');let cols=[...document.querySelectorAll('.rpCol:checked')].map(x=>x.value);let list=scope==='all'?[...roster.employees].sort((a,b)=>fullName(a).localeCompare(fullName(b))):filteredRoster();let cell=(e,c)=>({Name:fullName(e),EID:e.eid,Rank:e.rank,Shift:e.shift,'Gate Shift':e.gateShift,Rate:money(e.rate),Type:e.type,RDO:(e.rdo||[]).join('/'),Uniform:['shirt','pants','jacket'].map(k=>`${k}:${e[k]||''} ${e[k+'Status']||''}`).join(' | '),DOH:fmtDate(e.doh),DOP:fmtDate(e.dop),Notes:e.notes}[c]||'');let html=`<div class="print-overlay" id="printOverlay"><div class="print-toolbar"><div><h2>PWADC Security Roster</h2><div>${new Date().toLocaleString()} · ${list.length} employee(s)</div></div><div><button onclick="window.print()">Print</button> <button onclick="document.getElementById('printOverlay').remove()">Close</button></div></div><table class="print-table"><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list.map(e=>`<tr>${cols.map(c=>`<td>${esc(cell(e,c))}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;closeModal();document.body.insertAdjacentHTML('beforeend',html);setTimeout(()=>window.print(),150)}
-function renderRosterSchedule(){
- const groups={};
- for(const row of roster.schedule||[]){const sec=row.section||'Unsectioned';(groups[sec]=groups[sec]||[]).push(row)}
- const sections=Object.entries(groups);
- return `<div class="schedule-command"><div><div class="page-title" style="font-size:24px">Master Schedule</div><div class="page-sub">Click any cell to reassign. None/Open cells can be reopened and assigned.</div></div><div class="schedule-actions"><button onclick="exportScheduleOnly()">Share Schedule</button><button onclick="printRosterSchedule()">Print Schedule</button><button onclick="openAddScheduleRowModal()">+ Add Row</button><button class="gold" onclick="openAddScheduleSectionModal()">+ Add Section</button></div></div><div id="schedule-container">${sections.length?sections.map(([sec,rows])=>renderScheduleSection(sec,rows,false)).join(''):'<div class="card"><div class="card-title">No Schedule Rows</div><p class="muted">Add a section or import roster JSON with schedule data.</p></div>'}</div>`
-}
-const EMP_SECTION_COLORS={
- '1st Shift — 0800-1600':{'aiken, don':'#f65555','brewer, jazmine':'#1c38ec','birdsong, tiffany':'#54ec1c','reese, javontae':'#1caeec','bennett, jasmine':'#bc1cec','cleveland, kenyetta':'#f6c555','small, kendarius':'#55f6e0'},
- '2nd Shift — 1600-2400':{'parker, lacey':'#f65555','ferguson, matt':'#1c38ec','smathers, raymond':'#54ec1c','cave, jalisa':'#1caeec','wilson, damyn':'#bc1cec','westbrook, sharon':'#f6c555','howard, tamika':'#55f6e0'},
- '3rd Shift — 0000-0800':{'anderson, shaun':'#f65555','summerhill, rickey':'#1c38ec','nelson, addison':'#54ec1c','perry, elizabeth':'#1caeec','king, faith':'#bc1cec','bennett, zachary':'#f6c555','alvarez, raina':'#55f6e0','edwards, derriana':'#ff8fd1'},
- 'Gate':{'paul, danillo':'#f65555','lancaster, kettrin':'#1c38ec','mack, danielle':'#54ec1c','hightower, kendrick':'#1caeec','abernathy, davetta':'#bc1cec','daniels, dominique':'#f6c555'},
- 'Dock & Support':{'jones, kaylan':'#f65555','jones, kay':'#f65555','mack, gilbert':'#1c38ec','mack, mack':'#1c38ec','williams, kyesha':'#54ec1c','de la torre, nelli':'#1caeec'}
-};
-function normalizeScheduleNameKey(cell){
- const known=new Set(['PSO','SO','SSO','LSO','SUPV','ONIN','APS','RECEP','RECEPTIONIST']);
- const parts=String(cell||'').trim().split(/\s+/); if(parts.length>1&&known.has(parts[0].toUpperCase())) return parts.slice(1).join(' ').toLowerCase();
- return String(cell||'').trim().toLowerCase();
-}
-function fallbackScheduleColor(key){const palette=['#f65555','#1c38ec','#54ec1c','#1caeec','#bc1cec','#f6c555','#55f6e0','#ff8fd1','#a0e060','#e08a2f','#4a90d9','#c6b273'];let h=0;for(let i=0;i<key.length;i++)h=(h*31+key.charCodeAt(i))>>>0;return palette[h%palette.length]}
-function empColorFromCell(cell,section){const x=String(cell||'').trim();if(!x||['None','Open','Pending'].includes(x))return null;const key=normalizeScheduleNameKey(x);const sec=EMP_SECTION_COLORS[section]||{};return sec[key]||fallbackScheduleColor((section||'')+'|'+key)}
-function scheduleCellParts(cell){
- const x=String(cell||'None').trim()||'None';
- if(['None','Open','Pending'].includes(x)) return {special:x,display:x==='None'?'Closed':x,rank:''};
- const known=new Set(['PSO','SO','SSO','LSO','SUPV','ONIN','APS','Receptionist','RECEP']);
- const m=x.match(/^([A-Za-z]+)\s(.+)$/); const raw=(m&&known.has(m[1]))?m[1]:''; const name=raw?m[2]:x;
- let abbr=''; const upper=raw.toUpperCase();
- if(['PSO','ONIN','APS'].includes(upper)) abbr='ST'; else if(!['SUPV','RECEP','RECEPTIONIST',''].includes(upper)) abbr=upper;
- return {special:'',display:name,rank:abbr};
-}
-function renderScheduleSection(sec,rows,forExport=false){
- const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
- return `<div class="schedule-section"><div class="section-head"><span>${esc(sec)}</span>${forExport?'':`<span class="row-count">${rows.length} row${rows.length===1?'':'s'}</span>`}</div><div class="table-wrap schedule-wrap"><div class="schedule-grid"><div class="sch-head">Post</div>${days.map(d=>`<div class="sch-head">${d}</div>`).join('')}${rows.map(row=>renderScheduleRow(row,sec,forExport)).join('')}</div></div></div>`
-}
-function renderScheduleRow(row,sec,forExport=false){
- const idx=(roster.schedule||[]).indexOf(row);
- const post=`<div>${esc(row.post||'Post')}${row.shiftLabel?`<br><span style="font-size:9px;color:var(--muted);font-weight:500;">${esc(row.shiftLabel)}</span>`:''}${row.hrs?`<br><span style="font-size:9px;color:var(--muted);font-weight:500;">${esc(row.hrs)} hrs</span>`:''}</div>`;
- const tools=forExport?'':`<span class="sch-row-tools"><button class="sm" title="Edit row" onclick="openEditScheduleRowModal(${idx});event.stopPropagation()">Edit</button><button class="sm danger" title="Remove row" onclick="removeScheduleRow(${idx});event.stopPropagation()">X</button></span>`;
- const cells=(row.days||['None','None','None','None','None','None','None']).slice(0,7); while(cells.length<7)cells.push('None');
- return `<div class="sch-post">${post}${tools}</div>${cells.map((name,day)=>renderScheduleCell(name,sec,idx,day,forExport)).join('')}`
-}
-function renderScheduleCell(name,sec,idx,day,forExport=false){
- const p=scheduleCellParts(name); const color=empColorFromCell(name,sec); const cls=p.special==='None'?'sch-cell sch-closed':'sch-cell';
- if(p.special==='None') return `<div class="${cls}" ${forExport?'':`onclick="openScheduleCellModal(${idx},${day})"`}><div class="sch-name none">Closed</div>${forExport?'':'<div class="sch-edit-badge">EDIT</div>'}</div>`;
- if(p.special==='Open'||p.special==='Pending') return `<div class="sch-cell" ${forExport?'':`onclick="openScheduleCellModal(${idx},${day})"`}><div class="sch-name ${p.special.toLowerCase()}">${p.display}</div>${forExport?'':'<div class="sch-edit-badge">EDIT</div>'}</div>`;
- const style=color?`style="background:${color}28;border-left:3px solid ${color};padding-left:5px;"`:'';
- const rank=p.rank?`<span class="sch-rank-abbr" style="color:${color||'var(--muted)'}">${esc(p.rank)}</span>`:'';
- return `<div class="sch-cell" ${style} ${forExport?'':`onclick="openScheduleCellModal(${idx},${day})"`}><div style="color:var(--text);font-weight:700;font-size:11px;line-height:1.3;">${esc(p.display)}${rank}</div>${forExport?'':'<div class="sch-edit-badge">EDIT</div>'}</div>`
-}
-function scheduleNameClass(name){const x=String(name||'').toLowerCase();if(x==='none')return 'none';if(x==='open')return 'open';if(x==='pending')return 'pending';return ''}
-function uniqueScheduleSections(){return Array.from(new Set((roster.schedule||[]).map(r=>r.section||'Unsectioned')))}
-function employeeScheduleLabel(e){return ((e.rank||'')?e.rank+' ':'')+fullName(e)}
-function scheduleEmployeeOptions(selected=''){
- const base=['None','Open','Pending'];
- const emps=[...roster.employees].sort((a,b)=>fullName(a).localeCompare(fullName(b))).map(employeeScheduleLabel);
- return [...base,...emps].map(v=>`<option value="${esc(v)}" ${String(selected)===String(v)?'selected':''}>${esc(v)}</option>`).join('')
-}
-function openAddScheduleRowModal(){
- const sections=uniqueScheduleSections();
- showModal(`<div class="modal-head"><div class="modal-title">Add Schedule Row</div><button onclick="closeModal()">Close</button></div><div class="form-grid"><div class="full"><label>Section</label><select id="schedRowSection">${sections.map(s=>`<option value="${esc(s)}">${esc(s)}</option>`).join('')}</select></div><div><label>Post Label</label><input id="schedRowPost" placeholder="Response, Floater, Gate"></div><div><label>Shift Time</label><input id="schedRowShift" placeholder="0600-1400"></div><div><label>Hours</label><select id="schedRowHours"><option value="8">8 hours</option><option value="10">10 hours</option><option value="12">12 hours</option></select></div><div class="full"><label>Initial Assignment</label><select id="schedRowAssign">${scheduleEmployeeOptions('None')}</select></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="confirmAddScheduleRow()">Add Row</button></div>`)
-}
-function confirmAddScheduleRow(){
- const assignment=val('schedRowAssign')||'None';
- roster.schedule.push({section:val('schedRowSection')||'Unsectioned',post:val('schedRowPost')||'New Row',shiftLabel:val('schedRowShift')||'',hrs:Number(val('schedRowHours')||8),autoAdded:false,days:[assignment,assignment,assignment,assignment,assignment,assignment,assignment]});
- roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:'Schedule row added',detail:(val('schedRowSection')||'')+' · '+(val('schedRowPost')||'New Row')});
- saveRoster();closeModal();safeRenderPages();toast('Schedule row added')
-}
-function openAddScheduleSectionModal(){
- showModal(`<div class="modal-head"><div class="modal-title">Add Schedule Section</div><button onclick="closeModal()">Close</button></div><div class="form-grid"><div class="full"><label>Section Name</label><input id="schedSectionName" placeholder="4th Shift — 1000-1800"></div><div><label>First Post Label</label><input id="schedSectionPost" placeholder="Supervisor"></div><div><label>Shift Time</label><input id="schedSectionShift" placeholder="1000-1800"></div><div><label>Hours</label><select id="schedSectionHours"><option value="8">8 hours</option><option value="10">10 hours</option><option value="12">12 hours</option></select></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="confirmAddScheduleSection()">Create Section</button></div>`)
-}
-function confirmAddScheduleSection(){
- const sec=val('schedSectionName')||'New Section';
- roster.schedule.push({section:sec,post:val('schedSectionPost')||'New Post',shiftLabel:val('schedSectionShift')||'',hrs:Number(val('schedSectionHours')||8),autoAdded:false,days:['None','None','None','None','None','None','None']});
- roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:'Schedule section added',detail:sec});
- saveRoster();closeModal();safeRenderPages();toast('Schedule section added')
-}
-function openEditScheduleRowModal(idx){
- const row=roster.schedule[idx];if(!row)return;
- showModal(`<div class="modal-head"><div class="modal-title">Edit Schedule Row</div><button onclick="closeModal()">Close</button></div><div class="form-grid"><div class="full"><label>Section</label><input id="editRowSection" value="${esc(row.section||'')}"></div><div><label>Post Label</label><input id="editRowPost" value="${esc(row.post||'')}"></div><div><label>Shift Time</label><input id="editRowShift" value="${esc(row.shiftLabel||'')}"></div><div><label>Hours</label><select id="editRowHours">${[8,10,12].map(h=>`<option value="${h}" ${Number(row.hrs||8)===h?'selected':''}>${h} hours</option>`).join('')}</select></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="confirmEditScheduleRow(${idx})">Save Row</button></div>`)
-}
-function confirmEditScheduleRow(idx){const row=roster.schedule[idx];if(!row)return;row.section=val('editRowSection')||row.section;row.post=val('editRowPost')||row.post;row.shiftLabel=val('editRowShift')||'';row.hrs=Number(val('editRowHours')||row.hrs||8);roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:'Schedule row edited',detail:row.section+' · '+row.post});saveRoster();closeModal();safeRenderPages();toast('Schedule row updated')}
-function openScheduleCellModal(idx,day){
- const row=roster.schedule[idx];if(!row)return;const days=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];const current=(row.days||[])[day]||'None';scheduleEditContext={idx,day};
- showModal(`<div class="modal-head"><div class="modal-title">Reassign Slot</div><button onclick="closeModal()">Close</button></div><div class="notice"><strong>${esc(row.section||'')}</strong><br>${esc(row.post||'')} ${row.shiftLabel?'· '+esc(row.shiftLabel):''} · ${days[day]}</div><div class="form-grid"><div class="full"><label>Assignment</label><select id="schedCellAssign">${scheduleEmployeeOptions(current)}</select></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button onclick="setScheduleCellSpecial('None')">None</button><button onclick="setScheduleCellSpecial('Open')">Open</button><button onclick="setScheduleCellSpecial('Pending')">Pending</button><button class="primary" onclick="confirmScheduleCell()">Save Assignment</button></div>`)
-}
-function setScheduleCellSpecial(v){const el=document.getElementById('schedCellAssign');if(el)el.value=v}
-function confirmScheduleCell(){if(!scheduleEditContext)return;const {idx,day}=scheduleEditContext;const row=roster.schedule[idx];if(!row)return;row.days=row.days||['None','None','None','None','None','None','None'];while(row.days.length<7)row.days.push('None');row.days[day]=val('schedCellAssign')||'None';roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:'Schedule cell reassigned',detail:(row.section||'')+' · '+(row.post||'')+' day '+day+' -> '+row.days[day]});saveRoster();closeModal();safeRenderPages();toast('Schedule updated')}
-function removeScheduleRow(idx){const row=roster.schedule[idx];if(!row)return;if(!confirm('Remove schedule row: '+(row.section||'')+' / '+(row.post||'')+'?'))return;roster.schedule.splice(idx,1);roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:'Schedule row removed',detail:(row.section||'')+' · '+(row.post||'')});saveRoster();safeRenderPages();toast('Schedule row removed')}
-function scheduleSections(){let groups={};for(const r of roster.schedule||[]){(groups[r.section||'Unsectioned']=groups[r.section||'Unsectioned']||[]).push(r)}return Object.entries(groups)}
-function scheduleHtmlSnapshot(){return scheduleSections().map(([sec,rows])=>renderScheduleSection(sec,rows,true)).join('')}
-function scheduleExportCss(){return `@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@400;500;600&display=swap');
-:root { --red:#C0272D; --gold:#C6B273; --charcoal:#1e2330; --surface:#28303f; --surface2:#313b4d; --surface3:#3d4a5e; --border:#404d62; --text:#eef0f4; --text-muted:#8a96a8; --text-dim:#c4cad5; --orange:#e08a2f; }
-* { box-sizing:border-box; } body { margin:0; font-family:'Barlow',sans-serif; background:var(--charcoal); color:var(--text); padding:24px; } .header { border-bottom:3px solid var(--red); padding:0 0 14px 0; margin-bottom:18px; display:flex; justify-content:space-between; align-items:flex-end; gap:16px; } .title { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:30px; color:var(--gold); letter-spacing:1px; text-transform:uppercase; } .subtitle { font-size:12px; color:var(--text-muted); letter-spacing:.4px; margin-top:3px; } .actions { display:flex; gap:8px; } .btn { font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:13px; letter-spacing:.8px; text-transform:uppercase; padding:8px 14px; border-radius:4px; border:1px solid var(--border); background:transparent; color:var(--text-dim); cursor:pointer; } .schedule-section { margin-bottom:28px; break-inside:avoid; page-break-inside:avoid; } .section-head { font-family:'Barlow Condensed',sans-serif; font-weight:800; font-size:15px; letter-spacing:1px; text-transform:uppercase; color:var(--red); padding:8px 12px; background:var(--surface); border:1px solid var(--border); border-left:3px solid var(--red); border-radius:4px; margin-bottom:8px; display:block;} .table-wrap { overflow-x:auto; border-radius:6px; border:1px solid var(--border); } .schedule-grid { display:grid; grid-template-columns:120px repeat(7, 1fr); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:6px; overflow:hidden; font-size:12px; min-width:900px; } .sch-head { background:var(--surface2); font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:11px; letter-spacing:1px; text-transform:uppercase; color:var(--gold); padding:8px 6px; text-align:center; } .sch-post { background:var(--surface2); color:var(--text-muted); font-family:'Barlow Condensed',sans-serif; font-weight:700; font-size:10px; letter-spacing:.5px; text-transform:uppercase; padding:8px 8px; display:flex; align-items:center; } .sch-cell { background:var(--surface); padding:5px 6px; text-align:center; position:relative; min-height:36px; } .sch-name { font-size:11px; color:var(--text-dim); line-height:1.3; } .sch-name.none { color:var(--surface3); font-style:italic; } .sch-name.open { color:var(--orange); font-style:italic; font-weight:600; } .sch-name.pending { color:var(--gold); font-style:italic; } .sch-closed { background:#161c28 !important; } .sch-rank-abbr { font-size:9px;font-family:'Barlow Condensed',sans-serif;font-weight:700;letter-spacing:.5px;opacity:.85;display:block;margin-top:1px; }
-@media print { @page { size:landscape; margin:.35in; } body { background:white; color:#111; padding:0; } .actions { display:none; } .title { color:#111; } .subtitle { color:#444; } .section-head { color:#111; border-color:#999; background:#eee; } .table-wrap, .schedule-grid { border-color:#999; } .schedule-grid { gap:1px; background:#999; } .sch-head { background:#ddd; color:#111; } .sch-post { background:#eee; color:#111; } .sch-cell { background:#fff !important; color:#111; } * { -webkit-print-color-adjust:exact; print-color-adjust:exact; } }`}
-function scheduleShareHtml(){const date=new Date();const dateStamp=date.toISOString().slice(0,10);const printedDate=date.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});return '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n<meta name="viewport" content="width=device-width, initial-scale=1.0">\n<title>PWADC Security Schedule - '+dateStamp+'</title>\n<style>\n'+scheduleExportCss()+'\n</style>\n</head>\n<body>\n<div class="header"><div><div class="title">PWADC Security Master Schedule</div><div class="subtitle">Schedule-only snapshot exported '+printedDate+'. Roster, pay, uniforms, analytics, and edit controls are not included.</div></div><div class="actions"><button class="btn" onclick="window.print()">Print</button></div></div>\n'+scheduleHtmlSnapshot()+'\n</body>\n</html>'}
-function exportScheduleOnly(){const html=scheduleShareHtml();const dateStamp=new Date().toISOString().slice(0,10);const blob=new Blob([html],{type:'text/html'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='PWADC_Security_Schedule_'+dateStamp+'.html';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);toast('Exported schedule-only HTML for supervisors.')}
-function printRosterSchedule(){const w=window.open('','_blank');if(!w){toast('Popup blocked. Allow popups to print schedule.');return;}w.document.write(scheduleShareHtml());w.document.close();setTimeout(()=>w.print(),350)}
-function renderRosterTraining(){return `<div class="card"><div class="card-title">Training Topics</div><div class="toolbar"><button class="primary" onclick="addTrainingTopic()">Add Topic</button></div><div class="table-wrap"><table class="wide-table"><thead><tr><th>Topic</th><th>Interval</th><th>Required</th><th>Notes</th><th></th></tr></thead><tbody>${(roster.trainingTopics||[]).map(t=>`<tr><td>${esc(t.name)}</td><td>${esc(t.intervalDays)} days</td><td>${t.required?'Yes':'No'}</td><td>${esc(t.notes||'')}</td><td><button class="sm danger" onclick="deleteTrainingTopic('${esc(t.id)}')">Remove</button></td></tr>`).join('')}</tbody></table></div></div><div class="card"><div class="card-title">Training Records</div><div class="notice">${(roster.trainingRecords||[]).length} training record(s). Full employee/topic matrix will be added after roster layout approval.</div></div>`}
-function addTrainingTopic(){let name=prompt('Training topic name:');if(!name)return;roster.trainingTopics.push({id:roster.nextTrainingTopicId++,name,intervalDays:365,required:true,notes:''});saveRoster();safeRenderPages()}function deleteTrainingTopic(id){roster.trainingTopics=roster.trainingTopics.filter(t=>String(t.id)!==String(id));saveRoster();safeRenderPages()}
-function renderRosterUniforms(){
-  const all=getUniformItems('all');
-  const needed=all.filter(x=>x.status==='needed');
-  const ordered=all.filter(x=>x.status==='ordered');
-  const issued=all.filter(x=>x.status==='issued');
-  const needsAgg=aggregateUniforms(needed);
-  const orderedAgg=aggregateUniforms(ordered);
-  const issuedAgg=aggregateUniforms(issued);
-  const section=(title,items,agg,empty)=>`<div class="card uniform-section"><div class="card-title">${title}</div><div class="uniform-order-grid"><div><div class="table-wrap"><table class="wide-table"><thead><tr><th>Employee</th><th>Rank</th><th>Shift</th><th>Item</th><th>Size</th><th>Status</th><th>Qty</th></tr></thead><tbody>${items.map(i=>`<tr><td><strong>${esc(i.employee)}</strong></td><td>${rankBadge(i.rank)}</td><td>${esc(i.shift||'')}</td><td>${esc(titleCase(i.item))}</td><td>${esc(i.size)}</td><td><span class="uniform-chip ${esc(i.status)}">${esc(i.status)}</span></td><td>${i.qty}</td></tr>`).join('')||`<tr><td colspan="7">${empty}</td></tr>`}</tbody></table></div></div><div><div class="table-wrap"><table class="wide-table"><thead><tr><th>Item</th><th>Size</th><th>People</th><th>Pieces</th></tr></thead><tbody>${agg.map(i=>`<tr><td>${esc(titleCase(i.item))}</td><td>${esc(i.size)}</td><td>${i.people}</td><td><strong>${i.qty}</strong></td></tr>`).join('')||`<tr><td colspan="4">${empty}</td></tr>`}</tbody></table></div></div></div></div>`;
-  return `<div class="uniform-toolbar"><div><div class="page-title">Uniforms</div><div class="page-sub">Uniform accountability split by status: needs to be ordered, ordered, and issued. Jackets count as one per person.</div></div><div class="top-actions"><button onclick="printUniformOrderSheet()">Print Uniforms</button><button onclick="exportUniformCSV()">Export Uniform CSV</button></div></div>
-  <div class="uniform-summary-grid"><div class="kpi"><div class="num">${needed.length}</div><div class="lbl">Needs Ordered</div></div><div class="kpi"><div class="num">${ordered.length}</div><div class="lbl">Ordered</div></div><div class="kpi"><div class="num">${issued.length}</div><div class="lbl">Issued</div></div><div class="kpi"><div class="num">${needed.reduce((n,x)=>n+x.qty,0)}</div><div class="lbl">Pieces Needed</div></div></div>
-  ${section('Needs to be Ordered',needed,needsAgg,'No items marked needed.')}
-  ${section('Already Ordered',ordered,orderedAgg,'No items marked ordered.')}
-  ${section('Issued Uniforms',issued,issuedAgg,'No issued items recorded.')}`
-}
-function renderRosterAnalytics(){
-  const byShift=countBy(roster.employees,e=>e.shift||'Blank');
-  const byRank=countBy(roster.employees,e=>e.rank||'Blank');
-  const byType=countBy(roster.employees,e=>e.type||'Blank');
-  const sched=scheduleMetrics();
-  const openUniform=roster.employees.reduce((n,e)=>n+['shirt','pants','jacket'].filter(k=>(e[k+'Status']||'')&&e[k+'Status']!=='issued').length,0);
-  const topShift=Object.entries(byShift).sort((a,b)=>b[1]-a[1])[0]||['-',0];
-  return `<div class="analytics-toolbar"><div><div class="page-title">Labor Analytics</div><div class="page-sub">Headcount, schedule hours, open slots, FTE, and estimated weekly labor cost from the live roster schedule.</div></div><div class="top-actions"><button onclick="printAnalytics()">Print Analytics</button><button onclick="exportAnalyticsCSV()">Export Analytics CSV</button></div></div>
-  <div class="grid cols-4"><div class="kpi"><div class="num">${roster.employees.length}</div><div class="lbl">Employees</div></div><div class="kpi"><div class="num">${sched.hours}</div><div class="lbl">Scheduled HPW</div></div><div class="kpi"><div class="num">${sched.fte.toFixed(1)}</div><div class="lbl">FTE Equivalent</div></div><div class="kpi"><div class="num schedule-risk">${sched.open}</div><div class="lbl">Open Slots</div></div></div>
-  <div class="grid cols-2"><div class="card"><div class="card-title">Headcount by Shift</div>${analyticsBars(byShift)}</div><div class="card"><div class="card-title">Headcount by Rank</div>${analyticsBars(byRank)}</div><div class="card"><div class="card-title">Employment Type</div>${analyticsBars(byType)}</div><div class="card"><div class="card-title">Schedule Cost Snapshot</div><div class="analytics-money">${money(sched.cost)} / week</div><div class="health-row"><span>Most staffed shift</span><span class="ok">${esc(topShift[0])} · ${topShift[1]}</span></div><div class="health-row"><span>Uniform needs/orders</span><span class="warn">${openUniform}</span></div><div class="health-row"><span>Unmatched schedule names</span><span class="warn">${sched.unmatched}</span></div></div></div>
-  <div class="card"><div class="card-title">Schedule Hours by Section</div><div class="table-wrap"><table class="wide-table"><thead><tr><th>Section</th><th>Rows</th><th>Assigned Slots</th><th>Open Slots</th><th>HPW</th><th>Est. Weekly Cost</th></tr></thead><tbody>${Object.values(sched.sections).map(x=>`<tr><td>${esc(x.section)}</td><td>${x.rows}</td><td>${x.assigned}</td><td class="schedule-risk">${x.open}</td><td>${x.hours}</td><td>${money(x.cost)}</td></tr>`).join('')}</tbody></table></div></div>`
-}
-function titleCase(s){return (s||'').charAt(0).toUpperCase()+(s||'').slice(1)}
-function uniformQty(e,item){if(item==='jacket')return 1;let days=7-((e.rdo||[]).length||0);return days>=5?5:3}
-function getUniformItems(mode='open'){let out=[];for(const e of roster.employees){if(['ONIN','APS','Onin'].includes(e.type)||['ONIN','APS'].includes(e.rank))continue;for(const k of ['shirt','pants','jacket']){let status=(e[k+'Status']||'').toLowerCase();if(!status)continue;if(mode==='open'&&status==='issued')continue;if(mode!=='all'&&mode!=='open'&&status!==mode)continue;out.push({employee:fullName(e),rank:e.rank,shift:e.shift,item:k,size:e[k]||'Unspecified',status,qty:uniformQty(e,k)})}}return out}
-function getUniformOpenItems(){return getUniformItems('open')}
-function aggregateUniforms(items){const aggregate={};for(const i of items){const key=i.item+'|'+i.size+'|'+i.status;if(!aggregate[key])aggregate[key]={item:i.item,size:i.size,status:i.status,qty:0,people:0};aggregate[key].qty+=i.qty;aggregate[key].people+=1}return Object.values(aggregate).sort((a,b)=>(a.status+a.item+a.size).localeCompare(b.status+b.item+b.size))}
-function schedulePersonName(raw){let v=(raw||'').trim();if(!v||['none','closed','open','pending'].includes(v.toLowerCase()))return '';let parts=v.split(/\s+/);let first=parts[0].replace(/[^A-Za-z]/g,'').toUpperCase();if(['SUPV','PSO','SO','SSO','LSO','ONIN','APS','RECEP','ST'].includes(first))v=parts.slice(1).join(' ');return v.trim()}
-function findRosterByScheduleName(raw){let nm=schedulePersonName(raw).toLowerCase();if(!nm)return null;return roster.employees.find(e=>fullName(e).toLowerCase()===nm)||roster.employees.find(e=>nm.includes(e.last.toLowerCase())&&nm.includes(e.first.toLowerCase()))||null}
-function scheduleMetrics(){let out={hours:0,cost:0,open:0,unmatched:0,fte:0,sections:{}};for(const row of (roster.schedule||[])){let sec=row.section||'Unassigned';let bucket=out.sections[sec]||(out.sections[sec]={section:sec,rows:0,assigned:0,open:0,hours:0,cost:0});bucket.rows++;for(const cell of (row.days||[])){let val=(cell||'').trim();let low=val.toLowerCase();if(!val||low==='none'||low==='closed')continue;if(low==='open'||low==='pending'){out.open++;bucket.open++;continue;}let hrs=Number(row.hrs||8);out.hours+=hrs;bucket.hours+=hrs;bucket.assigned++;let emp=findRosterByScheduleName(val);if(emp){let cost=Number(emp.rate||0)*hrs;out.cost+=cost;bucket.cost+=cost}else out.unmatched++;}}out.fte=out.hours/40;return out}
-function analyticsBars(obj){let entries=Object.entries(obj).sort((a,b)=>b[1]-a[1]);let max=Math.max(1,...entries.map(x=>x[1]));return `<div class="analytics-list">${entries.map(([k,v])=>`<div class="analytics-bar"><span>${esc(k)}</span><div class="bar-track"><div class="bar-fill" style="width:${Math.round(v/max*100)}%"></div></div><strong>${v}</strong></div>`).join('')}</div>`}
-function printUniformOrderSheet(){let items=getUniformItems('all');let rows=['needed','ordered','issued'].map(st=>`<tr><th colspan="7" style="text-align:left;background:#e5e7eb;">${st.toUpperCase()}</th></tr>`+items.filter(i=>i.status===st).map(i=>`<tr><td>${esc(i.employee)}</td><td>${esc(i.rank)}</td><td>${esc(i.shift)}</td><td>${esc(titleCase(i.item))}</td><td>${esc(i.size)}</td><td>${esc(i.status)}</td><td>${i.qty}</td></tr>`).join('')).join('');let html=`<div class="print-overlay" id="printOverlay"><div class="print-toolbar"><div><h2>PWADC Security Uniform Accountability</h2><div>${new Date().toLocaleString()} · needed, ordered, and issued</div></div><div><button onclick="window.print()">Print</button> <button onclick="document.getElementById('printOverlay').remove()">Close</button></div></div><table class="print-table"><thead><tr><th>Employee</th><th>Rank</th><th>Shift</th><th>Item</th><th>Size</th><th>Status</th><th>Qty</th></tr></thead><tbody>${rows}</tbody></table></div>`;document.body.insertAdjacentHTML('beforeend',html);setTimeout(()=>window.print(),150)}
-function exportUniformCSV(){let rows=[['Employee','Rank','Shift','Item','Size','Status','Qty'],...getUniformItems('all').map(i=>[i.employee,i.rank,i.shift,titleCase(i.item),i.size,i.status,i.qty])];downloadCSV('PWADC_Uniforms_'+new Date().toISOString().slice(0,10)+'.csv',rows)}
-function exportAnalyticsCSV(){let m=scheduleMetrics();let rows=[['Metric','Value'],['Employees',roster.employees.length],['Scheduled HPW',m.hours],['FTE',m.fte.toFixed(2)],['Open Slots',m.open],['Estimated Weekly Cost',m.cost.toFixed(2)],[],['Section','Rows','Assigned Slots','Open Slots','HPW','Cost'],...Object.values(m.sections).map(x=>[x.section,x.rows,x.assigned,x.open,x.hours,x.cost.toFixed(2)])];downloadCSV('PWADC_Roster_Analytics_'+new Date().toISOString().slice(0,10)+'.csv',rows)}
-function printAnalytics(){let m=scheduleMetrics();let rows=Object.values(m.sections);let html=`<div class="print-overlay" id="printOverlay"><div class="print-toolbar"><div><h2>PWADC Security Labor Analytics</h2><div>${new Date().toLocaleString()} · HPW ${m.hours} · FTE ${m.fte.toFixed(1)} · Open Slots ${m.open}</div></div><div><button onclick="window.print()">Print</button> <button onclick="document.getElementById('printOverlay').remove()">Close</button></div></div><table class="print-table"><thead><tr><th>Section</th><th>Rows</th><th>Assigned</th><th>Open</th><th>HPW</th><th>Cost</th></tr></thead><tbody>${rows.map(x=>`<tr><td>${esc(x.section)}</td><td>${x.rows}</td><td>${x.assigned}</td><td>${x.open}</td><td>${x.hours}</td><td>${money(x.cost)}</td></tr>`).join('')}</tbody></table></div>`;document.body.insertAdjacentHTML('beforeend',html);setTimeout(()=>window.print(),150)}
-function downloadCSV(name,rows){let csv=rows.map(r=>r.map(v=>`"${String(v??'').replace(/"/g,'""')}"`).join(',')).join('\n');let blob=new Blob([csv],{type:'text/csv'});let a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),500)}
-
-function countBy(arr,fn){let o={};for(const x of arr){let k=fn(x);o[k]=(o[k]||0)+1}return o}
-function val(id){let el=document.getElementById(id);return el?el.value:''}
-function showModal(html){let d=document.createElement('div');d.className='modal-backdrop';d.id='modalBackdrop';d.innerHTML='<div class="modal-card">'+html+'</div>';document.body.appendChild(d)}function closeModal(){let d=document.getElementById('modalBackdrop');if(d)d.remove()}
-async function importRosterJSON(input){const file=input&&input.files&&input.files[0];if(!file)return;try{const text=await file.text();const data=JSON.parse(text);if(!Array.isArray(data.employees)||!Array.isArray(data.schedule))throw new Error('File does not look like a PWADC roster/staff JSON export.');roster=data;normalizeRoster();roster.audit.push({at:new Date().toISOString(),user:env.user||'',action:'Roster JSON imported',detail:file.name});await createRosterBackup();saveRoster('import');safeRenderPages();toast('Imported roster JSON: '+file.name)}catch(e){toast('Roster import failed: '+e.message)}finally{if(input)input.value=''}}
-async function reloadPackagedRosterData(){if(!confirm('Replace current shared roster data with the packaged latest roster JSON? A backup will be created first.'))return;try{await createRosterBackup();let r=await SuiteBridge.send('suite:resetModuleFromSeed',{}, {module:'roster'});let raw=r.data;roster=typeof raw==='string'?JSON.parse(raw||'{}'):(raw||{});normalizeRoster();safeRenderPages();toast('Loaded packaged latest roster JSON')}catch(e){toast('Roster reload failed: '+e.message)}}
-async function createRosterBackup(){try{await SuiteBridge.send('suite:createBackup',roster,{module:'roster'});toast('Roster backup created')}catch(e){toast('Roster backup failed: '+e.message)}}
-function exportRosterCSV(){let rows=['Last,First,EID,Rank,Shift,Gate Shift,Rate,Type,DOH,DOP,RDO,Shirt,Shirt Status,Pants,Pants Status,Jacket,Jacket Status,Notes'];for(const e of roster.employees){rows.push([e.last,e.first,e.eid,e.rank,e.shift,e.gateShift,e.rate,e.type,e.doh,e.dop,(e.rdo||[]).join('/'),e.shirt,e.shirtStatus,e.pants,e.pantsStatus,e.jacket,e.jacketStatus,e.notes].map(x=>'"'+String(x||'').replace(/"/g,'""')+'"').join(','))}SuiteBridge.send('suite:writeExport',rows.join('\n'),{module:'roster',fileName:'roster-export-'+new Date().toISOString().slice(0,10)+'.csv'}).then(()=>toast('Roster CSV exported')).catch(e=>toast('Roster export failed: '+e.message))}
-function renderAttendance(){return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">Fast daily entry, grid review, exceptions, shared JSON autosave</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="reloadPackagedAttendanceData()">Use Packaged Latest JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div><div class="subnav">${['daily','grid','exceptions','audit'].map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${v==='daily'?'Daily Entry':v==='grid'?'90-Day Grid':v==='exceptions'?'Exceptions':'Audit Log'}</button>`).join('')}</div>${activeAttView==='daily'?renderDaily():activeAttView==='grid'?renderGrid():activeAttView==='exceptions'?renderExceptions():renderAudit()}`}
-function shiftRank(shift){let i=SHIFT_ORDER.indexOf(shift||'');return i>=0?i:99}
-function sortedEmployees(){return attendance.employees.slice().sort((a,b)=>shiftRank(a.shift)-shiftRank(b.shift)||(a.shift||'').localeCompare(b.shift||'')||(a.name||'').localeCompare(b.name||''))}
-function currentRows(){let rows=sortedEmployees();if(entryShift!=='All')rows=rows.filter(e=>e.shift===entryShift);if(showBlanks)rows=rows.filter(e=>!getCode(e.id,entryDate));return rows}
-function groupRowsByShift(rows){const groups=[];const map={};for(const e of rows){const sh=e.shift||'Unassigned';if(!map[sh]){map[sh]=[];groups.push({shift:sh,rows:map[sh]});}map[sh].push(e);}groups.sort((a,b)=>shiftRank(a.shift)-shiftRank(b.shift)||a.shift.localeCompare(b.shift));return groups}
-function dailyCounts(rows){const dow=parseISO(entryDate).getDay();let entered=0,blank=0,rdo=0;for(const e of rows){if((e.rdos||[]).includes(dow))rdo++;if(getCode(e.id,entryDate))entered++;else blank++;}return{entered,blank,rdo,total:rows.length}}
-function getCode(id,date){return (attendance.attendance[id]&&attendance.attendance[id][date])||''}function setCode(id,date,code){attendance.attendance[id]=attendance.attendance[id]||{};if(code)attendance.attendance[id][date]=code;else delete attendance.attendance[id][date];audit('Attendance code set',`${id} ${date} ${code||'blank'}`);saveAttendance()}
-function autoFillRdosForDate(date){let changed=0;const dow=parseISO(date).getDay();for(const e of attendance.employees){if((e.rdos||[]).includes(dow)&&!getCode(e.id,date)){attendance.attendance[e.id]=attendance.attendance[e.id]||{};attendance.attendance[e.id][date]='O';changed++;}}if(changed){audit('RDO auto-filled',changed+' blank RDO(s) set to O for '+date);saveAttendance('rdo-auto');}}
-function renderDaily(){autoFillRdosForDate(entryDate);const shifts=['All',...SHIFT_ORDER.filter(sh=>attendance.employees.some(e=>e.shift===sh)),...Array.from(new Set(attendance.employees.map(e=>e.shift).filter(Boolean))).filter(sh=>!SHIFT_ORDER.includes(sh))];const rows=currentRows();const counts=dailyCounts(rows);const groups=groupRowsByShift(rows);return `<div class="card"><div class="card-title">Daily Entry Command Pad</div><div class="toolbar"><div><label>Date</label><input type="date" value="${entryDate}" onchange="entryDate=this.value;safeRenderPages()"></div><div><label>Shift</label><select onchange="entryShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${entryShift===s?'selected':''}>${s}</option>`).join('')}</select></div><div><label>Active Code</label><div class="quick-codes">${CODES.map(c=>`<button class="code-btn ${c[0]} ${activeCode===c[0]?'active':''}" title="${c[1]}" onclick="activeCode='${c[0]}';safeRenderPages()">${c[0]}</button>`).join('')}</div></div></div><div class="toolbar"><button class="primary" onclick="markScheduledPresent()">Mark Scheduled Present</button><button onclick="markRdosOff()">Mark RDOs Off</button><button onclick="copyPreviousDay()">Copy Previous Day</button><button onclick="showBlanks=!showBlanks;safeRenderPages()">${showBlanks?'Show All':'Show Blanks Only'}</button><button class="danger" onclick="clearDay()">Clear Day</button></div><div class="notice"><div>Daily Entry is grouped by shift. Use the code buttons beside each employee, or click an employee and type a code from the keyboard. Blank RDOs are automatically set to O.</div><div class="keyboard-help"><strong>Keyboard:</strong> P, T, A=AL, L=LE, W=UE, E, U, V, O, F=FL, N=NE. Number keys 1-0 also map left-to-right across the code row.</div></div><div class="daily-status"><span class="chip">${counts.total} visible</span><span class="chip">${counts.entered} entered</span><span class="chip">${counts.blank} blank</span><span class="chip">${counts.rdo} RDO</span></div></div><div class="people-list">${groups.map(g=>renderShiftDailyGroup(g)).join('')}</div>`}
-function renderShiftDailyGroup(g){const c=dailyCounts(g.rows);return `<section class="shift-section"><div class="shift-head"><strong>${esc(g.shift)}</strong><span>${c.total} people · ${c.entered} entered · ${c.blank} blank · ${c.rdo} RDO</span></div><div class="shift-body">${g.rows.map(renderDailyRow).join('')}</div></section>`}
-function renderDailyRow(e){const c=getCode(e.id,entryDate);const isRdo=e.rdos&&e.rdos.includes(parseISO(entryDate).getDay());const selected=selectedEntryEmpId===e.id;return `<div class="person-row ${selected?'selected':''} ${isRdo?'rdo-auto':''}" tabindex="0" onclick="selectedEntryEmpId='${esc(e.id)}';safeRenderPages()" onfocus="selectedEntryEmpId='${esc(e.id)}';safeRenderPages()"><div class="person-name"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span></div><div class="row-code-pad">${CODES.map(code=>`<button class="row-code-btn ${code[0]} ${c===code[0]?'active':''}" title="${esc(code[1])}" onclick="event.stopPropagation();selectedEntryEmpId='${esc(e.id)}';setCode('${esc(e.id)}','${entryDate}','${code[0]}');safeRenderPages()">${code[0]}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(c)}">${esc(c||'Blank')}</span>${isRdo?'<span class="chip">RDO</span>':''}</div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button></div></div>`}
-function last7(id){let out=[];for(let i=6;i>=0;i--){let d=addDays(entryDate,-i),c=getCode(id,d);out.push(`<span class="badge ${esc(c)}" title="${fmt(d)}">${esc(c||'-')}</span>`)}return out.join(' ')}function editNote(id,date){const k=id+'|'+date;let n=prompt('Attendance note:',attendance.notes[k]||'');if(n===null)return;if(n.trim())attendance.notes[k]=n.trim();else delete attendance.notes[k];audit('Attendance note updated',k);saveAttendance();safeRenderPages()}
-function markScheduledPresent(){for(const e of currentRows()){const dow=parseISO(entryDate).getDay();if(!(e.rdos||[]).includes(dow)&&!getCode(e.id,entryDate))setCode(e.id,entryDate,'P')}toast('Scheduled blanks marked Present');safeRenderPages()}function markRdosOff(){for(const e of currentRows()){const dow=parseISO(entryDate).getDay();if((e.rdos||[]).includes(dow))setCode(e.id,entryDate,'O')}toast('RDOs marked Off');safeRenderPages()}function copyPreviousDay(){const prev=addDays(entryDate,-1);for(const e of currentRows()){const c=getCode(e.id,prev);if(c)setCode(e.id,entryDate,c)}toast('Copied previous day');safeRenderPages()}function clearDay(){if(!confirm('Clear visible entries for '+entryDate+'?'))return;for(const e of currentRows())setCode(e.id,entryDate,'');safeRenderPages()}
-function getDates(){let arr=[];for(let d=addDays(gridEnd,-89);d<=gridEnd;d=addDays(d,1))arr.push(d);return arr.reverse()}function renderGrid(){const dates=getDates();return `<div class="card"><div class="card-title">90-Day Grid</div><div class="toolbar"><div><label>Ending Date</label><input type="date" value="${gridEnd}" onchange="gridEnd=this.value;safeRenderPages()"></div><div><label>Shift</label><select onchange="entryShift=this.value;safeRenderPages()">${['All',...SHIFT_ORDER.filter(sh=>attendance.employees.some(e=>e.shift===sh)),...Array.from(new Set(attendance.employees.map(e=>e.shift).filter(Boolean))).filter(sh=>!SHIFT_ORDER.includes(sh))].map(s=>`<option ${entryShift===s?'selected':''}>${s}</option>`).join('')}</select></div></div><div class="notice">Newest date is on the left.</div></div><div class="table-wrap"><table><thead><tr><th class="name">Employee</th>${dates.map(d=>`<th class="${d===new Date().toISOString().slice(0,10)?'today':''}">${fmt(d)}<br>${DAYS[parseISO(d).getDay()]}</th>`).join('')}</tr></thead><tbody>${currentRows().map(e=>`<tr><td class="name"><strong>${esc(e.name)}</strong><br><small>${esc(e.shift)} · ${esc(e.title)}</small></td>${dates.map(d=>{let c=getCode(e.id,d);return `<td class="${parseISO(d).getDay()%6===0?'weekend':''}" onclick="setCode('${e.id}','${d}','${activeCode}');safeRenderPages()"><span class="badge ${esc(c)}">${esc(c||'')}</span></td>`}).join('')}</tr>`).join('')}</tbody></table></div>`}
-function issueDateLabel(items){return (items||[]).slice().sort((a,b)=>b.date.localeCompare(a.date)).map(x=>fmt(x.date)+' '+x.code).join(', ')||'No dates'}function flagKey(empId,type,periodKey){return `${empId}|${type}|${periodKey}`}function computeFlags(){const dates=getDates(),flags=[],s=attendance.settings;for(const e of attendance.employees){let issues=[],counts={week:{},month:{},dow:{}},disc=[],occ=[];for(const d of dates){const c=getCode(e.id,d),dt=parseISO(d),wk=weekKey(dt),mo=d.slice(0,7),dow=DAYS[dt.getDay()];if(c==='U')issues.push({type:'Unexcused',sev:'critical',periodKey:d,msg:`Unexcused absence on ${fmt(d)}`,issueDates:[{date:d,code:c}]});if(c==='UE')issues.push({type:'Unauthorized Early',sev:'high',periodKey:d,msg:`Unauthorized early departure on ${fmt(d)}`,issueDates:[{date:d,code:c}]});if(OCC_CODES.has(c)){disc.push({date:d,code:c});occ.push({date:d,code:c})}if(PATTERN_CODES.has(c)){let item={date:d,code:c};counts.week[wk]=counts.week[wk]||[];counts.week[wk].push(item);counts.month[mo]=counts.month[mo]||[];counts.month[mo].push(item);counts.dow[dow]=counts.dow[dow]||[];counts.dow[dow].push(item)}}if(disc.length>=s.rollingThreshold)issues.push({type:'90-Day',sev:'critical',periodKey:`rolling-${dates[dates.length-1]}-${dates[0]}`,msg:`${disc.length} discipline occurrence(s) in 90 days`,issueDates:disc});for(const [k,it] of Object.entries(counts.week))if(it.length>=s.weekThreshold)issues.push({type:'Weekly',sev:'high',periodKey:k,msg:`${it.length} attendance issue(s) in week of ${k}`,issueDates:it});for(const [k,it] of Object.entries(counts.month))if(it.length>=s.monthThreshold)issues.push({type:'Monthly',sev:'high',periodKey:k,msg:`${it.length} attendance issue(s) in ${k}`,issueDates:it});for(const [k,it] of Object.entries(counts.dow))if(it.length>=s.patternThreshold)issues.push({type:'Pattern',sev:'medium',periodKey:k,msg:`${it.length} attendance issue(s) on ${k}s`,issueDates:it});if(occ.length>=6)issues.push({type:'Occurrences',sev:'critical',periodKey:`occ-${dates[dates.length-1]}-${dates[0]}`,msg:`${occ.length} discipline occurrence(s) in 90 days`,issueDates:occ});else if(occ.length>=4)issues.push({type:'Occurrences',sev:'high',periodKey:`occ-${dates[dates.length-1]}-${dates[0]}`,msg:`${occ.length} discipline occurrence(s) in 90 days`,issueDates:occ});for(const iss of issues){const k=flagKey(e.id,iss.type,iss.periodKey),a=attendance.flagActions[k];flags.push({...iss,emp:e,key:k,addressed:!!a,action:a||null})}}return flags}
-function buildBuckets(flags){const order=['T','AL','LE','E','U','UE','V','GEN'],map={};for(const f of flags){for(const it of (f.issueDates&&f.issueDates.length?f.issueDates:[{code:'GEN',date:f.periodKey}])){const code=order.includes(it.code)?it.code:'GEN';map[code]=map[code]||{code,dates:{},flags:[]};if(it.date)map[code].dates[it.date]=true;if(!map[code].flags.some(x=>x.key===f.key))map[code].flags.push(f)}}return Object.values(map).sort((a,b)=>order.indexOf(a.code)-order.indexOf(b.code)).map(b=>({...b,dateList:Object.keys(b.dates).sort((a,b)=>b.localeCompare(a))}))}
-function renderExceptions(){const flags=computeFlags();const open=flags.filter(f=>!f.addressed);let groups={};for(const f of flags){groups[f.emp.id]=groups[f.emp.id]||{emp:f.emp,flags:[]};groups[f.emp.id].flags.push(f)}let list=Object.values(groups).sort((a,b)=>b.flags.filter(f=>!f.addressed).length-a.flags.filter(f=>!f.addressed).length||a.emp.name.localeCompare(b.emp.name));return `<div class="grid cols-3"><div class="kpi"><div class="num">${open.filter(f=>f.sev==='critical').length}</div><div class="lbl">Critical Open</div></div><div class="kpi"><div class="num">${open.filter(f=>f.sev==='high').length}</div><div class="lbl">High Open</div></div><div class="kpi"><div class="num">${open.length}</div><div class="lbl">Total Open</div></div></div><div class="notice">Grouped by person, then code bucket. Clear individual rule, clear code, or clear person.</div><br>${list.map(renderFlagGroup).join('')||'<div class="card"><div class="card-title">No Exceptions</div>No exceptions found.</div>'}`}
-function renderFlagGroup(g){const open=g.flags.filter(f=>!f.addressed),buckets=buildBuckets(g.flags);return `<div class="flag-group"><div class="flag-head"><div class="flag-person"><strong>${esc(g.emp.name)}</strong><span>${esc(g.emp.shift)} · ${esc(g.emp.title)}</span></div><div>${open.length?`<span class="chip">${open.length} Open</span>`:''}${g.flags.filter(f=>f.sev==='critical'&&!f.addressed).length?'<span class="chip critical">Critical</span>':''}</div><div>${open.length?`<button data-clear-person="${esc(g.emp.id)}">Clear Person</button>`:''}</div></div>${buckets.map(b=>renderBucket(g.emp,b)).join('')}</div>`}
-function renderBucket(emp,b){const open=b.flags.filter(f=>!f.addressed);return `<details class="bucket" open><summary><span class="badge ${esc(b.code)}">${esc(b.code)}</span><span>${esc(codeLabel(b.code))}<br><small>${esc(b.dateList.slice(0,8).map(fmt).join(', '))}${b.dateList.length>8?' ...':''}</small></span><span class="chip">${b.dateList.length} dates</span><span>${open.length?`<button class="sm" data-clear-code-emp="${esc(emp.id)}" data-clear-code="${esc(b.code)}">Clear ${esc(b.code)}</button>`:''}</span></summary><div class="bucket-body">${b.flags.map(renderExceptionCard).join('')}</div></details>`}function codeLabel(c){return CODES.find(x=>x[0]===c)?.[1]||'General'}function renderExceptionCard(f){return `<div class="exception-card ${f.sev} ${f.addressed?'addressed':''}"><div><div class="sev ${f.sev}">${f.sev}</div><span class="chip">${esc(f.type)}</span></div><div>${esc(f.msg)}<br><small>Issue Dates: ${esc(issueDateLabel(f.issueDates))}</small>${f.addressed?`<br><span class="ok">${esc(f.action.actionType||'Reviewed')} · ${esc(f.action.note||'')}</span>`:''}</div><div>${f.addressed?`<button class="sm" data-reopen="${esc(f.key)}">Reopen</button>`:`<button class="sm" data-action="Coaching" data-key="${esc(f.key)}">Coaching</button> <button class="sm" data-action="Verbal Warning" data-key="${esc(f.key)}">Verbal</button> <button class="sm" data-action="Written Warning" data-key="${esc(f.key)}">Written</button> <button class="sm" data-action="Final Warning" data-key="${esc(f.key)}">Final</button>`}</div></div>`}
-function clearKeys(keys,actionType,note){const stamp=new Date().toISOString();for(const k of keys)attendance.flagActions[k]={at:stamp,actionType,note};audit('Flags cleared',`${keys.length} flag(s) · ${actionType}`);saveAttendance();safeRenderPages()}document.addEventListener('click',e=>{let b=e.target.closest('[data-action]');if(b){let note=prompt('Supervisor note:',b.dataset.action+' completed');if(note!==null)clearKeys([b.dataset.key],b.dataset.action,note||b.dataset.action);return}b=e.target.closest('[data-reopen]');if(b){delete attendance.flagActions[b.dataset.reopen];saveAttendance();safeRenderPages();return}b=e.target.closest('[data-clear-person]');if(b){let fs=computeFlags().filter(f=>f.emp.id===b.dataset.clearPerson&&!f.addressed);let note=prompt('Clear all open exceptions for this person:', 'Reviewed / cleared');if(note!==null)clearKeys(fs.map(f=>f.key),'Reviewed / Cleared',note);return}b=e.target.closest('[data-clear-code]');if(b){let fs=computeFlags().filter(f=>f.emp.id===b.dataset.clearCodeEmp&&!f.addressed&&(f.issueDates||[]).some(it=>it.code===b.dataset.clearCode));let note=prompt('Clear '+b.dataset.clearCode+' exceptions:', b.dataset.clearCode+' reviewed / cleared');if(note!==null)clearKeys([...new Set(fs.map(f=>f.key))],'Reviewed / Cleared',note);return}});
-function renderAudit(){return `<div class="card"><div class="card-title">Attendance Audit Log</div><div class="table-wrap"><table><thead><tr><th>Date/Time</th><th>User</th><th>Action</th><th>Detail</th></tr></thead><tbody>${(attendance.audit||[]).slice(0,300).map(a=>`<tr><td>${esc(new Date(a.at).toLocaleString())}</td><td>${esc(a.user||'')}</td><td>${esc(a.action)}</td><td>${esc(a.detail)}</td></tr>`).join('')}</tbody></table></div></div>`}
-async function importAttendanceJSON(input){const file=input&&input.files&&input.files[0];if(!file)return;try{const text=await file.text();const data=JSON.parse(text);if(!Array.isArray(data.employees)||!data.attendance||typeof data.attendance!=='object')throw new Error('File does not look like a PWADC attendance JSON export.');const oldCount=attendance.employees.length;attendance=data;normalizeAttendance();audit('Attendance JSON imported',file.name+' · '+attendance.employees.length+' employees · previous '+oldCount);await createAttendanceBackup();saveAttendance('import');entryDate='2026-06-01';gridEnd='2026-06-01';safeRenderPages();toast('Imported attendance JSON: '+file.name)}catch(e){toast('Import failed: '+e.message)}finally{if(input)input.value=''}}
-document.addEventListener('keydown',function(ev){if(unlocked)return;if(ev.target&&['INPUT','TEXTAREA','SELECT'].includes(ev.target.tagName))return;const k=String(ev.key||'');if(/^\d$/.test(k)){ev.preventDefault();pinPress(k);return;}if(k==='Backspace'){ev.preventDefault();pinPress('X');return;}if(k==='Escape'||k.toLowerCase()==='c'){ev.preventDefault();pinPress('C');return;}if(k==='Enter'){ev.preventDefault();checkPin();return;}});
-const KEY_CODE_MAP={p:'P',t:'T',a:'AL',l:'LE',w:'UE',e:'E',u:'U',v:'V',o:'O',f:'FL',n:'NE','1':'P','2':'T','3':'AL','4':'LE','5':'UE','6':'E','7':'U','8':'V','9':'O','0':'FL'};
-document.addEventListener('keydown',function(ev){if(activeModule!=='attendance'||activeAttView!=='daily')return;if(ev.target&&['INPUT','TEXTAREA','SELECT'].includes(ev.target.tagName))return;const key=String(ev.key||'').toLowerCase();const code=KEY_CODE_MAP[key];if(!code)return;ev.preventDefault();activeCode=code;if(selectedEntryEmpId){setCode(selectedEntryEmpId,entryDate,code);const rows=currentRows();const i=rows.findIndex(e=>e.id===selectedEntryEmpId);if(i>=0&&i<rows.length-1)selectedEntryEmpId=rows[i+1].id;}safeRenderPages();});
-async function reloadPackagedAttendanceData(){if(!confirm('Replace the current shared attendance data with the packaged latest JSON seed? A backup will be created first.'))return;try{await createAttendanceBackup();let r=await SuiteBridge.send('suite:resetModuleFromSeed',{}, {module:'attendance'});let raw=r.data;if(typeof raw==='string')attendance=JSON.parse(raw||'{}');else attendance=raw||{};normalizeAttendance();entryDate=attendance.lastSaved?attendance.lastSaved.slice(0,10):'2026-06-01';gridEnd=entryDate;safeRenderPages();toast('Loaded packaged latest attendance JSON');}catch(e){toast('Reload failed: '+e.message)}}
-async function createAttendanceBackup(){try{let r=await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});toast('Backup created');}catch(e){toast('Backup failed: '+e.message)}}function exportAttendanceCSV(){let rows=['Employee,Shift,Title,Date,Code,Note'];for(const e of attendance.employees){for(const [d,c] of Object.entries(attendance.attendance[e.id]||{})){let n=attendance.notes[e.id+'|'+d]||'';rows.push([e.name,e.shift,e.title,d,c,n].map(x=>'"'+String(x||'').replace(/"/g,'""')+'"').join(','))}}SuiteBridge.send('suite:writeExport',rows.join('\n'),{module:'attendance',fileName:'attendance-export-'+new Date().toISOString().slice(0,10)+'.csv'}).then(()=>toast('CSV exported')).catch(e=>toast('Export failed: '+e.message))}
-function openSettings(){renderSettings();document.getElementById('settingsPanel').classList.add('open')}function closeSettings(){document.getElementById('settingsPanel').classList.remove('open')}function renderSettings(){document.getElementById('settingsBody').innerHTML=`<div class="form-grid"><div><label>Theme</label><select id="setTheme"><option ${settings.theme==='dark'?'selected':''}>dark</option><option ${settings.theme==='light'?'selected':''}>light</option><option ${settings.theme==='auto'?'selected':''}>auto</option></select></div><div><label>Default Module</label><select id="setDefault">${MODULES.map(m=>`<option value="${m.id}" ${settings.defaultModule===m.id?'selected':''}>${m.label}</option>`).join('')}</select></div><div><label>PIN</label><input id="setPin" value="${esc(settings.pin)}" maxlength="8"></div><div><label>Backup Retention Days</label><input id="setRetention" type="number" value="${settings.backupRetentionDays}"></div><div class="full"><label>Data Root</label><input id="setRoot" value="${esc(settings.dataRoot)}"></div><div class="full"><button class="primary" onclick="saveSettings()">Save Settings</button> <button onclick="runHealthCheck()">Run Health Check</button></div></div><div id="healthBox" style="margin-top:14px"></div>`}async function saveSettings(){settings={...settings,theme:document.getElementById('setTheme').value,defaultModule:document.getElementById('setDefault').value,pin:document.getElementById('setPin').value||'1234',dataRoot:document.getElementById('setRoot').value,backupRetentionDays:Number(document.getElementById('setRetention').value||60)};applyTheme();try{await SuiteBridge.send('suite:saveSettings',settings);toast('Settings saved')}catch(e){toast('Settings failed: '+e.message)}}async function runHealthCheck(){try{let r=await SuiteBridge.send('suite:healthCheck');document.getElementById('healthBox').innerHTML=`<div class="card"><div class="card-title">Health Check</div><div style="color:var(--muted);font-size:12px;margin-bottom:8px">${esc(r.dataRoot)}</div>${r.checks.map(c=>`<div class="health-row"><span>${esc(c.name)}</span><span class="${c.ok?'ok':'bad'}">${c.ok?'OK':esc(c.error)}</span></div>`).join('')}</div>`}catch(e){toast('Health check failed')}}
-init();
