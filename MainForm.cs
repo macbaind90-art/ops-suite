@@ -23,6 +23,8 @@ namespace PWADC.SecurityOperationsSuite
         public MainForm()
         {
             Text = "PWADC Security Operations Suite";
+            AutoScaleMode = AutoScaleMode.Dpi;
+            MinimumSize = new System.Drawing.Size(1100, 700);
             Width = 1500;
             Height = 950;
             StartPosition = FormStartPosition.CenterScreen;
