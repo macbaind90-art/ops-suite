@@ -1,5 +1,15 @@
-@echo off
-setlocal
-echo Building PWADC Security Operations Suite v2.2...
-dotnet publish SecurityOperationsSuite.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
-pause
+using System;
+using System.Windows.Forms;
+
+namespace PWADC.SecurityOperationsSuite
+{
+    internal static class Program
+    {
+        [STAThread]
+        private static void Main()
+        {
+            ApplicationConfiguration.Initialize();
+            Application.Run(new MainForm());
+        }
+    }
+}
