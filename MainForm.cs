@@ -366,7 +366,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.4.8" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.4.9" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -382,7 +382,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.4.8", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.4.9", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "badge-audit", "amag-audit", "access-audit", "suite-settings" };
         private static string ModuleFileName(string module) => module switch
         {
