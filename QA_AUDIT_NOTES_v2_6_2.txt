@@ -1,0 +1,21 @@
+PWADC Security Operations Suite v2.6.2 - Other Programs Launcher
+
+Changes:
+- Replaced embedded audit modules in top navigation with an Other Programs launcher.
+- Added launcher cards for Badge Audit, AMAG Audit, and Access Audit.
+- Added packaged standalone program files under app/programs.
+- Added C# bridge command suite:openPath to launch files/folders with Windows default handlers.
+- Added C# bridge command suite:refreshPrograms to copy packaged program files to the shared Programs folder.
+- Added C# bridge command suite:backupPrograms and Settings > Backup Everything support for standalone program folder backups.
+- Default shared root remains \\pig-fs\Security\MacBain\Security Operations Suite.
+- JavaScript syntax check passed with node --check.
+
+Expected shared folder layout:
+\\pig-fs\Security\MacBain\Security Operations Suite\Programs\
+  Badge Audit\PWADC_Badge_Audit_Tool.html
+  AMAG Audit\PWADC_AMAG_Audit_Tool.html
+  Access Audit\PWADC_Access_Audit_Tool.html
+
+Notes:
+- The old audit module iframe/native files may remain inside the package as fallback assets, but they are no longer exposed in the main navigation.
+- .NET build was not run in this environment because dotnet is not installed here. GitHub Actions will perform the real Windows publish.

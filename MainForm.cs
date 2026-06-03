@@ -3,6 +3,7 @@ using Microsoft.Web.WebView2.WinForms;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Diagnostics;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -126,6 +127,20 @@ namespace PWADC.SecurityOperationsSuite
                         string exportPath = WriteExport(exportModule, fileName, content);
                         await Respond(requestId, true, new { module = exportModule, path = exportPath });
                         break;
+                    case "suite:openPath":
+                        if (!root.TryGetProperty("payload", out JsonElement openPayload)) throw new InvalidOperationException("Missing open path payload.");
+                        string openPath = openPayload.TryGetProperty("path", out JsonElement op) ? op.GetString() ?? "" : "";
+                        OpenPath(openPath);
+                        await Respond(requestId, true, new { path = openPath });
+                        break;
+                    case "suite:refreshPrograms":
+                        CopyPackagedProgramsToShared(true);
+                        await Respond(requestId, true, new { path = Path.Combine(settings.DataRoot, "Programs") });
+                        break;
+                    case "suite:backupPrograms":
+                        string programsBackupPath = BackupProgramsFolder();
+                        await Respond(requestId, true, new { path = programsBackupPath });
+                        break;
                     default:
                         await Respond(requestId, false, new { error = "Unknown message type: " + type });
                         break;
@@ -174,11 +189,13 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Locks"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports"));
+            Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Programs"));
             foreach (string module in ModuleNames())
             {
                 Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module)));
                 Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports", ModuleFolder(module)));
             }
+            CopyPackagedProgramsToShared(false);
         }
 
         private object RunHealthCheck()
@@ -190,6 +207,7 @@ namespace PWADC.SecurityOperationsSuite
             checks.Add(Check("Can create backups folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups")); return true; }));
             checks.Add(Check("Can create exports folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports")); return true; }));
             checks.Add(Check("Can create locks folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Locks")); return true; }));
+            checks.Add(Check("Can create programs folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Programs")); return true; }));
             return new { dataRoot = settings.DataRoot, checks };
         }
 
@@ -361,12 +379,68 @@ namespace PWADC.SecurityOperationsSuite
             return path;
         }
 
+
+        private void OpenPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new InvalidOperationException("No path was provided.");
+            string expanded = Environment.ExpandEnvironmentVariables(path);
+            if (!File.Exists(expanded) && !Directory.Exists(expanded))
+            {
+                CopyPackagedProgramsToShared(false);
+            }
+            if (!File.Exists(expanded) && !Directory.Exists(expanded)) throw new FileNotFoundException("Path was not found: " + expanded);
+            Process.Start(new ProcessStartInfo(expanded) { UseShellExecute = true });
+        }
+
+        private void CopyPackagedProgramsToShared(bool overwrite)
+        {
+            try
+            {
+                string source = Path.Combine(appFolder, "programs");
+                string dest = Path.Combine(settings.DataRoot, "Programs");
+                if (!Directory.Exists(source)) return;
+                CopyDirectory(source, dest, overwrite);
+            }
+            catch { }
+        }
+
+        private static void CopyDirectory(string sourceDir, string destDir, bool overwrite)
+        {
+            Directory.CreateDirectory(destDir);
+            foreach (string dir in Directory.GetDirectories(sourceDir, "*", SearchOption.AllDirectories))
+            {
+                string relative = Path.GetRelativePath(sourceDir, dir);
+                Directory.CreateDirectory(Path.Combine(destDir, relative));
+            }
+            foreach (string file in Directory.GetFiles(sourceDir, "*", SearchOption.AllDirectories))
+            {
+                string relative = Path.GetRelativePath(sourceDir, file);
+                string target = Path.Combine(destDir, relative);
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                if (overwrite || !File.Exists(target)) File.Copy(file, target, true);
+            }
+        }
+
+        private string BackupProgramsFolder()
+        {
+            string source = Path.Combine(settings.DataRoot, "Programs");
+            if (!Directory.Exists(source))
+            {
+                CopyPackagedProgramsToShared(false);
+            }
+            if (!Directory.Exists(source)) throw new DirectoryNotFoundException("Programs folder was not found.");
+            string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
+            string dest = Path.Combine(settings.DataRoot, "Backups", "Programs", "Programs_" + stamp);
+            CopyDirectory(source, dest, true);
+            return dest;
+        }
+
         private void CreateSuiteLockFile()
         {
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.4.12" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.6.2" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -382,15 +456,15 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.4.12", baseDirectory = AppContext.BaseDirectory };
-        private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "badge-audit", "amag-audit", "access-audit", "suite-settings" };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.6.2", baseDirectory = AppContext.BaseDirectory };
+        private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "suite-settings", "programs" };
         private static string ModuleFileName(string module) => module switch
         {
-            "attendance" => "attendance-data.json", "roster" => "roster-data.json", "tasks" => "tasks-data.json", "badge-audit" => "badge-audit-data.json", "amag-audit" => "amag-audit-data.json", "access-audit" => "access-audit-data.json", _ => module + ".json"
+            "attendance" => "attendance-data.json", "roster" => "roster-data.json", "tasks" => "tasks-data.json", _ => module + ".json"
         };
         private static string ModuleFolder(string module) => module switch
         {
-            "attendance" => "Attendance", "roster" => "Roster", "tasks" => "Task Tracker", "badge-audit" => "Badge Audit", "amag-audit" => "AMAG Audit", "access-audit" => "Access Audit", "suite-settings" => "Suite Settings", _ => module
+            "attendance" => "Attendance", "roster" => "Roster", "tasks" => "Task Tracker", "suite-settings" => "Suite Settings", "programs" => "Programs", _ => module
         };
     }
 
