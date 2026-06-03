@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PWADC Security Operations Suite v2.6.0</title>
+<title>PWADC Security Operations Suite v2.6.1</title>
 <style>
 :root{--red:#C0272D;--red2:#e03840;--gold:#C6B273;--gold2:#ddce91;--bg:#1e2330;--surface:#28303f;--surface2:#313b4d;--surface3:#3d4a5e;--border:#404d62;--text:#eef0f4;--muted:#8a96a8;--dim:#c4cad5;--green:#4caf6e;--blue:#4a90d9;--orange:#e08a2f;--purple:#a06ede;--danger:#ff7676;--shadow:0 12px 30px rgba(0,0,0,.28);--radius:10px}
 :root[data-theme="light"]{--bg:#f3f2ef;--surface:#fff;--surface2:#f2f4f7;--surface3:#e3e7ed;--border:#d7dce5;--text:#1d2430;--muted:#697386;--dim:#303848;--shadow:0 8px 22px rgba(20,30,45,.11)}
@@ -218,18 +218,20 @@ td.name,th.name{min-width:clamp(185px,12vw,240px)}
 
 .archive-panel{margin-top:18px;border:1px solid var(--border);border-radius:8px;background:var(--surface);overflow:hidden}.archive-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid var(--border);cursor:pointer}.archive-title{font-family:'Barlow Condensed',sans-serif;font-weight:800;color:var(--gold);letter-spacing:.8px;text-transform:uppercase}.archive-body{padding:12px}.archived-row{opacity:.72}.archive-badge{display:inline-block;padding:2px 7px;border:1px solid var(--border);border-radius:3px;background:var(--surface3);color:var(--text-muted);font-family:'Barlow Condensed',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}.sync-pill{display:inline-block;margin-left:6px;color:var(--gold);font-size:11px}
 
-/* v2.6.0 isolated audit tools */
+/* v2.6.1 isolated audit tools */
 .audit-shell{display:flex;flex-direction:column;height:calc(100vh - 96px);min-height:720px;gap:12px}
 .audit-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .audit-frame-wrap{flex:1;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface);box-shadow:var(--shadow)}
 .audit-frame{width:100%;height:100%;border:0;background:#fff}
 .audit-note{font-size:12px;color:var(--muted);line-height:1.45}
 @media(max-height:850px){.audit-shell{height:calc(100vh - 82px);min-height:600px}}
+
+.audit-native-frame-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);height:calc(100vh - 150px);min-height:720px}.audit-native-frame{width:100%;height:100%;border:0;background:#fff}.audit-action-note{margin-bottom:12px}
 </style>
 </head>
 <body>
-<div id="lockScreen" class="lock-screen"><div class="lock-card"><div class="suite-title">PWADC Security Operations</div><div class="suite-sub">Command Suite v2.6.0</div><p style="color:var(--muted);margin-top:18px">Enter global PIN</p><div class="pin-row" id="pinDots"></div><div class="pin-pad" id="pinPad"></div><div class="pin-hint">Keyboard entry enabled: type PIN, Backspace deletes, Enter submits.</div><div class="pin-error" id="pinError"></div></div></div>
-<div id="app" class="hidden"><div class="topbar"><div class="brand"><strong>PWADC Security Operations</strong><span>Command Suite v2.6.0</span></div><div class="nav" id="nav"></div><div class="status"><div id="moduleStatus">Loading</div><div id="saveStatus">Initializing...</div></div><button onclick="openSettings()">Settings</button><button class="gold" onclick="lockSuite()">Lock</button></div><main class="wrap" id="pages"></main></div>
+<div id="lockScreen" class="lock-screen"><div class="lock-card"><div class="suite-title">PWADC Security Operations</div><div class="suite-sub">Command Suite v2.6.1</div><p style="color:var(--muted);margin-top:18px">Enter global PIN</p><div class="pin-row" id="pinDots"></div><div class="pin-pad" id="pinPad"></div><div class="pin-hint">Keyboard entry enabled: type PIN, Backspace deletes, Enter submits.</div><div class="pin-error" id="pinError"></div></div></div>
+<div id="app" class="hidden"><div class="topbar"><div class="brand"><strong>PWADC Security Operations</strong><span>Command Suite v2.6.1</span></div><div class="nav" id="nav"></div><div class="status"><div id="moduleStatus">Loading</div><div id="saveStatus">Initializing...</div></div><button onclick="openSettings()">Settings</button><button class="gold" onclick="lockSuite()">Lock</button></div><main class="wrap" id="pages"></main></div>
 <aside class="settings-panel" id="settingsPanel"><div class="settings-head"><div><strong style="color:var(--gold);text-transform:uppercase;letter-spacing:1px">Global Settings</strong><div style="font-size:11px;color:var(--muted)">Suite-wide configuration</div></div><button onclick="closeSettings()">Close</button></div><div class="settings-body" id="settingsBody"></div></aside><div class="toast" id="toast"></div>
 <script>
 'use strict';
@@ -495,50 +497,16 @@ let badgeAuditState={files:{punch:null,ts:null,gate:null,dispatch:null,recep:nul
 let simpleAuditState={};
 
 function renderBadgeAuditNative(){
-  const f=badgeAuditState.files||{};
-  const fileLabel=k=>f[k]?esc(f[k].name):'No file loaded';
-  const findings=badgeAuditState.findings||[];
   return `<div class="native-audit">
     <div class="page-head">
-      <div><div class="page-title">Badge Audit</div><div class="page-sub">Native suite audit module · upload punch details and badge reader logs, run review, export findings</div></div>
+      <div><div class="page-title">Badge Audit</div><div class="page-sub">Full Badge Audit v18 engine · drag/drop uploads · XLSX punch parsing · reader logs · original audit findings</div></div>
       <div class="btn-group">
-        <button onclick="runNativeBadgeAudit()">Run Audit</button>
-        <button onclick="exportNativeBadgeAuditCSV()">Export CSV</button>
-        <button onclick="printNativeBadgeAudit()">Print Report</button>
-        <button onclick="clearNativeBadgeAudit()">Clear</button>
+        <button onclick="document.getElementById('badgeAuditFrame').contentWindow.location.reload()">Reload Tool</button>
+        <button onclick="window.open('modules/badge-audit-native.html','_blank')">Open Standalone</button>
       </div>
     </div>
-    <div class="drop-grid">
-      ${renderAuditDrop('punch','Punch Details','Required. XLSX/CSV export from time system. CSV is parsed natively now; XLSX native parsing will be added in the next audit engine pass.','.xlsx,.xls,.csv')}
-      ${renderAuditDrop('ts','TS Reader Log','Badge reader text log.','.txt,.csv')}
-      ${renderAuditDrop('gate','Gate Reader Log','Badge reader text log.','.txt,.csv')}
-      ${renderAuditDrop('dispatch','Dispatch Reader Log','Optional badge reader text log.','.txt,.csv')}
-      ${renderAuditDrop('recep','Reception Reader Log','Optional badge reader text log.','.txt,.csv')}
-    </div>
-    <div class="card">
-      <div class="card-title">Audit Settings</div>
-      <div class="form-grid">
-        <label>Badge-before-clock threshold minutes<input id="badgeAuditBadgeThreshold" type="number" min="0" value="1"></label>
-        <label>Shift early threshold minutes<input id="badgeAuditShiftThreshold" type="number" min="0" value="10"></label>
-        <label>Supervisor filter<select id="badgeAuditSupervisor"><option value="ALL">All Supervisors</option></select></label>
-        <label>Audit date<input id="badgeAuditDate" type="date"></label>
-      </div>
-      <div class="audit-status">${badgeAuditState.ranAt?`Last run: ${esc(new Date(badgeAuditState.ranAt).toLocaleString())}`:'Load files, then run the audit.'}</div>
-    </div>
-    <div class="grid cols-4">
-      <div class="kpi"><div class="num">${findings.length}</div><div class="lbl">Total Findings</div></div>
-      <div class="kpi"><div class="num">${findings.filter(x=>x.type==='Clock-in Before Badge').length}</div><div class="lbl">Clock-in Before Badge</div></div>
-      <div class="kpi"><div class="num">${findings.filter(x=>x.type==='No Badge Match').length}</div><div class="lbl">No Badge Match</div></div>
-      <div class="kpi"><div class="num">${Object.values(f).filter(Boolean).length}</div><div class="lbl">Files Loaded</div></div>
-    </div>
-    <div class="card">
-      <div class="card-title">Loaded Files</div>
-      <div>${['punch','ts','gate','dispatch','recep'].map(k=>`<span class="result-pill"><strong>${esc(k.toUpperCase())}</strong> ${fileLabel(k)}</span>`).join('')}</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Findings</div>
-      ${findings.length?`<div class="table-wrap"><table><thead><tr><th>Type</th><th>Employee</th><th>Date</th><th>Clock</th><th>Badge</th><th>Source</th><th>Notes</th></tr></thead><tbody>${findings.map(x=>`<tr><td>${esc(x.type)}</td><td>${esc(x.employee)}</td><td>${esc(x.date)}</td><td>${esc(x.clock)}</td><td>${esc(x.badge)}</td><td>${esc(x.source)}</td><td>${esc(x.notes)}</td></tr>`).join('')}</tbody></table></div>`:`<p class="muted">No findings yet. Run the audit after loading files.</p>`}
-    </div>
+    <div class="notice audit-action-note">This module now uses the full Badge Audit v18 workflow instead of the temporary simplified parser. Use the drop zones inside the tool for punch details and reader logs.</div>
+    <div class="audit-native-frame-wrap"><iframe id="badgeAuditFrame" class="audit-native-frame" src="modules/badge-audit-native.html"></iframe></div>
   </div>`;
 }
 function renderAuditDrop(key,title,desc,accept){
@@ -643,7 +611,7 @@ function removeSimpleFinding(id,i){const st=simpleAuditState[id];if(!st)return;s
 function exportSimpleAudit(id,title){const st=simpleAuditState[id]||{files:[],findings:[]};const rows=[['Audit','Files','Finding','Details'],...st.findings.map(f=>[title,st.files.join('; '),f.title,f.detail])];downloadCSV(title.replace(/\s+/g,'_')+'_'+new Date().toISOString().slice(0,10)+'.csv',rows);}
 function reloadAuditFrame(id){const f=document.getElementById('frame-'+id);if(f)f.src=f.src}
 function openAuditToolWindow(file){try{window.open(file,'_blank')}catch(e){showToast('Could not open standalone tool: '+e.message,true)}}
-function renderHome(){const flags=computeFlags();return `<div class="page-head"><div><div class="page-title">Security Operations Dashboard</div><div class="page-sub">${env.user||'User'} @ ${env.machine||'Machine'} · v2.6.0</div></div></div><div class="grid cols-3"><div class="kpi"><div class="num">${activeAttendanceEmployees().length}</div><div class="lbl">Active Attendance Employees</div></div><div class="kpi"><div class="num">${roster.employees.length}</div><div class="lbl">Roster Employees</div></div><div class="kpi"><div class="num">${flags.filter(f=>!f.addressed).length}</div><div class="lbl">Open Attendance Exceptions</div></div><div class="kpi"><div class="num">${(tasks.tasks||[]).filter(t=>t.status!=='Complete'&&t.status!=='On Hold').length}</div><div class="lbl">Active Tasks</div></div><div class="kpi"><div class="num">${attendance.lastSaved?new Date(attendance.lastSaved).toLocaleDateString():'-'}</div><div class="lbl">Attendance Last Saved</div></div></div><div class="grid cols-2">${['attendance','roster','tasks','badge-audit','amag-audit','access-audit'].map(id=>`<div class="card module-card" onclick="navigate('${id}')"><h3>${MODULES.find(m=>m.id===id).label}</h3><p>${id==='attendance'?'Daily entry, 90-day grid, exceptions, clear by person/code, and shared JSON storage.':id==='roster'?'Staff records, master schedule, uniforms, training, print/export, and shared JSON storage.':id==='tasks'?'Project/task tracker, weekly boss update email/export, status, priority, owner, and follow-up tracking.':id==='badge-audit'?'Native badge audit module with suite-owned workflow and exports.':id==='amag-audit'?'Native AMAG audit capture screen. Full comparison engine next.':'Native access audit capture screen. Full comparison engine next.'}</p></div>`).join('')}</div>`}
+function renderHome(){const flags=computeFlags();return `<div class="page-head"><div><div class="page-title">Security Operations Dashboard</div><div class="page-sub">${env.user||'User'} @ ${env.machine||'Machine'} · v2.6.1</div></div></div><div class="grid cols-3"><div class="kpi"><div class="num">${activeAttendanceEmployees().length}</div><div class="lbl">Active Attendance Employees</div></div><div class="kpi"><div class="num">${roster.employees.length}</div><div class="lbl">Roster Employees</div></div><div class="kpi"><div class="num">${flags.filter(f=>!f.addressed).length}</div><div class="lbl">Open Attendance Exceptions</div></div><div class="kpi"><div class="num">${(tasks.tasks||[]).filter(t=>t.status!=='Complete'&&t.status!=='On Hold').length}</div><div class="lbl">Active Tasks</div></div><div class="kpi"><div class="num">${attendance.lastSaved?new Date(attendance.lastSaved).toLocaleDateString():'-'}</div><div class="lbl">Attendance Last Saved</div></div></div><div class="grid cols-2">${['attendance','roster','tasks','badge-audit','amag-audit','access-audit'].map(id=>`<div class="card module-card" onclick="navigate('${id}')"><h3>${MODULES.find(m=>m.id===id).label}</h3><p>${id==='attendance'?'Daily entry, 90-day grid, exceptions, clear by person/code, and shared JSON storage.':id==='roster'?'Staff records, master schedule, uniforms, training, print/export, and shared JSON storage.':id==='tasks'?'Project/task tracker, weekly boss update email/export, status, priority, owner, and follow-up tracking.':id==='badge-audit'?'Native badge audit module with suite-owned workflow and exports.':id==='amag-audit'?'Native AMAG audit capture screen. Full comparison engine next.':'Native access audit capture screen. Full comparison engine next.'}</p></div>`).join('')}</div>`}
 
 function fullName(e){return ((e.last||'')+', '+(e.first||'')).replace(/^,\s*/,'').replace(/,\s*$/,'')}
 function rosterShift(e){return (e.shift||'').toString()}
@@ -827,6 +795,8 @@ function scheduleShareHtml(){
 <title>PWADC Security Schedule - ${dateStamp}</title>
 <style>
 ${scheduleExportCss()}
+
+.audit-native-frame-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);height:calc(100vh - 150px);min-height:720px}.audit-native-frame{width:100%;height:100%;border:0;background:#fff}.audit-action-note{margin-bottom:12px}
 </style>
 </head>
 <body>
@@ -1012,6 +982,8 @@ async function importTasksJSON(input){const file=input&&input.files&&input.files
 function exportTasksCSV(){let rows=[['Project','Status','Priority','Category','Owner','Due Date','Current Update','Next Step','Updated At'],...(tasks.tasks||[]).map(t=>[t.project,t.status,t.priority,t.category,t.owner,t.dueDate,t.update,t.nextStep,t.updatedAt])];downloadCSV('PWADC_Tasks_'+new Date().toISOString().slice(0,10)+'.csv',rows)}
 function weeklyTaskText(){const today=new Date().toLocaleDateString();let list=(tasks.tasks||[]).filter(t=>t.status!=='Complete').sort((a,b)=>String(a.category||'').localeCompare(String(b.category||''))||String(a.project).localeCompare(String(b.project)));let lines=['Security Projects Weekly Update - '+today,''];for(const t of list){lines.push(t.project+' - '+(t.update||'No current update entered.')+(t.nextStep?' Next step: '+t.nextStep:''));}return lines.join('\n')}
 function weeklyTaskHtml(){const today=new Date().toLocaleDateString();let list=(tasks.tasks||[]).filter(t=>t.status!=='Complete').sort((a,b)=>String(a.category||'').localeCompare(String(b.category||''))||String(a.project).localeCompare(String(b.project)));return `<!doctype html><html><head><meta charset="utf-8"><title>PWADC Security Weekly Project Update</title><style>body{font-family:Segoe UI,Arial,sans-serif;margin:28px;color:#1d2430}h1{color:#8f1c21;margin-bottom:4px}.sub{color:#667085;margin-bottom:22px}.item{border-left:4px solid #C0272D;background:#f5f6f8;margin:10px 0;padding:10px 14px;border-radius:6px}.project{font-weight:800;color:#1e2330}.meta{font-size:12px;color:#667085;margin:2px 0 8px}.next{margin-top:6px;color:#344054}button{padding:8px 14px;margin-bottom:18px}
+
+.audit-native-frame-wrap{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface);height:calc(100vh - 150px);min-height:720px}.audit-native-frame{width:100%;height:100%;border:0;background:#fff}.audit-action-note{margin-bottom:12px}
 </style></head><body><button onclick="window.print()">Print</button><h1>PWADC Security Weekly Project Update</h1><div class="sub">Generated ${esc(today)} · ${list.length} active projects</div>${list.map(t=>`<div class="item"><div class="project">${esc(t.project)}</div><div class="meta">${esc(t.status)} · ${esc(t.priority)} Priority · ${esc(t.category||'General')}</div><div>${esc(t.update||'No current update entered.')}</div>${t.nextStep?`<div class="next"><strong>Next step:</strong> ${esc(t.nextStep)}</div>`:''}</div>`).join('')}</body></html>`}
 function taskEmailBody(){return weeklyTaskText()+"\n\nRespectfully,\nDavid"}
 function openWeeklyTaskEmail(){const subject='PWADC Security Weekly Project Update - '+new Date().toLocaleDateString();const body=taskEmailBody();const mailto='mailto:jfaure@pwadc.com?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);const a=document.createElement('a');a.href=mailto;a.style.display='none';document.body.appendChild(a);a.click();setTimeout(()=>{try{a.remove()}catch(e){}},1000);toast('Opening email draft to jfaure@pwadc.com')}
