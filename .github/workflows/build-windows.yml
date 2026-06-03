@@ -1,4 +1,4 @@
-name: Build PWADC Security Operations Suite v2.0
+name: Build PWADC Security Operations Suite
 
 on:
   workflow_dispatch:
@@ -6,6 +6,10 @@ on:
     branches:
       - main
       - v2-suite-rebuild
+      - v2.6-native-audits
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   build:
@@ -29,5 +33,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v2-0-Windows
+          name: PWADC-Security-Operations-Suite-v2-6-0-Native-Badge-Audit-Windows
           path: bin/Release/net8.0-windows/win-x64/publish/
