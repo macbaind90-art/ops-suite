@@ -15,7 +15,7 @@ namespace PWADC.SecurityOperationsSuite
         private readonly string appFolder;
         private readonly string indexPath;
 
-        private const string DefaultRoot = @"\\pig-fs\Security\Security Operations Suite";
+        private const string DefaultRoot = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         private const string SettingsFileName = "suite-settings.json";
         private SuiteSettings settings = new SuiteSettings();
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true, WriteIndented = true };
@@ -399,7 +399,7 @@ namespace PWADC.SecurityOperationsSuite
         public string Theme { get; set; } = "dark";
         public string DefaultModule { get; set; } = "home";
         public string Pin { get; set; } = "1234";
-        public string DataRoot { get; set; } = @"\\pig-fs\Security\Security Operations Suite";
+        public string DataRoot { get; set; } = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         public int BackupRetentionDays { get; set; } = 60;
     }
 }
