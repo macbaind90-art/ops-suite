@@ -218,7 +218,7 @@ namespace PWADC.SecurityOperationsSuite
                 {
                     string backupDir = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
                     Directory.CreateDirectory(backupDir);
-                    string backupName = ModuleFileName(module).Replace(".json", "-replaced-empty-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json");
+                    string backupName = ModuleFileName(module).Replace(".json", "-replaced-empty-" + DateTime.Now.ToString("yyyyMMdd-HHmmssfff") + ".json");
                     File.WriteAllText(Path.Combine(backupDir, backupName), existingJson);
                     string seedJson = File.ReadAllText(seedPath);
                     File.WriteAllText(path, seedJson);
@@ -297,7 +297,7 @@ namespace PWADC.SecurityOperationsSuite
             string path = Path.Combine(settings.DataRoot, "Data", ModuleFileName(module));
             if (File.Exists(path))
             {
-                string backupName = Path.GetFileNameWithoutExtension(path) + "-before-seed-restore-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json";
+                string backupName = Path.GetFileNameWithoutExtension(path) + "-before-seed-restore-" + DateTime.Now.ToString("yyyyMMdd-HHmmssfff") + ".json";
                 File.Copy(path, Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module), backupName), true);
             }
             File.WriteAllText(path, seedJson);
@@ -346,7 +346,7 @@ namespace PWADC.SecurityOperationsSuite
         {
             JsonDocument.Parse(json).Dispose();
             EnsureFolders();
-            string backupName = ModuleFolder(module).ToLowerInvariant().Replace(" ", "-") + "-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json";
+            string backupName = ModuleFolder(module).ToLowerInvariant().Replace(" ", "-") + "-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmssfff") + ".json";
             string path = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module), backupName);
             File.WriteAllText(path, json);
             return path;
@@ -366,7 +366,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.4.11" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.4.12" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -382,7 +382,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.4.11", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.4.12", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "badge-audit", "amag-audit", "access-audit", "suite-settings" };
         private static string ModuleFileName(string module) => module switch
         {

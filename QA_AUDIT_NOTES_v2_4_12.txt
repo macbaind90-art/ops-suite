@@ -1,0 +1,5 @@
+v2.4.12
+- Added Delete button for archived roster employees.
+- Delete removes the archived employee from roster archive while preserving attendance history. Empty linked attendance rows may be removed.
+- Added Settings > Backup Everything to back up Attendance, Roster, Task Tracker, and Suite Settings.
+- Updated app/build labels to v2.4.12.
