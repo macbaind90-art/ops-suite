@@ -104,6 +104,15 @@ namespace PWADC.SecurityOperationsSuite
                         SaveModuleData(saveModule, json);
                         await Respond(requestId, true, new { module = saveModule, savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") });
                         break;
+                    case "suite:saveModuleData2":
+                        if (!root.TryGetProperty("payload", out JsonElement savePayload)) throw new InvalidOperationException("Missing save payload.");
+                        string saveModule2 = savePayload.TryGetProperty("module", out JsonElement sm2) ? sm2.GetString() ?? "" : "";
+                        string json2 = savePayload.TryGetProperty("json", out JsonElement js2) ? js2.GetString() ?? "" : "";
+                        if (string.IsNullOrWhiteSpace(saveModule2)) throw new InvalidOperationException("Save module was not defined by the interface.");
+                        if (string.IsNullOrWhiteSpace(json2) || json2 == "undefined") throw new InvalidOperationException("Save JSON payload was undefined before write.");
+                        SaveModuleData(saveModule2, json2);
+                        await Respond(requestId, true, new { module = saveModule2, savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") });
+                        break;
                     case "suite:createBackup":
                         string backupModule = root.TryGetProperty("module", out JsonElement bm) ? bm.GetString() ?? "" : "";
                         string backupJson = root.TryGetProperty("payload", out JsonElement bp) ? bp.GetRawText() : "{}";
@@ -297,15 +306,40 @@ namespace PWADC.SecurityOperationsSuite
 
         private void SaveModuleData(string module, string json)
         {
+            if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Save failed because module was not defined.");
+            if (string.IsNullOrWhiteSpace(json) || json == "undefined") throw new InvalidOperationException("Save failed because JSON payload was undefined.");
+            // Validate JSON before touching the current live file.
             JsonDocument.Parse(json).Dispose();
             EnsureFolders();
-            string path = Path.Combine(settings.DataRoot, "Data", ModuleFileName(module));
+            string dataDir = Path.Combine(settings.DataRoot, "Data");
+            Directory.CreateDirectory(dataDir);
+            string path = Path.Combine(dataDir, ModuleFileName(module));
+
+            // Backups should protect the save, not block it. If backup fails because of a
+            // transient share/lock issue, still attempt the live save and report only if that fails.
+            try
+            {
+                if (File.Exists(path))
+                {
+                    string backupDir = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
+                    Directory.CreateDirectory(backupDir);
+                    string backupName = Path.GetFileNameWithoutExtension(path) + "-before-save-" + DateTime.Now.ToString("yyyyMMdd-HHmmssfff") + ".json";
+                    File.Copy(path, Path.Combine(backupDir, backupName), true);
+                }
+            }
+            catch { }
+
+            string tempPath = path + ".tmp";
+            File.WriteAllText(tempPath, json);
             if (File.Exists(path))
             {
-                string backupName = Path.GetFileNameWithoutExtension(path) + "-before-save-" + DateTime.Now.ToString("yyyyMMdd-HHmmss") + ".json";
-                File.Copy(path, Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module), backupName), true);
+                File.Copy(tempPath, path, true);
+                File.Delete(tempPath);
             }
-            File.WriteAllText(path, json);
+            else
+            {
+                File.Move(tempPath, path);
+            }
         }
 
         private string CreateBackup(string module, string json)
@@ -332,7 +366,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.4.5" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.4.7" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -348,7 +382,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.4.5", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.4.7", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "badge-audit", "amag-audit", "access-audit", "suite-settings" };
         private static string ModuleFileName(string module) => module switch
         {
