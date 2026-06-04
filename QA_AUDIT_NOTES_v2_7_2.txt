@@ -1,4 +1,4 @@
-PWADC Security Operations Suite v2.7.2 QA Notes
+PWADC Security Operations Suite v2.7.3 QA Notes
 
 Purpose:
 - Small stabilization patch only.
