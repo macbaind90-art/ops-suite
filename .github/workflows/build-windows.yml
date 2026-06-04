@@ -5,8 +5,7 @@ on:
   push:
     branches:
       - main
-      - v2-suite-rebuild
-      - v2.6-native-audits
+      - v2.7
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
