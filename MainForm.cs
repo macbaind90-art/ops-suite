@@ -141,6 +141,18 @@ namespace PWADC.SecurityOperationsSuite
                         string programsBackupPath = BackupProgramsFolder();
                         await Respond(requestId, true, new { path = programsBackupPath });
                         break;
+
+                    case "suite:listBackups":
+                        string listModule = root.TryGetProperty("module", out JsonElement lbm) ? lbm.GetString() ?? "" : "";
+                        await Respond(requestId, true, ListBackups(listModule));
+                        break;
+                    case "suite:restoreBackup":
+                        if (!root.TryGetProperty("payload", out JsonElement restorePayload)) throw new InvalidOperationException("Missing restore payload.");
+                        string restoreModule = restorePayload.TryGetProperty("module", out JsonElement rsm) ? rsm.GetString() ?? "" : "";
+                        string restorePath = restorePayload.TryGetProperty("path", out JsonElement rsp) ? rsp.GetString() ?? "" : "";
+                        string restoredJson = RestoreBackup(restoreModule, restorePath);
+                        await Respond(requestId, true, new { module = restoreModule, data = restoredJson, restoredFrom = restorePath });
+                        break;
                     default:
                         await Respond(requestId, false, new { error = "Unknown message type: " + type });
                         break;
@@ -380,6 +392,46 @@ namespace PWADC.SecurityOperationsSuite
         }
 
 
+
+        private object ListBackups(string module)
+        {
+            if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Backup module was not defined.");
+            EnsureFolders();
+            string folder = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
+            Directory.CreateDirectory(folder);
+            var backups = new List<object>();
+            foreach (string file in Directory.GetFiles(folder, "*", SearchOption.TopDirectoryOnly))
+            {
+                FileInfo info = new FileInfo(file);
+                backups.Add(new { name = info.Name, path = info.FullName, modified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"), sizeBytes = info.Length });
+            }
+            backups.Sort((a, b) => StringComparer.OrdinalIgnoreCase.Compare((string)b.GetType().GetProperty("modified")!.GetValue(b)!, (string)a.GetType().GetProperty("modified")!.GetValue(a)!));
+            return new { module, backups };
+        }
+
+        private string RestoreBackup(string module, string backupPath)
+        {
+            if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Restore module was not defined.");
+            if (string.IsNullOrWhiteSpace(backupPath)) throw new InvalidOperationException("Restore backup path was not provided.");
+            EnsureFolders();
+            string fullBackupPath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(backupPath));
+            string allowedRoot = Path.GetFullPath(Path.Combine(settings.DataRoot, "Backups"));
+            if (!fullBackupPath.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Restore path is outside the suite backup folder.");
+            if (!File.Exists(fullBackupPath)) throw new FileNotFoundException("Backup file was not found: " + fullBackupPath);
+            string json = File.ReadAllText(fullBackupPath);
+            JsonDocument.Parse(json).Dispose();
+            string livePath = Path.Combine(settings.DataRoot, "Data", ModuleFileName(module));
+            if (File.Exists(livePath))
+            {
+                string preRestoreDir = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
+                Directory.CreateDirectory(preRestoreDir);
+                string preRestoreName = Path.GetFileNameWithoutExtension(livePath) + "-before-restore-" + DateTime.Now.ToString("yyyyMMdd-HHmmssfff") + ".json";
+                File.Copy(livePath, Path.Combine(preRestoreDir, preRestoreName), true);
+            }
+            File.WriteAllText(livePath, json);
+            return json;
+        }
+
         private void OpenPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new InvalidOperationException("No path was provided.");
@@ -440,7 +492,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.6.2" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "2.7.2" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -456,7 +508,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.6.2", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "2.7.2", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "suite-settings", "programs" };
         private static string ModuleFileName(string module) => module switch
         {

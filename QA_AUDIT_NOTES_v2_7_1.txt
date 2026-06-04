@@ -1,0 +1,19 @@
+PWADC Security Operations Suite v2.7.1 QA Notes
+
+Purpose:
+- Patch v2.7.0 page render failure caused by missing fullName() helper.
+
+Root cause:
+- Data Health / Home dashboard called rosterDisplayName(), which called fullName().
+- fullName() was referenced throughout roster/training/uniform logic but was missing from the generated index.html.
+
+Fix:
+- Added robust fullName(e) helper that supports:
+  - roster records with last/first fields
+  - attendance records with name field
+  - fallback to EID or ID
+- Updated visible version labels to v2.7.1.
+- Updated GitHub artifact name to v2.7.1.
+
+Checks:
+- Extracted JavaScript from app/index.html and ran node --check successfully.
