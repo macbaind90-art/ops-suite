@@ -1,0 +1,5 @@
+v2.7.4 Data Health Matching Fix
+- Data Health no longer uses exact full-name matching only.
+- It uses existing roster-attendance matching logic: rosterId, last name, first-name prefix/initial, and compatible shift.
+- This prevents false positives where employees use nicknames or shortened first names in Attendance.
+- No save, sync, roster edit, attendance entry, or Other Programs logic changed.
