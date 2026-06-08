@@ -1,0 +1,5 @@
+QA notes v2.7.10
+- Added missing getCode() and setCode() attendance helpers.
+- Fixes Home/Attendance render failure from computeFlags.
+- Preserves Attendance Review + Notice Generator from v2.7.9.
+- No check*.js files included in build kit.
