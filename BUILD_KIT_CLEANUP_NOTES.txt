@@ -1,0 +1,4 @@
+PWADC Security Operations Suite v2.7.9 Build Kit Cleanup
+
+Excluded temporary check*.js validation files and scratch extracted JavaScript files.
+Kept only QA notes for current version and one prior version.

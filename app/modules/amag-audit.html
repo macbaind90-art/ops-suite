@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PWADC AMAG User Audit Tool</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --red:        #C0272D;
+    --red-dark:   #8B1A1E;
+    --red-light:  #FFF0F0;
+    --red-border: #F5C0C2;
+    --gold:       #C6B273;
+    --gold-light: #FBF7EC;
+    --gold-border:#E8D9A0;
+    --charcoal:   #1A1A1A;
+    --ink:        #2C2C2C;
+    --muted:      #6B6B6B;
+    --rule:       #E2E2E2;
+    --bg:         #F3F2EF;
+    --card:       #FFFFFF;
+    --amber-bg:   #FFFBEE;
+    --amber-border:#F0D080;
+    --blue-bg:    #EFF6FF;
+    --blue-border:#B9D4F5;
+    --green-bg:   #EFFAF3;
+    --green-border:#A8D9B8;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.10);
+    --radius: 10px;
+  }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: var(--red);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .hdr-icon {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 8px;
+    display: grid; place-items: center;
+    font-size: 20px; color: white; flex-shrink: 0;
+  }
+  .hdr-text h1 { font-size: 17px; font-weight: 700; color: white; letter-spacing: -0.2px; }
+  .hdr-text p  { font-size: 12px; color: rgba(255,255,255,0.72); margin-top: 1px; }
+  .hdr-pill {
+    margin-left: auto;
+    background: rgba(255,255,255,0.15);
+    color: white; font-size: 10px; font-weight: 700;
+    letter-spacing: 1px; text-transform: uppercase;
+    padding: 5px 11px; border-radius: 20px;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  main { max-width: 1060px; margin: 0 auto; padding: 28px 24px 60px; }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--rule);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+  }
+  .upload-card h2 {
+    font-size: 13px; font-weight: 700; letter-spacing: 0.6px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 18px;
+  }
+  .drop-zone {
+    border: 2px dashed var(--rule);
+    border-radius: 8px;
+    padding: 32px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.drag-over {
+    border-color: var(--red);
+    background: var(--red-light);
+  }
+  .drop-zone.loaded {
+    border-color: #5BAD7A;
+    background: var(--green-bg);
+    border-style: solid;
+  }
+  .drop-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  .dz-icon { font-size: 28px; display: block; margin-bottom: 8px; }
+  .dz-label { font-size: 14px; font-weight: 600; color: var(--ink); display: block; }
+  .dz-sub   { font-size: 12px; color: var(--muted); margin-top: 4px; display: block; }
+  .dz-fname { font-size: 12px; color: #5BAD7A; font-weight: 600; margin-top: 6px; display: none; }
+  .drop-zone.loaded .dz-fname { display: block; }
+  .drop-zone.loaded .dz-sub   { display: none; }
+
+  /* ── RUN BAR ── */
+  .run-bar {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--rule);
+    padding: 16px 24px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .btn-run {
+    background: var(--red); color: white;
+    border: none; border-radius: 6px;
+    padding: 10px 24px; font-size: 14px; font-weight: 700;
+    cursor: pointer; transition: background 0.15s, transform 0.1s;
+    letter-spacing: 0.2px;
+  }
+  .btn-run:hover:not(:disabled) { background: var(--red-dark); transform: translateY(-1px); }
+  .btn-run:disabled { background: #C0C0C0; cursor: not-allowed; transform: none; }
+  .btn-dl {
+    background: var(--charcoal); color: white;
+    border: none; border-radius: 6px;
+    padding: 10px 20px; font-size: 13px; font-weight: 600;
+    cursor: pointer; transition: background 0.15s;
+    display: none;
+  }
+  .btn-dl:hover { background: #333; }
+  .run-status { font-size: 13px; color: var(--muted); margin-left: 4px; }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--rule);
+    padding: 18px 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .stat-card.red   { border-top: 3px solid var(--red);  }
+  .stat-card.gold  { border-top: 3px solid var(--gold); }
+  .stat-card.amber { border-top: 3px solid #E8A020; }
+  .stat-card.blue  { border-top: 3px solid #4A90D9; }
+  .stat-num  { font-size: 32px; font-weight: 700; color: var(--ink); line-height: 1; }
+  .stat-label{ font-size: 12px; color: var(--muted); margin-top: 6px; font-weight: 500; }
+
+  /* ── SECTION HEADER ── */
+  .section-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    margin: 28px 0 12px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--rule);
+  }
+  .section-hdr h3 {
+    font-size: 15px; font-weight: 700; color: var(--ink);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-hdr h3 .dot {
+    width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+  }
+  .dot-red   { background: var(--red); }
+  .dot-charcoal { background: var(--charcoal); }
+  .dot-amber { background: #E8A020; }
+  .count-pill {
+    font-size: 12px; font-weight: 700; padding: 3px 10px;
+    border-radius: 20px; background: var(--rule); color: var(--muted);
+  }
+
+  /* ── TABLE ── */
+  .tbl-wrap {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--rule);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead th {
+    background: var(--charcoal); color: white;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+    text-transform: uppercase; padding: 10px 14px;
+    text-align: left;
+  }
+  tbody tr { border-bottom: 1px solid var(--rule); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: #FAFAFA; }
+  tbody td { padding: 10px 14px; font-size: 13px; color: var(--ink); vertical-align: middle; }
+
+  .type-pill {
+    display: inline-block; padding: 3px 9px; border-radius: 20px;
+    font-size: 11px; font-weight: 700; white-space: nowrap;
+  }
+  .type-new    { background: var(--red-light);   color: var(--red-dark); border: 1px solid var(--red-border); }
+  .type-reprint{ background: var(--gold-light);  color: #7A6420;         border: 1px solid var(--gold-border); }
+  .type-reenroll{ background: var(--blue-bg);    color: #1A4A8A;         border: 1px solid var(--blue-border); }
+  .type-rebuild { background: var(--amber-bg);   color: #7A5200;         border: 1px solid var(--amber-border); }
+
+  .flag-row { background: var(--amber-bg) !important; }
+  .flag-row td { color: #6B4A00 !important; }
+
+  /* ── FLAGS SECTION ── */
+  .flags-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
+  .flag-item {
+    background: var(--amber-bg);
+    border: 1px solid var(--amber-border);
+    border-radius: 7px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #6B4A00;
+    line-height: 1.5;
+  }
+  .flag-item.blue {
+    background: var(--blue-bg); border-color: var(--blue-border); color: #1A3A6A;
+  }
+  .flag-item strong { font-weight: 700; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    text-align: center; padding: 40px 20px;
+    color: var(--muted); font-size: 14px;
+  }
+
+  @media (max-width: 700px) {
+    header { padding: 14px 16px; }
+    main { padding: 16px 14px 50px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+    .upload-card { padding: 18px 16px; }
+    table { font-size: 12px; }
+    thead th, tbody td { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr-icon">&#128274;</div>
+  <div class="hdr-text">
+    <h1>PWADC AMAG User Audit Tool</h1>
+    <p>Upload a histoper.txt export &mdash; get instant new badge &amp; inactive badge analysis</p>
+  </div>
+  <div class="hdr-pill">Security Operations</div>
+</header>
+
+<main>
+
+  <!-- UPLOAD -->
+  <div class="upload-card">
+    <h2>Step 1 &mdash; Load Log File</h2>
+    <div class="drop-zone" id="dz"
+         ondragover="dzDrag(event,true)" ondragleave="dzDrag(event,false)" ondrop="dzDrop(event)">
+      <input type="file" id="fi" accept=".txt" onchange="handleFile(this)">
+      <span class="dz-icon">&#128196;</span>
+      <span class="dz-label">Click or drag to upload histoper.txt</span>
+      <span class="dz-sub">AMAG SymmetryWEB Users History Report (.txt)</span>
+      <div class="dz-fname" id="dz-fname"></div>
+    </div>
+  </div>
+
+  <!-- RUN BAR -->
+  <div class="run-bar">
+    <button class="btn-run" id="btn-run" onclick="runAudit()" disabled>&#9654;&nbsp; Parse &amp; Analyze</button>
+    <button class="btn-dl"  id="btn-dl"  onclick="downloadExcel()">&#8595;&nbsp; Download Excel Report</button>
+    <span class="run-status" id="run-status">Load a histoper.txt file to begin.</span>
+  </div>
+
+  <!-- RESULTS (hidden until run) -->
+  <div id="results" style="display:none;">
+
+    <!-- STATS -->
+    <div class="stats-grid" id="stats-grid"></div>
+
+    <!-- NEW BADGES TABLE -->
+    <div class="section-hdr">
+      <h3><span class="dot dot-red"></span>New Badges Issued</h3>
+      <span class="count-pill" id="new-count">0</span>
+    </div>
+    <div id="new-badges-out"></div>
+
+    <!-- INACTIVE TABLE -->
+    <div class="section-hdr">
+      <h3><span class="dot dot-charcoal"></span>Badges Made Inactive</h3>
+      <span class="count-pill" id="inactive-count">0</span>
+    </div>
+    <div id="inactive-out"></div>
+
+    <!-- FLAGS -->
+    <div class="section-hdr" id="flags-hdr" style="display:none;">
+      <h3><span class="dot dot-amber"></span>Flags &amp; Notes</h3>
+      <span class="count-pill" id="flags-count">0</span>
+    </div>
+    <div id="flags-out"></div>
+
+  </div>
+
+</main>
+
+<script>
+// ─── STATE ───────────────────────────────────────────────────────────────────
+var rawText = null;
+var lastResult = null;
+
+// ─── FILE HANDLING ────────────────────────────────────────────────────────────
+function handleFile(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    rawText = e.target.result;
+    var dz = document.getElementById('dz');
+    dz.classList.add('loaded');
+    document.getElementById('dz-fname').textContent = file.name;
+    document.getElementById('btn-run').disabled = false;
+    document.getElementById('run-status').textContent = file.name + ' loaded. Ready to analyze.';
+  };
+  reader.readAsText(file);
+}
+
+function dzDrag(e, over) {
+  e.preventDefault();
+  document.getElementById('dz').classList.toggle('drag-over', over);
+}
+function dzDrop(e) {
+  e.preventDefault();
+  dzDrag(e, false);
+  var file = e.dataTransfer.files[0];
+  if (file) {
+    document.getElementById('fi').files; // can't set directly — use reader
+    var reader = new FileReader();
+    reader.onload = function(ev) {
+      rawText = ev.target.result;
+      var dz = document.getElementById('dz');
+      dz.classList.add('loaded');
+      document.getElementById('dz-fname').textContent = file.name;
+      document.getElementById('btn-run').disabled = false;
+      document.getElementById('run-status').textContent = file.name + ' loaded. Ready to analyze.';
+    };
+    reader.readAsText(file);
+  }
+}
+
+// ─── PARSER ───────────────────────────────────────────────────────────────────
+function parseLog(text) {
+  var lines = text.split(/\r?\n/);
+  var newBadges = [];
+  var inactive  = [];
+  var flags     = [];
+
+  // ── Pass 1: collect events with context ──────────────────────────────────
+  // We scan for three event types:
+  //   A) "Added Card Holder" → new enrollment candidate
+  //   B) "Printed Badge" + "Card Number To XXXXX" nearby → reprint/reassignment
+  //   C) "Enabled : Card Inactive" (not also Disabled in same block) → inactive
+
+  // Build a map: cardNumber → latest assigned number (for reassignments)
+  // Strategy: collect all lines, then scan for patterns
+
+  var addedHolders = {};   // name → {lineIdx, date}
+  var inactiveCards = {};  // cardNum → {name, date, lineIdx}
+  var printedBadges = {};  // name → [{lineIdx, date}]
+  var cardNumberChanges = []; // [{from, to, lineIdx, date}]
+  var deletedCards = {};   // cardNum → {name, date}
+
+  // Parse each line
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var parts = line.split('\t');
+    if (parts.length < 3) continue;
+
+    var date    = (parts[0] || '').trim();
+    var who     = (parts[1] || '').trim();
+    var what    = (parts[2] || '').trim();
+
+    // Extract date portion only (mm/dd/yyyy)
+    var dateOnly = date.split(' ')[0] || date;
+
+    // A) Added Card Holder
+    var m = what.match(/^Added Card Holder\s*:\s*(.+)$/);
+    if (m) {
+      var name = normalizeName(m[1].trim());
+      addedHolders[name] = { lineIdx: i, date: dateOnly, who: who };
+    }
+
+    // B) Printed Badge
+    m = what.match(/^Printed Badge:\s*(.+)$/);
+    if (m) {
+      var pname = normalizeName(m[1].trim());
+      if (!printedBadges[pname]) printedBadges[pname] = [];
+      printedBadges[pname].push({ lineIdx: i, date: dateOnly });
+    }
+
+    // C) Card Number To XXXXX
+    m = what.match(/Card Number (\d+)\s*:.*Card Number To (\d+)/);
+    if (m) {
+      cardNumberChanges.push({ from: m[1], to: m[2], lineIdx: i, date: dateOnly });
+    }
+    // Also catch "Card Number 1 : Modified : Card Number To XXXXX" (temp card 1)
+    m = what.match(/Card Number (1|\d)\s*:.*Card Number To (\d{4,})/);
+    if (m) {
+      // avoid duplicate if same line already caught above
+      var alreadyAdded = cardNumberChanges.some(function(c){ return c.lineIdx === i; });
+      if (!alreadyAdded) {
+        cardNumberChanges.push({ from: m[1], to: m[2], lineIdx: i, date: dateOnly });
+      }
+    }
+
+    // D) Card Inactive (Enabled only — not Disabled)
+    m = what.match(/Card Number (\d+),?\s*\d*\s*:.*Enabled\s*:\s*Card Inactive/);
+    if (m) {
+      // Check next few lines — if there's a Disabled : Card Inactive, it was reversed
+      var cardNum = m[1];
+      // Look ahead 8 lines for disabled
+      var reversed = false;
+      for (var j = i + 1; j < Math.min(i + 10, lines.length); j++) {
+        if (lines[j].indexOf('Card Number ' + cardNum) !== -1 &&
+            lines[j].indexOf('Disabled') !== -1 &&
+            lines[j].indexOf('Card Inactive') !== -1) {
+          reversed = true;
+          break;
+        }
+      }
+      if (!reversed) {
+        // Get name from nearby Modified Card Holder line — use tab-split what col only
+        var iname = '';
+        for (var j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+          var lpi = lines[j].split('\t'); var wi = (lpi[2]||'').trim();
+          var nm2 = wi.match(/Modified Card Holder\s*:\s*(.+)/);
+          if (nm2) { iname = normalizeName(nm2[1].trim()); break; }
+        }
+        if (!inactiveCards[cardNum]) {
+          inactiveCards[cardNum] = { name: iname, date: dateOnly, lineIdx: i };
+        }
+      } else {
+        // Reversed — flag it
+        var iname2 = '';
+        for (var j = i + 1; j < Math.min(i + 4, lines.length); j++) {
+          var lpi2 = lines[j].split('\t'); var wi2 = (lpi2[2]||'').trim();
+          var nm3 = wi2.match(/Modified Card Holder\s*:\s*(.+)/);
+          if (nm3) { iname2 = normalizeName(nm3[1].trim()); break; }
+        }
+        flags.push({ type: 'info', text: iname2 + ' (card ' + cardNum + ') — set inactive then immediately reversed. Net status: ACTIVE. Not included in inactive list.' });
+      }
+    }
+
+    // E) Deleted Card
+    m = what.match(/Deleted Card\s*:.*Card Number:(\d+)/);
+    if (m) {
+      var dname = '';
+      for (var j = i + 1; j < Math.min(i + 3, lines.length); j++) {
+        var lpd = lines[j].split('\t'); var wd = (lpd[2]||'').trim();
+        var nm4 = wd.match(/(?:Deleted|Modified) Card Holder\s*:\s*(.+)/);
+        if (nm4) { dname = normalizeName(nm4[1].trim()); break; }
+      }
+      deletedCards[m[1]] = { name: dname, date: dateOnly };
+    }
+  }
+
+  // ── Pass 2: Resolve new badge records ──────────────────────────────────────
+
+  // For each Added Card Holder, find the final card number assigned
+  Object.keys(addedHolders).forEach(function(name) {
+    var ah = addedHolders[name];
+    // Look for a card number assignment AFTER this line (within 15 lines)
+    var finalCard = null;
+    var searchDate = ah.date;
+    for (var k = 0; k < cardNumberChanges.length; k++) {
+      var cc = cardNumberChanges[k];
+      if (cc.lineIdx > ah.lineIdx && cc.lineIdx < ah.lineIdx + 20 && cc.date === searchDate) {
+        finalCard = cc.to;
+        break;
+      }
+    }
+
+    // Determine type: was the old card deleted? → re-enrollment
+    var oldDeleted = Object.keys(deletedCards).some(function(dc) {
+      return deletedCards[dc].name === name;
+    });
+
+    var btype = oldDeleted ? 'Re-Enrollment' : 'New Enrollment';
+    var note  = oldDeleted ? 'Prior card record deleted; re-enrolled with new card' : '';
+
+    // Check if badge was printed multiple times
+    var prints = printedBadges[name] ? printedBadges[name].length : 0;
+    if (prints > 1) note += (note ? '; ' : '') + 'Badge printed ' + prints + 'x during enrollment';
+
+    newBadges.push({
+      date:  ah.date,
+      name:  name,
+      badge: finalCard || '—',
+      type:  btype,
+      note:  note,
+      who:   ah.who
+    });
+
+    // Flag re-enrollments
+    if (oldDeleted) {
+      flags.push({ type: 'info', text: name + ' — prior record deleted and re-enrolled. Verify HR status.' });
+    }
+  });
+
+  // For reprints: card number changes NOT associated with an Added Card Holder
+  cardNumberChanges.forEach(function(cc) {
+    // Skip temp card reassignments that were already caught (from:1,2,3,4,8 with a new enrollment nearby)
+    var isTempCard = ['1','2','3','4','5','6','7','8'].indexOf(cc.from) !== -1;
+    if (isTempCard) return; // already handled via Added Card Holder
+
+    // Find the name associated with this card change
+    // Use only the What column (tab index 2) to avoid company/client bleed-in
+    var rname = '';
+    for (var j = cc.lineIdx - 1; j >= Math.max(0, cc.lineIdx - 4); j--) {
+      var lp5 = lines[j].split('\t'); var w5 = (lp5[2]||'').trim();
+      var nm5 = w5.match(/(?:Modified Card Holder|Printed Badge)\s*:\s*(.+)/);
+      if (nm5) { rname = normalizeName(nm5[1].trim()); break; }
+    }
+    if (!rname) {
+      for (var j = cc.lineIdx + 1; j < Math.min(lines.length, cc.lineIdx + 4); j++) {
+        var lp6 = lines[j].split('\t'); var w6 = (lp6[2]||'').trim();
+        var nm6 = w6.match(/(?:Modified Card Holder|Printed Badge)\s*:\s*(.+)/);
+        if (nm6) { rname = normalizeName(nm6[1].trim()); break; }
+      }
+    }
+    if (!rname) return;
+
+    // Was this a card number reversal? (to = an old number we've seen before)
+    // Heuristic: if to < from and both are 5-digit cards, it might be a reversal
+    var isReversal = parseInt(cc.to, 10) < parseInt(cc.from, 10) &&
+                     cc.from.length >= 5 && cc.to.length >= 5;
+
+    var btype = isReversal ? 'Card # Reversal' : 'Reprint / Reassignment';
+    var note  = 'Card ' + cc.from + ' reassigned to ' + cc.to;
+    if (isReversal) note += ' (reversal — restores original number)';
+
+    // Don't add if already in newBadges (same person, same date)
+    var exists = newBadges.some(function(nb) {
+      return nb.name === rname && nb.date === cc.date && nb.badge === cc.to;
+    });
+    if (!exists) {
+      newBadges.push({
+        date:  cc.date,
+        name:  rname,
+        badge: cc.to,
+        type:  btype,
+        note:  note,
+        who:   ''
+      });
+      if (isReversal) {
+        flags.push({ type: 'info', text: rname + ' — card ' + cc.from + ' swapped back to ' + cc.to + '. Confirm correct number in SymmetryWEB.' });
+      }
+    }
+  });
+
+  // ── Pass 3: Sort and finalize ──────────────────────────────────────────────
+  newBadges.sort(function(a, b) {
+    return a.date.localeCompare(b.date) || a.name.localeCompare(b.name);
+  });
+
+  // Build inactive list
+  Object.keys(inactiveCards).forEach(function(cardNum) {
+    var ic = inactiveCards[cardNum];
+    inactive.push({ date: ic.date, name: ic.name, badge: cardNum });
+
+    // Short-tenure flag: if same person was newly badged recently
+    var recentNew = newBadges.find(function(nb) {
+      return nb.name === ic.name;
+    });
+    if (recentNew) {
+      flags.push({ type: 'warn', text: ic.name + ' (card ' + cardNum + ') — badge issued ' + recentNew.date + ', deactivated ' + ic.date + '. Very short tenure. Verify separation documentation.' });
+    }
+  });
+
+  inactive.sort(function(a, b) {
+    return a.date.localeCompare(b.date) || a.name.localeCompare(b.name);
+  });
+
+  // Detect date range
+  var allDates = newBadges.map(function(x){return x.date;})
+    .concat(inactive.map(function(x){return x.date;}))
+    .filter(Boolean).sort();
+  var dateRange = allDates.length > 0
+    ? (allDates[0] === allDates[allDates.length-1]
+        ? allDates[0]
+        : allDates[0] + ' – ' + allDates[allDates.length-1])
+    : 'Unknown';
+
+  return { newBadges: newBadges, inactive: inactive, flags: flags, dateRange: dateRange };
+}
+
+// ─── NAME NORMALIZER ──────────────────────────────────────────────────────────
+// Converts "Smith John" or "Smith  John" → "John Smith"
+// Strips any trailing company/client info that bleeds in from tab-delimited fields
+function normalizeName(raw) {
+  // The What field value may still contain trailing tab-separated company/client
+  // columns if the line wasn't fully split. Strip anything after a tab.
+  var s = raw.split('\t')[0];
+  // Also strip known noise tokens that appear in AMAG exports
+  s = s.replace(/\bMy Company\b/gi, '')
+       .replace(/\bRECEPTIONDESK\b/gi, '')
+       .replace(/\bJMONROEDESK\b/gi, '')
+       .replace(/\bPWADC\b/gi, '')
+       .replace(/\bRECEPTION\s*DESK\b/gi, '')
+       .trim().replace(/\s+/g, ' ');
+  if (!s) return raw.trim();
+  var parts = s.split(' ');
+  if (parts.length < 2) return s;
+  // AMAG stores Last First (or Last First Middle)
+  var last  = parts[0];
+  var first = parts.slice(1).join(' ');
+  return (first + ' ' + last).trim();
+}
+
+// ─── RUN ──────────────────────────────────────────────────────────────────────
+function runAudit() {
+  if (!rawText) return;
+  var result = parseLog(rawText);
+  lastResult = result;
+
+  // Stats
+  var newCount    = result.newBadges.length;
+  var inactCount  = result.inactive.length;
+  var newEnroll   = result.newBadges.filter(function(b){ return b.type === 'New Enrollment'; }).length;
+  var reprints    = result.newBadges.filter(function(b){ return b.type === 'Reprint / Reassignment'; }).length;
+
+  document.getElementById('stats-grid').innerHTML =
+    statCard('red',  newEnroll, 'New Enrollments') +
+    statCard('gold', reprints,  'Reprints / Reassignments') +
+    statCard('blue', result.newBadges.filter(function(b){ return b.type !== 'New Enrollment' && b.type !== 'Reprint / Reassignment'; }).length, 'Other Badge Events') +
+    statCard('amber',inactCount,'Badges Deactivated');
+
+  // New badges table
+  document.getElementById('new-count').textContent = newCount;
+  if (newCount === 0) {
+    document.getElementById('new-badges-out').innerHTML = '<div class="empty-state">No new badge events found in this log.</div>';
+  } else {
+    var rows = result.newBadges.map(function(b) {
+      return '<tr>' +
+        '<td>' + esc(b.date) + '</td>' +
+        '<td><strong>' + esc(b.name) + '</strong></td>' +
+        '<td><code>' + esc(b.badge) + '</code></td>' +
+        '<td>' + typePill(b.type) + '</td>' +
+        '<td style="color:var(--muted)">' + esc(b.note) + '</td>' +
+        '</tr>';
+    }).join('');
+    document.getElementById('new-badges-out').innerHTML =
+      '<div class="tbl-wrap"><table>' +
+      '<thead><tr><th>Date</th><th>Name</th><th>Badge #</th><th>Type</th><th>Notes</th></tr></thead>' +
+      '<tbody>' + rows + '</tbody></table></div>';
+  }
+
+  // Inactive table
+  document.getElementById('inactive-count').textContent = inactCount;
+  if (inactCount === 0) {
+    document.getElementById('inactive-out').innerHTML = '<div class="empty-state">No inactive badge events found in this log.</div>';
+  } else {
+    var irows = result.inactive.map(function(b) {
+      return '<tr>' +
+        '<td>' + esc(b.date) + '</td>' +
+        '<td><strong>' + esc(b.name) + '</strong></td>' +
+        '<td><code>' + esc(b.badge) + '</code></td>' +
+        '</tr>';
+    }).join('');
+    document.getElementById('inactive-out').innerHTML =
+      '<div class="tbl-wrap"><table>' +
+      '<thead><tr><th>Date</th><th>Name</th><th>Badge #</th></tr></thead>' +
+      '<tbody>' + irows + '</tbody></table></div>';
+  }
+
+  // Flags
+  var flagsHdr = document.getElementById('flags-hdr');
+  var flagsOut = document.getElementById('flags-out');
+  if (result.flags.length === 0) {
+    flagsHdr.style.display = 'none';
+    flagsOut.innerHTML = '';
+  } else {
+    flagsHdr.style.display = 'flex';
+    document.getElementById('flags-count').textContent = result.flags.length;
+    var fitems = result.flags.map(function(f) {
+      var cls = f.type === 'warn' ? '' : ' blue';
+      var icon = f.type === 'warn' ? '\u26A0\uFE0F  ' : '\u2139\uFE0F  ';
+      return '<div class="flag-item' + cls + '">' + icon + esc(f.text) + '</div>';
+    }).join('');
+    flagsOut.innerHTML = '<div class="flags-list">' + fitems + '</div>';
+  }
+
+  document.getElementById('results').style.display = 'block';
+  document.getElementById('btn-dl').style.display = 'inline-block';
+  document.getElementById('run-status').textContent =
+    'Analysis complete — ' + result.dateRange + '   |   ' + newCount + ' badge events, ' + inactCount + ' deactivations';
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function statCard(color, num, label) {
+  return '<div class="stat-card ' + color + '"><div class="stat-num">' + num + '</div><div class="stat-label">' + label + '</div></div>';
+}
+function typePill(type) {
+  var cls = {
+    'New Enrollment':         'type-new',
+    'Reprint / Reassignment': 'type-reprint',
+    'Re-Enrollment':          'type-reenroll',
+    'Admin Rebuild':          'type-rebuild',
+    'Card # Reversal':        'type-rebuild',
+  }[type] || 'type-new';
+  return '<span class="type-pill ' + cls + '">' + esc(type) + '</span>';
+}
+
+// ─── EXCEL DOWNLOAD ───────────────────────────────────────────────────────────
+function downloadExcel() {
+  if (!lastResult) return;
+  var wb = XLSX.utils.book_new();
+
+  // Sheet 1 — New Badges
+  var nb = [['Date','Name','Badge #','Type','Notes']];
+  lastResult.newBadges.forEach(function(b) {
+    nb.push([b.date, b.name, b.badge, b.type, b.note]);
+  });
+  var ws1 = XLSX.utils.aoa_to_sheet(nb);
+  ws1['!cols'] = [{wch:12},{wch:26},{wch:10},{wch:24},{wch:50}];
+  XLSX.utils.book_append_sheet(wb, ws1, 'New Badges');
+
+  // Sheet 2 — Inactive Badges
+  var ib = [['Date','Name','Badge #']];
+  lastResult.inactive.forEach(function(b) {
+    ib.push([b.date, b.name, b.badge]);
+  });
+  var ws2 = XLSX.utils.aoa_to_sheet(ib);
+  ws2['!cols'] = [{wch:12},{wch:26},{wch:10}];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Inactive Badges');
+
+  // Sheet 3 — Flags
+  if (lastResult.flags.length > 0) {
+    var fl = [['Type','Note']];
+    lastResult.flags.forEach(function(f) {
+      fl.push([f.type === 'warn' ? 'Warning' : 'Info', f.text]);
+    });
+    var ws3 = XLSX.utils.aoa_to_sheet(fl);
+    ws3['!cols'] = [{wch:10},{wch:90}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Flags & Notes');
+  }
+
+  var dateStr = lastResult.dateRange.replace(/ /g,'').replace(/\//g,'-').replace(/\u2013/g,'_');
+  XLSX.writeFile(wb, 'PWADC_Badge_Audit_' + dateStr + '.xlsx');
+}
+</script>
+</body>
+</html>
