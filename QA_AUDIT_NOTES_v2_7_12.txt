@@ -1,0 +1,6 @@
+v2.7.12 Attendance Patterns + No Exceptions Tab
+- Removed Attendance Exceptions tab from navigation.
+- Added Attendance Patterns tab.
+- Highlighted Daily Entry, 90-Day Grid, and Attendance Review rows when employees meet discipline thresholds.
+- Approved tracking codes AL, V, E, and LE remain non-disciplinary.
+- JavaScript syntax check run before packaging.
