@@ -1,0 +1,11 @@
+PWADC Security Operations Suite v2.7.15 QA Notes
+
+Scope:
+- Attendance notice print layout tightened to match uploaded Confirming Notice format more closely.
+- Attendance pattern acknowledgement now hides acknowledged discipline dates from future threshold counts.
+- New T/U/UE occurrences after acknowledgement must accumulate before a new pattern appears.
+- Acknowledged hidden patterns can be reopened.
+
+Checks:
+- JavaScript syntax check passed with node --check.
+- No check*.js files included in build kit.
