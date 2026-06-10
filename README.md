@@ -1,23 +1,15 @@
-# PWADC Security Operations Suite v3.0.1
+# PWADC Security Operations Suite v3.0.2
 
-Patch build kit. Restores the old Attendance Review layout and moves grouped person/code-category behavior to the Patterns screen.
+Full build kit for GitHub Actions.
 
-## Build workflow
+## What changed
 
-Path:
+- Converted Attendance Patterns screen to employee tiles.
+- Each tile shows the categories/codes the employee has hit.
+- Clicking a tile drills into grouped categories, code/date details, acknowledge/hide, and Create Notice actions.
+- Attendance Review remains the old table layout with threshold number highlighting.
+- No QA notes or check*.js files included.
 
-```text
-.github/workflows/build-windows.yml
-```
+## Workflow path
 
-Use GitHub Actions to publish the Windows single-file EXE.
-
-## Scope
-
-This v3.0.1 patch corrects Attendance Review and Patterns behavior after the v3.0 QA baseline.
-
-## Shared data root
-
-```text
-\\pig-fs\Security\MacBain\Security Operations Suite
-```
+`.github/workflows/build-windows.yml`
