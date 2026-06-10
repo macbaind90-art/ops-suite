@@ -1,7 +1,0 @@
-v2.7.0 Stability Command Center
-- Added Data Health Check
-- Added Restore Center backed by bridge list/restore commands
-- Added combined Change Log
-- Updated Home dashboard health indicators
-- Updated seeds from latest uploaded backups
-- Default data root remains \\pig-fs\Security\MacBain\Security Operations Suite

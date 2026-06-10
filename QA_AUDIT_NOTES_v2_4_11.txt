@@ -1,5 +1,0 @@
-PWADC Security Operations Suite v2.4.11 Grid No-Jump Patch
-
-Fixed Attendance 90-Day Grid scroll jump by removing full page re-render from cell selection, keyboard edits, arrow movement, and double-click code apply. Cell edits now update the DOM in place and autosave through the existing attendance save bridge.
-
-Syntax check: passed.

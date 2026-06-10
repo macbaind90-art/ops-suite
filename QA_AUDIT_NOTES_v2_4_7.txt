@@ -1,5 +1,0 @@
-v2.4.7 Save Bridge Fix
-- Added explicit suite:saveModuleData2 bridge that sends module and JSON as strings.
-- Roster, Attendance, and Tasks save functions now use the explicit bridge.
-- Added hard errors for missing module or undefined payload.
-- Updated version labels to v2.4.7.

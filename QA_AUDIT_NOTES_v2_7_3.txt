@@ -1,5 +1,0 @@
-v2.7.3 Undefined Helper Sweep
-- Added missing rosterShifts() and rosterRanks() helpers.
-- Restored OTHER_PROGRAMS configuration and standalone launcher helpers.
-- Added showToast() compatibility alias.
-- Ran JavaScript syntax and static missing-helper checks.

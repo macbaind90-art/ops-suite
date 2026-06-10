@@ -1,4 +1,0 @@
-QA notes v2.7.8
-- Schedule reassignment dropdowns now filter to employees aligned with the schedule section/post context.
-- Roster table headers are sortable; clicking a header toggles ascending/descending order.
-- JavaScript syntax check passed.

@@ -1,6 +1,0 @@
-Build kit cleanup policy:
-- Temporary check*.js validation files are excluded.
-- Temporary extracted script files are excluded.
-- QA notes are limited to the current version plus one prior version.
-
-This kit includes only v2.7.12 and v2.7.13 QA notes.

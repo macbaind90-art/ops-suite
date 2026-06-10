@@ -1,6 +1,0 @@
-QA notes v2.7.11
-- Restored missing attendance helper functions from stable v2.7.8 daily/grid workflow.
-- Added autoFillRdosForDate(), currentRows(), dailyCounts(), groupRowsByShift(), sortedEmployees(), and shiftRank().
-- Preserved v2.7.9 Attendance Review + Notice Generator and v2.7.10 getCode/setCode helpers.
-- JavaScript syntax check passed.
-- No check*.js files included.

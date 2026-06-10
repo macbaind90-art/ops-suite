@@ -1,5 +1,0 @@
-v2.6.1 Badge Audit Full Engine
-- Replaced simplified native badge parser with the full Badge Audit Tool v18 workflow as the active module.
-- Fixes file chooser label/flow by using original drag-and-drop drop zones.
-- Restores XLSX punch parsing, reader log slots, date/supervisor selection, thresholds, and original findings sections.
-- Current implementation is an isolated internal module page to avoid JavaScript collisions with the suite shell.

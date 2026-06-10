@@ -1,5 +1,0 @@
-v2.7.5 Data Health Alias + Schedule Match Fix
-- Data Health matching no longer ignores attendance rows with stale rosterId values.
-- Added first-name alias/short-name matching for Liz/Elizabeth, Jaz/Jazmine, Jae/Jalisa, Ray/Raymond, Dan/Danillo, Kay/Kaylan, KD/Kendarius, Day/Damyn.
-- Schedule health now uses person matching instead of raw normalized string equality.
-- JavaScript syntax check passed.

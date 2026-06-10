@@ -1,6 +1,0 @@
-v2.7.6 Attendance Name Alignment Fix
-
-- Added Align Attendance Names button in Data Health.
-- Alignment updates attendance employee display names/basic fields from roster without merging/deleting history.
-- Data Health now uses loose person matching for roster/attendance checks.
-- Intended to resolve false missing-link warnings caused by shortened names and stale rosterId values.
