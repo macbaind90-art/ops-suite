@@ -1,13 +1,5 @@
-# PWADC Security Operations Suite v3.0.3
+# PWADC Security Operations Suite v3.0.4
 
-Full build kit for GitHub Actions.
+Build with GitHub Actions using `.github/workflows/build-windows.yml`.
 
-## Workflow path
-
-`.github/workflows/build-windows.yml`
-
-## Build output
-
-GitHub Actions artifact name:
-
-`PWADC-Security-Operations-Suite-v3-0-3-Windows`
+Artifact name: `PWADC-Security-Operations-Suite-v3-0-4-Windows`
