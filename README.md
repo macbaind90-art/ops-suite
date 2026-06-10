@@ -1,6 +1,6 @@
-# PWADC Security Operations Suite v3.0
+# PWADC Security Operations Suite v3.0.1
 
-Production baseline build kit.
+Patch build kit. Restores the old Attendance Review layout and moves grouped person/code-category behavior to the Patterns screen.
 
 ## Build workflow
 
@@ -14,7 +14,7 @@ Use GitHub Actions to publish the Windows single-file EXE.
 
 ## Scope
 
-This v3.0 baseline includes the stabilized suite through Attendance Review grouped flags, Attendance Patterns, Pattern Acknowledge, Data Health, Restore Center, Change Log, Other Programs launcher, Roster/Schedule/Training/Uniforms, and Task Tracker.
+This v3.0.1 patch corrects Attendance Review and Patterns behavior after the v3.0 QA baseline.
 
 ## Shared data root
 
