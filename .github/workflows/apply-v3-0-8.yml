@@ -104,12 +104,6 @@ jobs:
           readme = Path('README.md')
           readme.write_text('# PWADC Security Operations Suite v3.0.8\n\n## Build\n\nUse GitHub Actions workflow at `.github/workflows/build-windows.yml`.\n\nThis build updates the Home screen into Manager Dashboard 2.0 with Attendance, Staffing for Today, Task Watch, and Quick Actions.\n', encoding='utf-8')
 
-          workflow = Path('.github/workflows/build-windows.yml')
-          y = workflow.read_text(encoding='utf-8').replace('v3-0-7', 'v3-0-8')
-          workflow.write_text(y, encoding='utf-8')
-
-          Path('.github/workflows/apply-v3-0-8.yml').unlink()
-
       - name: Validate JavaScript syntax
         shell: bash
         run: |
@@ -126,6 +120,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add app/index.html README.md .github/workflows/build-windows.yml .github/workflows/apply-v3-0-8.yml
+          git add app/index.html README.md
           git commit -m "Apply v3.0.8 manager dashboard"
           git push
