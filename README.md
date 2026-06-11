@@ -1,14 +1,7 @@
-# PWADC Security Operations Suite v3.0.6
-
-Build with GitHub Actions using `.github/workflows/build-windows.yml`.
-
-## What changed
-- Added individual username + PIN login.
-- Added role tiers: Admin, Supervisor, Guard, Viewer.
-- Added Settings → User Management for Admin users.
-- Added current user display in the top bar.
-- Restricted module visibility by role.
-- Change/audit logs now record the signed-in user where supported.
+# PWADC Security Operations Suite v3.0.7
 
 ## Build
-Upload this kit to the repo, then run the GitHub Actions workflow.
+
+Use GitHub Actions workflow at `.github/workflows/build-windows.yml`.
+
+This build fixes the v3.0.6 startup issue and keeps the schedule row removal and custom rank management updates.
