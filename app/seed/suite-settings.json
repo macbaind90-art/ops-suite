@@ -1,1 +1,41 @@
-{"theme":"dark","defaultModule":"home","pin":"6268","dataRoot":"\\\\pig-fs\\Security\\MacBain\\Security Operations Suite","backupRetentionDays":180}
+{
+  "theme": "dark",
+  "defaultModule": "home",
+  "pin": "6268",
+  "dataRoot": "\\\\pig-fs\\Security\\MacBain\\Security Operations Suite",
+  "backupRetentionDays": 180,
+  "users": [
+    {
+      "id": "admin",
+      "username": "David",
+      "displayName": "David MacBain",
+      "role": "Admin",
+      "pin": "6268",
+      "active": true
+    },
+    {
+      "id": "supervisor",
+      "username": "Supervisor",
+      "displayName": "Supervisor",
+      "role": "Supervisor",
+      "pin": "1234",
+      "active": false
+    },
+    {
+      "id": "guard",
+      "username": "Guard",
+      "displayName": "Guard",
+      "role": "Guard",
+      "pin": "1111",
+      "active": false
+    },
+    {
+      "id": "viewer",
+      "username": "Viewer",
+      "displayName": "Viewer",
+      "role": "Viewer",
+      "pin": "0000",
+      "active": false
+    }
+  ]
+}
