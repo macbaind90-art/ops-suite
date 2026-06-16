@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 index = Path('app/index.html')
 s = index.read_text(encoding='utf-8')
@@ -95,6 +96,35 @@ if 'function renderRoster(' not in s:
         raise SystemExit('Could not find renderModule insertion point for renderRoster fallback')
     s = s.replace(marker, roster_fallback + '\n' + marker, 1)
 
+module_fallbacks = r'''
+function renderOtherPrograms(){
+  const programs=typeof OTHER_PROGRAMS!=='undefined'?OTHER_PROGRAMS:[];
+  return `<div class="page-head"><div><div class="page-title">Other Programs</div><div class="page-sub">Standalone audit and utility tools</div></div></div><div class="grid cols-3">${programs.map(p=>`<div class="card module-card"><h3>${esc(p.title||p.id||'Program')}</h3><p>${esc(p.purpose||'Standalone tool')}</p><div class="toolbar"><button onclick="openOtherProgramFallback('${escAttr(p.folder||'')}','${escAttr(p.file||'')}')">Open</button></div></div>`).join('')||'<div class="card"><div class="card-title">No Programs Configured</div><p class="mini-note">No standalone programs were found in the packaged configuration.</p></div>'}</div>`;
+}
+function openOtherProgramFallback(folder,file){
+  const base=(settings&&settings.dataRoot?settings.dataRoot:'\\\\pig-fs\\Security\\MacBain\\Security Operations Suite')+'\\Programs';
+  const path=base+'\\'+folder+'\\'+file;
+  try{if(window.chrome&&window.chrome.webview){window.chrome.webview.postMessage({type:'openPath',payload:{path}});toast('Opening '+file);return}}catch(_){ }
+  toast('Program path: '+path);
+}
+function renderDataHealth(){
+  let h={critical:0,warning:0,items:[]};
+  try{h=computeDataHealth()}catch(e){h={critical:1,warning:0,items:[{level:'critical',msg:e.message}]}}
+  const items=h.items||h.findings||[];
+  return `<div class="page-head"><div><div class="page-title">Data Health</div><div class="page-sub">Read-only integrity checks</div></div><button onclick="safeRenderPages()">Refresh</button></div><div class="grid cols-3"><div class="kpi"><div class="num">${h.critical||0}</div><div class="lbl">Critical</div></div><div class="kpi"><div class="num">${h.warning||0}</div><div class="lbl">Warning</div></div><div class="kpi"><div class="num">${items.length}</div><div class="lbl">Total Findings</div></div></div><div class="card"><div class="card-title">Findings</div>${items.length?items.map(i=>`<div class="log-row"><div>${esc(i.level||i.sev||'info')}</div><div>${esc(i.module||'System')}</div><div>${esc(i.msg||i.message||i.detail||'')}</div></div>`).join(''):'<p class="mini-note">No data health findings.</p>'}</div>`;
+}
+function renderRestoreCenter(){return `<div class="page-head"><div><div class="page-title">Restore Center</div><div class="page-sub">Backup and restore controls</div></div></div><div class="card"><div class="card-title">Restore Center</div><p class="mini-note">Restore data is preserved. Full restore controls will return in the cleanup pass.</p><button class="gold" onclick="backupEverything()">Backup Everything</button></div>`}
+function renderChangeLog(){return `<div class="page-head"><div><div class="page-title">Change Log</div><div class="page-sub">Combined audit trail</div></div></div><div class="card"><div class="card-title">Recent Activity</div><p class="mini-note">Change log data is preserved. Full filters will return in the cleanup pass.</p></div>`}
+function renderTasks(){const rows=(tasks.tasks||[]);return `<div class="page-head"><div><div class="page-title">Task Tracker</div><div class="page-sub">Active and archived task tracking</div></div></div><div class="card"><div class="card-title">Tasks</div><div class="table-wrap"><table><thead><tr><th>Task</th><th>Status</th><th>Priority</th><th>Owner</th></tr></thead><tbody>${rows.map(t=>`<tr><td>${esc(t.title||t.name||'Task')}</td><td>${esc(t.status||'Open')}</td><td>${esc(t.priority||'')}</td><td>${esc(t.owner||'')}</td></tr>`).join('')||'<tr><td colspan="4">No tasks found.</td></tr>'}</tbody></table></div></div>`}
+'''
+for fn in ['renderOtherPrograms','renderDataHealth','renderRestoreCenter','renderChangeLog','renderTasks']:
+    if f'function {fn}(' not in s:
+        marker = 'function renderModule(id){'
+        if marker not in s:
+            raise SystemExit('Could not find renderModule insertion point for module fallbacks')
+        s = s.replace(marker, module_fallbacks + '\n' + marker, 1)
+        break
+
 schedule_helpers = r'''
 function removeScheduleRowByIndex(rowIndex){
   const idx=Number(rowIndex);
@@ -138,5 +168,14 @@ if 'decorateScheduleRemoveButtons();' not in segment:
     if old in s:
         s = s.replace(old, new, 1)
 
+# QA sweep: every render function referenced by renderModule must exist after patching.
+called = set(re.findall(r'return\s+(render[A-Za-z0-9_]+)\(', s)) | set(re.findall(r'\?\s*(render[A-Za-z0-9_]+)\(', s)) | set(re.findall(r':\s*(render[A-Za-z0-9_]+)\(', s))
+defined = set(re.findall(r'function\s+(render[A-Za-z0-9_]+)\s*\(', s))
+required = {'renderHome','renderAttendance','renderRoster','renderTasks','renderDataHealth','renderRestoreCenter','renderChangeLog','renderOtherPrograms'}
+missing = sorted((called | required) - defined)
+if missing:
+    raise SystemExit('QA failed. Missing renderer function(s): ' + ', '.join(missing))
+
 index.write_text(s, encoding='utf-8')
 print('Applied v3.0.9 hotfix to app/index.html')
+print('QA render function sweep passed')
