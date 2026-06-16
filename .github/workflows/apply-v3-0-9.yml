@@ -1,0 +1,285 @@
+name: Apply v3.0.9 Schedule Row Removal
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/apply-v3-0-9.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.event.head_commit.message != 'Apply v3.0.9 schedule row removal'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Patch app to v3.0.9
+        shell: python
+        run: |
+          from pathlib import Path
+
+          index = Path('app/index.html')
+          s = index.read_text(encoding='utf-8')
+
+          # Version labels
+          s = s.replace('PWADC Security Operations Suite v3.0.8', 'PWADC Security Operations Suite v3.0.9')
+          s = s.replace('PWADC Security Operations Suite v3.0.7', 'PWADC Security Operations Suite v3.0.9')
+          s = s.replace('Command Suite v3.0.8', 'Command Suite v3.0.9')
+          s = s.replace('Command Suite v3.0.7', 'Command Suite v3.0.9')
+          s = s.replace('COMMAND SUITE v3.0.8', 'COMMAND SUITE v3.0.9')
+          s = s.replace('COMMAND SUITE v3.0.7', 'COMMAND SUITE v3.0.9')
+          s = s.replace('· v3.0.8', '· v3.0.9')
+          s = s.replace('· v3.0.7', '· v3.0.9')
+
+          # Add schedule row remover without needing to rewrite the existing schedule renderer.
+          helper = r'''
+function removeScheduleRowByIndex(rowIndex){
+  const idx=Number(rowIndex);
+  if(!Number.isInteger(idx)||idx<0||idx>=(roster.schedule||[]).length){toast('Schedule row not found');return;}
+  const row=roster.schedule[idx]||{};
+  const label=[row.section,row.post,row.role].filter(Boolean).join(' / ')||('row '+(idx+1));
+  if(!confirm('Remove schedule row: '+label+'? This removes the row from the schedule but does not delete any employee from the roster.'))return;
+  roster.schedule.splice(idx,1);
+  roster.audit=Array.isArray(roster.audit)?roster.audit:[];
+  roster.audit.unshift({at:new Date().toISOString(),user:currentUserName()||env.user||'',machine:env.machine||'',action:'Removed schedule row',detail:label});
+  saveRosterNow('remove-schedule-row').then(ok=>{if(ok){toast('Schedule row removed');safeRenderPages({preserveScroll:true});}});
+}
+function decorateScheduleRemoveButtons(){
+  try{
+    if(activeModule!=='roster'||activeRosterView!=='schedule')return;
+    const posts=Array.from(document.querySelectorAll('#page-roster .sch-post'));
+    if(!posts.length)return;
+    posts.forEach((post,idx)=>{
+      if(post.querySelector('.remove-schedule-row-btn'))return;
+      const tools=post.querySelector('.sch-row-tools')||post;
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='sm danger remove-schedule-row-btn';
+      btn.textContent='Remove';
+      btn.title='Remove this schedule row';
+      btn.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();removeScheduleRowByIndex(idx);});
+      tools.appendChild(btn);
+    });
+  }catch(e){console.warn('Schedule row remover decoration failed',e)}
+}
+'''
+          if 'function removeScheduleRowByIndex(' not in s:
+              marker = 'function renderAttendance(){'
+              if marker not in s:
+                  raise SystemExit('Could not find insertion marker for schedule removal helpers')
+              s = s.replace(marker, helper + '\n' + marker, 1)
+
+          # Run decorator after each render.
+          old = "renderPages();\n    if(preserveScroll){setTimeout(()=>window.scrollTo(sx,sy),0);}"
+          new = "renderPages();\n    setTimeout(()=>{try{decorateScheduleRemoveButtons();}catch(_){ }},0);\n    if(preserveScroll){setTimeout(()=>window.scrollTo(sx,sy),0);}"
+          if old in s and 'decorateScheduleRemoveButtons();' not in s[s.index('function safeRenderPages'):s.index('function showStartupError')]:
+              s = s.replace(old, new, 1)
+          elif 'function decorateScheduleRemoveButtons(' in s and 'decorateScheduleRemoveButtons();' not in s[s.index('function safeRenderPages'):s.index('function showStartupError')]:
+              raise SystemExit('Could not patch safeRenderPages decorator call')
+
+          index.write_text(s, encoding='utf-8')
+
+          readme = Path('README.md')
+          readme.write_text('''# PWADC Security Operations Suite v3.0.9
+
+## Current Build
+
+**Version:** v3.0.9
+
+This build adds schedule row removal while preserving the v3.0.8 Manager Dashboard 2.0 work.
+
+## Current Updates in v3.0.9
+
+- Added Remove button support for schedule rows
+- Removing a schedule row deletes only the schedule row, not the roster employee
+- Schedule row removals are recorded in the roster audit log
+- Version updated to v3.0.9
+- README.md includes current updates and major version history
+- `.github/workflows/build-windows.yml` included and artifact updated to v3.0.9
+
+## Major Version History
+
+### v3.0
+
+Stable production milestone for the PWADC Security Operations Suite.
+
+Major capabilities included:
+
+- Attendance module
+- Roster module
+- Schedule module
+- Training tracking
+- Uniform tracking
+- Task Tracker
+- Other Programs launcher
+- Data Health
+- Restore Center
+- Change Log
+- Backup Everything
+- Pattern tracking
+- Attendance Review
+- Notice generator
+- Shared data root support
+- GitHub Actions Windows EXE build workflow
+
+### v3.0.1 - v3.0.3
+
+- Corrected Attendance Review and Patterns screen behavior
+- Restored Attendance Review to the preferred table layout
+- Moved grouped drill-down behavior to the Patterns screen
+- Added pattern employee tiles
+- Added single-tile drilldown so only one selected employee opens at a time
+- Simplified build/artifact names to version-only format
+- Included `.github/workflows/build-windows.yml` in build kits
+
+### v3.0.4
+
+- Added schedule row removal
+- Added Remove Row option inside schedule row edit modal
+- Added Manage Ranks
+- Added custom rank support for roster employee add/edit
+- Prevented deletion of ranks currently assigned to employees
+
+### v3.0.5
+
+- Task Tracker completed tasks now archive automatically
+- Archived tasks hidden from normal open-status view
+- Archived tasks can be reopened
+- Removed Next Step from task table, modal, export, weekly update, and data health checks
+- Hardened modal click behavior
+
+### v3.0.6
+
+- Added individual username + PIN login
+- Added role tiers:
+  - Admin
+  - Supervisor
+  - Guard
+  - Viewer
+- Added Settings → User Management
+- Added current signed-in user display
+- Added role-based module visibility
+- Audit/change logs record signed-in user where supported
+
+### v3.0.7
+
+- Fixed v3.0.6 startup failure caused by missing `DEFAULT_USERS`
+- Kept schedule row removal
+- Kept custom rank management
+
+### v3.0.8
+
+- Added Manager Dashboard 2.0
+- Added Attendance dashboard section
+- Added Staffing for Today dashboard section
+- Added Task Watch dashboard section
+- Added Quick Actions dashboard section
+
+### v3.0.9
+
+- Added reliable schedule row removal from the Schedule screen
+- Confirm prompt clarifies employees are not deleted from the roster
+- Roster audit log records removed schedule rows
+
+## Build
+
+Use GitHub Actions workflow at:
+
+```text
+.github/workflows/build-windows.yml
+```
+
+Expected artifact naming pattern:
+
+```text
+PWADC-Security-Operations-Suite-vX-X-X-Windows
+```
+
+## Shared Data Root
+
+Default shared data path:
+
+```text
+\\\\pig-fs\\Security\\MacBain\\Security Operations Suite
+```
+
+Primary folders:
+
+```text
+Data
+Backups
+Exports
+Locks
+Programs
+Documents
+```
+
+## Other Programs
+
+Standalone audit tools are launched from:
+
+```text
+\\\\pig-fs\\Security\\MacBain\\Security Operations Suite\\Programs
+```
+
+Expected tools:
+
+```text
+Badge Audit
+AMAG Audit
+Access Audit
+```
+
+## Build Kit Rules
+
+Going forward, build kits should:
+
+- Include `README.md`
+- Include `.github/workflows/build-windows.yml`
+- Use version-only names, such as `v3.0.9`
+- Exclude `check*.js`
+- Exclude scratch validation files
+- Exclude QA audit notes
+- Keep filenames and artifact names simple
+''', encoding='utf-8')
+
+          workflow = Path('.github/workflows/build-windows.yml')
+          if workflow.exists():
+              y = workflow.read_text(encoding='utf-8')
+              y = y.replace('PWADC-Security-Operations-Suite-v3-0-8-Windows','PWADC-Security-Operations-Suite-v3-0-9-Windows')
+              y = y.replace('PWADC-Security-Operations-Suite-v3-0-7-Windows','PWADC-Security-Operations-Suite-v3-0-9-Windows')
+              workflow.write_text(y, encoding='utf-8')
+
+          # Remove old temporary patch workflow if it exists, and remove this workflow after patching.
+          for temp in ['.github/workflows/apply-v3-0-8.yml','.github/workflows/apply-v3-0-9.yml']:
+              p=Path(temp)
+              if p.exists():
+                  p.unlink()
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('app/index.html').read_text(encoding='utf-8')
+          js=s[s.index('<script>')+8:s.rindex('</script>')]
+          Path('/tmp/app.js').write_text(js, encoding='utf-8')
+          PY
+          node --check /tmp/app.js
+
+      - name: Commit v3.0.9
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add app/index.html README.md .github/workflows/build-windows.yml .github/workflows/apply-v3-0-8.yml .github/workflows/apply-v3-0-9.yml || true
+          git commit -m "Apply v3.0.9 schedule row removal"
+          git push
