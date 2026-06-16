@@ -27,7 +27,6 @@ jobs:
           index = Path('app/index.html')
           s = index.read_text(encoding='utf-8')
 
-          # Version labels inside the packaged app.
           for a,b in {
               'PWADC Security Operations Suite v3.0.8':'PWADC Security Operations Suite v3.0.9',
               'PWADC Security Operations Suite v3.0.7':'PWADC Security Operations Suite v3.0.9',
@@ -40,7 +39,6 @@ jobs:
           }.items():
               s = s.replace(a,b)
 
-          # Add missing helpers that caused the v3.0.8/v3.0.9 dashboard render failure.
           helpers = r'''
 function findRosterByScheduleName(name){
   const key=scheduleNameToPersonKey(name);
@@ -62,7 +60,6 @@ function isRdo(emp,date){return dashboardIsRdo(emp,date)}
                   raise SystemExit('Could not find buildRosterIndexes insertion point')
               s = s.replace(marker, helpers + '\n' + marker, 1)
 
-          # Replace dashboard with safe Manager Dashboard 2.0 renderer.
           if 'function renderHome(){' not in s:
               raise SystemExit('renderHome not found')
           start = s.index('function renderHome(){')
@@ -95,7 +92,6 @@ function isRdo(emp,date){return dashboardIsRdo(emp,date)}
           '''
           s = s[:start] + render_home + s[end:]
 
-          # Schedule row removal support, applied after render to avoid large schedule renderer rewrites.
           schedule_helpers = r'''
 function removeScheduleRowByIndex(rowIndex){
   const idx=Number(rowIndex);
@@ -128,26 +124,29 @@ function decorateScheduleRemoveButtons(){
               if marker not in s:
                   raise SystemExit('Could not find renderAttendance insertion point')
               s = s.replace(marker, schedule_helpers + '\n' + marker, 1)
-          if 'decorateScheduleRemoveButtons();' not in s[s.index('function safeRenderPages'):s.index('function showStartupError')]:
+
+          try:
+              segment = s[s.index('function safeRenderPages'):s.index('function showStartupError')]
+          except ValueError:
+              segment = ''
+          if 'decorateScheduleRemoveButtons();' not in segment:
               old = "renderPages();\n    if(preserveScroll){setTimeout(()=>window.scrollTo(sx,sy),0);}"
               new = "renderPages();\n    setTimeout(()=>{try{decorateScheduleRemoveButtons();}catch(_){ }},0);\n    if(preserveScroll){setTimeout(()=>window.scrollTo(sx,sy),0);}"
-              if old not in s:
-                  raise SystemExit('Could not patch safeRenderPages')
-              s = s.replace(old,new,1)
+              if old in s:
+                  s = s.replace(old,new,1)
 
           index.write_text(s, encoding='utf-8')
 
       - name: Validate JavaScript syntax
-        shell: bash
+        shell: pwsh
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          s=Path('app/index.html').read_text(encoding='utf-8')
-          js=s[s.index('<script>')+8:s.rindex('</script>')]
-          Path('app-check.js').write_text(js, encoding='utf-8')
-          PY
+          $html = Get-Content -Raw -Path "app/index.html"
+          $start = $html.IndexOf('<script>') + 8
+          $end = $html.LastIndexOf('</script>')
+          $js = $html.Substring($start, $end - $start)
+          Set-Content -Path "app-check.js" -Value $js -Encoding UTF8
           node --check app-check.js
-          del app-check.js
+          Remove-Item "app-check.js" -Force
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
