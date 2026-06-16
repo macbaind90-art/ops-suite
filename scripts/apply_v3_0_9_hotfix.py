@@ -69,6 +69,32 @@ render_home = r'''function renderHome(){
 '''
 s = s[:start] + render_home + s[end:]
 
+roster_fallback = r'''
+function renderRoster(){
+  const views=['roster','schedule','training','uniforms'];
+  const label=v=>v==='roster'?'Roster':v==='schedule'?'Schedule':v==='training'?'Training':'Uniforms';
+  return `<div class="page-head"><div><div class="page-title">Roster</div><div class="page-sub">Staff records, master schedule, uniforms, training, and shared JSON autosave</div></div><div class="top-actions"><button onclick="saveRosterNow('manual')">Save Roster</button><button onclick="backupEverything()">Backup Everything</button></div></div><div class="subnav">${views.map(v=>`<button class="${activeRosterView===v?'active':''}" onclick="activeRosterView='${v}';safeRenderPages()">${label(v)}</button>`).join('')}</div>${activeRosterView==='schedule'?renderScheduleFallback():activeRosterView==='training'?renderTrainingFallback():activeRosterView==='uniforms'?renderUniformsFallback():renderRosterFallback()}`;
+}
+function rosterNameFallback(e){return e.name||[e.first,e.last].filter(Boolean).join(' ')||'Unnamed'}
+function activeRosterRowsFallback(){return (roster.employees||[]).filter(e=>!e.archived&&e.status!=='Archived').slice().sort((a,b)=>String(a.shift||'').localeCompare(String(b.shift||''))||rosterNameFallback(a).localeCompare(rosterNameFallback(b)))}
+function renderRosterFallback(){
+  const rows=activeRosterRowsFallback();
+  return `<div class="card"><div class="card-title">Active Roster</div><div class="table-wrap"><table class="roster-table"><thead><tr><th>Name</th><th>Rank</th><th>Shift</th><th>Section</th><th>RDO</th><th>Status</th></tr></thead><tbody>${rows.map(e=>`<tr><td class="td-name"><strong>${esc(rosterNameFallback(e))}</strong><br><small>${esc(e.eid||e.id||'')}</small></td><td>${esc(e.rank||e.title||'')}</td><td>${esc(e.shift||'')}</td><td>${esc(e.section||'')}</td><td>${esc(Array.isArray(e.rdo)?e.rdo.join(', '):(e.rdo||''))}</td><td>${esc(e.status||'Active')}</td></tr>`).join('')||'<tr><td colspan="6" class="empty">No active roster employees found.</td></tr>'}</tbody></table></div></div>`;
+}
+function renderScheduleFallback(){
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const rows=roster.schedule||[];
+  return `<div class="card"><div class="card-title">Master Schedule</div><div class="notice">Use Remove to delete a schedule row only. This does not delete anyone from the roster.</div><div class="schedule-grid"><div class="sch-head">Post</div>${days.map(d=>`<div class="sch-head">${d}</div>`).join('')}${rows.map((row,idx)=>{const vals=Array.isArray(row.days)?row.days:days.map(d=>row[d]||row[d.toLowerCase()]||'');return `<div class="sch-post"><div>${esc(row.post||row.role||'Post')}<small>${esc(row.section||'')}</small></div><div class="sch-row-tools"><button class="sm danger" onclick="removeScheduleRowByIndex(${idx})">Remove</button></div></div>${days.map((d,i)=>`<div class="sch-cell"><div class="sch-name ${vals[i]?'':'none'}">${esc(vals[i]||'Open')}</div></div>`).join('')}`}).join('')||'<div class="sch-cell" style="grid-column:1 / -1">No schedule rows found.</div>'}</div></div>`;
+}
+function renderTrainingFallback(){return `<div class="card"><div class="card-title">Training</div><p class="mini-note">Training records are preserved in shared data. Full training controls will return in the next cleanup pass.</p></div>`}
+function renderUniformsFallback(){return `<div class="card"><div class="card-title">Uniforms</div><p class="mini-note">Uniform records are preserved in shared data. Full print controls will return in the next cleanup pass.</p></div>`}
+'''
+if 'function renderRoster(' not in s:
+    marker = 'function renderModule(id){'
+    if marker not in s:
+        raise SystemExit('Could not find renderModule insertion point for renderRoster fallback')
+    s = s.replace(marker, roster_fallback + '\n' + marker, 1)
+
 schedule_helpers = r'''
 function removeScheduleRowByIndex(rowIndex){
   const idx=Number(rowIndex);
