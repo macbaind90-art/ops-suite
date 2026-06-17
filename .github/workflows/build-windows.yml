@@ -23,6 +23,9 @@ jobs:
       - name: Fix login bootstrap
         run: python scripts/fix_login_bootstrap.py
 
+      - name: Apply bridge compatibility shim
+        run: python scripts/apply_bridge_shim.py
+
       - name: Validate JavaScript syntax
         shell: pwsh
         run: |
