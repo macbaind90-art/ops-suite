@@ -20,6 +20,9 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
+      - name: Fix login bootstrap
+        run: python scripts/fix_login_bootstrap.py
+
       - name: Validate JavaScript syntax
         shell: pwsh
         run: |
