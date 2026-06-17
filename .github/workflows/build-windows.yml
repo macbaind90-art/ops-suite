@@ -19,11 +19,6 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Apply v3.0.10 materialized source for build
-        run: python scripts/materialize_v3_0_10.py
 
       - name: Validate JavaScript syntax
         shell: pwsh
