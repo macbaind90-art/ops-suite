@@ -19,9 +19,11 @@ jobs:
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Apply v3.0.9 runtime hotfix
-        run: python scripts/apply_v3_0_9_hotfix.py
+      - name: Apply v3.0.10 materialized source for build
+        run: python scripts/materialize_v3_0_10.py
 
       - name: Validate JavaScript syntax
         shell: pwsh
@@ -48,5 +50,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-0-9-Windows
+          name: PWADC-Security-Operations-Suite-v3-0-10-Windows
           path: bin/Release/net8.0-windows/win-x64/publish/
