@@ -1,7 +1,7 @@
 {
   "Theme": "dark",
   "DefaultModule": "home",
-  "Pin": "6268",
+  "Pin": "1234",
   "DataRoot": "\\\\pig-fs\\Security\\MacBain\\Security Operations Suite",
   "BackupRetentionDays": 180
 }
