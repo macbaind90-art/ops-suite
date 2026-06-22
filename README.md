@@ -1,11 +1,13 @@
-# PWADC Security Operations Suite v3.0.16 Labor Analytics Expansion Build
+# PWADC Security Operations Suite v3.0.17 Sortable Tables Build
 
-This package is the full repository for the v3.0.16 build. It keeps the clean upload format with `.github/workflows/build-windows.yml` included and no `.git` folder required.
+This package is the full repository for the v3.0.17 build. It keeps the clean upload format with `.github/workflows/build-windows.yml` included and no `.git` folder required.
 
-## Changes in v3.0.16
+## Changes in v3.0.17
 
-- Fixed roster analytics page render failure caused by a missing schedule person-name helper.
-- Keeps v3.0.15 labor analytics features intact.
+- Added click-to-sort behavior across standard tables.
+- Table headers now sort ascending/descending without changing the saved data order.
+- Sort handling supports text, numbers, currency, percentages, hours, and common date/time values.
+- Keeps v3.0.16 roster analytics render fix and v3.0.15 labor analytics features intact.
 
 ## Changes in v3.0.15
 
@@ -28,7 +30,7 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-16-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-17-Windows`
 
 ## Full build-windows.yml
 
@@ -77,6 +79,6 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-0-16-Windows
+          name: PWADC-Security-Operations-Suite-v3-0-17-Windows
           path: bin/Release/net8.0-windows/win-x64/publish/
 ```
