@@ -492,7 +492,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.0.19" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.0.20" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -508,7 +508,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.0.19", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.0.20", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "suite-settings", "programs" };
         private static string ModuleFileName(string module) => module switch
         {
@@ -533,6 +533,15 @@ namespace PWADC.SecurityOperationsSuite
         public double MonthlyMultiplier { get; set; } = 4.333;
         public double AnnualMultiplier { get; set; } = 52;
         public double FteBaselineHours { get; set; } = 40;
+        public List<CoverageRequirement> CoverageRequirements { get; set; } = new List<CoverageRequirement>
+        {
+            new CoverageRequirement { Id = "cov1", Area = "1st Shift", Section = "1st Shift", DayType = "All", RequiredHeadcount = 6, HoursPerPost = 8, Notes = "Supervisor, Lead, EOC, Gate, and Rovers" },
+            new CoverageRequirement { Id = "cov2", Area = "2nd Shift", Section = "2nd Shift", DayType = "All", RequiredHeadcount = 6, HoursPerPost = 8, Notes = "Supervisor, Lead, EOC, Gate, and Rovers" },
+            new CoverageRequirement { Id = "cov3", Area = "3rd Shift", Section = "3rd Shift", DayType = "All", RequiredHeadcount = 6, HoursPerPost = 8, Notes = "Supervisor, Lead, EOC, Gate, and Rovers" },
+            new CoverageRequirement { Id = "cov4", Area = "Crosswalk", Section = "Crosswalk", DayType = "Weekday", RequiredHeadcount = 1, HoursPerPost = 8, Notes = "0500-1300 dock surge coverage" },
+            new CoverageRequirement { Id = "cov5", Area = "Grocery Dock", Section = "Grocery Dock", DayType = "Weekday", RequiredHeadcount = 2, HoursPerPost = 8, Notes = "0600-1400 grocery dock coverage" },
+            new CoverageRequirement { Id = "cov6", Area = "Reception", Section = "Reception", DayType = "Weekday", RequiredHeadcount = 1, HoursPerPost = 9, Notes = "0800-1700 front desk coverage" }
+        };
         public List<SuiteUser> Users { get; set; } = new List<SuiteUser>
         {
             new SuiteUser { Id = "admin", Username = "David", DisplayName = "David MacBain", Role = "Admin", Pin = "6268", Active = true },
@@ -540,6 +549,17 @@ namespace PWADC.SecurityOperationsSuite
             new SuiteUser { Id = "lead", Username = "Lead", DisplayName = "Lead", Role = "Lead", Pin = "1111", Active = false },
             new SuiteUser { Id = "viewer", Username = "Viewer", DisplayName = "Viewer", Role = "Viewer", Pin = "0000", Active = false }
         };
+    }
+
+    public class CoverageRequirement
+    {
+        public string Id { get; set; } = "";
+        public string Area { get; set; } = "Coverage Area";
+        public string Section { get; set; } = "Coverage Area";
+        public string DayType { get; set; } = "All";
+        public double RequiredHeadcount { get; set; } = 1;
+        public double HoursPerPost { get; set; } = 8;
+        public string Notes { get; set; } = "";
     }
 
     public class SuiteUser

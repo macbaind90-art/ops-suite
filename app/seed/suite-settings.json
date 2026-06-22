@@ -43,5 +43,61 @@
       "Pin": "0000",
       "Active": false
     }
+  ],
+  "CoverageRequirements": [
+    {
+      "Id": "cov1",
+      "Area": "1st Shift",
+      "Section": "1st Shift",
+      "DayType": "All",
+      "RequiredHeadcount": 6,
+      "HoursPerPost": 8,
+      "Notes": "Supervisor, Lead, EOC, Gate, and Rovers"
+    },
+    {
+      "Id": "cov2",
+      "Area": "2nd Shift",
+      "Section": "2nd Shift",
+      "DayType": "All",
+      "RequiredHeadcount": 6,
+      "HoursPerPost": 8,
+      "Notes": "Supervisor, Lead, EOC, Gate, and Rovers"
+    },
+    {
+      "Id": "cov3",
+      "Area": "3rd Shift",
+      "Section": "3rd Shift",
+      "DayType": "All",
+      "RequiredHeadcount": 6,
+      "HoursPerPost": 8,
+      "Notes": "Supervisor, Lead, EOC, Gate, and Rovers"
+    },
+    {
+      "Id": "cov4",
+      "Area": "Crosswalk",
+      "Section": "Crosswalk",
+      "DayType": "Weekday",
+      "RequiredHeadcount": 1,
+      "HoursPerPost": 8,
+      "Notes": "0500-1300 dock surge coverage"
+    },
+    {
+      "Id": "cov5",
+      "Area": "Grocery Dock",
+      "Section": "Grocery Dock",
+      "DayType": "Weekday",
+      "RequiredHeadcount": 2,
+      "HoursPerPost": 8,
+      "Notes": "0600-1400 grocery dock coverage"
+    },
+    {
+      "Id": "cov6",
+      "Area": "Reception",
+      "Section": "Reception",
+      "DayType": "Weekday",
+      "RequiredHeadcount": 1,
+      "HoursPerPost": 9,
+      "Notes": "0800-1700 front desk coverage"
+    }
   ]
 }

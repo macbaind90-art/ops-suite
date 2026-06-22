@@ -1,23 +1,18 @@
-# PWADC Security Operations Suite v3.0.19
+# PWADC Security Operations Suite v3.0.20
 
-This build adds settings-based labor assumptions and first-pass role privileges.
+Clean full repo package with `.github` workflow included and no `.git` folder.
 
-## v3.0.19 changes
+## v3.0.20 changes
 
-- Labor loaded-cost assumptions are now editable in Settings.
-- Added FT Pig, PT Pig, and TempToHire loaded-rate settings.
-- Added monthly multiplier, annual multiplier, and FTE baseline-hour settings.
-- Added Admin / Supervisor / Lead / Viewer role model.
-- Settings are Admin-only.
-- Roster add/edit/remove, promotion, merit, schedule editing, and attendance employee removal are Admin-only.
-- Individual pay rates and employee-level costs are hidden from users below Admin.
-- Supervisor can view labor summaries and section-level loaded cost without individual pay rates.
-- Lead and Viewer do not see labor-cost analytics.
+- Adds an admin-editable Required Coverage Model in Settings.
+- Adds dashboard coverage summary: open posts, open HPW, and staffing risk.
+- Adds analytics comparison of required HPW vs scheduled HPW.
+- Adds required coverage detail with risk labels: Covered, Short, Overstaffed, No coverage, and Single point.
+- Adds estimated loaded weekly gap cost.
+- Keeps v3.0.19 role and pay-visibility protections.
 
 ## GitHub Actions workflow
 
 Path: `.github/workflows/build-windows.yml`
 
-Run **Build PWADC Security Operations Suite** on the `main` branch.
-
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-19-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-20-Windows`
