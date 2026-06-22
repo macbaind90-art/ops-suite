@@ -1,17 +1,18 @@
-# PWADC Security Operations Suite v3.0.21
+# PWADC Security Operations Suite v3.0.22
 
-Clean full repo package with `.github` workflow included and no `.git` folder.
-
-## v3.0.21 changes
-
-- Moves Settings out of the slide-out panel and into a full Admin-only Settings page.
-- Adds user-friendly Settings sections: General, Users & Roles, Labor Assumptions, Coverage Requirements, Data & Backups, Programs, and Danger Zone.
-- Keeps loaded-cost and coverage settings editable from the new page.
-- Adds validation for rates, multipliers, required Admin access, blank PINs, and coverage rule values.
-- Keeps v3.0.20 required coverage analytics intact.
+Schedule-based staffing rules build.
 
 ## GitHub Actions workflow
 
 Path: `.github/workflows/build-windows.yml`
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-21-Windows`
+Run **Build PWADC Security Operations Suite** on the `main` branch.
+
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-22-Windows`
+
+## Build notes
+
+- Clean upload ZIP. No `.git` folder.
+- `.github/workflows/build-windows.yml` is included.
+- Coverage requirements are seeded from the current PWADC Security Schedule export dated 2026-06-22.
+- Reception remains a 0800-1700 coverage window but uses 8 hours for labor/cost calculations because lunch is covered by relief.

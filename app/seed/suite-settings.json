@@ -46,58 +46,390 @@
   ],
   "CoverageRequirements": [
     {
-      "Id": "cov1",
-      "Area": "1st Shift",
-      "Section": "1st Shift",
-      "DayType": "All",
-      "RequiredHeadcount": 6,
-      "HoursPerPost": 8,
-      "Notes": "Supervisor, Lead, EOC, Gate, and Rovers"
+      "id": "cov1",
+      "area": "1st Shift Core Supervisor",
+      "section": "1st Shift",
+      "post": "Supervisor",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "0800-1600 core supervisor coverage"
     },
     {
-      "Id": "cov2",
-      "Area": "2nd Shift",
-      "Section": "2nd Shift",
-      "DayType": "All",
-      "RequiredHeadcount": 6,
-      "HoursPerPost": 8,
-      "Notes": "Supervisor, Lead, EOC, Gate, and Rovers"
+      "id": "cov2",
+      "area": "1st Shift Extra Supervisor",
+      "section": "1st Shift",
+      "post": "Supervisor",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Second supervisor row on Mon-Wed"
     },
     {
-      "Id": "cov3",
-      "Area": "3rd Shift",
-      "Section": "3rd Shift",
-      "DayType": "All",
-      "RequiredHeadcount": 6,
-      "HoursPerPost": 8,
-      "Notes": "Supervisor, Lead, EOC, Gate, and Rovers"
+      "id": "cov3",
+      "area": "1st Shift Base",
+      "section": "1st Shift",
+      "post": "Base",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Base post coverage"
     },
     {
-      "Id": "cov4",
-      "Area": "Crosswalk",
-      "Section": "Crosswalk",
-      "DayType": "Weekday",
-      "RequiredHeadcount": 1,
-      "HoursPerPost": 8,
-      "Notes": "0500-1300 dock surge coverage"
+      "id": "cov4",
+      "area": "1st Shift Response",
+      "section": "1st Shift",
+      "post": "Response",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 2,
+      "hoursPerPost": 8,
+      "notes": "Two response posts; current schedule has open response slots on Sun/Sat"
     },
     {
-      "Id": "cov5",
-      "Area": "Grocery Dock",
-      "Section": "Grocery Dock",
-      "DayType": "Weekday",
-      "RequiredHeadcount": 2,
-      "HoursPerPost": 8,
-      "Notes": "0600-1400 grocery dock coverage"
+      "id": "cov5",
+      "area": "1st Shift Floater",
+      "section": "1st Shift",
+      "post": "Floater",
+      "days": [
+        "Thu",
+        "Fri"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Floater coverage shown Thu-Fri"
     },
     {
-      "Id": "cov6",
-      "Area": "Reception",
-      "Section": "Reception",
-      "DayType": "Weekday",
-      "RequiredHeadcount": 1,
-      "HoursPerPost": 9,
-      "Notes": "0800-1700 front desk coverage"
+      "id": "cov6",
+      "area": "2nd Shift Core Supervisor",
+      "section": "2nd Shift",
+      "post": "Supervisor",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "1600-2400 core supervisor coverage"
+    },
+    {
+      "id": "cov7",
+      "area": "2nd Shift Extra Supervisor",
+      "section": "2nd Shift",
+      "post": "Supervisor",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Second supervisor row on Mon-Wed"
+    },
+    {
+      "id": "cov8",
+      "area": "2nd Shift Base",
+      "section": "2nd Shift",
+      "post": "Base",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Base post coverage"
+    },
+    {
+      "id": "cov9",
+      "area": "2nd Shift Response",
+      "section": "2nd Shift",
+      "post": "Response",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 2,
+      "hoursPerPost": 8,
+      "notes": "Two response posts"
+    },
+    {
+      "id": "cov10",
+      "area": "2nd Shift Floater",
+      "section": "2nd Shift",
+      "post": "Floater",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Weekday floater coverage"
+    },
+    {
+      "id": "cov11",
+      "area": "3rd Shift Core Supervisor",
+      "section": "3rd Shift",
+      "post": "Supervisor",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "0000-0800 core supervisor coverage"
+    },
+    {
+      "id": "cov12",
+      "area": "3rd Shift Extra Supervisor",
+      "section": "3rd Shift",
+      "post": "Supervisor",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Second supervisor row on Mon-Wed"
+    },
+    {
+      "id": "cov13",
+      "area": "3rd Shift Base",
+      "section": "3rd Shift",
+      "post": "Base",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Base post coverage"
+    },
+    {
+      "id": "cov14",
+      "area": "3rd Shift Response",
+      "section": "3rd Shift",
+      "post": "Response",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 2,
+      "hoursPerPost": 8,
+      "notes": "Two response posts"
+    },
+    {
+      "id": "cov15",
+      "area": "3rd Shift Floater",
+      "section": "3rd Shift",
+      "post": "Floater",
+      "days": [
+        "Sun",
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Primary floater row"
+    },
+    {
+      "id": "cov16",
+      "area": "3rd Shift Extra Floater",
+      "section": "3rd Shift",
+      "post": "Floater",
+      "days": [
+        "Mon",
+        "Thu"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Second floater row on Mon/Thu"
+    },
+    {
+      "id": "cov17",
+      "area": "Gate 0400-1200",
+      "section": "Gate",
+      "post": "Gate 0400-1200",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Weekday gate coverage"
+    },
+    {
+      "id": "cov18",
+      "area": "Gate 1200-2000",
+      "section": "Gate",
+      "post": "Gate 1200-2000",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "requiredHeadcount": 2,
+      "hoursPerPost": 8,
+      "notes": "Two weekday gate guards"
+    },
+    {
+      "id": "cov19",
+      "area": "Gate 2000-0400",
+      "section": "Gate",
+      "post": "Gate 2000-0400",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Weekday overnight gate coverage"
+    },
+    {
+      "id": "cov20",
+      "area": "Gate 0400-1600 Weekend",
+      "section": "Gate",
+      "post": "Gate 0400-1600",
+      "days": [
+        "Sun",
+        "Sat"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 12,
+      "notes": "Weekend day gate coverage"
+    },
+    {
+      "id": "cov21",
+      "area": "Gate 1600-0400 Weekend",
+      "section": "Gate",
+      "post": "Gate 1600-0400",
+      "days": [
+        "Sun",
+        "Sat"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 12,
+      "notes": "Weekend night gate coverage"
+    },
+    {
+      "id": "cov22",
+      "area": "Grocery Dock 0600-1400",
+      "section": "Dock & Support",
+      "post": "Grocery 0600-1400",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Weekday grocery dock coverage"
+    },
+    {
+      "id": "cov23",
+      "area": "Crosswalk 0500-1300",
+      "section": "Dock & Support",
+      "post": "Crosswalk 0500-1300",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "Weekday crosswalk/dock surge coverage"
+    },
+    {
+      "id": "cov24",
+      "area": "Reception 0800-1700",
+      "section": "Dock & Support",
+      "post": "Reception 0800-1700",
+      "days": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri"
+      ],
+      "requiredHeadcount": 1,
+      "hoursPerPost": 8,
+      "notes": "9-hour window with 1-hour lunch relief covered by another guard; 8 hours for cost/HPW"
     }
   ]
 }
