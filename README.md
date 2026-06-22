@@ -1,15 +1,21 @@
-# PWADC Security Operations Suite v3.0.14 Roster Labor Analytics Build
+# PWADC Security Operations Suite v3.0.15 Labor Analytics Expansion Build
 
-This package is the full repository for the v3.0.14 build. It preserves the working Attendance removal controls and adds roster PT/FT/TempToHire classification plus loaded-cost labor analytics.
+This package is the full repository for the v3.0.15 build. It keeps the clean upload format with `.github/workflows/build-windows.yml` included and no `.git` folder required.
 
+## Changes in v3.0.15
 
-## Changes in v3.0.14
+- Expanded Roster labor cost visibility per employee.
+- Added weekly, monthly, and yearly base cost and loaded cost calculations.
+- Added scheduled HPW per employee, using master schedule assignments when found.
+- Added planning fallback hours when an employee is not found on the schedule: FT/Temp 40 HPW and PT 24 HPW.
+- Expanded Analytics to include coverage risk, scheduled vs required hours, open HPW gap, overtime exposure, RDO conflict flags, temp dependency, and readiness/risk indicators.
+- Analytics print and CSV now include employee-level cost detail.
 
-- Added PT / FT / TempToHire employment class to Roster employee records.
-- Added PT / FT / TempToHire column to the Roster table and printable roster options.
-- Added loaded-cost logic to Analytics: FT Pig 33%, PT Pig 27%, TempToHire 35%.
-- Added base weekly labor cost, loaded weekly labor cost, and loaded add-on reporting.
-- Added section-level base cost and loaded cost in Analytics, print, and CSV export.
+## Loaded cost assumptions
+
+- FT Pig employees: 33%
+- PT Pig employees: 27%
+- TempToHire employees: 35%
 
 ## GitHub Actions workflow
 
@@ -17,7 +23,7 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-14-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-15-Windows`
 
 ## Full build-windows.yml
 
@@ -66,6 +72,6 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-0-14-Windows
+          name: PWADC-Security-Operations-Suite-v3-0-15-Windows
           path: bin/Release/net8.0-windows/win-x64/publish/
 ```
