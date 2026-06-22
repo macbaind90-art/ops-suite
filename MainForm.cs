@@ -146,6 +146,12 @@ namespace PWADC.SecurityOperationsSuite
                         string listModule = root.TryGetProperty("module", out JsonElement lbm) ? lbm.GetString() ?? "" : "";
                         await Respond(requestId, true, ListBackups(listModule));
                         break;
+                    case "suite:readBackupSummary":
+                        if (!root.TryGetProperty("payload", out JsonElement summaryPayload)) throw new InvalidOperationException("Missing backup summary payload.");
+                        string summaryModule = summaryPayload.TryGetProperty("module", out JsonElement sumMod) ? sumMod.GetString() ?? "" : "";
+                        string summaryPath = summaryPayload.TryGetProperty("path", out JsonElement sumPath) ? sumPath.GetString() ?? "" : "";
+                        await Respond(requestId, true, ReadBackupSummary(summaryModule, summaryPath));
+                        break;
                     case "suite:restoreBackup":
                         if (!root.TryGetProperty("payload", out JsonElement restorePayload)) throw new InvalidOperationException("Missing restore payload.");
                         string restoreModule = restorePayload.TryGetProperty("module", out JsonElement rsm) ? rsm.GetString() ?? "" : "";
@@ -409,6 +415,44 @@ namespace PWADC.SecurityOperationsSuite
             return new { module, backups };
         }
 
+        private object ReadBackupSummary(string module, string backupPath)
+        {
+            if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Backup module was not defined.");
+            if (string.IsNullOrWhiteSpace(backupPath)) throw new InvalidOperationException("Backup path was not provided.");
+            EnsureFolders();
+            string fullBackupPath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(backupPath));
+            string allowedRoot = Path.GetFullPath(Path.Combine(settings.DataRoot, "Backups"));
+            if (!fullBackupPath.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Backup path is outside the suite backup folder.");
+            if (!File.Exists(fullBackupPath)) throw new FileNotFoundException("Backup file was not found: " + fullBackupPath);
+            FileInfo info = new FileInfo(fullBackupPath);
+            string json = File.ReadAllText(fullBackupPath);
+            using JsonDocument doc = JsonDocument.Parse(json);
+            JsonElement root = doc.RootElement;
+            int employees = CountArray(root, "employees");
+            int schedule = CountArray(root, "schedule");
+            int tasks = CountArray(root, "tasks");
+            int audit = CountArray(root, "audit");
+            int attendanceRecords = 0;
+            if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("attendance", out JsonElement att) && att.ValueKind == JsonValueKind.Object)
+            {
+                foreach (JsonProperty person in att.EnumerateObject())
+                {
+                    if (person.Value.ValueKind == JsonValueKind.Object)
+                    {
+                        foreach (JsonProperty _ in person.Value.EnumerateObject()) attendanceRecords++;
+                    }
+                }
+            }
+            string lastSaved = root.ValueKind == JsonValueKind.Object && root.TryGetProperty("lastSaved", out JsonElement ls) ? ls.GetString() ?? "" : "";
+            return new { module, name = info.Name, path = info.FullName, modified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"), sizeBytes = info.Length, employees, schedule, tasks, audit, attendanceRecords, lastSaved };
+        }
+
+        private static int CountArray(JsonElement root, string property)
+        {
+            if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty(property, out JsonElement arr) && arr.ValueKind == JsonValueKind.Array) return arr.GetArrayLength();
+            return 0;
+        }
+
         private string RestoreBackup(string module, string backupPath)
         {
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Restore module was not defined.");
@@ -492,7 +536,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.0.23" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.0.24" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -508,7 +552,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.0.23", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.0.24", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "suite-settings", "programs" };
         private static string ModuleFileName(string module) => module switch
         {
