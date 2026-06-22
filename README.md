@@ -1,22 +1,28 @@
-# PWADC Security Operations Suite v3.0.17 Sortable Tables Build
+# PWADC Security Operations Suite v3.0.18 Employee Profile Build
 
-This package is the full repository for the v3.0.17 build. It keeps the clean upload format with `.github/workflows/build-windows.yml` included and no `.git` folder required.
+This package is the full repository for the v3.0.18 build. It keeps the clean upload format with `.github/workflows/build-windows.yml` included and no `.git` folder required.
 
-## Changes in v3.0.17
+## Changes in v3.0.18
 
-- Added click-to-sort behavior across standard tables.
-- Table headers now sort ascending/descending without changing the saved data order.
-- Sort handling supports text, numbers, currency, percentages, hours, and common date/time values.
-- Keeps v3.0.16 roster analytics render fix and v3.0.15 labor analytics features intact.
+- Added a Global Employee Search box in the top bar.
+- Added an Employee Profile module/screen.
+- Profile combines roster, attendance, schedule, training, uniform, and labor-cost details in one place.
+- Added Profile action from the roster table.
+- Added Print Profile support.
+- Kept the v3.0.17 standard table sorting behavior.
+- Kept v3.0.16 roster analytics render fix and v3.0.15 labor analytics features intact.
 
-## Changes in v3.0.15
+## Employee Profile Includes
 
-- Expanded Roster labor cost visibility per employee.
-- Added weekly, monthly, and yearly base cost and loaded cost calculations.
-- Added scheduled HPW per employee, using master schedule assignments when found.
-- Added planning fallback hours when an employee is not found on the schedule: FT/Temp 40 HPW and PT 24 HPW.
-- Expanded Analytics to include coverage risk, scheduled vs required hours, open HPW gap, overtime exposure, RDO conflict flags, temp dependency, and readiness/risk indicators.
-- Analytics print and CSV now include employee-level cost detail.
+- Employee name, EID, rank/title, shift/section, gate shift, employment class, status, and hourly rate.
+- Scheduled HPW.
+- Base weekly/monthly/yearly labor cost.
+- Loaded weekly/monthly/yearly labor cost.
+- Attendance counts for the last 30 and 90 days.
+- Recent attendance entries.
+- Schedule assignment summary.
+- Training readiness summary.
+- Uniform summary.
 
 ## Loaded cost assumptions
 
@@ -30,7 +36,7 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-17-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-18-Windows`
 
 ## Full build-windows.yml
 
@@ -79,6 +85,7 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-0-17-Windows
+          name: PWADC-Security-Operations-Suite-v3-0-18-Windows
           path: bin/Release/net8.0-windows/win-x64/publish/
+
 ```
