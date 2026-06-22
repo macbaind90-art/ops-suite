@@ -492,7 +492,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.0.18" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.0.19" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -508,7 +508,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.0.18", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.0.19", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "suite-settings", "programs" };
         private static string ModuleFileName(string module) => module switch
         {
@@ -527,5 +527,28 @@ namespace PWADC.SecurityOperationsSuite
         public string Pin { get; set; } = "1234";
         public string DataRoot { get; set; } = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         public int BackupRetentionDays { get; set; } = 180;
+        public double FtLoadedRate { get; set; } = 0.33;
+        public double PtLoadedRate { get; set; } = 0.27;
+        public double TempLoadedRate { get; set; } = 0.35;
+        public double MonthlyMultiplier { get; set; } = 4.333;
+        public double AnnualMultiplier { get; set; } = 52;
+        public double FteBaselineHours { get; set; } = 40;
+        public List<SuiteUser> Users { get; set; } = new List<SuiteUser>
+        {
+            new SuiteUser { Id = "admin", Username = "David", DisplayName = "David MacBain", Role = "Admin", Pin = "6268", Active = true },
+            new SuiteUser { Id = "supervisor", Username = "Supervisor", DisplayName = "Supervisor", Role = "Supervisor", Pin = "1234", Active = false },
+            new SuiteUser { Id = "lead", Username = "Lead", DisplayName = "Lead", Role = "Lead", Pin = "1111", Active = false },
+            new SuiteUser { Id = "viewer", Username = "Viewer", DisplayName = "Viewer", Role = "Viewer", Pin = "0000", Active = false }
+        };
+    }
+
+    public class SuiteUser
+    {
+        public string Id { get; set; } = "";
+        public string Username { get; set; } = "";
+        public string DisplayName { get; set; } = "";
+        public string Role { get; set; } = "Viewer";
+        public string Pin { get; set; } = "1234";
+        public bool Active { get; set; } = true;
     }
 }

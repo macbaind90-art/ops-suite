@@ -3,5 +3,45 @@
   "DefaultModule": "home",
   "Pin": "1234",
   "DataRoot": "\\\\pig-fs\\Security\\MacBain\\Security Operations Suite",
-  "BackupRetentionDays": 180
+  "BackupRetentionDays": 180,
+  "FtLoadedRate": 0.33,
+  "PtLoadedRate": 0.27,
+  "TempLoadedRate": 0.35,
+  "MonthlyMultiplier": 4.333,
+  "AnnualMultiplier": 52,
+  "FteBaselineHours": 40,
+  "Users": [
+    {
+      "Id": "admin",
+      "Username": "David",
+      "DisplayName": "David MacBain",
+      "Role": "Admin",
+      "Pin": "6268",
+      "Active": true
+    },
+    {
+      "Id": "supervisor",
+      "Username": "Supervisor",
+      "DisplayName": "Supervisor",
+      "Role": "Supervisor",
+      "Pin": "1234",
+      "Active": false
+    },
+    {
+      "Id": "lead",
+      "Username": "Lead",
+      "DisplayName": "Lead",
+      "Role": "Lead",
+      "Pin": "1111",
+      "Active": false
+    },
+    {
+      "Id": "viewer",
+      "Username": "Viewer",
+      "DisplayName": "Viewer",
+      "Role": "Viewer",
+      "Pin": "0000",
+      "Active": false
+    }
+  ]
 }
