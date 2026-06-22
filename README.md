@@ -1,6 +1,11 @@
-# PWADC Security Operations Suite v3.0.15 Labor Analytics Expansion Build
+# PWADC Security Operations Suite v3.0.16 Labor Analytics Expansion Build
 
-This package is the full repository for the v3.0.15 build. It keeps the clean upload format with `.github/workflows/build-windows.yml` included and no `.git` folder required.
+This package is the full repository for the v3.0.16 build. It keeps the clean upload format with `.github/workflows/build-windows.yml` included and no `.git` folder required.
+
+## Changes in v3.0.16
+
+- Fixed roster analytics page render failure caused by a missing schedule person-name helper.
+- Keeps v3.0.15 labor analytics features intact.
 
 ## Changes in v3.0.15
 
@@ -23,7 +28,7 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-15-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-16-Windows`
 
 ## Full build-windows.yml
 
@@ -72,6 +77,6 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-0-15-Windows
+          name: PWADC-Security-Operations-Suite-v3-0-16-Windows
           path: bin/Release/net8.0-windows/win-x64/publish/
 ```
