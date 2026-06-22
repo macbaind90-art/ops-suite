@@ -1,16 +1,15 @@
-# PWADC Security Operations Suite v3.0.13 Attendance Manual Removal Build
+# PWADC Security Operations Suite v3.0.14 Roster Labor Analytics Build
 
-This package is the full repository for the v3.0.13 build. It preserves the working v3.0.12 roster-to-attendance sync and adds a backup control inside Attendance itself: an employee can be removed from active Attendance without deleting their historical attendance records.
+This package is the full repository for the v3.0.14 build. It preserves the working Attendance removal controls and adds roster PT/FT/TempToHire classification plus loaded-cost labor analytics.
 
-## Changes in v3.0.13
 
-- Added **Remove Employee** button to the Attendance module header.
-- Manual Attendance removal archives the selected Attendance employee instead of deleting history.
-- Removed employee is hidden from Daily Entry, 90-Day Grid, Attendance Review, Patterns, and dashboard active counts.
-- Existing attendance history remains in the JSON for audit/history.
-- A backup is requested before the manual removal save.
-- Attendance audit log records who removed the employee and the reason/note.
-- Version labels updated to v3.0.13.
+## Changes in v3.0.14
+
+- Added PT / FT / TempToHire employment class to Roster employee records.
+- Added PT / FT / TempToHire column to the Roster table and printable roster options.
+- Added loaded-cost logic to Analytics: FT Pig 33%, PT Pig 27%, TempToHire 35%.
+- Added base weekly labor cost, loaded weekly labor cost, and loaded add-on reporting.
+- Added section-level base cost and loaded cost in Analytics, print, and CSV export.
 
 ## GitHub Actions workflow
 
@@ -18,7 +17,7 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-13-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-14-Windows`
 
 ## Full build-windows.yml
 
@@ -67,6 +66,6 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-0-13-Windows
+          name: PWADC-Security-Operations-Suite-v3-0-14-Windows
           path: bin/Release/net8.0-windows/win-x64/publish/
 ```
