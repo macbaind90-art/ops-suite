@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v3.0.22
+# PWADC Security Operations Suite v3.0.23
 
 Schedule-based staffing rules build.
 
@@ -8,7 +8,7 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-22-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-23-Windows`
 
 ## Build notes
 
