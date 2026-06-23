@@ -1307,24 +1307,109 @@
   "trainingTopics": [
     {
       "id": 1,
-      "name": "Post Orders Review",
-      "intervalDays": 365,
+      "name": "Security Department Orientation",
+      "intervalDays": 0,
+      "warningDays": 30,
       "required": true,
-      "notes": "Annual review of assigned post orders"
+      "active": true,
+      "requirementGroup": "All",
+      "requirementText": "",
+      "notes": "Required for all Security employees. No expiration unless policy changes."
+    },
+    {
+      "id": 2,
+      "name": "Emergency Procedures",
+      "intervalDays": 365,
+      "warningDays": 30,
+      "required": true,
+      "active": true,
+      "requirementGroup": "All",
+      "requirementText": "",
+      "notes": "Annual emergency response, evacuation, severe weather, and escalation review."
     },
     {
       "id": 3,
+      "name": "Post Orders Review",
+      "intervalDays": 365,
+      "warningDays": 30,
+      "required": true,
+      "active": true,
+      "requirementGroup": "All",
+      "requirementText": "",
+      "notes": "Annual review of assigned post orders."
+    },
+    {
+      "id": 4,
+      "name": "Supervisor Standards",
+      "intervalDays": 365,
+      "warningDays": 30,
+      "required": true,
+      "active": true,
+      "requirementGroup": "Supervisors",
+      "requirementText": "",
+      "notes": "Required for supervisors and acting supervisors."
+    },
+    {
+      "id": 5,
+      "name": "Gate Post Training",
+      "intervalDays": 365,
+      "warningDays": 30,
+      "required": true,
+      "active": true,
+      "requirementGroup": "Gate",
+      "requirementText": "",
+      "notes": "Gate traffic, visitor/vendor flow, check-in, escalation, and gate controls."
+    },
+    {
+      "id": 6,
+      "name": "Base / EOC Training",
+      "intervalDays": 365,
+      "warningDays": 30,
+      "required": true,
+      "active": true,
+      "requirementGroup": "BaseEOC",
+      "requirementText": "",
+      "notes": "Base/EOC, camera review, access control coordination, radio traffic, and incident intake."
+    },
+    {
+      "id": 7,
+      "name": "Dock / Crosswalk Training",
+      "intervalDays": 365,
+      "warningDays": 30,
+      "required": true,
+      "active": true,
+      "requirementGroup": "DockCrosswalk",
+      "requirementText": "",
+      "notes": "Crosswalk, grocery/perishable dock safety, truck movement, and stop sign enforcement."
+    },
+    {
+      "id": 8,
+      "name": "Forklift / PLE Certification",
+      "intervalDays": 365,
+      "warningDays": 30,
+      "required": true,
+      "active": true,
+      "requirementGroup": "PLE",
+      "requirementText": "",
+      "notes": "Required only for employees assigned or authorized to operate forklift/PLE equipment."
+    },
+    {
+      "id": 9,
       "name": "Gate Procedures",
       "intervalDays": 365,
       "required": true,
-      "notes": "Gate traffic, visitor/vendor flow, escalation"
+      "notes": "Gate traffic, visitor/vendor flow, escalation",
+      "warningDays": 30,
+      "active": true,
+      "requirementGroup": "All",
+      "requirementText": ""
     }
   ],
   "trainingRecords": [],
-  "nextTrainingTopicId": 4,
+  "nextTrainingTopicId": 10,
   "nextTrainingRecordId": 1,
   "exportedAt": "2026-06-03T16:44:53.713Z",
-  "version": "3.0.22",
+  "version": "3.0.34",
   "audit": [
     {
       "at": "2026-06-03T16:45:47.655Z",
