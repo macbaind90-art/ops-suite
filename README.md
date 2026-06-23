@@ -1,6 +1,6 @@
-# PWADC Security Operations Suite v3.0.30
+# PWADC Security Operations Suite v3.0.31
 
-Report Methodology and Label Polish build.
+Schedule Editing Improvements build.
 
 ## GitHub Actions workflow
 
@@ -8,26 +8,21 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-30-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-31-Windows`
 
-## v3.0.30 notes
+## v3.0.31 notes
 
-- Added HPW methodology notes to Weekly Staffing, Labor Cost, and Coverage Gap reports.
-- Added attendance interpretation legend to schedule/attendance comparison reports.
-- Added Data Confidence boxes showing schedule rows counted, Open/Pending cells, matched attendance HPW, and no-entry HPW.
-- Clarified report labels:
-  - Schedule Required HPW
-  - Named Scheduled HPW
-  - Open/Pending HPW
-  - Attendance Covered HPW
-  - Attendance Missed HPW
-  - No Entry HPW
-- Improved report preview controls with Print / Save PDF, Close Preview, and generated timestamp.
-- Kept the schedule-authority HPW math intact.
+- Improved the Master Schedule editor so the schedule remains the authority for HPW, reports, and labor cost.
+- Added clearer schedule row editing for section, post, coverage window, cost hours, row notes, and all daily assignments/statuses.
+- Added row notes for items such as lunch relief, weekend-only posts, remote gate eligibility, and temp coverage.
+- Added official day statuses in the editor: Closed, Open, Pending, or assigned employee.
+- Added Duplicate Row for faster creation of similar posts.
+- Added copy-pattern helpers: Copy Mon to Tue-Fri, Close Weekends, Mon-Fri Open, Copy Sun to Sat, and Close Entire Row.
+- Added Schedule Data Check warnings for invalid/missing cost hours, coverage-window vs cost-hour mismatches, Open/Pending unfilled cells, inactive assigned employees, and employees scheduled above the FTE baseline.
+- Kept role restrictions intact: Admin can edit schedule; other roles remain view-only for schedule editing controls.
 
 ## Build notes
 
 - Clean upload ZIP. No `.git` folder.
-- `.github/workflows/build-windows.yml` is included.
-- All file and folder timestamps are refreshed during packaging.
-- JavaScript syntax validation is included in the GitHub Actions workflow.
+- `.github/workflows/build-windows.yml` included.
+- All timestamps refreshed during package creation.
