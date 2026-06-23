@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v3.0.37
+# PWADC Security Operations Suite v3.0.38
 
 Clean full repo package with `.github` included and no `.git` folder.
 
@@ -8,20 +8,18 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-37-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-38-Windows`
 
-## v3.0.37 notes
+## v3.0.38 notes
 
-- Uniform Accountability now groups rows by employee.
-- Uniform rows are editable directly from the table.
-- Roster screen now links each employee directly to their Uniform section.
-- Uniform tracker remains uniforms-only; radios, keys, office supplies, badges/access cards, flashlights, and rain gear are excluded.
-
-
-- Corrected the v3.0.35 Uniform / Equipment scope back to a focused Uniform Tracker.
-- Removed radio, key, access card, badge, flashlight, and rain gear item types from the Uniform tracker.
-- Uniform tracking now focuses on shirt, pants, jacket, safety vest, and other uniform-only items.
-- Existing non-uniform items are filtered out of the Uniform view and should be handled by separate trackers/modules.
-- Removed the separation/company-property checklist from the Uniform screen.
-- Updated Employee Profile, Reports, Print Sheet, CSV export, and on-screen labels to say Uniforms only.
-- Kept cost visibility restricted to Admin.
+- Added a dedicated Office Supplies module.
+- Office Supplies is separate from Uniforms, Radios, and Keys.
+- Added add, edit, remove/archive, and Admin restore for supply items.
+- Added editable supply fields: item, category, current quantity, minimum quantity, order quantity, status, ordered date, received date, vendor, storage location, Admin-only cost, and notes.
+- Added automatic status behavior for In Stock, Low, and Out, with manual Ordered and Discontinued options.
+- Added low/out/ordered dashboard-style metrics on the Office Supplies page.
+- Added office supplies print sheet and CSV export.
+- Added Office Supplies Report to the Professional Report Center.
+- Kept Uniform Accountability unchanged from v3.0.37.
+- No `.git` folder is included.
+- `.github/workflows/build-windows.yml` is included.
