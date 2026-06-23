@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v3.0.28
+# PWADC Security Operations Suite v3.0.29
 
 Report Print Isolation Fix build.
 
@@ -8,7 +8,16 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-28-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-29-Windows`
+
+## v3.0.29 notes
+
+- Weekly Staffing and Coverage Gap reports now use the published schedule as the staffing authority.
+- Named schedule cells count as scheduled HPW.
+- Open and Pending cells count as unfilled HPW.
+- Closed and blank cells are ignored.
+- Labor cost uses named schedule assignments only.
+- Attendance comparison is added for the report week.
 
 ## Build notes
 
