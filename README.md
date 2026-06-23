@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v3.0.32
+# PWADC Security Operations Suite v3.0.33
 
 Schedule Editing Improvements build.
 
@@ -8,9 +8,9 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-32-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-33-Windows`
 
-## v3.0.32 notes
+## v3.0.33 notes
 
 - Improved the Master Schedule editor so the schedule remains the authority for HPW, reports, and labor cost.
 - Added clearer schedule row editing for section, post, coverage window, cost hours, row notes, and all daily assignments/statuses.
