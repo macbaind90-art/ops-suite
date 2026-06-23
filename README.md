@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v3.0.27
+# PWADC Security Operations Suite v3.0.28
 
 Report Print Isolation Fix build.
 
@@ -8,7 +8,7 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-27-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-28-Windows`
 
 ## Build notes
 
