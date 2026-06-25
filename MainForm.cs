@@ -536,7 +536,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.1.5" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.1.6" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -552,7 +552,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.1.5", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.1.6", baseDirectory = AppContext.BaseDirectory };
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "suite-settings", "programs" };
         private static string ModuleFileName(string module) => module switch
         {
@@ -572,7 +572,7 @@ namespace PWADC.SecurityOperationsSuite
         public string DataRoot { get; set; } = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         public int BackupRetentionDays { get; set; } = 180;
         public double FtLoadedRate { get; set; } = 0.33;
-        public double PtLoadedRate { get; set; } = 0.27;
+        public double PtLoadedRate { get; set; } = 0.20;
         public double TempLoadedRate { get; set; } = 0.35;
         public double MonthlyMultiplier { get; set; } = 4.333;
         public double AnnualMultiplier { get; set; } = 52;

@@ -5,7 +5,7 @@
   "DataRoot": "\\\\pig-fs\\Security\\MacBain\\Security Operations Suite",
   "BackupRetentionDays": 180,
   "FtLoadedRate": 0.33,
-  "PtLoadedRate": 0.27,
+  "PtLoadedRate": 0.2,
   "TempLoadedRate": 0.35,
   "MonthlyMultiplier": 4.333,
   "AnnualMultiplier": 52,
@@ -431,5 +431,6 @@
       "hoursPerPost": 8,
       "notes": "9-hour window with 1-hour lunch relief covered by another guard; 8 hours for cost/HPW"
     }
-  ]
+  ],
+  "ptLoadedRate": 0.2
 }
