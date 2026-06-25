@@ -1,8 +1,8 @@
-# PWADC Security Operations Suite v3.1.3
+# PWADC Security Operations Suite v3.1.4
 
 Stable Operations Management release.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-1-3-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-1-4-Windows`
 
 ## Build
 
@@ -12,7 +12,11 @@ GitHub Actions workflow path:
 
 The workflow validates JavaScript in `app/index.html`, restores the .NET project, publishes a self-contained Windows x64 executable, and uploads the versioned artifact.
 
-## v3.1.3 release notes
+## v3.1.4 bugfix release notes
+
+- Restores the Daily Entry render functions removed during the v3.1.3 pattern upgrade.
+- Keeps the v3.1.3 Attendance Patterns upgrade intact.
+- No data structure changes.
 
 - Attendance Patterns Upgrade on top of the v3.1.0 Operations Management baseline.
 - Adds smarter pattern detection for Monday/Friday issues, before/after RDO issues, repeated tardies, unauthorized early-outs, same day-of-week patterns, mixed issue types, and rolling 90-day occurrence risk.
