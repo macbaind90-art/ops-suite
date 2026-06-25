@@ -1,27 +1,29 @@
-# PWADC Security Operations Suite v3.0.41
+# PWADC Security Operations Suite v3.1.0
 
-Clean full repo package with `.github` included and no `.git` folder.
+Stable Operations Management release.
 
-## GitHub Actions workflow
+Expected artifact: `PWADC-Security-Operations-Suite-v3-1-0-Windows`
 
-Path: `.github/workflows/build-windows.yml`
+## Build
 
-Run **Build PWADC Security Operations Suite** on the `main` branch.
+GitHub Actions workflow path:
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-41-Windows`
+`.github/workflows/build-windows.yml`
 
-## v3.0.41 notes
+The workflow validates JavaScript in `app/index.html`, restores the .NET project, publishes a self-contained Windows x64 executable, and uploads the versioned artifact.
 
-- Stability, navigation, and data-polish pass before the v3.1 milestone.
-- Cleaned version labels and footer/report metadata to v3.0.41.
-- Added a Data Health module inventory panel so Attendance, Roster/Schedule, Training, Uniforms, Office Supplies, Tasks, Notices, Settings, and Other Programs can be checked from one place.
-- Expanded Data Health checks for Office Supplies, Training, Uniforms, Attendance Notices, and Task Tracker data quality.
-- Added module ownership notes so shared data boundaries are clearer:
-  - Attendance owns attendance records, notes, patterns, and notices.
-  - Roster owns employee records, schedule, training, uniforms, and office supplies.
-  - Task Tracker owns project/task data.
-  - Settings owns users, roles, labor assumptions, coverage requirements, and app settings.
-  - Programs are kept separate as standalone tools.
-- Added clearer backup/restore wording that explains which modules are covered by each shared JSON file.
-- No `.git` folder is included.
-- `.github/workflows/build-windows.yml` is included.
+## v3.1.0 release notes
+
+- Promotes the v3.0.x build-out line into the first stable Operations Management release.
+- Updates version labels, build metadata, README, manifest, and artifact naming to v3.1.0.
+- Adds a Start Here screen with supervisor workflow, admin workflow, module map, and included feature summary.
+- Keeps current modules intact: Roster, Attendance, Schedule, Reports, Training, Uniforms, Office Supplies, Task Tracker, Attendance Notices, Data Health, Restore Center, Settings, Change Log, and Other Programs.
+- No new heavy operational module was added in this milestone release.
+
+## Data root
+
+`\pig-fs\Security\MacBain\Security Operations Suite`
+
+## Notes
+
+This ZIP is a clean full repository package for GitHub upload. It intentionally excludes `.git` and includes `.github`.
