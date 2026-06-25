@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v3.0.39
+# PWADC Security Operations Suite v3.0.40
 
 Clean full repo package with `.github` included and no `.git` folder.
 
@@ -8,24 +8,21 @@ Path: `.github/workflows/build-windows.yml`
 
 Run **Build PWADC Security Operations Suite** on the `main` branch.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-0-39-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-0-40-Windows`
 
-## v3.0.39 notes
+## v3.0.40 notes
 
-- Added a dedicated Office Supplies module.
-- Office Supplies is separate from Uniforms, Radios, and Keys.
-- Added add, edit, remove/archive, and Admin restore for supply items.
-- Added editable supply fields: item, category, current quantity, minimum quantity, order quantity, status, ordered date, received date, vendor, storage location, Admin-only cost, and notes.
-- Added automatic status behavior for In Stock, Low, and Out, with manual Ordered and Discontinued options.
-- Added low/out/ordered dashboard-style metrics on the Office Supplies page.
-- Added office supplies print sheet and CSV export.
-- Added Office Supplies Report to the Professional Report Center.
-- Kept Uniform Accountability unchanged from v3.0.37.
+- Upgraded Task Tracker without removing the existing email draft behavior.
+- Kept **Open Current Draft** for the existing weekly email draft workflow.
+- Added **Generate Fresh Draft** for the improved weekly manager update.
+- Added **Copy Draft Text** and **Print Draft** support.
+- Added task fields: due date, follow-up date, assigned to, priority, status, category, blocked by, last update, next action, and recurring cadence.
+- Added task statuses: Not Started, In Progress, Waiting, Blocked, Completed, and Archived.
+- Added task priorities: Critical, High, Normal, and Low.
+- Added recurring options: None, Daily, Weekly, Monthly, Quarterly, Annual, and Custom.
+- Weekly update now organizes tasks by Completed This Week, In Progress, Waiting / Blocked, Needs Decision, and Upcoming Next Week.
+- Dashboard now shows overdue task count.
+- Task Status Report now includes overdue, due-this-week, blocked, high/critical, follow-up, blocker, and next-action detail.
+- Task CSV export now includes follow-up, recurring, blocked by, last update, next action, completed, and archived fields.
 - No `.git` folder is included.
 - `.github/workflows/build-windows.yml` is included.
-
-
-## v3.0.39 notes
-- Added Attendance Notice Workflow under Attendance.
-- Added notice history by employee, editable notice status, delivered/acknowledged/refused/escalated/no-notice workflow states.
-- Added related attendance dates, employee response, manager notes, printable notice packet, report and CSV export.
