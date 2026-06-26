@@ -1,6 +1,6 @@
-# PWADC Security Operations Suite v3.1.17
+# PWADC Security Operations Suite v3.1.18
 
-## v3.1.17 Attendance Patterns Rebuild
+## v3.1.18 Attendance Pattern QA / Tuning Pass
 
 - Rebuilds Attendance Patterns into a clearer rule-based review workflow.
 - Keeps the Attendance Review page largely intact.
@@ -25,7 +25,7 @@
 - Keeps v3.1.15/v3.1.16 render safety and dashboard improvements intact.
 - No roster, schedule, HPW, labor, training, or uniform logic changed.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-1-17-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-1-18-Windows`
 
 ## Build
 
