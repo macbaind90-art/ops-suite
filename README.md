@@ -1,8 +1,10 @@
-# PWADC Security Operations Suite v3.1.19
+# PWADC Security Operations Suite v3.1.20
 
-## v3.1.19 Pattern Action Hide Fix
+## v3.1.20 Pattern Employee Bulk Actions
 
-- Fixes Attendance Pattern action behavior so Monitor and Not an Issue immediately remove the card from the Outstanding workflow.
+- Adds employee-level **Monitor All**, **Not an Issue All**, and **Create Notice for All** buttons on the Attendance Patterns employee detail view.
+- Keeps individual category buttons available for one-off decisions.
+- Bulk notice creates one consolidated notice and marks all linked outstanding pattern categories as Notice Created after saving.
 - Keeps the Attendance Review page largely intact.
 - Shows patterns grouped by employee, with every category that employee falls into.
 - Pattern cards now show:
@@ -25,7 +27,7 @@
 - Keeps v3.1.15/v3.1.16 render safety and dashboard improvements intact.
 - No roster, schedule, HPW, labor, training, or uniform logic changed.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-1-19-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-1-20-Windows`
 
 ## Build
 

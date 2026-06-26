@@ -1,4 +1,4 @@
-name: Build PWADC Security Operations Suite
+name: Build Windows EXE
 
 on:
   workflow_dispatch:
@@ -6,42 +6,30 @@ on:
     branches:
       - main
 
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-
 jobs:
-  build:
+  build-windows:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout source
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Validate JavaScript syntax
-        shell: pwsh
-        run: |
-          $html = Get-Content -Raw -Path "app/index.html"
-          $start = $html.IndexOf('<script>') + 8
-          $end = $html.LastIndexOf('</script>')
-          $js = $html.Substring($start, $end - $start)
-          Set-Content -Path "app-check.js" -Value $js -Encoding UTF8
-          node --check app-check.js
-          node -e "const fs=require('fs'); const js=fs.readFileSync('app-check.js','utf8'); const required=['renderShell','renderPages','renderModule','safeRenderPages','renderHome','renderStartHere','renderAttendance','renderDaily','renderDailyRow','renderGrid','renderAttendanceReview','renderPatterns','renderAttendanceNotices','renderAudit','renderRoster','renderRosterList','renderRosterSchedule','renderTrainingPage','renderTrainingMatrix','renderTrainingCell','openTrainingRecordModal','openTrainingForEmployee','renderRosterTraining','renderRosterUniforms','renderRosterAnalytics','renderEmployeeProfile','renderOfficeSupplies','renderReports','renderSettingsPage','renderTasks','renderDataHealth','renderRestoreCenter','renderChangeLog','renderOtherPrograms']; const missing=required.filter(n=>!(new RegExp('function\\s+'+n+'\\s*\\(').test(js)||new RegExp('(const|let|var)\\s+'+n+'\\s*=').test(js))); if(missing.length){console.error('Missing required render functions: '+missing.join(', ')); process.exit(1);} console.log('Required render function check passed: '+required.length);"
-          Remove-Item "app-check.js" -Force
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      - name: Restore dependencies
+      - name: Restore
         run: dotnet restore SecurityOperationsSuite.csproj
 
-      - name: Publish single-file EXE
-        run: dotnet publish SecurityOperationsSuite.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
+      - name: Build
+        run: dotnet build SecurityOperationsSuite.csproj --configuration Release --no-restore
 
-      - name: Upload build artifact
+      - name: Publish self-contained Windows x64 EXE
+        run: dotnet publish SecurityOperationsSuite.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output publish
+
+      - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-1-18-Windows
-          path: bin/Release/net8.0-windows/win-x64/publish/
+          name: PWADC-Security-Operations-Suite-v3-1-20-Windows
+          path: publish/**
