@@ -43,5 +43,5 @@ jobs:
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-1-10-Windows
+          name: PWADC-Security-Operations-Suite-v3-1-12-Windows
           path: bin/Release/net8.0-windows/win-x64/publish/
