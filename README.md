@@ -1,8 +1,8 @@
-# PWADC Security Operations Suite v3.1.18
+# PWADC Security Operations Suite v3.1.19
 
-## v3.1.18 Attendance Pattern QA / Tuning Pass
+## v3.1.19 Pattern Action Hide Fix
 
-- Rebuilds Attendance Patterns into a clearer rule-based review workflow.
+- Fixes Attendance Pattern action behavior so Monitor and Not an Issue immediately remove the card from the Outstanding workflow.
 - Keeps the Attendance Review page largely intact.
 - Shows patterns grouped by employee, with every category that employee falls into.
 - Pattern cards now show:
@@ -21,11 +21,11 @@
 - Adds a **Monitor** action for reviewed patterns that should stay watched without creating a notice.
 - Links **Create Notice** from a pattern and marks that pattern as Notice Created after saving.
 - Front page Attendance Patterns count now uses only outstanding unresolved pattern findings.
-- Reviewed/hidden pattern history remains visible on the Patterns page.
+- Reviewed/hidden pattern history remains visible on the Patterns page and still reopens when newer related behavior appears.
 - Keeps v3.1.15/v3.1.16 render safety and dashboard improvements intact.
 - No roster, schedule, HPW, labor, training, or uniform logic changed.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-1-18-Windows`
+Expected artifact: `PWADC-Security-Operations-Suite-v3-1-19-Windows`
 
 ## Build
 
