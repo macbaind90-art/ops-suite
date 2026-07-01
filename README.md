@@ -1,18 +1,17 @@
-# PWADC Security Operations Suite v3.1.24
+# PWADC Security Operations Suite v3.1.25
 
-## v3.1.24 Shift Report Reset / Version Fix
+## v3.1.25 Shift Report N/A Noise Filter
 
-Tunes the dedicated Shift Reports module for importing supervisor shift report PDFs/text files, extracting operational follow-up items, and tracking issues through Open, Monitoring, Closed, or No Action status.
+Full clean repository package for the PWADC Security Operations Suite.
 
-The tracker captures report ID, date, shift, supervisor, incidents, patrol issues, overview, pass-down notes, officer roster concerns, and 3rd-shift off-duty officer notes. Routine Vehicle / Equipment sections remain stored with the imported report but do not create tracked issues.
+### Build notes
+- GitHub Actions workflow included at `.github/workflows/build-windows.yml`.
+- No `.git` folder included.
+- Shared data root remains `\\pig-fs\Security\MacBain\Security Operations Suite`.
 
-Attendance Pattern persistence fixes from v3.1.21 remain in place.
-
-### v3.1.24 Notes
-- Routine Vehicle / Equipment report sections are stored with imported reports but no longer generate tracked issues.
-- 3rd-shift off-duty officer notes are detected as an Off-Duty Officer issue type.
-- Existing Shift Report import, dedupe, backup, export, and Task Tracker handoff behavior remains in place.
-
-### v3.1.24 Notes
-- One-time Shift Report reset button added for accidental bulk imports. Remove this button in the next build.
-- Current version references aligned across app UI, .NET metadata, manifest, build.bat, and GitHub Actions artifact name.
+### v3.1.25 Notes
+- Shift Reports now ignore N/A, NA, None, blank placeholders, and routine no-issue language during issue detection.
+- Routine Vehicle / Equipment report content is stored but does not create issues.
+- 3rd-shift off-duty officer notes remain detected.
+- The temporary one-time Shift Report reset button from the prior cleanup build has been removed.
+- Version labels and GitHub artifact naming are aligned to v3.1.25.
