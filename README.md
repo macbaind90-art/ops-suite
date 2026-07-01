@@ -1,7 +1,9 @@
-# PWADC Security Operations Suite v3.1.21
+# PWADC Security Operations Suite v3.1.22
 
-## v3.1.21 Attendance Pattern Persistence Fix
+## v3.1.22 Shift Report Issue Tracker
 
-This build keeps the v3.1.20 employee-level bulk pattern actions and fixes the persistence gap where resolved Attendance Pattern findings could return after restart or when the 90-day ending date changed. Pattern review actions now save both the generated pattern key and a stable employee/type key. Existing older review records are also matched by employee/type and latest reviewed date so prior cleanup work remains honored.
+Adds a dedicated Shift Reports module for importing supervisor shift report PDFs/text files, extracting operational follow-up items, and tracking issues through Open, Monitoring, Closed, or No Action status.
 
-No unrelated module logic was changed.
+The tracker captures report ID, date, shift, supervisor, incidents, patrol issues, overview, pass-down notes, officer roster concerns, and vehicle/equipment follow-ups. Issues can be edited, exported, backed up, or converted into Task Tracker items.
+
+Attendance Pattern persistence fixes from v3.1.21 remain in place.

@@ -536,7 +536,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.1.21" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.1.22" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -552,15 +552,15 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.1.21", baseDirectory = AppContext.BaseDirectory };
-        private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "suite-settings", "programs" };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.1.22", baseDirectory = AppContext.BaseDirectory };
+        private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "shift-reports", "suite-settings", "programs" };
         private static string ModuleFileName(string module) => module switch
         {
-            "attendance" => "attendance-data.json", "roster" => "roster-data.json", "tasks" => "tasks-data.json", _ => module + ".json"
+            "attendance" => "attendance-data.json", "roster" => "roster-data.json", "tasks" => "tasks-data.json", "shift-reports" => "shift-reports-data.json", _ => module + ".json"
         };
         private static string ModuleFolder(string module) => module switch
         {
-            "attendance" => "Attendance", "roster" => "Roster", "tasks" => "Task Tracker", "suite-settings" => "Suite Settings", "programs" => "Programs", _ => module
+            "attendance" => "Attendance", "roster" => "Roster", "tasks" => "Task Tracker", "shift-reports" => "Shift Reports", "suite-settings" => "Suite Settings", "programs" => "Programs", _ => module
         };
     }
 
