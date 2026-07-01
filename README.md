@@ -1,34 +1,7 @@
-# PWADC Security Operations Suite v3.1.20
+# PWADC Security Operations Suite v3.1.21
 
-## v3.1.20 Pattern Employee Bulk Actions
+## v3.1.21 Attendance Pattern Persistence Fix
 
-- Adds employee-level **Monitor All**, **Not an Issue All**, and **Create Notice for All** buttons on the Attendance Patterns employee detail view.
-- Keeps individual category buttons available for one-off decisions.
-- Bulk notice creates one consolidated notice and marks all linked outstanding pattern categories as Notice Created after saving.
-- Keeps the Attendance Review page largely intact.
-- Shows patterns grouped by employee, with every category that employee falls into.
-- Pattern cards now show:
-  - Why the rule triggered
-  - Threshold
-  - Actual count
-  - Related dates
-  - Related attendance codes
-  - Risk level and score
-- Adds pattern statuses:
-  - Outstanding
-  - Monitoring
-  - Not an Issue
-  - Notice Created
-- Adds a **Not an Issue** action with reason/note capture.
-- Adds a **Monitor** action for reviewed patterns that should stay watched without creating a notice.
-- Links **Create Notice** from a pattern and marks that pattern as Notice Created after saving.
-- Front page Attendance Patterns count now uses only outstanding unresolved pattern findings.
-- Reviewed/hidden pattern history remains visible on the Patterns page and still reopens when newer related behavior appears.
-- Keeps v3.1.15/v3.1.16 render safety and dashboard improvements intact.
-- No roster, schedule, HPW, labor, training, or uniform logic changed.
+This build keeps the v3.1.20 employee-level bulk pattern actions and fixes the persistence gap where resolved Attendance Pattern findings could return after restart or when the 90-day ending date changed. Pattern review actions now save both the generated pattern key and a stable employee/type key. Existing older review records are also matched by employee/type and latest reviewed date so prior cleanup work remains honored.
 
-Expected artifact: `PWADC-Security-Operations-Suite-v3-1-20-Windows`
-
-## Build
-
-Use GitHub Actions workflow at `.github/workflows/build-windows.yml`.
+No unrelated module logic was changed.
