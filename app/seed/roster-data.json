@@ -17,7 +17,7 @@
       "jacket": "XS",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -42,7 +42,7 @@
       "jacket": "XS",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -67,7 +67,7 @@
       "jacket": "M",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -92,7 +92,7 @@
       "jacket": "M",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "ordered",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -117,7 +117,7 @@
       "jacket": "L",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -142,7 +142,7 @@
       "jacket": "XL",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "ordered",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Thu",
@@ -167,7 +167,7 @@
       "jacket": "3X",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "ordered",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Tue",
@@ -192,7 +192,7 @@
       "jacket": "4X",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Fri",
@@ -217,7 +217,7 @@
       "jacket": "L",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -242,7 +242,7 @@
       "jacket": "S",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -267,7 +267,7 @@
       "jacket": "S",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "ordered",
       "rdo": [
         "Tue",
@@ -292,7 +292,7 @@
       "jacket": "S",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Tue",
@@ -317,7 +317,7 @@
       "jacket": "M",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Thu",
@@ -342,7 +342,7 @@
       "jacket": "L",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -367,7 +367,7 @@
       "jacket": "L",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Thu",
@@ -392,7 +392,7 @@
       "jacket": "XL",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -417,7 +417,7 @@
       "jacket": "XL",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -442,7 +442,7 @@
       "jacket": "2X",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Thu",
@@ -467,7 +467,7 @@
       "jacket": "",
       "notes": "",
       "shirtStatus": "",
-      "pantsStatus": "",
+      "pantsStatus": "needed",
       "jacketStatus": "",
       "rdo": [
         "Sun",
@@ -492,7 +492,7 @@
       "jacket": "4X",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -517,7 +517,7 @@
       "jacket": "2X",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -542,7 +542,7 @@
       "jacket": "4X",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Fri",
@@ -567,7 +567,7 @@
       "jacket": "3X",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -592,7 +592,7 @@
       "jacket": "4X",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -620,7 +620,7 @@
       "jacket": "3X",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Thu",
@@ -645,7 +645,7 @@
       "jacket": "XL",
       "notes": "pt",
       "shirtStatus": "ordered",
-      "pantsStatus": "ordered",
+      "pantsStatus": "needed",
       "jacketStatus": "ordered",
       "rdo": [
         "Mon",
@@ -698,7 +698,7 @@
       "jacket": "",
       "notes": "",
       "shirtStatus": "issued",
-      "pantsStatus": "issued",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Sun",
@@ -723,7 +723,7 @@
       "jacket": "",
       "notes": "",
       "shirtStatus": "",
-      "pantsStatus": "",
+      "pantsStatus": "needed",
       "jacketStatus": "",
       "rdo": [
         "Sun",
@@ -748,7 +748,7 @@
       "jacket": "2X",
       "notes": "",
       "shirtStatus": "ordered",
-      "pantsStatus": "ordered",
+      "pantsStatus": "needed",
       "jacketStatus": "issued",
       "rdo": [
         "Wed",
@@ -773,7 +773,7 @@
       "jacket": "",
       "notes": "",
       "shirtStatus": "",
-      "pantsStatus": "",
+      "pantsStatus": "needed",
       "jacketStatus": "",
       "rdo": [
         "Mon",
@@ -800,7 +800,7 @@
       "pants": "",
       "jacket": "",
       "shirtStatus": "",
-      "pantsStatus": "",
+      "pantsStatus": "needed",
       "jacketStatus": "",
       "notes": "P/T",
       "rdo": [
@@ -827,7 +827,7 @@
       "pants": "18",
       "jacket": "XL",
       "shirtStatus": "ordered",
-      "pantsStatus": "ordered",
+      "pantsStatus": "needed",
       "jacketStatus": "ordered",
       "notes": "",
       "rdo": [
