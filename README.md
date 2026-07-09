@@ -1,17 +1,15 @@
-# PWADC Security Operations Suite v3.1.25
+# PWADC Security Operations Suite v3.1.26
 
-## v3.1.25 Shift Report N/A Noise Filter
+## v3.1.26 Roster / Uniform Print Polish
 
-Full clean repository package for the PWADC Security Operations Suite.
+This release keeps the v3.1.25 Shift Report noise filtering in place and updates Roster / Uniform print behavior.
 
-### Build notes
-- GitHub Actions workflow included at `.github/workflows/build-windows.yml`.
-- No `.git` folder included.
-- Shared data root remains `\\pig-fs\Security\MacBain\Security Operations Suite`.
+### v3.1.26 Notes
+- Roster printing now sends output straight to the system print dialog instead of first displaying the full-screen in-app print page.
+- Uniform printing now opens a selector for scope, statuses, item types, and columns.
+- Uniform print output also goes straight to the system print dialog.
+- Shift Report N/A / NA placeholder filtering remains in place.
+- Routine vehicle/equipment notes remain stored but do not create issues.
+- 3rd-shift off-duty officer detection remains in place.
 
-### v3.1.25 Notes
-- Shift Reports now ignore N/A, NA, None, blank placeholders, and routine no-issue language during issue detection.
-- Routine Vehicle / Equipment report content is stored but does not create issues.
-- 3rd-shift off-duty officer notes remain detected.
-- The temporary one-time Shift Report reset button from the prior cleanup build has been removed.
-- Version labels and GitHub artifact naming are aligned to v3.1.25.
+Build artifact naming is aligned to v3.1.26.
