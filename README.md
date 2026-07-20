@@ -1,19 +1,20 @@
-# PWADC Security Operations Suite v3.1.29
+# PWADC Security Operations Suite v3.1.30
 
-## v3.1.29 Navigation Streamline
+## v3.1.30 Workflow + Dashboard Pass
 
-This release keeps Shift Reports and Shift Intelligence as separate modules, but groups the top navigation into dropdown sections so the header is less crowded.
+This build is the first of the three consolidation passes. It focuses on daily workflow clarity rather than backend/security changes.
 
-### Navigation groups
-- Core: Home, Start Here
-- People: Attendance, Roster, Employee Profile, Training
-- Operations: Shift Reports, Shift Intelligence, Task Tracker
-- Inventory: Office Supplies
-- Reports / Data: Reports, Data Health, Restore Center, Change Log
-- Tools: Other Programs, Settings
+### What changed
+- Shift Reports now has a clear handoff to Shift Intelligence.
+- Dashboard now surfaces command queues: Shift Intake awaiting review, Needs Action watchlist, dormant shift issues, attendance patterns, open notices, and open tasks.
+- Attendance, Shift Reports, Shift Intelligence, and Uniforms now show workflow banners with the intended operating sequence.
+- Shift Reports remains the intake/source-history side.
+- Shift Intelligence remains the decision/watchlist side.
 
-### Notes
-- Shift Reports remains the intake/source document module.
-- Shift Intelligence remains the controlled issue-tracking/watchlist module.
-- No data model changes were made to Attendance, Roster, Shift Reports, or Shift Intelligence.
-- GitHub Actions artifact naming is aligned to v3.1.29.
+### Deferred to v3.1.31
+- Backend save safety
+- openPath restriction
+- Data Health file-path/file-size visibility
+- Audit and destructive-action hardening
+
+GitHub Actions artifact naming is aligned to v3.1.30.
