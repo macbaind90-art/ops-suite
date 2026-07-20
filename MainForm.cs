@@ -102,8 +102,8 @@ namespace PWADC.SecurityOperationsSuite
                     case "suite:saveModuleData":
                         string saveModule = root.TryGetProperty("module", out JsonElement sm) ? sm.GetString() ?? "" : "";
                         string json = root.TryGetProperty("payload", out JsonElement dataPayload) ? dataPayload.GetRawText() : "{}";
-                        SaveModuleData(saveModule, json);
-                        await Respond(requestId, true, new { module = saveModule, savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") });
+                        var saveInfo = SaveModuleData(saveModule, json);
+                        await Respond(requestId, true, saveInfo);
                         break;
                     case "suite:saveModuleData2":
                         if (!root.TryGetProperty("payload", out JsonElement savePayload)) throw new InvalidOperationException("Missing save payload.");
@@ -111,8 +111,8 @@ namespace PWADC.SecurityOperationsSuite
                         string json2 = savePayload.TryGetProperty("json", out JsonElement js2) ? js2.GetString() ?? "" : "";
                         if (string.IsNullOrWhiteSpace(saveModule2)) throw new InvalidOperationException("Save module was not defined by the interface.");
                         if (string.IsNullOrWhiteSpace(json2) || json2 == "undefined") throw new InvalidOperationException("Save JSON payload was undefined before write.");
-                        SaveModuleData(saveModule2, json2);
-                        await Respond(requestId, true, new { module = saveModule2, savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") });
+                        var saveInfo2 = SaveModuleData(saveModule2, json2);
+                        await Respond(requestId, true, saveInfo2);
                         break;
                     case "suite:createBackup":
                         string backupModule = root.TryGetProperty("module", out JsonElement bm) ? bm.GetString() ?? "" : "";
@@ -226,7 +226,8 @@ namespace PWADC.SecurityOperationsSuite
             checks.Add(Check("Can create exports folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports")); return true; }));
             checks.Add(Check("Can create locks folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Locks")); return true; }));
             checks.Add(Check("Can create programs folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Programs")); return true; }));
-            return new { dataRoot = settings.DataRoot, checks };
+            checks.Add(Check("Open path guard active", () => IsSafeOpenPath(settings.DataRoot)));
+            return new { dataRoot = settings.DataRoot, checks, moduleFiles = ModuleFileStatuses() };
         }
 
         private object Check(string name, Func<bool> fn)
@@ -340,60 +341,77 @@ namespace PWADC.SecurityOperationsSuite
             return seedJson;
         }
 
-        private void SaveModuleData(string module, string json)
+        private object SaveModuleData(string module, string json)
         {
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Save failed because module was not defined.");
-            if (string.IsNullOrWhiteSpace(json) || json == "undefined") throw new InvalidOperationException("Save failed because JSON payload was undefined.");
-            // Validate JSON before touching the current live file.
-            JsonDocument.Parse(json).Dispose();
-            EnsureFolders();
-            string dataDir = Path.Combine(settings.DataRoot, "Data");
-            Directory.CreateDirectory(dataDir);
-            string path = Path.Combine(dataDir, ModuleFileName(module));
+            if (!IsKnownModule(module)) throw new InvalidOperationException("Save failed because module is not approved: " + module);
+            if (string.IsNullOrWhiteSpace(json) || json == "undefined") throw new InvalidOperationException("Save failed because JSON payload was undefined for module: " + ModuleFolder(module));
 
-            // Backups should protect the save, not block it. If backup fails because of a
-            // transient share/lock issue, still attempt the live save and report only if that fails.
             try
             {
+                JsonDocument.Parse(json).Dispose(); // validate before touching live file
+                EnsureFolders();
+                string dataDir = Path.Combine(settings.DataRoot, "Data");
+                Directory.CreateDirectory(dataDir);
+                string path = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
+                if (!IsPathUnder(path, dataDir)) throw new InvalidOperationException("Resolved save path is outside the suite Data folder.");
+
+                string backupPath = "";
                 if (File.Exists(path))
                 {
                     string backupDir = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
                     Directory.CreateDirectory(backupDir);
                     string backupName = Path.GetFileNameWithoutExtension(path) + "-before-save-" + DateTime.Now.ToString("yyyyMMdd-HHmmssfff") + ".json";
-                    File.Copy(path, Path.Combine(backupDir, backupName), true);
+                    backupPath = Path.Combine(backupDir, backupName);
+                    File.Copy(path, backupPath, true);
                 }
-            }
-            catch { }
 
-            string tempPath = path + ".tmp";
-            File.WriteAllText(tempPath, json);
-            if (File.Exists(path))
-            {
-                File.Copy(tempPath, path, true);
-                File.Delete(tempPath);
+                string tempPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+                File.WriteAllText(tempPath, json);
+                try
+                {
+                    if (File.Exists(path)) File.Copy(tempPath, path, true);
+                    else File.Move(tempPath, path);
+                }
+                finally
+                {
+                    try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
+                }
+
+                FileInfo info = new FileInfo(path);
+                return new { module, path = info.FullName, savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), sizeBytes = info.Length, backupPath };
             }
-            else
+            catch (Exception ex)
             {
-                File.Move(tempPath, path);
+                throw new InvalidOperationException("Save failed for " + ModuleFolder(module) + ". Check shared-drive access and retry. Details: " + ex.Message, ex);
             }
         }
 
         private string CreateBackup(string module, string json)
         {
+            if (!IsKnownModule(module)) throw new InvalidOperationException("Backup module is not approved: " + module);
             JsonDocument.Parse(json).Dispose();
             EnsureFolders();
+            string backupDir = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
+            Directory.CreateDirectory(backupDir);
             string backupName = ModuleFolder(module).ToLowerInvariant().Replace(" ", "-") + "-backup-" + DateTime.Now.ToString("yyyyMMdd-HHmmssfff") + ".json";
-            string path = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module), backupName);
+            string path = Path.GetFullPath(Path.Combine(backupDir, backupName));
+            if (!IsPathUnder(path, backupDir)) throw new InvalidOperationException("Backup path is outside the suite backup folder.");
             File.WriteAllText(path, json);
             return path;
         }
 
         private string WriteExport(string module, string fileName, string content)
         {
+            if (!IsKnownModule(module)) throw new InvalidOperationException("Export module is not approved: " + module);
             EnsureFolders();
-            string safeName = string.Join("_", fileName.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
-            string path = Path.Combine(settings.DataRoot, "Exports", ModuleFolder(module), safeName);
-            File.WriteAllText(path, content);
+            string safeName = string.Join("_", Path.GetFileName(fileName).Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
+            if (string.IsNullOrWhiteSpace(safeName)) safeName = "export.txt";
+            string exportDir = Path.Combine(settings.DataRoot, "Exports", ModuleFolder(module));
+            Directory.CreateDirectory(exportDir);
+            string path = Path.GetFullPath(Path.Combine(exportDir, safeName));
+            if (!IsPathUnder(path, exportDir)) throw new InvalidOperationException("Export path is outside the suite export folder.");
+            File.WriteAllText(path, content ?? "");
             return path;
         }
 
@@ -402,6 +420,7 @@ namespace PWADC.SecurityOperationsSuite
         private object ListBackups(string module)
         {
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Backup module was not defined.");
+            if (!IsKnownModule(module)) throw new InvalidOperationException("Backup module is not approved: " + module);
             EnsureFolders();
             string folder = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
             Directory.CreateDirectory(folder);
@@ -418,11 +437,12 @@ namespace PWADC.SecurityOperationsSuite
         private object ReadBackupSummary(string module, string backupPath)
         {
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Backup module was not defined.");
+            if (!IsKnownModule(module)) throw new InvalidOperationException("Backup module is not approved: " + module);
             if (string.IsNullOrWhiteSpace(backupPath)) throw new InvalidOperationException("Backup path was not provided.");
             EnsureFolders();
             string fullBackupPath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(backupPath));
             string allowedRoot = Path.GetFullPath(Path.Combine(settings.DataRoot, "Backups"));
-            if (!fullBackupPath.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Backup path is outside the suite backup folder.");
+            if (!IsPathUnder(fullBackupPath, allowedRoot)) throw new InvalidOperationException("Backup path is outside the suite backup folder.");
             if (!File.Exists(fullBackupPath)) throw new FileNotFoundException("Backup file was not found: " + fullBackupPath);
             FileInfo info = new FileInfo(fullBackupPath);
             string json = File.ReadAllText(fullBackupPath);
@@ -456,11 +476,12 @@ namespace PWADC.SecurityOperationsSuite
         private string RestoreBackup(string module, string backupPath)
         {
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Restore module was not defined.");
+            if (!IsKnownModule(module)) throw new InvalidOperationException("Restore module is not approved: " + module);
             if (string.IsNullOrWhiteSpace(backupPath)) throw new InvalidOperationException("Restore backup path was not provided.");
             EnsureFolders();
             string fullBackupPath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(backupPath));
             string allowedRoot = Path.GetFullPath(Path.Combine(settings.DataRoot, "Backups"));
-            if (!fullBackupPath.StartsWith(allowedRoot, StringComparison.OrdinalIgnoreCase)) throw new InvalidOperationException("Restore path is outside the suite backup folder.");
+            if (!IsPathUnder(fullBackupPath, allowedRoot)) throw new InvalidOperationException("Restore path is outside the suite backup folder.");
             if (!File.Exists(fullBackupPath)) throw new FileNotFoundException("Backup file was not found: " + fullBackupPath);
             string json = File.ReadAllText(fullBackupPath);
             JsonDocument.Parse(json).Dispose();
@@ -479,7 +500,8 @@ namespace PWADC.SecurityOperationsSuite
         private void OpenPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new InvalidOperationException("No path was provided.");
-            string expanded = Environment.ExpandEnvironmentVariables(path);
+            string expanded = Path.GetFullPath(Environment.ExpandEnvironmentVariables(path));
+            if (!IsSafeOpenPath(expanded)) throw new InvalidOperationException("Blocked open-path request outside approved suite folders: " + expanded);
             if (!File.Exists(expanded) && !Directory.Exists(expanded))
             {
                 CopyPackagedProgramsToShared(false);
@@ -536,7 +558,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.1.30" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.1.31" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -552,7 +574,77 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.1.30", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.1.31", baseDirectory = AppContext.BaseDirectory };
+
+        private object ModuleFileStatuses()
+        {
+            var rows = new List<object>();
+            foreach (string module in ModuleNames())
+            {
+                if (module == "programs") continue;
+                rows.Add(ModuleFileStatus(module));
+            }
+            return rows;
+        }
+
+        private object ModuleFileStatus(string module)
+        {
+            string fileName = ModuleFileName(module);
+            string path = Path.Combine(settings.DataRoot, "Data", fileName);
+            FileInfo? info = File.Exists(path) ? new FileInfo(path) : null;
+            string newestBackup = "";
+            string newestBackupModified = "";
+            long newestBackupSize = 0;
+            string backupDir = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
+            if (Directory.Exists(backupDir))
+            {
+                FileInfo? newest = null;
+                foreach (string f in Directory.GetFiles(backupDir, "*.json", SearchOption.TopDirectoryOnly))
+                {
+                    FileInfo bi = new FileInfo(f);
+                    if (newest == null || bi.LastWriteTime > newest.LastWriteTime) newest = bi;
+                }
+                if (newest != null)
+                {
+                    newestBackup = newest.Name;
+                    newestBackupModified = newest.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    newestBackupSize = newest.Length;
+                }
+            }
+            string lastSaved = "";
+            if (info != null)
+            {
+                try
+                {
+                    using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(info.FullName));
+                    if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("lastSaved", out JsonElement ls)) lastSaved = ls.GetString() ?? "";
+                }
+                catch { }
+            }
+            return new { module, label = ModuleFolder(module), fileName, path, exists = info != null, sizeBytes = info?.Length ?? 0, modified = info?.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "", lastSaved, newestBackup, newestBackupModified, newestBackupSize };
+        }
+
+        private static bool IsKnownModule(string module)
+        {
+            foreach (string m in ModuleNames()) if (string.Equals(m, module, StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+
+        private bool IsSafeOpenPath(string path)
+        {
+            string full = Path.GetFullPath(Environment.ExpandEnvironmentVariables(path));
+            string dataRoot = Path.GetFullPath(settings.DataRoot);
+            string appRoot = Path.GetFullPath(appFolder);
+            string exeRoot = Path.GetFullPath(AppContext.BaseDirectory);
+            return IsPathUnder(full, dataRoot) || IsPathUnder(full, appRoot) || IsPathUnder(full, exeRoot);
+        }
+
+        private static bool IsPathUnder(string path, string root)
+        {
+            string fullPath = Path.GetFullPath(path).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            string fullRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            return fullPath.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase);
+        }
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "shift-reports", "shift-intelligence", "suite-settings", "programs" };
         private static string ModuleFileName(string module) => module switch
         {

@@ -1,20 +1,16 @@
-# PWADC Security Operations Suite v3.1.30
+# PWADC Security Operations Suite v3.1.31
 
-## v3.1.30 Workflow + Dashboard Pass
+## v3.1.31 Data Safety + Security Pass
 
-This build is the first of the three consolidation passes. It focuses on daily workflow clarity rather than backend/security changes.
+This release keeps the prior workflow/dashboard improvements and hardens the data safety layer.
 
-### What changed
-- Shift Reports now has a clear handoff to Shift Intelligence.
-- Dashboard now surfaces command queues: Shift Intake awaiting review, Needs Action watchlist, dormant shift issues, attendance patterns, open notices, and open tasks.
-- Attendance, Shift Reports, Shift Intelligence, and Uniforms now show workflow banners with the intended operating sequence.
-- Shift Reports remains the intake/source-history side.
-- Shift Intelligence remains the decision/watchlist side.
+### v3.1.31 Notes
+- Module saves now validate approved module names before writing.
+- Saves validate JSON, write through a guarded temp file, create before-save backups, and return saved path/size details.
+- Desktop open-path requests are restricted to approved suite folders.
+- Data Health now includes a Live Module Files panel showing file path, exists status, size, modified date, lastSaved value, and newest backup.
+- Restore requires a reason and a second final confirmation before overwriting live JSON.
+- Backup, export, restore, and open-path handling now has tighter path boundary checks.
+- Workflow and dashboard changes from the prior workflow build remain in place.
 
-### Deferred to v3.1.31
-- Backend save safety
-- openPath restriction
-- Data Health file-path/file-size visibility
-- Audit and destructive-action hardening
-
-GitHub Actions artifact naming is aligned to v3.1.30.
+Build artifact naming is aligned to v3.1.31.
