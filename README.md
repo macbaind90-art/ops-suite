@@ -1,17 +1,19 @@
-# PWADC Security Operations Suite v3.1.28
+# PWADC Security Operations Suite v3.1.29
 
-## v3.1.28 Shift Intelligence
+## v3.1.29 Navigation Streamline
 
-Adds a new top-level **Shift Intelligence** module. Shift Reports remains the raw report intake/import layer. Shift Intelligence is the controlled operational watchlist and trend layer.
+This release keeps Shift Reports and Shift Intelligence as separate modules, but groups the top navigation into dropdown sections so the header is less crowded.
 
-### v3.1.28 Notes
-- Adds intake review buckets: Auto-Link, Suggested Matches, New, and Ignored / Reference.
-- Adds issue statuses: New, Watching, Recurring, Needs Action, Resolved, Ignored, and Reference Only.
-- Uses hybrid matching across category, location, and wording.
-- Auto-link is available for strong matches; moderate matches require review.
-- Attendance is treated as reference-only unless it creates an actual operational issue such as uncovered coverage.
-- Active watchlist sorts by Needs Action, Recurring, New, Watching, and Dormant.
-- Dormant recommendation begins after 7 days with no repeat mention; resolution suggestion begins after 14 days with no repeat mention.
-- Prior Roster/Uniform print polish, pants-needed update, Shift Report N/A filtering, routine vehicle/equipment ignore logic, and 3rd-shift off-duty officer detection remain in place.
+### Navigation groups
+- Core: Home, Start Here
+- People: Attendance, Roster, Employee Profile, Training
+- Operations: Shift Reports, Shift Intelligence, Task Tracker
+- Inventory: Office Supplies
+- Reports / Data: Reports, Data Health, Restore Center, Change Log
+- Tools: Other Programs, Settings
 
-Build artifact naming is aligned to v3.1.28.
+### Notes
+- Shift Reports remains the intake/source document module.
+- Shift Intelligence remains the controlled issue-tracking/watchlist module.
+- No data model changes were made to Attendance, Roster, Shift Reports, or Shift Intelligence.
+- GitHub Actions artifact naming is aligned to v3.1.29.
