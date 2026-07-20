@@ -1,16 +1,17 @@
-# PWADC Security Operations Suite v3.1.31
+# PWADC Security Operations Suite v3.1.32
 
-## v3.1.31 Data Safety + Security Pass
+## v3.1.32 Platform Polish + Regression Pass
 
-This release keeps the prior workflow/dashboard improvements and hardens the data safety layer.
+This build consolidates the prior workflow improvements and data safety/security hardening into a release-ready platform polish pass.
 
-### v3.1.31 Notes
-- Module saves now validate approved module names before writing.
-- Saves validate JSON, write through a guarded temp file, create before-save backups, and return saved path/size details.
-- Desktop open-path requests are restricted to approved suite folders.
-- Data Health now includes a Live Module Files panel showing file path, exists status, size, modified date, lastSaved value, and newest backup.
-- Restore requires a reason and a second final confirmation before overwriting live JSON.
-- Backup, export, restore, and open-path handling now has tighter path boundary checks.
-- Workflow and dashboard changes from the prior workflow build remain in place.
+### v3.1.32 Notes
+- Start Here now presents a clearer daily operating flow.
+- Data Health includes a manual suite-wide regression checklist.
+- Dashboard command queues remain the front-door workflow.
+- Guarded saves, safe open-path behavior, live module file visibility, and stronger restore confirmations remain active.
+- No new major modules were added.
 
-Build artifact naming is aligned to v3.1.31.
+### Pre-v3.2.0 posture
+This is intended as the final stability pass before Compliance / Executive Reporting Expansion.
+
+Build artifact naming is aligned to v3.1.32.
