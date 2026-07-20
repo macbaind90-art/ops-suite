@@ -1,17 +1,34 @@
-# PWADC Security Operations Suite v3.1.32
+# PWADC Security Operations Suite v3.1.34
 
-## v3.1.32 Platform Polish + Regression Pass
+## v3.1.34 Full UI Audit / Screen Polish Pass
 
-This build consolidates the prior workflow improvements and data safety/security hardening into a release-ready platform polish pass.
+This release is a full screen-level polish pass across the suite. It keeps the v3.1.29 grouped navigation, the v3.1.30 workflow/dashboard improvements, the v3.1.31 safety work, and the v3.1.32 regression guide.
 
-### v3.1.32 Notes
-- Start Here now presents a clearer daily operating flow.
-- Data Health includes a manual suite-wide regression checklist.
-- Dashboard command queues remain the front-door workflow.
-- Guarded saves, safe open-path behavior, live module file visibility, and stronger restore confirmations remain active.
-- No new major modules were added.
+### Screen polish goals
+- Reduce home-screen overload.
+- Add a consistent screen guide to every major module.
+- Make each page explain what to do first, what to review, and where the workflow goes next.
+- Keep admin/safety screens deliberate and less accidental.
+- Avoid new modules and avoid data model changes.
 
-### Pre-v3.2.0 posture
-This is intended as the final stability pass before Compliance / Executive Reporting Expansion.
+### Screens audited
+- Home / Dashboard
+- Start Here
+- Attendance
+- Roster
+- Employee Profile
+- Training
+- Office Supplies
+- Task Tracker
+- Shift Reports
+- Shift Intelligence
+- Reports
+- Data Health
+- Restore Center
+- Change Log
+- Other Programs
+- Settings / Roles
 
-Build artifact naming is aligned to v3.1.32.
+### Notes
+- This is a UI and flow polish pass, not a backend/data-model change.
+- GitHub Actions artifact naming is aligned to v3.1.34.
