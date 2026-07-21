@@ -1,17 +1,15 @@
-# PWADC Security Operations Suite v3.2.3
+# PWADC Security Operations Suite v3.2.3.1
 
-## v3.2.3 Home / Command Center Redesign
+## v3.2.3.1 UI Render Fix / Undefined Helper Sweep
 
-This release redesigns Home into a true command center. The screen now starts with one lead priority, compact remaining queues, a daily supervisor workflow, quick actions, recent activity, and a calmer system snapshot instead of presenting every dashboard signal at once.
+This patch keeps the v3.2.3 Home / Command Center redesign, then fixes the render failure found during testing.
 
-### Completed in this build
-- Rebuilt Home around **Today’s Priority** instead of a busy grid of equal cards.
-- Added a calmer **System Snapshot** showing critical health, warnings, attendance-through date, and roster save status.
-- Added compact command KPIs for today, priority signals, attendance employees, active roster, and training readiness.
-- Added a clear **Daily Workflow** sequence: Import, Review, People work, Tasks, Data Health, Reports.
-- Added a right-side **Quick Actions** panel and **Recent Activity** panel.
-- Kept Secondary Signals, Admin Tools, and Module Map behind collapsible panels.
-- Kept v3.2.2.2 navigation hover fix and the v3.2.2 design-system foundation.
+### Fixed in this build
+- Added missing Shift Intelligence count helpers used by Home and executive reports.
+- Added missing shared `workflowBanner` helper used by Attendance, Uniforms, Shift Reports, and Shift Intelligence.
+- Added missing `rosterEmployeeById` helper used by employee training print packets.
+- Added missing `openReportWindow` print-preview fallback used by Start Here and employee training print packets.
+- Ran a stronger undefined-helper sweep and major screen render smoke test.
 
 ### Roadmap status
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -19,6 +17,7 @@ This release redesigns Home into a true command center. The screen now starts wi
 - ~~v3.2.2.1 - High-Intelligence Professional Design System Rerun~~ Completed
 - ~~v3.2.2.2 - Navigation Dropdown Hover Fix~~ Completed
 - ~~v3.2.3 - Home / Command Center Redesign~~ Completed
+- ~~v3.2.3.1 - UI Render Fix / Undefined Helper Sweep~~ Completed
 - **v3.2.4 - People Workflow Redesign** Next
 - v3.2.5 - Operations Workflow Redesign
 - v3.2.6 - Reports / Data / Admin Redesign
