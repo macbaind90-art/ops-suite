@@ -1,19 +1,26 @@
-# PWADC Security Operations Suite v3.1.37
+# PWADC Security Operations Suite v3.1.38
 
-## v3.1.37 Backup / Restore Verification Pass
+## v3.1.38 Backup Retention / Backup Manager
 
-This release keeps the attendance import date-focus fix and adds a safety review for backup, restore, packaged recovery, export, and open-path flows.
+This release adds a controlled backup retention strategy and Backup Manager panel. It keeps the v3.1.30 workflow improvements, v3.1.31 data safety/security hardening, v3.1.32 regression guide, v3.1.35 UI render fix, v3.1.36 attendance import date focus fix, and backup/restore verification hardening.
 
-### Backup / restore hardening
-- Restore and backup preview are locked to the selected module's backup folder.
-- JSON restore no longer exposes Standalone Programs as a normal module restore target. Programs remain handled through the standalone programs backup flow.
-- Restore writes through a temporary file before replacing live JSON.
-- Packaged recovery restore now validates module, validates JSON, creates a before-seed backup safely, and writes only to the Data folder.
-- Backup lists now show JSON backups only.
-- Roster and Task packaged recovery labels were clarified.
+### Backup Manager
 
-### Verification notes
-- JavaScript syntax check run.
-- Required render-function check run.
-- C# brace sanity check run.
-- Backup/restore static path-safety review completed.
+- Inventory backup counts and size by module.
+- Classify backups as Manual, Auto, Pre-Restore, Archive, or Legacy.
+- Preview cleanup before deleting anything.
+- Confirm cleanup twice.
+- Write a cleanup log after deletion.
+- Protect manual, archive, and legacy backups.
+
+### Retention policy
+
+- Keep all backups from the last 7 days.
+- Keep one daily backup for 30 days.
+- Keep one weekly backup for 12 weeks.
+- Keep one monthly backup for 12 months.
+- Keep pre-restore backups at least 90 days.
+
+### Checks
+
+JavaScript syntax and required render-function checks are expected for release packaging. GitHub Actions workflow is included for the Windows EXE build.
