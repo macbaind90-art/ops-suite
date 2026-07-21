@@ -1,18 +1,30 @@
-# PWADC Security Operations Suite v3.1.39
+# PWADC Security Operations Suite v3.2.0
 
-## v3.1.39 Live Data Clarity / Startup Safety
+## v3.2.0 Compliance / Executive Reporting Expansion
 
-This release makes the suite clearer about which data it is using so old packaged recovery data, imported backups, restored backups, and live shared files are easier to tell apart.
+This release expands the Report Center into a manager-ready briefing and compliance reporting hub while keeping live-data clarity, backup manager, restore safety, and UI polish in place.
 
-### Highlights
-- Home now shows a live data source strip.
-- Data Health now includes a Live Data Clarity panel.
-- Module load responses include source metadata from the desktop bridge.
-- Attendance, roster, tasks, shift reports, and shift intelligence show session source details.
-- Attendance import / restore still focuses to the latest populated attendance date.
-- Live Module Files includes newest meaningful data date where available.
-- Packaged recovery is labeled as recovery data, not current live data.
-- Fixed a duplicate `Programs` source-line issue in `MainForm.cs` from the prior backup-manager pass.
+### New report package
+- Executive Operations Briefing
+- Compliance Readiness Report
+- Operations Full Summary
+- Shift Intelligence Summary
 
-### Recommended use
-Use Data Health first if anything appears old. Confirm the configured data root, module file modified times, and newest attendance date before restoring or importing.
+### Existing reports retained
+- Weekly Staffing Report
+- Coverage Gap Report
+- Attendance Summary Report
+- Attendance Pattern Report
+- Attendance Notice Workflow Report
+- Training Readiness Report
+- Uniform Status Report
+- Office Supplies Report
+- Task Status Report
+- Labor Cost Summary with role-based pay visibility
+
+### Safety posture
+- No data model changes.
+- No new modules.
+- Report visibility remains role-based.
+- Pay/cost detail remains controlled by role.
+- Backup Manager and restore protections remain active.

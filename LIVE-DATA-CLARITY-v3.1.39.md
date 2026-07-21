@@ -1,4 +1,4 @@
-# v3.1.39 Live Data Clarity / Startup Safety
+# v3.2.0 Live Data Clarity / Startup Safety
 
 ## Purpose
 Prevent confusion between live shared data, packaged recovery data, imported backups, and restored backups.
