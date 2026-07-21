@@ -1,4 +1,4 @@
-# v3.2.3.1 UI Render Fix / Undefined Helper Sweep
+# v3.2.3.2 UI Render Fix / Undefined Helper Sweep
 
 This emergency patch follows the Home / Command Center redesign.
 

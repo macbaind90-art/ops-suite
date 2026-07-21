@@ -1,15 +1,15 @@
-# PWADC Security Operations Suite v3.2.3.1
+# PWADC Security Operations Suite v3.2.3.2
 
-## v3.2.3.1 UI Render Fix / Undefined Helper Sweep
+## v3.2.3.2 GitHub Version Format Fix
 
-This patch keeps the v3.2.3 Home / Command Center redesign, then fixes the render failure found during testing.
+This maintenance release keeps the v3.2.3 Home / Command Center redesign and v3.2.3.1 render fixes, then corrects the .NET version metadata so GitHub Actions can build the Windows artifact.
 
 ### Fixed in this build
-- Added missing Shift Intelligence count helpers used by Home and executive reports.
-- Added missing shared `workflowBanner` helper used by Attendance, Uniforms, Shift Reports, and Shift Intelligence.
-- Added missing `rosterEmployeeById` helper used by employee training print packets.
-- Added missing `openReportWindow` print-preview fallback used by Start Here and employee training print packets.
-- Ran a stronger undefined-helper sweep and major screen render smoke test.
+- Updated `.csproj` version fields to the required four-part numeric format: `3.2.3.2`.
+- Updated `app.manifest` assembly identity to `3.2.3.2`.
+- Updated the GitHub Actions artifact name to `PWADC-Security-Operations-Suite-v3-2-3-2-Windows`.
+- Swept the repository for invalid five-part numeric version strings.
+- Kept the prior undefined-helper fixes from v3.2.3.1.
 
 ### Roadmap status
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -18,6 +18,7 @@ This patch keeps the v3.2.3 Home / Command Center redesign, then fixes the rende
 - ~~v3.2.2.2 - Navigation Dropdown Hover Fix~~ Completed
 - ~~v3.2.3 - Home / Command Center Redesign~~ Completed
 - ~~v3.2.3.1 - UI Render Fix / Undefined Helper Sweep~~ Completed
+- ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
 - **v3.2.4 - People Workflow Redesign** Next
 - v3.2.5 - Operations Workflow Redesign
 - v3.2.6 - Reports / Data / Admin Redesign

@@ -2,7 +2,7 @@
 
 ## Current Position
 
-Current milestone: **v3.2.3.1 - UI Render Fix / Undefined Helper Sweep**.
+Current milestone: **v3.2.3.2 - GitHub Version Format Fix**.
 
 The suite is now beyond prototype stage. It has enough operational value that the next development era should be disciplined: design consistency, data reliability, modular code, security hardening, performance, and eventually a v4.0 platform architecture release.
 
@@ -44,6 +44,7 @@ The best v4.0 path is likely:
 - ~~v3.2.2.2 - Navigation Dropdown Hover Fix~~ Completed
 - ~~v3.2.3 - Home / Command Center Redesign~~ Completed
 - ~~v3.2.3.1 - UI Render Fix / Undefined Helper Sweep~~ Completed
+- ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
 **v3.2.4 - People Workflow Redesign** Next
 - v3.2.5 - Operations Workflow Redesign
 - v3.2.6 - Reports / Data / Admin Redesign
@@ -97,6 +98,9 @@ The best v4.0 path is likely:
 - Added shared workflow banner helper used by People and Operations screens
 - Added report-window and employee lookup helpers used by print/export paths
 - Added stronger undefined-helper sweep and major screen render smoke test
+
+### ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
+Corrected .NET version metadata to four numeric components and swept the repo for invalid version strings so GitHub Actions can build successfully.
 
 ### v3.2.4 - People Workflow Redesign
 - Improve Attendance, Review, Patterns, Notices, Roster, Employee Profile, Training, Uniforms
