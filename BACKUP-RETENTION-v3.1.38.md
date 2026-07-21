@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v3.2.0
+# PWADC Security Operations Suite v3.2.1
 
 ## Backup Retention / Backup Manager
 

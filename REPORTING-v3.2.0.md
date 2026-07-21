@@ -1,4 +1,4 @@
-# v3.2.0 Reporting Expansion
+# v3.2.1 Reporting Expansion
 
 ## Review scope
 The suite now treats Reports as an executive/compliance hub, not just a list of exports.
