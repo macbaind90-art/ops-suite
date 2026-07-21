@@ -2,7 +2,7 @@
 
 ## Current Position
 
-Current milestone: **v3.2.2.2 - High-Intelligence Design System Rerun**.
+Current milestone: **v3.2.3 - Home / Command Center Redesign**.
 
 The suite is now beyond prototype stage. It has enough operational value that the next development era should be disciplined: design consistency, data reliability, modular code, security hardening, performance, and eventually a v4.0 platform architecture release.
 
@@ -40,9 +40,10 @@ The best v4.0 path is likely:
 
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
 - ~~v3.2.2 - Professional Design System Pass~~ Completed
-- ~~v3.2.2.2 - High-Intelligence Design System Rerun~~ Completed
-- v3.2.3 - Home / Command Center Redesign ← Next
-- v3.2.4 - People Workflow Redesign
+- ~~v3.2.2.1 - High-Intelligence Professional Design System Rerun~~ Completed
+- ~~v3.2.2.2 - Navigation Dropdown Hover Fix~~ Completed
+- ~~v3.2.3 - Home / Command Center Redesign~~ Completed
+- **v3.2.4 - People Workflow Redesign** Next
 - v3.2.5 - Operations Workflow Redesign
 - v3.2.6 - Reports / Data / Admin Redesign
 - v3.3.0 - Code Organization / Modularization
@@ -53,6 +54,7 @@ The best v4.0 path is likely:
 - v3.8.0 - Performance / Scale Pass
 - v3.9.0 - v4.0 Migration Planning
 - v4.0 - Platform Architecture Release
+
 
 
 ### ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -70,19 +72,23 @@ The best v4.0 path is likely:
 - Add design tokens / CSS variables where needed
 - Reduce inline styling
 
-### ~~v3.2.2.2 - High-Intelligence Design System Rerun~~ Completed
+### ~~v3.2.2.1 - High-Intelligence Design System Rerun~~ Completed
 - Re-audit shared UI primitives at higher depth before Home redesign
 - Remove duplicated design CSS from print/export templates
 - Tighten form labels, modal headers/actions, empty states, and responsive spacing
 - Preserve v3.2.3 as the Home / Command Center redesign phase
 
-### v3.2.3 - Home / Command Center Redesign
-- Rebuild home screen around action priority
-- Reduce noise and secondary stats
-- Add Today’s Priority area
-- Add System Health area
-- Add Recent Activity area
-- Keep daily decisions above the fold
+### ~~v3.2.2.2 - Navigation Dropdown Hover Fix~~ Completed
+- Fixed dropdown hover dead zone
+- Preserved click/focus behavior for navigation menus
+
+### ~~v3.2.3 - Home / Command Center Redesign~~ Completed
+- Rebuilt Home around one lead priority and compact remaining queues
+- Reduced noise by keeping secondary stats behind collapsible panels
+- Added Today’s Priority area
+- Added System Snapshot area
+- Added Recent Activity area
+- Kept daily decisions above the fold
 
 ### v3.2.4 - People Workflow Redesign
 - Improve Attendance, Review, Patterns, Notices, Roster, Employee Profile, Training, Uniforms
@@ -168,4 +174,3 @@ The best v4.0 path is likely:
 
 Do not let roadmap work become feature confetti. Every build should answer one question: does this make the suite easier to use, safer to trust, easier to maintain, or more professional to present?
 
-- ~~v3.2.2.2 - Navigation Dropdown Hover Fix~~ Completed
