@@ -2,7 +2,7 @@
 
 ## Current Position
 
-Current milestone: **v3.2.2.1 - High-Intelligence Design System Rerun**.
+Current milestone: **v3.2.2.2 - High-Intelligence Design System Rerun**.
 
 The suite is now beyond prototype stage. It has enough operational value that the next development era should be disciplined: design consistency, data reliability, modular code, security hardening, performance, and eventually a v4.0 platform architecture release.
 
@@ -40,7 +40,7 @@ The best v4.0 path is likely:
 
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
 - ~~v3.2.2 - Professional Design System Pass~~ Completed
-- ~~v3.2.2.1 - High-Intelligence Design System Rerun~~ Completed
+- ~~v3.2.2.2 - High-Intelligence Design System Rerun~~ Completed
 - v3.2.3 - Home / Command Center Redesign ← Next
 - v3.2.4 - People Workflow Redesign
 - v3.2.5 - Operations Workflow Redesign
@@ -70,7 +70,7 @@ The best v4.0 path is likely:
 - Add design tokens / CSS variables where needed
 - Reduce inline styling
 
-### ~~v3.2.2.1 - High-Intelligence Design System Rerun~~ Completed
+### ~~v3.2.2.2 - High-Intelligence Design System Rerun~~ Completed
 - Re-audit shared UI primitives at higher depth before Home redesign
 - Remove duplicated design CSS from print/export templates
 - Tighten form labels, modal headers/actions, empty states, and responsive spacing
@@ -167,3 +167,5 @@ The best v4.0 path is likely:
 ## Guardrail
 
 Do not let roadmap work become feature confetti. Every build should answer one question: does this make the suite easier to use, safer to trust, easier to maintain, or more professional to present?
+
+- ~~v3.2.2.2 - Navigation Dropdown Hover Fix~~ Completed
