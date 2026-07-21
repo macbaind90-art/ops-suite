@@ -92,7 +92,7 @@ namespace PWADC.SecurityOperationsSuite
                         break;
                     case "suite:loadModuleData":
                         string loadModule = root.TryGetProperty("module", out JsonElement lm) ? lm.GetString() ?? "" : "";
-                        await Respond(requestId, true, new { module = loadModule, data = LoadModuleData(loadModule) });
+                        await Respond(requestId, true, LoadModuleDataEnvelope(loadModule));
                         break;
                     case "suite:resetModuleFromSeed":
                         string resetModule = root.TryGetProperty("module", out JsonElement rm) ? rm.GetString() ?? "" : "";
@@ -229,6 +229,17 @@ namespace PWADC.SecurityOperationsSuite
             CopyPackagedProgramsToShared(false);
         }
 
+        private class ModuleLoadResult
+        {
+            public string Module { get; set; } = "";
+            public string Data { get; set; } = "{}";
+            public string Source { get; set; } = "unknown";
+            public string SourceDetail { get; set; } = "";
+            public string Path { get; set; } = "";
+            public string FileModified { get; set; } = "";
+            public bool LiveFileExisted { get; set; } = false;
+        }
+
         private object RunHealthCheck()
         {
             var checks = new List<object>();
@@ -249,42 +260,85 @@ namespace PWADC.SecurityOperationsSuite
             catch (Exception ex) { return new { name, ok = false, error = ex.Message }; }
         }
 
-        private string LoadModuleData(string module)
+        private object LoadModuleDataEnvelope(string module)
+        {
+            ModuleLoadResult info = LoadModuleDataWithSource(module);
+            return new
+            {
+                module = info.Module,
+                data = info.Data,
+                source = info.Source,
+                sourceDetail = info.SourceDetail,
+                path = info.Path,
+                fileModified = info.FileModified,
+                liveFileExisted = info.LiveFileExisted,
+                dataRoot = settings.DataRoot,
+                loadedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+            };
+        }
+
+        private ModuleLoadResult LoadModuleDataWithSource(string module)
         {
             EnsureFolders();
             string path = Path.Combine(settings.DataRoot, "Data", ModuleFileName(module));
             string seedPath = Path.Combine(appFolder, "seed", ModuleFileName(module));
+            string fullPath = Path.GetFullPath(path);
+            ModuleLoadResult result = new ModuleLoadResult { Module = module, Path = fullPath, LiveFileExisted = File.Exists(fullPath) };
 
-            if (File.Exists(path))
+            if (File.Exists(fullPath))
             {
-                string existingJson = File.ReadAllText(path);
+                string existingJson = File.ReadAllText(fullPath);
                 string seedJsonForCompare = File.Exists(seedPath) ? File.ReadAllText(seedPath) : "";
                 if (!ShouldReplaceWithSeed(module, existingJson, seedJsonForCompare))
                 {
-                    return existingJson;
+                    FileInfo info = new FileInfo(fullPath);
+                    result.Data = existingJson;
+                    result.Source = "live-shared";
+                    result.SourceDetail = "Loaded existing JSON from the configured shared Data folder.";
+                    result.FileModified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    return result;
                 }
 
                 if (File.Exists(seedPath))
                 {
                     string backupDir = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
                     Directory.CreateDirectory(backupDir);
-                    string backupName = ModuleFileName(module).Replace(".json", "-replaced-empty-" + DateTime.Now.ToString("yyyyMMdd-HHmmssfff") + ".json");
+                    string backupName = Path.GetFileNameWithoutExtension(ModuleFileName(module)) + "__pre-recovery-replace__" + DateTime.Now.ToString("yyyy-MM-dd_HHmmssfff") + ".json";
                     File.WriteAllText(Path.Combine(backupDir, backupName), existingJson);
                     string seedJson = File.ReadAllText(seedPath);
-                    File.WriteAllText(path, seedJson);
-                    return seedJson;
+                    File.WriteAllText(fullPath, seedJson);
+                    FileInfo info = new FileInfo(fullPath);
+                    result.Data = seedJson;
+                    result.Source = "packaged-recovery-replaced-empty";
+                    result.SourceDetail = "Live file was missing required data or appeared empty, so packaged recovery JSON was copied after creating a backup.";
+                    result.FileModified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    return result;
                 }
 
-                return existingJson;
+                result.Data = existingJson;
+                result.Source = "live-shared";
+                result.SourceDetail = "Loaded existing JSON from the configured shared Data folder.";
+                result.FileModified = new FileInfo(fullPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                return result;
             }
 
             if (File.Exists(seedPath))
             {
                 string seedJson = File.ReadAllText(seedPath);
-                File.WriteAllText(path, seedJson);
-                return seedJson;
+                Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
+                File.WriteAllText(fullPath, seedJson);
+                FileInfo info = new FileInfo(fullPath);
+                result.Data = seedJson;
+                result.Source = "packaged-recovery-created";
+                result.SourceDetail = "No live JSON file existed, so packaged recovery JSON was copied into the shared Data folder.";
+                result.FileModified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                return result;
             }
-            return "{}";
+
+            result.Data = "{}";
+            result.Source = "missing";
+            result.SourceDetail = "No live JSON file or packaged recovery JSON was found.";
+            return result;
         }
 
         private bool ShouldReplaceWithSeed(string module, string json, string seedJson = "")
@@ -774,7 +828,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.1.38" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.1.39" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -790,7 +844,57 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.1.38", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.1.39", baseDirectory = AppContext.BaseDirectory };
+
+        private string LatestAttendanceDateFromFile(string path)
+        {
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(path));
+                if (!doc.RootElement.TryGetProperty("attendance", out JsonElement att) || att.ValueKind != JsonValueKind.Object) return "";
+                string latest = "";
+                foreach (JsonProperty person in att.EnumerateObject())
+                {
+                    if (person.Value.ValueKind != JsonValueKind.Object) continue;
+                    foreach (JsonProperty day in person.Value.EnumerateObject())
+                    {
+                        string d = day.Name;
+                        string code = day.Value.ValueKind == JsonValueKind.String ? day.Value.GetString() ?? "" : day.Value.ToString();
+                        if (d.Length == 10 && !string.IsNullOrWhiteSpace(code) && code != "NE" && string.CompareOrdinal(d, latest) > 0) latest = d;
+                    }
+                }
+                return latest;
+            }
+            catch { return ""; }
+        }
+
+        private string NewestDatePropertyFromFile(string path, params string[] propertyNames)
+        {
+            try
+            {
+                using JsonDocument doc = JsonDocument.Parse(File.ReadAllText(path));
+                string latest = "";
+                foreach (string prop in propertyNames)
+                {
+                    if (!doc.RootElement.TryGetProperty(prop, out JsonElement arr) || arr.ValueKind != JsonValueKind.Array) continue;
+                    foreach (JsonElement item in arr.EnumerateArray())
+                    {
+                        if (item.ValueKind != JsonValueKind.Object) continue;
+                        foreach (string key in new[] { "date", "reportDate", "lastSeen", "updatedAt", "createdAt", "at", "dueDate" })
+                        {
+                            if (item.TryGetProperty(key, out JsonElement v))
+                            {
+                                string raw = v.ValueKind == JsonValueKind.String ? v.GetString() ?? "" : v.ToString();
+                                string d = raw.Length >= 10 ? raw.Substring(0, 10) : raw;
+                                if (d.Length == 10 && d[4] == '-' && d[7] == '-' && string.CompareOrdinal(d, latest) > 0) latest = d;
+                            }
+                        }
+                    }
+                }
+                return latest;
+            }
+            catch { return ""; }
+        }
 
         private object ModuleFileStatuses()
         {
@@ -837,7 +941,17 @@ namespace PWADC.SecurityOperationsSuite
                 }
                 catch { }
             }
-            return new { module, label = ModuleFolder(module), fileName, path, exists = info != null, sizeBytes = info?.Length ?? 0, modified = info?.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "", lastSaved, newestBackup, newestBackupModified, newestBackupSize };
+            string newestDataDate = "";
+            if (info != null)
+            {
+                if (module == "attendance") newestDataDate = LatestAttendanceDateFromFile(info.FullName);
+                else if (module == "shift-reports") newestDataDate = NewestDatePropertyFromFile(info.FullName, "reports", "issues");
+                else if (module == "shift-intelligence") newestDataDate = NewestDatePropertyFromFile(info.FullName, "issues", "intake", "reference");
+                else if (module == "tasks") newestDataDate = NewestDatePropertyFromFile(info.FullName, "tasks", "audit");
+                else if (module == "roster") newestDataDate = NewestDatePropertyFromFile(info.FullName, "employees", "schedule", "audit");
+            }
+            string sourceStatus = info == null ? "missing" : "live-shared";
+            return new { module, label = ModuleFolder(module), fileName, path, exists = info != null, sizeBytes = info?.Length ?? 0, modified = info?.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "", lastSaved, newestBackup, newestBackupModified, newestBackupSize, newestDataDate, sourceStatus };
         }
 
         private string ModuleBackupDir(string module)

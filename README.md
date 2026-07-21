@@ -1,26 +1,18 @@
-# PWADC Security Operations Suite v3.1.38
+# PWADC Security Operations Suite v3.1.39
 
-## v3.1.38 Backup Retention / Backup Manager
+## v3.1.39 Live Data Clarity / Startup Safety
 
-This release adds a controlled backup retention strategy and Backup Manager panel. It keeps the v3.1.30 workflow improvements, v3.1.31 data safety/security hardening, v3.1.32 regression guide, v3.1.35 UI render fix, v3.1.36 attendance import date focus fix, and backup/restore verification hardening.
+This release makes the suite clearer about which data it is using so old packaged recovery data, imported backups, restored backups, and live shared files are easier to tell apart.
 
-### Backup Manager
+### Highlights
+- Home now shows a live data source strip.
+- Data Health now includes a Live Data Clarity panel.
+- Module load responses include source metadata from the desktop bridge.
+- Attendance, roster, tasks, shift reports, and shift intelligence show session source details.
+- Attendance import / restore still focuses to the latest populated attendance date.
+- Live Module Files includes newest meaningful data date where available.
+- Packaged recovery is labeled as recovery data, not current live data.
+- Fixed a duplicate `Programs` source-line issue in `MainForm.cs` from the prior backup-manager pass.
 
-- Inventory backup counts and size by module.
-- Classify backups as Manual, Auto, Pre-Restore, Archive, or Legacy.
-- Preview cleanup before deleting anything.
-- Confirm cleanup twice.
-- Write a cleanup log after deletion.
-- Protect manual, archive, and legacy backups.
-
-### Retention policy
-
-- Keep all backups from the last 7 days.
-- Keep one daily backup for 30 days.
-- Keep one weekly backup for 12 weeks.
-- Keep one monthly backup for 12 months.
-- Keep pre-restore backups at least 90 days.
-
-### Checks
-
-JavaScript syntax and required render-function checks are expected for release packaging. GitHub Actions workflow is included for the Windows EXE build.
+### Recommended use
+Use Data Health first if anything appears old. Confirm the configured data root, module file modified times, and newest attendance date before restoring or importing.
