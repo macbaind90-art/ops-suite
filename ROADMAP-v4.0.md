@@ -2,7 +2,7 @@
 
 ## Current Position
 
-Current milestone: **v3.2.1 - Full UI / UX Audit + Roadmap Anchor**.
+Current milestone: **v3.2.2.1 - High-Intelligence Design System Rerun**.
 
 The suite is now beyond prototype stage. It has enough operational value that the next development era should be disciplined: design consistency, data reliability, modular code, security hardening, performance, and eventually a v4.0 platform architecture release.
 
@@ -36,20 +36,45 @@ The best v4.0 path is likely:
 
 ## Version Roadmap
 
-### v3.2.1 - Full UI / UX Audit + Roadmap Anchor
+## Roadmap Status
+
+- ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
+- ~~v3.2.2 - Professional Design System Pass~~ Completed
+- ~~v3.2.2.1 - High-Intelligence Design System Rerun~~ Completed
+- v3.2.3 - Home / Command Center Redesign ← Next
+- v3.2.4 - People Workflow Redesign
+- v3.2.5 - Operations Workflow Redesign
+- v3.2.6 - Reports / Data / Admin Redesign
+- v3.3.0 - Code Organization / Modularization
+- v3.4.0 - Data Layer / Reliability Upgrade
+- v3.5.0 - Reporting / Compliance Maturity
+- v3.6.0 - Role / Security Maturity
+- v3.7.0 - Workflow Intelligence / Smart Assist
+- v3.8.0 - Performance / Scale Pass
+- v3.9.0 - v4.0 Migration Planning
+- v4.0 - Platform Architecture Release
+
+
+### ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
 - Screen-by-screen audit
 - Shared UI element review
 - Professional design recommendations
 - v4.0 roadmap stored in repo
 - No major operational feature expansion
 
-### v3.2.2 - Professional Design System Pass
+### ~~v3.2.2 - Professional Design System Pass~~ Completed
 - Standardize page headers
 - Standardize screen guide cards
 - Standardize button hierarchy
 - Standardize cards, tables, chips, filters, toolbars, forms, modals, and empty states
 - Add design tokens / CSS variables where needed
 - Reduce inline styling
+
+### ~~v3.2.2.1 - High-Intelligence Design System Rerun~~ Completed
+- Re-audit shared UI primitives at higher depth before Home redesign
+- Remove duplicated design CSS from print/export templates
+- Tighten form labels, modal headers/actions, empty states, and responsive spacing
+- Preserve v3.2.3 as the Home / Command Center redesign phase
 
 ### v3.2.3 - Home / Command Center Redesign
 - Rebuild home screen around action priority
