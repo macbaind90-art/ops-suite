@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.2.5.1 - Manifest XML Startup Fix**.
+Current build: **v3.2.5.2 - Shift Report Intelligence Rebuild**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -13,9 +13,30 @@ Current build: **v3.2.5.1 - Manifest XML Startup Fix**.
 - ~~v3.2.4 - People Workflow Redesign~~ Completed
 - ~~v3.2.5 - Operations Workflow Redesign~~ Completed
 - ~~v3.2.5.1 - Manifest XML Startup Fix~~ Completed
+- ~~v3.2.5.2 - Shift Report Intelligence Rebuild~~ Completed
 
 ## Next
 - **v3.2.6 - Reports / Data / Admin Redesign**
+
+## Current Project Map
+### Command Center
+- Home / Dashboard remains the daily command summary.
+- Live data source/freshness stays visible so old/recovery data is not mistaken for current live data.
+
+### People Lane
+- Attendance, Notice Workflow, Roster, Employee Profile, Training, and Uniform Accountability stay connected as the People Workflow.
+
+### Operations Lane
+- Shift Reports is now **Shift Report Operational Intake**.
+- Shift Intelligence is the operational decision/watchlist layer.
+- Task Tracker receives owned follow-up actions from operations issues.
+- Office Supplies supports readiness but should not become a procurement system.
+
+### Shift Report Intelligence Model
+- Active Watch Item: repeated alarm/system pattern, unresolved equipment/facility concern, safety issue, staffing coverage impact, or incident follow-up.
+- Suggested Link: same location/system/topic appears across shifts and needs approval before linking.
+- Reference Only: routine pass-down, false alarm with no repeat, normal staffing, trailer/dock monitoring with no issue stated, or historical context.
+- Ignored / Noise: N/A, none, blank, no issues, no notifications, and nothing-else-of-note language.
 
 ## Future Phases
 - v3.3.0 - Code Organization / Modularization
