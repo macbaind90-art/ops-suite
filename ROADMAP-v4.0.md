@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.2.5.2 - Shift Report Intelligence Rebuild**.
+Current build: **v3.2.5.3 - Shift Report Interface Cleanup / Fresh Start Control**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -14,6 +14,7 @@ Current build: **v3.2.5.2 - Shift Report Intelligence Rebuild**.
 - ~~v3.2.5 - Operations Workflow Redesign~~ Completed
 - ~~v3.2.5.1 - Manifest XML Startup Fix~~ Completed
 - ~~v3.2.5.2 - Shift Report Intelligence Rebuild~~ Completed
+- ~~v3.2.5.3 - Shift Report Interface Cleanup / Fresh Start Control~~ Completed
 
 ## Next
 - **v3.2.6 - Reports / Data / Admin Redesign**
@@ -28,8 +29,8 @@ Current build: **v3.2.5.2 - Shift Report Intelligence Rebuild**.
 
 ### Operations Lane
 - Shift Reports is now **Shift Report Operational Intake**.
-- Shift Intelligence is the operational decision/watchlist layer.
-- Task Tracker receives owned follow-up actions from operations issues.
+- Shift Intelligence is the operational decision/watchlist layer with a cleaner watchboard interface.
+- Task Tracker receives owned follow-up actions from operations issues. Shift Reports/Shift Intelligence can be reset with an admin-only backup-first fresh start control when rebuilding the model.
 - Office Supplies supports readiness but should not become a procurement system.
 
 ### Shift Report Intelligence Model
