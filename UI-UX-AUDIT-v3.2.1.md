@@ -438,7 +438,7 @@ Recommendations:
 - Move cost to admin-only summary.
 - Keep this module intentionally simple.
 
-Target build: v3.2.5.
+Target build: v3.2.5.1.
 
 ### 15. Task Tracker
 
@@ -457,7 +457,7 @@ Recommendations:
 - Move draft/email/export/import/backup to action menu.
 - Make next action and blocker visually prominent.
 
-Target build: v3.2.5.
+Target build: v3.2.5.1.
 
 ### 16. Shift Reports
 
@@ -476,7 +476,7 @@ Recommendations:
 - Show post-import result clearly: report saved, items created, review next.
 - Keep raw source history separate from operational decisions.
 
-Target build: v3.2.5.
+Target build: v3.2.5.1.
 
 ### 17. Shift Intelligence
 
@@ -496,7 +496,7 @@ Recommendations:
 - Make Reference Only and Ignore calm, not scary.
 - Make Needs Action the dominant queue.
 
-Target build: v3.2.5.
+Target build: v3.2.5.1.
 
 ### 18. Executive Report Center
 

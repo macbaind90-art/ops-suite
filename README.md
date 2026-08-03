@@ -1,29 +1,22 @@
-# PWADC Security Operations Suite v3.2.5
+# PWADC Security Operations Suite v3.2.5.1
 
-## v3.2.5 Operations Workflow Redesign
+## v3.2.5.1 Manifest XML Startup Fix
 
-This release connects the Operations lane so Shift Reports, Shift Intelligence, Task Tracker, and Office Supplies feel like one controlled workflow instead of separate operational silos.
+This hotfix corrects a Windows startup failure caused by an invalid application manifest XML declaration.
 
-### Added in this build
-- Added a shared **Operations Workflow** strip across the Operations-related screens.
-- Added quick Operations lane movement for:
-  - Shift Reports
-  - Shift Intelligence
-  - Task Tracker
-  - Office Supplies
-  - Report Center
-- Added an **Operational Lifecycle** panel showing:
-  - Import
-  - Review
-  - Track
-  - Task
-  - Ready
-  - Report
-- Added a direct **Create Task** action from Shift Intelligence watchlist issues.
-- Reinforced the operating rule: raw notes stay in Shift Reports, meaningful operational issues move to Shift Intelligence, and owner/date/action follow-ups move to Task Tracker.
-- Kept v3.2.4 People Workflow redesign, v3.2.3 Home / Command Center redesign, and v3.2.3.2 GitHub version fix.
+### Fix
+- Restored the manifest XML declaration to `<?xml version="1.0" encoding="utf-8"?>`.
+- Kept the application identity/version at `3.2.5.1`.
+- Updated `.csproj`, `app.manifest`, and GitHub artifact naming to valid four-part versioning.
+- Added a manifest declaration check to prevent this side-by-side startup failure from returning.
 
-### Roadmap status
+### Included foundation
+This build keeps the v3.2.5 Operations Workflow Redesign intact:
+- Shift Reports, Shift Intelligence, Task Tracker, and Office Supplies share one Operations Workflow lane.
+- Shift Intelligence watchlist issues can create Task Tracker follow-ups.
+- README and roadmap continue tracking completed roadmap phases.
+
+## Roadmap Progress
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
 - ~~v3.2.2 - Professional Design System Pass~~ Completed
 - ~~v3.2.2.1 - High-Intelligence Professional Design System Rerun~~ Completed
@@ -33,6 +26,7 @@ This release connects the Operations lane so Shift Reports, Shift Intelligence, 
 - ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
 - ~~v3.2.4 - People Workflow Redesign~~ Completed
 - ~~v3.2.5 - Operations Workflow Redesign~~ Completed
+- ~~v3.2.5.1 - Manifest XML Startup Fix~~ Completed
 - **v3.2.6 - Reports / Data / Admin Redesign** Next
 - v3.3.0 - Code Organization / Modularization
 - v3.4.0 - Data Layer / Reliability Upgrade
@@ -43,10 +37,5 @@ This release connects the Operations lane so Shift Reports, Shift Intelligence, 
 - v3.9.0 - v4.0 Migration Planning
 - v4.0 - Platform Architecture Release
 
-### Current strategic direction
-- Stay with the current C# / WebView / HTML / CSS / JavaScript stack for the v3.x line.
-- Do not move to Rust or Ruby in the near term.
-- Continue workflow redesign before architecture changes.
-
-### Next planned build
-`v3.2.6 - Reports / Data / Admin Redesign`
+## Architecture Direction
+Continue with the current C# / WebView / HTML / CSS / JavaScript stack for now. The next architecture move is modularization, not Rust or Ruby migration.

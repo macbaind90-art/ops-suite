@@ -47,7 +47,7 @@ Recommended v3.2.3 sections:
 ## Still recommended for later phases
 
 - v3.2.4: connect Attendance, Roster, Employee Profile, Training, Uniforms into one People workflow.
-- v3.2.5: clarify Shift Reports -> Shift Intelligence -> Tasks as one Operations workflow.
+- v3.2.5.1: clarify Shift Reports -> Shift Intelligence -> Tasks as one Operations workflow.
 - v3.2.6: calm down Reports / Data / Admin screens with better risk language, previews, and audit visibility.
 - v3.3.0: split the large front-end into maintainable JavaScript modules.
 

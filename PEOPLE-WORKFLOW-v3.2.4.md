@@ -31,4 +31,4 @@ Employee Profile is the command snapshot. Attendance, Roster, Training, and Unif
 This pass does not change JSON structure. It improves the workflow and UI layer only.
 
 ## Next roadmap item
-v3.2.5 - Operations Workflow Redesign
+v3.2.5.1 - Operations Workflow Redesign
