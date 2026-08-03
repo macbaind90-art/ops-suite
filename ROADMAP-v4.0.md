@@ -2,7 +2,7 @@
 
 ## Current Position
 
-Current milestone: **v3.2.3.2 - GitHub Version Format Fix**.
+Current milestone: **v3.2.4 - People Workflow Redesign**.
 
 The suite is now beyond prototype stage. It has enough operational value that the next development era should be disciplined: design consistency, data reliability, modular code, security hardening, performance, and eventually a v4.0 platform architecture release.
 
@@ -45,8 +45,8 @@ The best v4.0 path is likely:
 - ~~v3.2.3 - Home / Command Center Redesign~~ Completed
 - ~~v3.2.3.1 - UI Render Fix / Undefined Helper Sweep~~ Completed
 - ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
-**v3.2.4 - People Workflow Redesign** Next
-- v3.2.5 - Operations Workflow Redesign
+- ~~v3.2.4 - People Workflow Redesign~~ Completed
+- **v3.2.5 - Operations Workflow Redesign** Next
 - v3.2.6 - Reports / Data / Admin Redesign
 - v3.3.0 - Code Organization / Modularization
 - v3.4.0 - Data Layer / Reliability Upgrade
@@ -102,11 +102,11 @@ The best v4.0 path is likely:
 ### ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
 Corrected .NET version metadata to four numeric components and swept the repo for invalid version strings so GitHub Actions can build successfully.
 
-### v3.2.4 - People Workflow Redesign
-- Improve Attendance, Review, Patterns, Notices, Roster, Employee Profile, Training, Uniforms
-- Make People work feel connected instead of separate rooms
-- Improve employee profile as a hub
-- Clarify pattern-to-notice flow
+### ~~v3.2.4 - People Workflow Redesign~~ Completed
+- Added a shared People Workflow strip across Attendance, Roster, Employee Profile, Training, and Uniforms
+- Added Employee Profile People Command tiles for patterns, notices, training, uniforms, and schedule assignments
+- Improved People lane action order and screen guidance
+- Kept HR-sensitive decisions tied to source modules rather than hiding them in summary cards
 
 ### v3.2.5 - Operations Workflow Redesign
 - Improve Shift Reports, Shift Intelligence, Task Tracker, Office Supplies

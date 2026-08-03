@@ -1,15 +1,26 @@
-# PWADC Security Operations Suite v3.2.3.2
+# PWADC Security Operations Suite v3.2.4
 
-## v3.2.3.2 GitHub Version Format Fix
+## v3.2.4 People Workflow Redesign
 
-This maintenance release keeps the v3.2.3 Home / Command Center redesign and v3.2.3.1 render fixes, then corrects the .NET version metadata so GitHub Actions can build the Windows artifact.
+This release connects the People lane so Attendance, Roster, Employee Profile, Training, and Uniforms feel like one controlled workflow instead of separate rooms.
 
-### Fixed in this build
-- Updated `.csproj` version fields to the required four-part numeric format: `3.2.3.2`.
-- Updated `app.manifest` assembly identity to `3.2.3.2`.
-- Updated the GitHub Actions artifact name to `PWADC-Security-Operations-Suite-v3-2-3-2-Windows`.
-- Swept the repository for invalid five-part numeric version strings.
-- Kept the prior undefined-helper fixes from v3.2.3.1.
+### Added in this build
+- Added a shared **People Workflow** strip across the People-related screens.
+- Added quick People lane movement for:
+  - Attendance
+  - Notice Workflow
+  - Roster
+  - Employee Profile
+  - Training
+  - Uniform Accountability
+- Added Employee Profile **People Command** tiles showing:
+  - outstanding attendance patterns
+  - open notices
+  - training exceptions
+  - uniform follow-ups
+  - schedule assignments
+- Improved People screen guidance and action order.
+- Kept v3.2.3 Home / Command Center redesign and v3.2.3.2 GitHub version fix.
 
 ### Roadmap status
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -19,8 +30,8 @@ This maintenance release keeps the v3.2.3 Home / Command Center redesign and v3.
 - ~~v3.2.3 - Home / Command Center Redesign~~ Completed
 - ~~v3.2.3.1 - UI Render Fix / Undefined Helper Sweep~~ Completed
 - ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
-- **v3.2.4 - People Workflow Redesign** Next
-- v3.2.5 - Operations Workflow Redesign
+- ~~v3.2.4 - People Workflow Redesign~~ Completed
+- **v3.2.5 - Operations Workflow Redesign** Next
 - v3.2.6 - Reports / Data / Admin Redesign
 - v3.3.0 - Code Organization / Modularization
 - v3.4.0 - Data Layer / Reliability Upgrade
@@ -34,7 +45,7 @@ This maintenance release keeps the v3.2.3 Home / Command Center redesign and v3.
 ### Current strategic direction
 - Stay with the current C# / WebView / HTML / CSS / JavaScript stack for the v3.x line.
 - Do not move to Rust or Ruby in the near term.
-- Continue screen/workflow redesign before architecture changes.
+- Continue workflow redesign before architecture changes.
 
 ### Next planned build
-`v3.2.4 - People Workflow Redesign`
+`v3.2.5 - Operations Workflow Redesign`
