@@ -2,7 +2,7 @@
 
 ## Current Position
 
-Current milestone: **v3.2.4 - People Workflow Redesign**.
+Current milestone: **v3.2.5 - Operations Workflow Redesign**.
 
 The suite is now beyond prototype stage. It has enough operational value that the next development era should be disciplined: design consistency, data reliability, modular code, security hardening, performance, and eventually a v4.0 platform architecture release.
 
@@ -46,8 +46,8 @@ The best v4.0 path is likely:
 - ~~v3.2.3.1 - UI Render Fix / Undefined Helper Sweep~~ Completed
 - ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
 - ~~v3.2.4 - People Workflow Redesign~~ Completed
-- **v3.2.5 - Operations Workflow Redesign** Next
-- v3.2.6 - Reports / Data / Admin Redesign
+- ~~v3.2.5 - Operations Workflow Redesign~~ Completed
+- **v3.2.6 - Reports / Data / Admin Redesign** Next
 - v3.3.0 - Code Organization / Modularization
 - v3.4.0 - Data Layer / Reliability Upgrade
 - v3.5.0 - Reporting / Compliance Maturity
@@ -108,11 +108,11 @@ Corrected .NET version metadata to four numeric components and swept the repo fo
 - Improved People lane action order and screen guidance
 - Kept HR-sensitive decisions tied to source modules rather than hiding them in summary cards
 
-### v3.2.5 - Operations Workflow Redesign
-- Improve Shift Reports, Shift Intelligence, Task Tracker, Office Supplies
-- Clarify Import -> Review -> Track -> Resolve -> Report
-- Improve suggested matches and reference-only handling
-- Improve create-task handoff from operational issues
+### ~~v3.2.5 - Operations Workflow Redesign~~ Completed
+- Added a shared Operations Workflow strip across Shift Reports, Shift Intelligence, Task Tracker, and Office Supplies
+- Clarified Import -> Review -> Track -> Resolve -> Report
+- Added operational lifecycle panel and decision rule language
+- Added create-task handoff from Shift Intelligence watchlist issues
 
 ### v3.2.6 - Reports / Data / Admin Redesign
 - Improve Executive Report Center, Data Health, Restore Center, Backup Manager, Change Log, Settings, Other Programs

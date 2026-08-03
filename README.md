@@ -1,26 +1,27 @@
-# PWADC Security Operations Suite v3.2.4
+# PWADC Security Operations Suite v3.2.5
 
-## v3.2.4 People Workflow Redesign
+## v3.2.5 Operations Workflow Redesign
 
-This release connects the People lane so Attendance, Roster, Employee Profile, Training, and Uniforms feel like one controlled workflow instead of separate rooms.
+This release connects the Operations lane so Shift Reports, Shift Intelligence, Task Tracker, and Office Supplies feel like one controlled workflow instead of separate operational silos.
 
 ### Added in this build
-- Added a shared **People Workflow** strip across the People-related screens.
-- Added quick People lane movement for:
-  - Attendance
-  - Notice Workflow
-  - Roster
-  - Employee Profile
-  - Training
-  - Uniform Accountability
-- Added Employee Profile **People Command** tiles showing:
-  - outstanding attendance patterns
-  - open notices
-  - training exceptions
-  - uniform follow-ups
-  - schedule assignments
-- Improved People screen guidance and action order.
-- Kept v3.2.3 Home / Command Center redesign and v3.2.3.2 GitHub version fix.
+- Added a shared **Operations Workflow** strip across the Operations-related screens.
+- Added quick Operations lane movement for:
+  - Shift Reports
+  - Shift Intelligence
+  - Task Tracker
+  - Office Supplies
+  - Report Center
+- Added an **Operational Lifecycle** panel showing:
+  - Import
+  - Review
+  - Track
+  - Task
+  - Ready
+  - Report
+- Added a direct **Create Task** action from Shift Intelligence watchlist issues.
+- Reinforced the operating rule: raw notes stay in Shift Reports, meaningful operational issues move to Shift Intelligence, and owner/date/action follow-ups move to Task Tracker.
+- Kept v3.2.4 People Workflow redesign, v3.2.3 Home / Command Center redesign, and v3.2.3.2 GitHub version fix.
 
 ### Roadmap status
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -31,8 +32,8 @@ This release connects the People lane so Attendance, Roster, Employee Profile, T
 - ~~v3.2.3.1 - UI Render Fix / Undefined Helper Sweep~~ Completed
 - ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
 - ~~v3.2.4 - People Workflow Redesign~~ Completed
-- **v3.2.5 - Operations Workflow Redesign** Next
-- v3.2.6 - Reports / Data / Admin Redesign
+- ~~v3.2.5 - Operations Workflow Redesign~~ Completed
+- **v3.2.6 - Reports / Data / Admin Redesign** Next
 - v3.3.0 - Code Organization / Modularization
 - v3.4.0 - Data Layer / Reliability Upgrade
 - v3.5.0 - Reporting / Compliance Maturity
@@ -48,4 +49,4 @@ This release connects the People lane so Attendance, Roster, Employee Profile, T
 - Continue workflow redesign before architecture changes.
 
 ### Next planned build
-`v3.2.5 - Operations Workflow Redesign`
+`v3.2.6 - Reports / Data / Admin Redesign`
