@@ -1,8 +1,20 @@
-# PWADC Security Operations Suite v3.2.5.3
+# PWADC Security Operations Suite v3.2.5.4
 
-## v3.2.5.3 Shift Report Interface Cleanup / Fresh Start Control
+## v3.2.5.4 Shift Operations Flow Redesign
 
-This build cleans up the rebuilt Shift Reports and Shift Intelligence interface and adds an admin-safe fresh start control for the rebuilt model.
+This hotfix/polish build restructures Shift Reports and Shift Intelligence around a clear operating path: Import → Classify → Review → Track → Close. It keeps the rebuilt parser/intelligence rules from v3.2.5.2 and the fresh-start control from v3.2.5.3, but changes the interface so the screens guide the user naturally instead of letting panels land wherever they fit.
+
+### v3.2.5.4 highlights
+- Shift Reports now behaves like an intake desk: source record first, parser output second, operational board third.
+- Shift Intelligence now behaves like a decision desk: pending intake on the left, active watchlist on the right.
+- Added a visible five-step Shift Operations path.
+- Moved decision rules into a collapsible section so guidance is available without crowding the board.
+- Source report history is tucked into a drawer to keep the main screen focused.
+
+
+## Prior v3.2.5.3 Shift Report Interface Cleanup / Fresh Start Control
+
+That build cleaned up the rebuilt Shift Reports and Shift Intelligence interface and added an admin-safe fresh start control for the rebuilt model.
 
 ### v3.2.5.3 highlights
 - Shift Reports now opens as a cleaner **Operational Intake** board.
@@ -51,6 +63,7 @@ The uploaded SEC-PWADC 2026-08-01 2nd-shift report should produce:
 - ~~v3.2.5.1 - Manifest XML Startup Fix~~ Completed
 - ~~v3.2.5.2 - Shift Report Intelligence Rebuild~~ Completed
 - ~~v3.2.5.3 - Shift Report Interface Cleanup / Fresh Start Control~~ Completed
+- ~~v3.2.5.4 - Shift Operations Flow Redesign~~ Completed
 - **v3.2.6 - Reports / Data / Admin Redesign** Next
 - v3.3.0 - Code Organization / Modularization
 - v3.4.0 - Data Layer / Reliability Upgrade
@@ -64,7 +77,7 @@ The uploaded SEC-PWADC 2026-08-01 2nd-shift report should produce:
 ## Current Project Map
 1. **Command Center:** Home summarizes priority queues and live data confidence.
 2. **People Lane:** Attendance, Notice Workflow, Roster, Employee Profile, Training, and Uniforms remain connected through the People Workflow.
-3. **Operations Lane:** Shift Report Operational Intake feeds Shift Intelligence, which feeds Task Tracker and Reports. Shift memory now has an admin-safe fresh start control that backs up first.
+3. **Operations Lane:** Shift Report Operational Intake now follows Import → Classify → Review → Track → Close. Shift Intelligence is the decision desk, then Task Tracker and Reports handle follow-up and closure. Shift memory has an admin-safe backup-first fresh start control.
 4. **Data / Admin Lane:** Reports, Data Health, Backup Manager, Restore Center, Change Log, and Settings remain the control layer.
 5. **Road to v4.0:** Continue current stack for now. Modularization, data reliability, reporting maturity, role/security maturity, performance, and v4.0 migration planning remain the forward path.
 
