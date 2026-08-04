@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.2.5.5 - Shift Operations Experience Redesign**.
+Current build: **v3.2.6 - Reports / Data / Admin Redesign**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -17,14 +17,12 @@ Current build: **v3.2.5.5 - Shift Operations Experience Redesign**.
 - ~~v3.2.5.3 - Shift Report Interface Cleanup / Fresh Start Control~~ Completed
 - ~~v3.2.5.4 - Shift Operations Flow Redesign~~ Completed
 - ~~v3.2.5.5 - Shift Operations Experience Redesign~~ Completed
+- ~~v3.2.6 - Reports / Data / Admin Redesign~~ Completed
 
-## Next
-- **v3.2.6 - Reports / Data / Admin Redesign**
-
-## Current Project Map
+## Current Governance Model
 ### Command Center
-- Home / Dashboard remains the daily command summary.
-- Live data source and freshness remain visible so stale or recovery data is not mistaken for current live data.
+- Home remains the daily command summary.
+- Live data source and freshness remain visible so stale, preview, or recovery data is not mistaken for current live data.
 
 ### People Lane
 - Attendance, Notice Workflow, Roster, Employee Profile, Training, and Uniform Accountability remain connected as the People Workflow.
@@ -32,25 +30,38 @@ Current build: **v3.2.5.5 - Shift Operations Experience Redesign**.
 ### Operations Lane
 - Shift Reports is the source intake and extraction workspace.
 - Shift Intelligence is the decision center and active watchlist.
-- The operating path is Import → Extract → Decide → Follow Up → Close.
-- Shift Reports separates Operational Signals, Reference Context, and Ignored Noise.
-- Shift Intelligence uses Intake Queue → Decision Detail → Active Watchlist.
+- The operating path remains Import → Extract → Decide → Follow Up → Close.
 - Task Tracker receives owned follow-up actions.
 - The backup-first Clear Shift Report Memory control remains Admin-only and affects only Shift Reports and Shift Intelligence.
-- Office Supplies supports operational readiness but should not become a procurement system.
+- Operational calibration against additional real reports remains a deferred stabilization item, not a blocker for v3.3.0.
 
-### Shift Report Intelligence Model
-- Active Watch Item: repeated alarm/system pattern, unresolved equipment/facility concern, safety issue, staffing coverage impact, or incident follow-up.
-- Suggested Link: same location, system, alarm, or pass-down topic appears across reports and needs approval before linking.
-- Reference Only: routine pass-down, false alarm with no repeat, normal staffing, trailer/dock monitoring with no stated issue, or historical context.
-- Ignored / Noise: N/A, none, blank, no issues, no notifications, nothing-else-of-note language, and normal on-time roster rows.
+### Governance Lane
+- Report Center answers the management decision and identifies the supporting source data.
+- Data Health verifies whether the source data is usable and elevates critical findings first.
+- Backup & Restore requires scope selection, backup selection, preview, reason, and confirmation before replacement.
+- Change Log elevates high-impact actions above routine activity.
+- Admin Settings separates users, labor assumptions, coverage authority, data controls, and recovery controls into governed sections.
+- The governing sequence is Report → Verify → Recover → Govern.
+
+### Specialist Tools
+- Other Programs remains a controlled launcher for independent specialist tools.
+- Independent tools remain isolated from the main application script to limit collision and regression risk.
 
 ### Future Emergency Operations Module
-- The uploaded emergency procedure and contact documents are intentionally excluded from v3.2.5.5.
-- A future phase may consolidate them into an Emergency Operations Manual / Procedure module after Shift Operations and the Reports / Data / Admin lane are stable.
+- Uploaded emergency procedure and contact documents remain intentionally excluded from v3.2.6.
+- A future phase may consolidate them into an Emergency Operations Manual / Procedure module after core workflow, modularization, and data-reliability priorities are addressed.
+
+## Next
+### v3.3.0 - Code Organization / Modularization
+Primary objectives:
+- Break the monolithic `app/index.html` script into controlled functional modules.
+- Preserve the existing user interface, workflows, shared JSON files, and desktop bridge contracts.
+- Introduce a clear dependency order and module registration pattern.
+- Separate shared utilities, state, rendering, persistence, and feature-specific logic.
+- Retain startup render guards and add module-level validation.
+- Avoid a speculative framework rewrite.
 
 ## Future Phases
-- v3.3.0 - Code Organization / Modularization
 - v3.4.0 - Data Layer / Reliability Upgrade
 - v3.5.0 - Reporting / Compliance Maturity
 - v3.6.0 - Role / Security Maturity
@@ -60,6 +71,4 @@ Current build: **v3.2.5.5 - Shift Operations Experience Redesign**.
 - v4.0 - Platform Architecture Release
 
 ## Architecture Direction
-The project should remain on the current C# / WebView2 / HTML / CSS / JavaScript stack in the near term. The primary platform risks are monolithic code, shared-file reliability, inconsistent workflow patterns, and limited data-layer controls, not the programming language.
-
-Likely v4.0 target: C# / WebView2 shell, modular front end, stronger data layer, improved audit/security controls, and possible SQLite or another structured data layer after the v3.4 and v3.9 planning phases.
+The project remains on C# / WebView2 / HTML / CSS / JavaScript in the near term. The immediate platform risk is the monolithic front-end file, followed by shared-file concurrency and data reliability. v3.3.0 should reduce code concentration first. v3.4.0 should then strengthen persistence, conflict handling, validation, and recovery. A structured data layer such as SQLite should be evaluated only after those requirements and migration controls are documented.
