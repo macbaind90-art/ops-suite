@@ -1,54 +1,43 @@
-# PWADC Security Operations Suite v3.2.5.4
+# PWADC Security Operations Suite v3.2.5.5
 
-## v3.2.5.4 Shift Operations Flow Redesign
+## v3.2.5.5 Shift Operations Experience Redesign
 
-This hotfix/polish build restructures Shift Reports and Shift Intelligence around a clear operating path: Import → Classify → Review → Track → Close. It keeps the rebuilt parser/intelligence rules from v3.2.5.2 and the fresh-start control from v3.2.5.3, but changes the interface so the screens guide the user naturally instead of letting panels land wherever they fit.
+This build finishes the Shift Reports / Shift Intelligence workflow redesign before the project moves into Reports / Data / Admin. The prior model contained the correct operational concepts, but the interface still behaved like a collection of panels. v3.2.5.5 consolidates the experience into two connected workspaces with a clear operating sequence.
 
-### v3.2.5.4 highlights
-- Shift Reports now behaves like an intake desk: source record first, parser output second, operational board third.
-- Shift Intelligence now behaves like a decision desk: pending intake on the left, active watchlist on the right.
-- Added a visible five-step Shift Operations path.
-- Moved decision rules into a collapsible section so guidance is available without crowding the board.
-- Source report history is tucked into a drawer to keep the main screen focused.
+### Shift Reports: focused intake workspace
+- Shift Reports is the source and extraction screen, not a second watchlist.
+- The latest imported report is presented as the authoritative source record.
+- Routine facts such as date, shift, supervisor, officer count, and alarm count remain metadata.
+- Extracted content is separated into Operational Signals, Reference Context, and Ignored Noise.
+- Repeated alarms and other meaningful items rise first.
+- Reference-only items remain visible without competing with active signals.
+- Report history, reporting outputs, filters, and administrative controls are secondary and collapsed or moved to the side rail.
+- The next action is explicit: move meaningful signals to Shift Intelligence.
 
+### Shift Intelligence: three-pane decision center
+- Left: Intake Queue.
+- Center: Decision Detail with source evidence, recommended handling, and suggested links.
+- Right: Active Watchlist.
+- One selected item is worked at a time.
+- Every intake item leaves the queue through Track, Link, Reference, or Ignore.
+- Creating or linking an issue moves focus directly to that watchlist item.
+- Watchlist detail centralizes ownership, notes, task creation, status, and closure actions.
+- Advanced filters and administrative controls remain available without dominating the workflow.
 
-## Prior v3.2.5.3 Shift Report Interface Cleanup / Fresh Start Control
+### Operational classification retained
+The v3.2.5.2 operational-meaning model remains in force:
+- Active Watch Item: repeated alarm/system pattern, unresolved equipment or facility concern, safety issue, staffing coverage impact, or incident follow-up.
+- Suggested Link: same system, location, alarm, or pass-down topic appears across reports and needs review before linking.
+- Reference Only: false alarm with no repeat, trailer/dock monitoring without impact, normal staffing, prior-shift context, or routine pass-down.
+- Ignored / Noise: N/A, none, blank, no issues, no notifications, nothing else of note, and normal on-time roster rows.
 
-That build cleaned up the rebuilt Shift Reports and Shift Intelligence interface and added an admin-safe fresh start control for the rebuilt model.
-
-### v3.2.5.3 highlights
-- Shift Reports now opens as a cleaner **Operational Intake** board.
-- Shift Intelligence now opens as a clearer **Watchboard**.
-- Tracking rules are shown in the interface so users understand Active Watch, Suggested Link, Reference Only, and Ignored/Noise.
-- Added **Clear Shift Report Memory** with required backup, typed confirmation, and audit reason.
-- Clearing shift memory does not affect Attendance, Roster, Training, Uniforms, Supplies, Tasks, Reports, backups, Restore Center, or Settings.
-
-This continues the v3.2.5.2 rebuild that scrapped the prior raw extraction behavior and rebuilt the workflow around **operational meaning** instead of raw text matching.
-
-### Why this changed
-The previous logic was too willing to track the wrong things. A shift report can say **No incidents** and **No patrol/safety issues**, while still containing operationally meaningful patterns such as repeated alarms, pump house activity, weather-related alarm causes, prior-shift alarm pass-downs, or trailer temperature monitoring.
-
-### New Shift Report Intake model
-- **Shift Reports** is now **Shift Report Operational Intake**.
-- It parses alarm rows and groups repeated alarms by system/location.
-- It treats repeated alarms as one operational pattern instead of separate clutter.
-- It stores routine pass-downs as reference-only unless they repeat or create operational impact.
-- It does not create issues from normal roster rows, on-time officers, No Incidents, No Patrol Issues, No Notifications, N/A, None, or Nothing Else of Note.
-
-### New Shift Intelligence model
-Shift Intelligence now separates:
-- **Active Watch Item**: repeated alarm, unresolved system/equipment issue, safety/facility concern, staffing coverage impact, or incident follow-up.
-- **Suggested Link**: same system/location/topic appears across shifts but needs manager approval before linking.
-- **Reference Only**: useful pass-down context, false alarm with no repeat, routine trailer/dock monitoring, normal staffing, or historical context.
-- **Ignored / Noise**: N/A, none, blank, no issues, no notifications, and nothing-else-of-note text.
-
-### Calibrated against sample report
-The uploaded SEC-PWADC 2026-08-01 2nd-shift report should produce:
-- **Active Watch Item:** Repeated M3-90 Jockey Pump Run Alarm, grouped as one pattern.
-- **Reference / Watch Context:** M3-63 Pump House Smoke Alarm checked as false alarm after a near lightning strike.
-- **Suggested Link / Reference:** 1st-shift pump house tamper alarm pass-down.
-- **Reference Only:** Back log trucks on docks 106, 107, and 108.
-- **No issue:** No incidents, no patrol/safety issues, no notifications, and normal on-time roster rows.
+### Sample calibration
+For SEC-PWADC-2026-08-01-2, the intended classification remains:
+- Repeated M3-90 Jockey Pump Run Alarm: one active operational pattern.
+- M3-63 Pump House Smoke Alarm with no smoke and possible lightning cause: reference/watch context.
+- Prior-shift Pump House Tamper Alarm: suggested link or reference-only.
+- Back log trucks on docks 106, 107, and 108: logistics reference unless duration, temperature, trailer condition, or follow-up impact is stated.
+- No incidents, no patrol issues, no notifications, and normal on-time officers: suppressed routine information, not active issues.
 
 ## Roadmap Progress
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -64,6 +53,7 @@ The uploaded SEC-PWADC 2026-08-01 2nd-shift report should produce:
 - ~~v3.2.5.2 - Shift Report Intelligence Rebuild~~ Completed
 - ~~v3.2.5.3 - Shift Report Interface Cleanup / Fresh Start Control~~ Completed
 - ~~v3.2.5.4 - Shift Operations Flow Redesign~~ Completed
+- ~~v3.2.5.5 - Shift Operations Experience Redesign~~ Completed
 - **v3.2.6 - Reports / Data / Admin Redesign** Next
 - v3.3.0 - Code Organization / Modularization
 - v3.4.0 - Data Layer / Reliability Upgrade
@@ -75,11 +65,12 @@ The uploaded SEC-PWADC 2026-08-01 2nd-shift report should produce:
 - v4.0 - Platform Architecture Release
 
 ## Current Project Map
-1. **Command Center:** Home summarizes priority queues and live data confidence.
-2. **People Lane:** Attendance, Notice Workflow, Roster, Employee Profile, Training, and Uniforms remain connected through the People Workflow.
-3. **Operations Lane:** Shift Report Operational Intake now follows Import → Classify → Review → Track → Close. Shift Intelligence is the decision desk, then Task Tracker and Reports handle follow-up and closure. Shift memory has an admin-safe backup-first fresh start control.
-4. **Data / Admin Lane:** Reports, Data Health, Backup Manager, Restore Center, Change Log, and Settings remain the control layer.
-5. **Road to v4.0:** Continue current stack for now. Modularization, data reliability, reporting maturity, role/security maturity, performance, and v4.0 migration planning remain the forward path.
+1. **Command Center:** Home summarizes priority queues and live-data confidence.
+2. **People Lane:** Attendance, Notice Workflow, Roster, Employee Profile, Training, and Uniform Accountability remain connected through the People Workflow.
+3. **Operations Lane:** Shift Reports now controls source intake and extraction. Shift Intelligence controls disposition, watchlist management, task handoff, and closure. The lane follows Import → Extract → Decide → Follow Up → Close.
+4. **Data / Admin Lane:** Reports, Data Health, Backup Manager, Restore Center, Change Log, and Settings remain the control layer and are next for redesign.
+5. **Future Emergency Operations:** Uploaded emergency procedure documents are not integrated in this build. They remain a future Emergency Operations Manual / procedure-module candidate after Shift Operations is stable.
+6. **Road to v4.0:** Continue the current stack while improving modularity, data reliability, reporting maturity, role/security controls, performance, and migration planning.
 
 ## Architecture Direction
-Continue with the current C# / WebView / HTML / CSS / JavaScript stack for now. The next architecture move is modularization, not Rust or Ruby migration.
+Continue with the current C# / WebView2 / HTML / CSS / JavaScript stack. The next architecture move is modularization and data reliability, not a language rewrite.
