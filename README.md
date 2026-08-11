@@ -1,4 +1,19 @@
-# PWADC Security Operations Suite v3.2.6
+# PWADC Security Operations Suite v3.2.6.1
+
+
+## v3.2.6.1 Attendance Review Discipline Code Fix
+
+This controlled hotfix corrects Attendance Review so it uses the same canonical discipline-code set as Daily Entry, Patterns, Notices, and Attendance reporting.
+
+### Attendance Review
+- Adds **CO (Call-Out)** to Week, Month, and 90-Day Discipline counts.
+- Adds **NCNS (No Call No Show)** to the same review columns because it was omitted by the same hard-coded display list.
+- Adds CO and NCNS to the expandable Discipline Review date history under each employee.
+- Replaces the duplicated Attendance Review discipline-code array with the suite's existing `DISCIPLINE_CODES` source of truth: T, U, UE, CO, NCNS.
+- Uses the existing `TRACKING_CODES` source of truth for approved tracking: AL, V, E, LE.
+- Does not change attendance data, thresholds, historical records, or the meaning of any attendance code.
+
+The defect was presentation-layer only: CO and NCNS were already stored and used by the pattern/notice/reporting logic, but Attendance Review displayed only T, U, and UE.
 
 ## v3.2.6 Reports / Data / Admin Redesign
 
@@ -89,6 +104,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.2.5.4 - Shift Operations Flow Redesign~~ Completed
 - ~~v3.2.5.5 - Shift Operations Experience Redesign~~ Completed
 - ~~v3.2.6 - Reports / Data / Admin Redesign~~ Completed
+- ~~v3.2.6.1 - Attendance Review Discipline Code Fix~~ Completed
 - **v3.3.0 - Code Organization / Modularization** Next
 - v3.4.0 - Data Layer / Reliability Upgrade
 - v3.5.0 - Reporting / Compliance Maturity

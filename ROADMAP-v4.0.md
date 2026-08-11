@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.2.6 - Reports / Data / Admin Redesign**.
+Current build: **v3.2.6.1 - Attendance Review Discipline Code Fix**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -18,6 +18,7 @@ Current build: **v3.2.6 - Reports / Data / Admin Redesign**.
 - ~~v3.2.5.4 - Shift Operations Flow Redesign~~ Completed
 - ~~v3.2.5.5 - Shift Operations Experience Redesign~~ Completed
 - ~~v3.2.6 - Reports / Data / Admin Redesign~~ Completed
+- ~~v3.2.6.1 - Attendance Review Discipline Code Fix~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -26,6 +27,7 @@ Current build: **v3.2.6 - Reports / Data / Admin Redesign**.
 
 ### People Lane
 - Attendance, Notice Workflow, Roster, Employee Profile, Training, and Uniform Accountability remain connected as the People Workflow.
+- v3.2.6.1 aligns Attendance Review with the canonical discipline codes: T, U, UE, CO, and NCNS.
 
 ### Operations Lane
 - Shift Reports is the source intake and extraction workspace.
