@@ -1,5 +1,36 @@
-# PWADC Security Operations Suite v3.2.6.1
+# PWADC Security Operations Suite v3.2.6.2
 
+
+## v3.2.6.2 Schedule Workspace Enhancements
+
+This controlled enhancement expands the Master Schedule into a safer working environment for day-to-day staffing changes and scenario planning without changing the rule that the **live published schedule is the authority for HPW, staffing reports, and labor analytics**.
+
+### Cell Copy / Paste
+- Adds a schedule clipboard for copying an employee assignment or status from one schedule cell to another.
+- Copy is initiated from the cell editor; the copied assignment remains available while moving between cells.
+- Paste records the source cell and destination in the roster audit history.
+- Copy/paste works in both the live schedule and mock schedules.
+
+### Clear Entire Schedule
+- Adds a guarded **Clear Schedule** action that clears every daily assignment/status to Closed while preserving sections, posts, coverage windows, cost hours, and row notes.
+- Clearing the live schedule requires a reason and exact `CLEAR SCHEDULE` confirmation.
+- A roster backup is created before the live schedule is cleared.
+- Mock schedules can be cleared independently with `CLEAR MOCK`; the live schedule is not affected.
+
+### Mock Schedule Library
+- Adds persistent `scheduleDrafts` storage inside the roster JSON for held staffing scenarios.
+- A mock can start from a copy of the live schedule or from blank assignments using the current live section/post structure.
+- Mock schedules can be opened, edited, renamed, duplicated, printed/shared, held indefinitely, and deleted without changing the live schedule.
+- Mock schedule screens and exports are clearly marked **MOCK / NOT PUBLISHED**.
+- Mock assignments do not drive live HPW, labor cost, attendance coverage, management reports, or other schedule-authority calculations.
+- Applying a mock to live requires a reason, exact `APPLY SCHEDULE` confirmation, and a roster backup before replacement.
+- Applying a mock does not delete the saved mock; the scenario remains available for reference or later reuse.
+
+### Scope Control
+- No Attendance logic or discipline codes were changed.
+- No Shift Reports / Shift Intelligence logic was changed.
+- No coverage-authority definitions, loaded-cost rates, or shared-data paths were changed.
+- v3.3.0 Code Organization / Modularization remains the next major roadmap phase.
 
 ## v3.2.6.1 Attendance Review Discipline Code Fix
 
@@ -105,6 +136,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.2.5.5 - Shift Operations Experience Redesign~~ Completed
 - ~~v3.2.6 - Reports / Data / Admin Redesign~~ Completed
 - ~~v3.2.6.1 - Attendance Review Discipline Code Fix~~ Completed
+- ~~v3.2.6.2 - Schedule Workspace Enhancements~~ Completed
 - **v3.3.0 - Code Organization / Modularization** Next
 - v3.4.0 - Data Layer / Reliability Upgrade
 - v3.5.0 - Reporting / Compliance Maturity
