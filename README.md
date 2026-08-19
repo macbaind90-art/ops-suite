@@ -1,4 +1,33 @@
-# PWADC Security Operations Suite v3.2.6.3
+# PWADC Security Operations Suite v3.3.0
+
+
+## v3.3.0 Code Organization / Modularization
+
+This architecture release reduces regression risk without intentionally changing PWADC operating workflows, shared JSON contracts, role rules, or schedule authority. The C# / WebView2 platform remains in place.
+
+### Front-End Module Structure
+- Reduces `app/index.html` from the monolithic application container to a small document shell that loads ordered assets.
+- Moves the design system into `app/assets/styles.css`.
+- Splits the former inline JavaScript into 10 bounded functional modules plus a module registry and startup gate.
+- Preserves classic-script global compatibility so existing inline UI actions and cross-feature helper calls continue to work without a framework rewrite.
+- Adds `PWADCModuleRegistry`, which verifies all expected front-end modules are present before `init()` is allowed to run.
+- Keeps the existing 85-function render guard and exposes front-end module registration status in the QA guardrail panel.
+
+### Windows Host Structure
+- Converts `MainForm` to a partial class and separates responsibilities into:
+  - `MainForm.cs` - window lifecycle and WebView shell
+  - `MainForm.Bridge.cs` - WebView message routing / responses
+  - `MainForm.Storage.cs` - settings, module load/save, health and storage operations
+  - `MainForm.Backups.cs` - backup inventory, retention, cleanup and restore
+  - `MainForm.Programs.cs` - approved path handling, standalone programs, locks, environment and module file status
+  - `Models.cs` - settings, users, coverage and backup models
+- Preserves the existing `suite:*` desktop bridge contracts and shared-drive folder model.
+
+### Build / Maintenance Controls
+- GitHub Actions artifact naming is aligned to v3.3.0.
+- `ARCHITECTURE-v3.3.0.md` defines module ownership, dependency order, and rules for future changes.
+- Existing workflows are intentionally unchanged. The release is a structural refactor, not a UI or policy redesign.
+- v3.4.0 Data Layer / Reliability Upgrade is now the next major roadmap phase.
 
 
 ## v3.2.6.3 Attendance Totals Print Enhancement
@@ -21,7 +50,7 @@ This controlled enhancement adds a management-ready attendance totals print work
 - No attendance entries are modified by printing.
 - No discipline or pattern thresholds are changed.
 - No Schedule, Shift Reports, Shift Intelligence, labor, or roster logic is changed.
-- v3.3.0 Code Organization / Modularization remains the next major roadmap phase.
+- v3.3.0 Code Organization / Modularization is now complete; v3.4.0 Data Layer / Reliability Upgrade is the next major roadmap phase.
 
 
 ## v3.2.6.2 Schedule Workspace Enhancements
@@ -53,7 +82,7 @@ This controlled enhancement expands the Master Schedule into a safer working env
 - No Attendance logic or discipline codes were changed.
 - No Shift Reports / Shift Intelligence logic was changed.
 - No coverage-authority definitions, loaded-cost rates, or shared-data paths were changed.
-- v3.3.0 Code Organization / Modularization remains the next major roadmap phase.
+- v3.3.0 Code Organization / Modularization is now complete; v3.4.0 Data Layer / Reliability Upgrade is the next major roadmap phase.
 
 ## v3.2.6.1 Attendance Review Discipline Code Fix
 
@@ -161,8 +190,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.2.6.1 - Attendance Review Discipline Code Fix~~ Completed
 - ~~v3.2.6.2 - Schedule Workspace Enhancements~~ Completed
 - ~~v3.2.6.3 - Attendance Totals Print Enhancement~~ Completed
-- **v3.3.0 - Code Organization / Modularization** Next
-- v3.4.0 - Data Layer / Reliability Upgrade
+- ~~v3.3.0 - Code Organization / Modularization~~ Completed
+- **v3.4.0 - Data Layer / Reliability Upgrade** Next
 - v3.5.0 - Reporting / Compliance Maturity
 - v3.6.0 - Role / Security Maturity
 - v3.7.0 - Workflow Intelligence / Smart Assist
@@ -177,7 +206,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 4. **Governance Lane:** Report Center, Data Health, Backup & Restore, Change Log, and Admin Settings follow Report → Verify → Recover → Govern.
 5. **Specialist Tools:** Other Programs launches independent tools without mixing their scripts into the primary suite.
 6. **Future Emergency Operations:** Uploaded emergency procedure documents remain candidates for a later controlled Emergency Operations Manual / procedure module.
-7. **Road to v4.0:** The next priority is breaking the monolithic front end into maintainable modules before changing the data layer.
+7. **Road to v4.0:** v3.3.0 has reduced monolithic-code risk; the next priority is hardening shared-file persistence, conflict handling, validation, and recovery in v3.4.0.
 
 ## Architecture Direction
-Continue with the current C# / WebView2 / HTML / CSS / JavaScript stack. v3.3.0 should reduce monolithic-code risk through controlled modularization without changing user workflows or shared-data behavior.
+Continue with the current C# / WebView2 / HTML / CSS / JavaScript stack. v3.3.0 establishes the modular baseline. v3.4.0 should build on that structure by strengthening persistence, conflict handling, validation, recovery, and shared-file reliability before considering any database migration.

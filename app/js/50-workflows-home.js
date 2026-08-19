@@ -1,0 +1,162 @@
+/* PWADC Security Operations Suite v3.3.0 | module: workflows-home */
+function workflowBanner(title,steps,note){const safeSteps=(Array.isArray(steps)?steps:[]).filter(Boolean);return `<div class="workflow-banner"><strong>${esc(title||'Workflow')}</strong>${safeSteps.length?`<div class="workflow-steps">${safeSteps.map((x,i)=>`<span class="workflow-step"><strong>${i+1}</strong> ${esc(x)}</span>`).join('')}</div>`:''}${note?`<div class="mini-note" style="margin-top:8px">${esc(note)}</div>`:''}</div>`}
+
+function safePeopleMetric(fn,fallback=0){try{const n=Number(fn());return Number.isFinite(n)?n:fallback;}catch(_){return fallback;}}
+function peopleWorkflowMetrics(){
+  const activeRoster=safePeopleMetric(()=>rosterActiveEmployees().length);
+  const attendanceActive=safePeopleMetric(()=>activeAttendanceEmployees().length);
+  const openPatterns=safePeopleMetric(()=>outstandingAttendancePatterns().length);
+  const notices=safePeopleMetric(()=>noticeKpis().open);
+  const trainingIssues=safePeopleMetric(()=>trainingRows().filter(r=>['Expired','Overdue','Expiring Soon','Due Soon','Missing','No Record'].includes(r.status)).length);
+  const uniform=safePeopleMetric(()=>{const m=uniformMetrics();return Number(m.needed||0)+Number(m.ordered||0)+Number(m.dueSoon||0);});
+  return {activeRoster,attendanceActive,openPatterns,notices,trainingIssues,uniform};
+}
+function peopleFlowChip(label,value,kind=''){
+  return `<span class="people-flow-chip ${esc(kind)}"><strong>${esc(value)}</strong>${esc(label)}</span>`;
+}
+function peopleWorkflowNav(active=''){
+  const m=peopleWorkflowMetrics();
+  const issueTotal=Number(m.openPatterns||0)+Number(m.notices||0)+Number(m.trainingIssues||0)+Number(m.uniform||0);
+  const buttons=[
+    {id:'attendance',label:'Attendance',count:m.openPatterns,sub:'patterns',cmd:"activeAttView='patterns';navigate('attendance')"},
+    {id:'notices',label:'Notices',count:m.notices,sub:'open',cmd:"activeAttView='notices';navigate('attendance')"},
+    {id:'roster',label:'Roster',count:m.activeRoster,sub:'active',cmd:"activeRosterView='roster';navigate('roster')"},
+    {id:'profile',label:'Profile',count:'Search',sub:'employee',cmd:"navigate('employee-profile')"},
+    {id:'training',label:'Training',count:m.trainingIssues,sub:'issues',cmd:"navigate('training')"},
+    {id:'uniforms',label:'Uniforms',count:m.uniform,sub:'open',cmd:"activeRosterView='uniforms';navigate('roster')"}
+  ];
+  return `<div class="people-flow-strip"><div class="people-flow-head"><div><div class="people-flow-title">People Workflow</div><div class="people-flow-note">Work people items in one lane: attendance evidence, notice decisions, roster identity, training readiness, and uniform accountability.</div></div><div class="people-flow-kpis">${peopleFlowChip('Active Roster',m.activeRoster)}${peopleFlowChip('Attendance',m.attendanceActive)}${peopleFlowChip('Open People Items',issueTotal,issueTotal?'warn':'')}</div></div><div class="people-flow-actions">${buttons.map(b=>`<button class="${active===b.id?'active':''}" onclick="${b.cmd}">${esc(b.label)}<span>${esc(b.count)} ${esc(b.sub)}</span></button>`).join('')}</div></div>`;
+}
+function renderPeopleWorkflowNav(active=''){return peopleWorkflowNav(active)}
+
+function safeOpsMetric(fn,fallback=0){try{const n=Number(fn());return Number.isFinite(n)?n:fallback;}catch(_){return fallback;}}
+function operationsWorkflowMetrics(){
+  const sr=safeOpsMetric(()=>shiftReportMetrics().reports), sourceOpen=safeOpsMetric(()=>Number(shiftReportMetrics().open||0)+Number(shiftReportMetrics().monitoring||0));
+  const bc=(()=>{try{return siBucketCounts()}catch(_){return {pending:0,auto:0,suggest:0,new:0,ref:0}}})();
+  const im=(()=>{try{return siIssueMetrics()}catch(_){return {active:0,needs:0,recurring:0,dormant:0}}})();
+  const tm=(()=>{try{return taskMetrics()}catch(_){return {total:0,overdue:0,blocked:0,high:0}}})();
+  const sm=(()=>{try{return officeSupplyMetrics()}catch(_){return {low:0,out:0,ordered:0,active:[]}}})();
+  const supplyIssues=Number(sm.low||0)+Number(sm.out||0)+Number(sm.ordered||0);
+  return {reports:sr,sourceOpen,pendingIntel:Number(bc.pending||0),auto:Number(bc.auto||0),suggest:Number(bc.suggest||0),needs:Number(im.needs||0),recurring:Number(im.recurring||0),activeIntel:Number(im.active||0),openTasks:Number(tm.total||0),overdueTasks:Number(tm.overdue||0),blockedTasks:Number(tm.blocked||0),highTasks:Number(tm.high||0),supplyIssues,lowSupplies:Number(sm.low||0),outSupplies:Number(sm.out||0),orderedSupplies:Number(sm.ordered||0)};
+}
+function opsFlowChip(label,value,kind=''){return `<span class="ops-flow-chip ${esc(kind)}"><strong>${esc(value)}</strong>${esc(label)}</span>`;}
+function operationsWorkflowNav(active=''){
+  const m=operationsWorkflowMetrics();
+  const decisionTotal=m.pendingIntel+m.needs+m.overdueTasks+m.blockedTasks+m.supplyIssues;
+  const buttons=[
+    {id:'shift-reports',label:'Import Reports',count:m.reports,sub:'source docs',cmd:"navigate('shift-reports')"},
+    {id:'shift-intelligence',label:'Review Intelligence',count:m.pendingIntel,sub:'pending intake',cmd:"shiftIntelBucketFilter='all';shiftIntelStatusFilter='active';navigate('shift-intelligence')"},
+    {id:'watchlist',label:'Work Watchlist',count:m.needs,sub:'needs action',cmd:"shiftIntelStatusFilter='Needs Action';navigate('shift-intelligence')"},
+    {id:'tasks',label:'Move Follow-Ups',count:m.openTasks,sub:'open tasks',cmd:"navigate('tasks')"},
+    {id:'office-supplies',label:'Supply Readiness',count:m.supplyIssues,sub:'supply issues',cmd:"navigate('office-supplies')"},
+    {id:'reports',label:'Report Closure',count:'Exec',sub:'briefing',cmd:"navigate('reports')"}
+  ];
+  return `<div class="ops-flow-strip"><div class="ops-flow-head"><div><div class="ops-flow-title">Operations Workflow</div><div class="ops-flow-note">Keep operational work in one lane: import source reports, review intelligence, convert follow-ups to tasks, keep supplies ready, then report closure.</div></div><div class="ops-flow-kpis">${opsFlowChip('Pending Intake',m.pendingIntel,m.pendingIntel?'warn':'')}${opsFlowChip('Needs Action',m.needs,m.needs?'bad':'')}${opsFlowChip('Open Tasks',m.openTasks,m.overdueTasks?'warn':'')}${opsFlowChip('Supply Issues',m.supplyIssues,m.supplyIssues?'warn':'')}</div></div><div class="ops-flow-actions">${buttons.map(b=>`<button class="${active===b.id?'active':''}" onclick="${b.cmd}">${esc(b.label)}<span>${esc(b.count)} ${esc(b.sub)}</span></button>`).join('')}</div></div>`;
+}
+function renderOperationsWorkflowNav(active=''){return operationsWorkflowNav(active)}
+function operationsLifecyclePanel(){const m=operationsWorkflowMetrics();const steps=[['Import',m.reports,'Shift PDFs stored as source history'],['Review',m.pendingIntel,'Intelligence intake awaiting decision'],['Track',m.activeIntel,'Active operational watchlist items'],['Task',m.openTasks,'Open follow-up assignments'],['Ready',m.supplyIssues,'Supply readiness items to monitor'],['Report','Exec','Brief command status']];return `<div class="ops-control-row"><div class="ops-lifecycle"><div class="ops-lifecycle-title">Operational lifecycle</div><div class="ops-lifecycle-grid">${steps.map(s=>`<div class="ops-life-step"><strong>${esc(s[1])}</strong><span>${esc(s[0])}: ${esc(s[2])}</span></div>`).join('')}</div></div><div class="ops-decision-note"><strong>Decision rule</strong>Raw notes stay in Shift Reports. Only meaningful operational issues move to Shift Intelligence. Follow-ups that require owner/date/action move to Task Tracker. Routine N/A, none, and reference-only notes should not become noise.</div></div>`;}
+async function createTaskFromShiftIntelIssue(id){const i=(shiftIntel.issues||[]).find(x=>Number(x.id)===Number(id));if(!i)return;normalizeTasks();tasks.tasks.unshift({id:tasks.nextId++,project:'Shift Intelligence Follow-Up: '+(i.title||i.category||'Operational Issue'),status:'Not Started',priority:i.priority==='High'?'High':(i.status==='Needs Action'?'High':'Normal'),category:'Shift Intelligence',assignedTo:i.owner||'',owner:i.owner||'',dueDate:'',followUpDate:'',blockedBy:'',nextAction:siRecommendedAction(i)||i.recommendedAction||'',lastUpdate:`From SI-${String(i.id).padStart(4,'0')} · ${i.category||''} · last seen ${i.lastSeen||''}`,createdAt:new Date().toISOString(),updatedAt:new Date().toISOString()});taskAudit('Task created from Shift Intelligence',`SI-${String(i.id).padStart(4,'0')} · ${i.title||''}`);i.managerNotes=(i.managerNotes?i.managerNotes+'\n':'')+'Task created in Task Tracker.';i.updatedAt=new Date().toISOString();await saveTasksNow('shift-intelligence-task');await saveShiftIntelNow('task-link');safeRenderPages({preserveScroll:true});toast('Task created from Shift Intelligence issue');}
+
+function employeeOpenNoticeCount(ae){if(!ae)return 0;try{return (attendance.notices||[]).filter(n=>String(n.employeeId)===String(ae.id)&&!['Acknowledged','Refused to Sign','Escalated','No Notice Needed','Void'].includes(String(n.status||''))).length;}catch(_){return 0;}}
+function employeeOpenPatternCount(ae){if(!ae)return 0;try{return outstandingAttendancePatterns().filter(p=>String(p.emp&&p.emp.id)===String(ae.id)).length;}catch(_){return 0;}}
+function employeeTrainingIssueCount(re){if(!re)return 0;try{const t=profileTrainingSummary(re);return Number(t.dueSoon||0)+Number(t.overdue||0)+Number(t.noRecord||0);}catch(_){return 0;}}
+function employeeUniformOpenCount(re){if(!re)return 0;try{return profileUniformSummary(re).filter(u=>!['Issued','Returned','Retired'].includes(String(u.status||''))||['due-soon','past-due'].includes(replacementDueClass(u.due))).length;}catch(_){return 0;}}
+function renderEmployeePeopleCommand(re,ae){
+  const patternCount=employeeOpenPatternCount(ae), noticeCount=employeeOpenNoticeCount(ae), trainingCount=employeeTrainingIssueCount(re), uniformCount=employeeUniformOpenCount(re), schedCount=safePeopleMetric(()=>profileScheduleRows(re).length);
+  const total=patternCount+noticeCount+trainingCount+uniformCount;
+  return `<div class="card people-command-panel"><div class="card-title">Employee People Command</div><div class="profile-priority-row"><div class="profile-priority-tile ${patternCount?'warn':''}"><b>${patternCount}</b><span>Outstanding Patterns</span></div><div class="profile-priority-tile ${noticeCount?'warn':''}"><b>${noticeCount}</b><span>Open Notices</span></div><div class="profile-priority-tile ${trainingCount?'bad':''}"><b>${trainingCount}</b><span>Training Exceptions</span></div><div class="profile-priority-tile ${uniformCount?'warn':''}"><b>${uniformCount}</b><span>Uniform Follow-Ups</span></div><div class="profile-priority-tile"><b>${schedCount}</b><span>Schedule Assignments</span></div></div><div class="people-page-note">${total?`This employee has ${total} people-work item(s) to review. Open the source module before making HR-sensitive decisions.`:'No open people-work exception found for this employee from the currently loaded data.'}</div><div class="people-next-actions"><button onclick="activeAttView='review';navigate('attendance')">Review Attendance</button><button onclick="activeAttView='patterns';navigate('attendance')">Open Patterns</button><button onclick="navigate('training')">Training</button><button onclick="activeRosterView='uniforms';navigate('roster')">Uniforms</button>${re?`<button class="gold admin-only" onclick="openEmployeeModal('${esc(re.id)}')">Edit Roster Record</button>`:''}</div></div>`;
+}
+
+
+
+function renderStartHere(){
+  const included=[['Dashboard','Daily command view for attendance, coverage, task, notice, and operational signals.','<button onclick="navigate(\'home\')">Open Dashboard</button>'],['Shift Operations','Import source reports, decide operational meaning, and maintain the watchlist.','<button onclick="navigate(\'shift-reports\')">Open Shift Reports</button><button onclick="navigate(\'shift-intelligence\')">Open Intelligence</button>'],['Task Tracker','Own follow-ups, blockers, due dates, and weekly status updates.','<button onclick="navigate(\'tasks\')">Open Tasks</button>'],['Reports / Data / Admin','Generate management outputs, verify integrity, manage backups, review audit activity, and govern settings.','<button onclick="navigate(\'reports\')">Open Reports</button><button onclick="navigate(\'data-health\')">Open Data Health</button>'],['People Workflow','Attendance, roster, employee profiles, schedule, training, and uniform accountability.','<button onclick="navigate(\'attendance\')">Open Attendance</button><button onclick="navigate(\'roster\')">Open Roster</button>'],['Other Programs','Standalone Badge, AMAG, and Access Audit tools.','<button onclick="navigate(\'other-programs\')">Open Programs</button>']];
+  return `<div class="page-head"><div><div class="page-title">Start Here</div><div class="page-sub">v3.3.0 Code Organization / Modularization · same operating workflows on a safer application structure.</div></div><div class="btn-group"><button onclick="navigate('home')">Dashboard</button><button class="gold" onclick="printStartHere()">Print Start Here</button></div></div>${screenGuide('start-here')}<div class="notice"><strong>Release posture:</strong> v3.3.0 is an architecture release. Attendance, schedule, Shift Operations, reporting, and governance behavior are intentionally preserved while the front-end and Windows host code are separated into controlled functional files.</div><div class="card"><div class="card-title">Daily Operating Flow</div><ol class="clean-list"><li><strong>Start on the Command Center.</strong> Work the priority queues that require action today.</li><li><strong>Maintain people and coverage records.</strong> Attendance, roster, schedule, training, and uniforms remain the operational source records.</li><li><strong>Process Shift Operations.</strong> Import reports, decide operational meaning, and move owned follow-up into Task Tracker.</li><li><strong>Use Reports for management closure.</strong> Select the management question, confirm scope, preview, then publish.</li><li><strong>Verify before high-impact action.</strong> Data Health and Backup & Restore are the control gate before repairs, cleanup, or restore.</li><li><strong>Use Change Log and Settings for governance.</strong> Review accountability, roles, assumptions, and restricted controls.</li></ol></div><div class="grid cols-3"><div class="kpi"><div class="num">10</div><div class="lbl">Front-End Functional Modules</div></div><div class="kpi"><div class="num">6</div><div class="lbl">Windows Host Source Files</div></div><div class="kpi"><div class="num">Guarded</div><div class="lbl">Ordered Startup</div></div></div><div class="card"><div class="card-title">Governance Lane</div><div class="governance-path"><div class="governance-step"><strong>1. Report</strong><span>Choose the output that answers the management decision.</span></div><div class="governance-step"><strong>2. Verify</strong><span>Review data integrity, live files, and backup posture.</span></div><div class="governance-step"><strong>3. Recover</strong><span>Preview scope and backup before replacing live data.</span></div><div class="governance-step"><strong>4. Govern</strong><span>Review audit activity and save controlled settings.</span></div></div></div><div class="card"><div class="card-title">What Is Included</div><div class="grid cols-3">${included.map(x=>moduleIncludedCard(x[0],x[1],x[2])).join('')}</div></div><div class="card"><div class="card-title">v3.3.0 Release Notes</div><table><thead><tr><th>Area</th><th>Architecture Improvement</th></tr></thead><tbody><tr><td>Front End</td><td>Moves inline CSS and JavaScript out of index.html into ordered application assets.</td></tr><tr><td>Module Registry</td><td>Validates the expected front-end dependency chain before suite initialization.</td></tr><tr><td>Feature Separation</td><td>Attendance, Schedule, Shift Operations, reporting, governance, and supporting workflows now live in bounded functional JavaScript files.</td></tr><tr><td>Windows Host</td><td>Splits MainForm responsibilities into partial classes for bridge routing, storage, backups, programs/environment, and the main window shell.</td></tr><tr><td>Regression Control</td><td>Existing JSON contracts, bridge message types, UI navigation, and operational behavior remain intentionally unchanged.</td></tr></tbody></table></div>`
+}
+
+function printStartHere(){openReportWindow(reportDoc('Start Here','v3.3.0 Code Organization / Modularization Release',document.querySelector('#page-start-here')?.innerHTML||renderStartHere(),'portrait'),false)}
+
+function dashboardAttentionCard(title,value,desc,btn,onclick,hot){return `<div class="attention-card ${hot?'hot':'ok'}" onclick="${onclick}"><h3>${esc(title)}</h3><div class="attention-metric">${esc(String(value))}</div><p>${esc(desc)}</p><div class="toolbar"><button class="${hot?'gold':'primary'}" onclick="event.stopPropagation();${onclick}">${esc(btn)}</button></div></div>`}
+function queueCard(title,value,desc,btn,go,hot){return `<div class="priority-compact ${hot?'hot':''}" onclick="${go}"><strong>${esc(String(value))}</strong><h3>${esc(title)}</h3><span>${esc(desc)}</span><button class="sm primary" onclick="event.stopPropagation();${go}">${esc(btn)}</button></div>`}
+function shiftIntelPendingCount(){try{return (siBucketCounts&&typeof siBucketCounts==='function')?Number(siBucketCounts().pending||0):((shiftIntel.intake||[]).filter(i=>(i.status||'Pending')==='Pending').length);}catch(_){return 0}}
+function shiftIntelNeedsActionCount(){try{return (siIssueMetrics&&typeof siIssueMetrics==='function')?Number(siIssueMetrics().needs||0):((shiftIntel.issues||[]).filter(i=>(i.status||'New')==='Needs Action').length);}catch(_){return 0}}
+function shiftIntelDormantCount(){try{return (siIssueMetrics&&typeof siIssueMetrics==='function')?Number(siIssueMetrics().dormant||0):((shiftIntel.issues||[]).filter(i=>typeof siComputedStatus==='function'&&siComputedStatus(i)==='Dormant').length);}catch(_){return 0}}
+function commandPriorityCard(item,lead=false){if(!item)return '';if(lead)return `<div class="priority-lead ${item.hot?'':'clear'}" onclick="${item.go}"><div class="priority-lead-label">${item.hot?'Top Priority':'All Clear'}</div><div class="priority-lead-title">${esc(item.title)}</div><div class="priority-lead-metric">${esc(String(item.value))}</div><p>${esc(item.desc)}</p><button class="${item.hot?'gold':'primary'}" onclick="event.stopPropagation();${item.go}">${esc(item.btn)}</button></div>`;return queueCard(item.title,item.value,item.desc,item.btn,item.go,item.hot)}
+function commandMetric(value,label){return `<div class="command-kpi"><strong>${esc(String(value))}</strong><span>${esc(label)}</span></div>`}
+function dashboardWorkflowCard(title,desc,btn,onclick){return `<div class="workflow-card" onclick="${onclick}"><strong>${esc(title)}</strong><span>${esc(desc)}</span><button class="primary" onclick="event.stopPropagation();${onclick}">${esc(btn)}</button></div>`}
+function commandWorkflowStep(i,title,desc,btn,onclick){return `<div class="daily-flow-step" onclick="${onclick}"><div class="daily-flow-num">${i}</div><div><div class="daily-flow-title">${esc(title)}</div><div class="daily-flow-text">${esc(desc)}</div></div><button class="sm primary" onclick="event.stopPropagation();${onclick}">${esc(btn)}</button></div>`}
+function commandSidebarAction(title,desc,btn,onclick){return `<div class="sidebar-action" onclick="${onclick}"><div><strong>${esc(title)}</strong><span>${esc(desc)}</span></div><button class="sm" onclick="event.stopPropagation();${onclick}">${esc(btn)}</button></div>`}
+function commandRecentActivityRows(){
+ const rows=[];
+ const push=(module,arr)=>{for(const a of (arr||[])){rows.push({module,at:a.at||a.date||a.createdAt||a.updatedAt||'',action:a.action||a.title||a.status||'Activity',detail:a.detail||a.note||a.notes||''});}}
+ push('Attendance',attendance.audit);push('Roster',roster.audit);push('Tasks',tasks.audit);push('Shift Reports',shiftReports.audit);push('Shift Intelligence',shiftIntel.audit);
+ return rows.filter(r=>r.at).sort((a,b)=>String(b.at).localeCompare(String(a.at))).slice(0,5).map(r=>`<div class="recent-activity-row"><strong>${esc(r.module)} · ${esc(r.action)}</strong><span>${esc(fmtDate(r.at)||r.at)}${r.detail?' · '+esc(String(r.detail).slice(0,120)):''}</span></div>`).join('')||'<div class="home-empty">No recent activity found yet. Once saves, imports, reviews, or restores occur, the most recent actions will appear here.</div>';
+}
+function renderHome(){
+ const outstandingPatterns=outstandingAttendancePatterns();
+ const health=computeDataHealth();
+ const tm=taskMetrics();
+ const openTasks=tm.total;
+ const shiftM=shiftReportMetrics();
+ const siPending=shiftIntelPendingCount();
+ const siNeeds=shiftIntelNeedsActionCount();
+ const siDormant=shiftIntelDormantCount();
+ const cov=scheduleAuthorityModel(scheduleMetrics());
+ const sup=(typeof officeSupplyMetrics==='function')?officeSupplyMetrics():{low:0,out:0,ordered:0};
+ const openNotices=noticeKpis().open;
+ const activeEmps=activeRosterForReports?activeRosterForReports():rosterActiveEmployees();
+ const training=(typeof trainingReadinessMetrics==='function')?trainingReadinessMetrics(activeEmps):{missing:0,expired:0,expiring:0,issueCount:0,score:100};
+ const uniforms=(typeof uniformMetrics==='function')?uniformMetrics():{needed:0,ordered:0,lostDamaged:0,dueSoon:0};
+ const openFlags=outstandingPatterns.length;
+ const attCount=activeAttendanceEmployees().length;
+ const rosterCount=(roster.employees||[]).filter(e=>!isArchivedEmployee(e)).length;
+ const today=new Date().toLocaleDateString();
+ const latestAttendance=latestAttendanceDataDate(attendance);
+ const priorityItems=[
+   {title:'Shift Intake Awaiting Review',value:siPending,desc:'Approve, link, reference, or ignore new report-derived items.',btn:'Review Intake',go:"navigate('shift-intelligence')",hot:siPending>0,weight:90},
+   {title:'Needs Action Watchlist',value:siNeeds,desc:'Operational items that need ownership, correction, or a decision.',btn:'Open Watchlist',go:"navigate('shift-intelligence')",hot:siNeeds>0,weight:85},
+   {title:'Outstanding Attendance Patterns',value:openFlags,desc:'Rule-based findings still needing a supervisor decision.',btn:'Review Patterns',go:"activeAttView='patterns';navigate('attendance')",hot:openFlags>0,weight:80},
+   {title:'Open Notices',value:openNotices,desc:'Notices waiting on review, delivery, acknowledgement, or closure.',btn:'Open Notices',go:"activeAttView='notices';navigate('attendance')",hot:openNotices>0,weight:75},
+   {title:'Open Tasks',value:openTasks,desc:'Follow-ups, blockers, and due dates needing movement.',btn:'Open Tasks',go:"navigate('tasks')",hot:openTasks>0,weight:70},
+   {title:'Schedule Gaps',value:cov.total.openPosts||0,desc:`${cov.total.openHours||0} open/pending HPW from the master schedule.`,btn:'Review Schedule',go:"activeRosterView='schedule';navigate('roster')",hot:(cov.total.openPosts||0)>0||(cov.total.openHours||0)>0,weight:65}
+ ];
+ const hotItems=priorityItems.filter(x=>x.hot).sort((a,b)=>b.weight-a.weight);
+ const lead=hotItems[0]||{title:'No urgent command items',value:'Clear',desc:'No primary queues are currently flagging urgent attention. Use the daily workflow or open secondary signals as needed.',btn:'Start Daily Flow',go:"navigate('shift-reports')",hot:false};
+ const remaining=priorityItems.filter(x=>x!==hotItems[0]);
+ const openPriority=(siPending||0)+(siNeeds||0)+(openFlags||0)+(openNotices||0)+(tm.overdue||0)+(cov.total.openPosts||0);
+ const workflow=[
+   ['Import Shift Reports','Bring in report PDFs as source history and raw intake.','Import',"navigate('shift-reports')"],
+   ['Review Intelligence','Approve/link/create/reference meaningful operational issues.','Review',"navigate('shift-intelligence')"],
+   ['Clear People Work','Daily attendance, patterns, notices, uniforms, and training.','People',"activeAttView='daily';navigate('attendance')"],
+   ['Move Follow-ups','Use tasks for owners, blockers, due dates, and next actions.','Tasks',"navigate('tasks')"],
+   ['Check Data Health','Confirm live data source, backup status, and restore posture.','Data',"navigate('data-health')"],
+   ['Run Reports','Produce briefing, compliance, and operating reports after queues are clean.','Reports',"navigate('reports')"]
+ ];
+ const secondary=[
+   dashboardAttentionCard('Training Issues',(training.missing||0)+(training.expired||0),`${training.missing||0} missing, ${training.expired||0} expired, ${training.expiring||0} expiring soon.`,'Open Training',"navigate('training')",((training.missing||0)+(training.expired||0))>0),
+   dashboardAttentionCard('Uniform Issues',(uniforms.needed||0)+(uniforms.ordered||0)+(uniforms.lostDamaged||0)+(uniforms.dueSoon||0),`${uniforms.needed||0} needed, ${uniforms.ordered||0} ordered, ${uniforms.lostDamaged||0} lost/damaged, ${uniforms.dueSoon||0} replacement due.`,'Open Uniforms',"activeRosterView='uniforms';navigate('roster')",((uniforms.needed||0)+(uniforms.lostDamaged||0)+(uniforms.dueSoon||0))>0),
+   dashboardAttentionCard('Supply Issues',(sup.low||0)+(sup.out||0),`${sup.low||0} low, ${sup.out||0} out, ${sup.ordered||0} ordered.`,'Open Supplies',"navigate('office-supplies')",((sup.low||0)+(sup.out||0))>0),
+   dashboardAttentionCard('Dormant Shift Issues',siDormant,'No repeat mention in 7+ days; decide watch, resolve, or keep active.','Review Dormant',"shiftIntelStatusFilter='Dormant';navigate('shift-intelligence')",siDormant>0),
+   dashboardAttentionCard('Shift Reports Imported',shiftM.reports||0,`${shiftM.open||0} raw report issue(s) not yet closed.`, 'Import Reports',"navigate('shift-reports')",false),
+   dashboardAttentionCard('Data Health',health.critical||0,`${health.critical||0} critical, ${health.warning||0} warning. Back up before major changes.`, 'Open Data Health',"navigate('data-health')",(health.critical||0)>0)
+ ];
+ const adminTools=canAdmin()?`<details class="home-collapsible"><summary><span>Admin Tools</span><span>Backup, restore, and configure deliberately</span></summary><div class="home-collapsible-body"><div class="workflow-grid">${[
+   ['Data Health','Run integrity checks and review live module files.','Data Health',"navigate('data-health')"],
+   ['Backup Everything','Create a full backup before major changes or imports.','Backup',"backupEverything()"],
+   ['Settings','Users, roles, data paths, programs, and labor assumptions.','Settings',"navigate('settings')"],
+   ['Restore Center','Preview backups, enter a reason, and restore deliberately.','Restore',"navigate('restore')"]
+ ].map(x=>dashboardWorkflowCard(x[0],x[1],x[2],x[3])).join('')}</div></div></details>`:'';
+ const moduleMap=`<details class="home-collapsible"><summary><span>Module Map</span><span>Open only when you need the full suite directory</span></summary><div class="home-collapsible-body"><div class="grid cols-3">${visibleModules().filter(m=>!['home'].includes(m.id)).map(m=>{const desc={
+ 'start-here':'Supervisor orientation and daily operating flow.',attendance:'Daily entry, review, patterns, and notices.',roster:'Staff records, schedule, uniforms, and roster analytics.','employee-profile':'Focused employee history, training, attendance, and uniforms.',training:'Training readiness, missing items, due-soon, and records.','office-supplies':'Office/security supplies, stock levels, vendors, and orders.','shift-reports':'Import daily PDFs and maintain source report history.','shift-intelligence':'Review report-derived items and manage the operational watchlist.',reports:'Professional reports, print views, and CSV exports.',settings:'Users, roles, data root, coverage, labor assumptions, and programs.',tasks:'Open follow-ups, due dates, blockers, and manager draft text.','data-health':'Integrity checks, live module files, backups, and regression checklist.',restore:'Guarded restore workflow with preview and reason.','change-log':'Combined audit trail across operational modules.','other-programs':'Standalone tools copied to the shared Programs folder.'};return `<div class="card" onclick="navigate('${m.id}')"><div class="card-title">${esc(m.label)}</div><p class="muted">${esc(desc[m.id]||'Open module.')}</p><button class="sm primary" onclick="event.stopPropagation();navigate('${m.id}')">Open</button></div>`}).join('')}</div></div></details>`;
+ return `<div class="page-head"><div><div class="page-title">Security Operations Command Center</div><div class="page-sub">${env.user||'User'} @ ${env.machine||'Machine'} · v3.3.0</div></div><div class="btn-group"><button onclick="navigate('start-here')">Start Here</button><button onclick="navigate('shift-reports')">Import Reports</button><button class="gold" onclick="navigate('shift-intelligence')">Review Intelligence</button><button class="admin-only" onclick="backupEverything()">Backup</button></div></div>
+ ${screenGuide('home')}${dataSourceBanner()}<div class="command-center"><section class="command-hero"><div class="command-hero-main"><div class="dashboard-eyebrow">Today’s command view</div><div class="command-hero-title">Start with decisions, not dashboards.</div><div class="command-hero-sub">This redesign keeps the daily command queues above the fold, moves supporting metrics into calmer areas, and turns Home into a starting point instead of a wall of widgets.</div><div class="command-kpi-row">${commandMetric(today,'Today')}${commandMetric(openPriority,'Priority Signals')}${commandMetric(attCount,'Attendance Employees')}${commandMetric(rosterCount,'Active Roster')}${commandMetric((training.score||100)+'%','Training Ready')}</div></div><aside class="command-hero-side"><div class="dashboard-eyebrow">System Snapshot</div><div class="command-status-row"><span>Critical</span><strong>${health.critical||0}</strong></div><div class="command-status-row"><span>Warnings</span><strong>${health.warning||0}</strong></div><div class="command-status-row"><span>Attendance Through</span><strong>${esc(fmt(latestAttendance)||'-')}</strong></div><div class="command-status-row"><span>Roster Saved</span><strong>${roster.lastSaved?esc(new Date(roster.lastSaved).toLocaleDateString()):'-'}</strong></div></aside></section>
+ <section class="command-layout"><div class="command-main"><div class="command-panel"><div class="command-panel-head"><div><div class="command-panel-title">Today’s Priority</div><div class="command-panel-sub">One lead decision first, then the remaining queues in compact form.</div></div><button onclick="safeRenderPages()">Refresh</button></div>${commandPriorityCard(lead,true)}<div class="priority-compact-grid">${remaining.map(x=>commandPriorityCard(x,false)).join('')}</div></div><div class="command-panel"><div class="command-panel-head"><div><div class="command-panel-title">Daily Workflow</div><div class="command-panel-sub">A natural operating sequence for supervisors and leads.</div></div></div><div class="daily-flow">${workflow.map((x,i)=>commandWorkflowStep(i+1,x[0],x[1],x[2],x[3])).join('')}</div></div></div><aside class="command-sidebar"><div class="command-panel"><div class="command-panel-head"><div><div class="command-panel-title">Quick Actions</div><div class="command-panel-sub">Common jumps without opening the full module map.</div></div></div><div class="sidebar-action-grid">${[
+   ['Import Reports','Add today\'s report PDFs.','Open',"navigate('shift-reports')"],
+   ['Attendance Daily Entry','Enter or correct today\'s codes.','Open',"activeAttView='daily';navigate('attendance')"],
+   ['Review Patterns','Clear outstanding pattern decisions.','Open',"activeAttView='patterns';navigate('attendance')"],
+   ['Backup Manager','Review retention and cleanup previews.','Open',"navigate('data-health')"]
+ ].map(x=>commandSidebarAction(x[0],x[1],x[2],x[3])).join('')}</div></div><div class="command-panel"><div class="command-panel-head"><div><div class="command-panel-title">Recent Activity</div><div class="command-panel-sub">Most recent cross-module audit entries.</div></div></div><div class="recent-activity">${commandRecentActivityRows()}</div></div></aside></section>
+ <details class="home-collapsible"><summary><span>Secondary Signals</span><span>Training, uniforms, supplies, dormant items, source reports, data health</span></summary><div class="home-collapsible-body"><div class="attention-grid">${secondary.join('')}</div></div></details>
+ ${adminTools}${moduleMap}</div>`
+}
+PWADCModuleRegistry.register('workflows-home');

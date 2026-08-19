@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.2.6.3 - Attendance Totals Print Enhancement**.
+Current build: **v3.3.0 - Code Organization / Modularization**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -21,6 +21,7 @@ Current build: **v3.2.6.3 - Attendance Totals Print Enhancement**.
 - ~~v3.2.6.1 - Attendance Review Discipline Code Fix~~ Completed
 - ~~v3.2.6.2 - Schedule Workspace Enhancements~~ Completed
 - ~~v3.2.6.3 - Attendance Totals Print Enhancement~~ Completed
+- ~~v3.3.0 - Code Organization / Modularization~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -57,18 +58,27 @@ Current build: **v3.2.6.3 - Attendance Totals Print Enhancement**.
 - Uploaded emergency procedure and contact documents remain intentionally excluded from v3.2.6.
 - A future phase may consolidate them into an Emergency Operations Manual / Procedure module after core workflow, modularization, and data-reliability priorities are addressed.
 
+## v3.3.0 Architecture Baseline
+- `app/index.html` is now a lightweight document shell instead of the application monolith.
+- CSS is externalized to `app/assets/styles.css`.
+- Front-end code is separated into 10 ordered functional modules plus a module registry and startup gate.
+- The module registry validates dependency presence before initialization.
+- Existing render-function guardrails remain active.
+- `MainForm` is separated into partial classes for the WebView shell, bridge routing, storage, backups, programs/environment, and shared models.
+- Existing UI workflows, shared JSON contracts, `suite:*` bridge message types, schedule authority, attendance codes, reporting behavior, and role controls are intentionally preserved.
+- `ARCHITECTURE-v3.3.0.md` is the maintenance map for future development.
+
 ## Next
-### v3.3.0 - Code Organization / Modularization
+### v3.4.0 - Data Layer / Reliability Upgrade
 Primary objectives:
-- Break the monolithic `app/index.html` script into controlled functional modules.
-- Preserve the existing user interface, workflows, shared JSON files, and desktop bridge contracts.
-- Introduce a clear dependency order and module registration pattern.
-- Separate shared utilities, state, rendering, persistence, and feature-specific logic.
-- Retain startup render guards and add module-level validation.
-- Avoid a speculative framework rewrite.
+- Add explicit read/write conflict detection for shared JSON files.
+- Strengthen atomic-save, validation, and recovery behavior.
+- Add schema/version awareness and safer migration boundaries.
+- Improve source freshness and stale-write protection.
+- Preserve backup-first recovery and auditable high-impact actions.
+- Evaluate SQLite only after persistence requirements and migration controls are documented.
 
 ## Future Phases
-- v3.4.0 - Data Layer / Reliability Upgrade
 - v3.5.0 - Reporting / Compliance Maturity
 - v3.6.0 - Role / Security Maturity
 - v3.7.0 - Workflow Intelligence / Smart Assist
@@ -77,4 +87,4 @@ Primary objectives:
 - v4.0 - Platform Architecture Release
 
 ## Architecture Direction
-The project remains on C# / WebView2 / HTML / CSS / JavaScript in the near term. The immediate platform risk is the monolithic front-end file, followed by shared-file concurrency and data reliability. v3.3.0 should reduce code concentration first. v3.4.0 should then strengthen persistence, conflict handling, validation, and recovery. A structured data layer such as SQLite should be evaluated only after those requirements and migration controls are documented.
+The project remains on C# / WebView2 / HTML / CSS / JavaScript in the near term. v3.3.0 resolves the immediate code-concentration risk by establishing controlled front-end and Windows-host modules. The primary remaining platform risk is shared-file concurrency and data reliability. v3.4.0 should strengthen persistence, conflict handling, validation, and recovery. A structured data layer such as SQLite should be evaluated only after those requirements and migration controls are documented.

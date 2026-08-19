@@ -14,6 +14,14 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Validate modular front end
+        run: node tools/validate-frontend.js
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -31,5 +39,5 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-2-5-5-Windows
+          name: PWADC-Security-Operations-Suite-v3-3-0-Windows
           path: publish/**
