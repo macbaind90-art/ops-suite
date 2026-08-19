@@ -34,7 +34,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.0'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.1'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
@@ -46,6 +46,23 @@ const major=['home','start-here','attendance','roster','employee-profile','train
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
 for(const view of ['daily','grid','review','patterns','notices','audit']){const out=evalx(`activeAttView='${view}'; renderAttendance()`);if(typeof out!=='string'||out.length<20)throw new Error('Attendance render failed: '+view);}
 for(const view of ['roster','schedule','training','uniforms','analytics']){const out=evalx(`activeRosterView='${view}'; renderRoster()`);if(typeof out!=='string'||out.length<20)throw new Error('Roster render failed: '+view);}
+
+// Schedule assignment controls: mock schedules must expose the entire active roster,
+// and typeahead must match employee numbers as well as names.
+const scheduleTest=evalx(`(()=>{
+  const active=rosterActiveEmployees();
+  if(!active.length)return {ok:false,reason:'No active roster employees in seed'};
+  const sample=active.find(e=>String(e.eid||'').trim())||active[0];
+  roster.scheduleDrafts=[{id:'validation-mock',name:'Validation Mock',schedule:cloneScheduleRows(roster.schedule||[])}];
+  scheduleWorkspaceMode='draft';scheduleWorkspaceDraftId='validation-mock';
+  const mockPool=scheduleEmployeePool('1st Shift — 0800-1600','Base');
+  const eid=String(sample.eid||'').trim();
+  const byEid=eid?scheduleEmployeeTypeaheadResults(eid,'1st Shift — 0800-1600','Base'):[];
+  const byName=scheduleEmployeeTypeaheadResults(fullName(sample).split(/\s+/)[0],'1st Shift — 0800-1600','Base');
+  scheduleWorkspaceMode='live';scheduleWorkspaceDraftId='';
+  return {ok:mockPool.length===active.length && (!eid||byEid.some(e=>String(e.id)===String(sample.id))) && byName.some(e=>String(e.id)===String(sample.id)),active:active.length,mock:mockPool.length,eid,byEid:byEid.length,byName:byName.length};
+})()`);
+if(!scheduleTest.ok)throw new Error('Schedule mock/typeahead validation failed: '+JSON.stringify(scheduleTest));
 
 const source=[html,...scriptRefs.map(ref=>fs.readFileSync(path.join(appRoot,ref),'utf8'))].join('\n');
 const declarations=[...source.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);

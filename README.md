@@ -1,4 +1,28 @@
-# PWADC Security Operations Suite v3.3.0
+# PWADC Security Operations Suite v3.3.0.1
+
+
+## v3.3.0.1 Schedule Assignment Picker
+
+This controlled schedule enhancement improves staffing scenario flexibility without changing live schedule authority, HPW rules, or the shared roster JSON structure.
+
+### Mock Schedule Assignment Flexibility
+- Mock schedules can assign **any active roster employee to any schedule slot**, regardless of the employee's normal shift, gate assignment, or schedule section.
+- The unrestricted pool applies to individual cell reassignment and the day-assignment selectors used when adding/editing mock rows.
+- Archived/inactive roster employees remain excluded.
+- Live schedule dropdown behavior retains the existing section/shift context.
+
+### Name / Employee Number Typeahead
+- Clicking a schedule cell now opens a searchable employee picker instead of requiring a long dropdown scan.
+- Open, Pending, and Closed cells automatically focus the search field.
+- Search accepts partial employee name or employee number (EID).
+- Results show employee name, EID, rank, and shift before selection.
+- Keyboard Up/Down, Enter, and Escape are supported.
+- The selected employee is stored using the existing schedule label format so HPW, employee matching, printouts, colors, and reporting remain compatible.
+- Copy/paste and Closed/Open/Pending status controls remain available in the same cell editor.
+
+### Scope Control
+- No roster records, schedule authority rules, attendance rules, labor assumptions, Shift Operations logic, or report definitions are changed.
+- v3.4.0 Data Layer / Reliability Upgrade remains the next major roadmap phase.
 
 
 ## v3.3.0 Code Organization / Modularization

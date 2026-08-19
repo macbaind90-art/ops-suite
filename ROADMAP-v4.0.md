@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.3.0 - Code Organization / Modularization**.
+Current build: **v3.3.0.1 - Schedule Assignment Picker**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -22,6 +22,7 @@ Current build: **v3.3.0 - Code Organization / Modularization**.
 - ~~v3.2.6.2 - Schedule Workspace Enhancements~~ Completed
 - ~~v3.2.6.3 - Attendance Totals Print Enhancement~~ Completed
 - ~~v3.3.0 - Code Organization / Modularization~~ Completed
+- ~~v3.3.0.1 - Schedule Assignment Picker~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -41,6 +42,7 @@ Current build: **v3.3.0 - Code Organization / Modularization**.
 - Operational calibration against additional real reports remains a deferred stabilization item, not a blocker for v3.3.0.
 - v3.2.6.2 adds a controlled schedule workspace: cell copy/paste, backup-first live schedule clearing, and persistent mock schedules that remain excluded from live HPW and labor reporting until explicitly applied.
 - v3.2.6.3 adds a print-ready Attendance Totals list from Attendance Review with employee/shift scope, selectable week/month/90-day periods, canonical CO/NCNS discipline totals, approved-code totals, and optional all-code detail.
+- v3.3.0.1 removes mock-schedule assignment restrictions so any active roster employee can fill any mock slot and adds cell-level name/EID typeahead assignment while preserving the live schedule authority and existing schedule-label format.
 
 ### Governance Lane
 - Report Center answers the management decision and identifies the supporting source data.
