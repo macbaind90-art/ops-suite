@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.2.6.2 - Schedule Workspace Enhancements**.
+Current build: **v3.2.6.3 - Attendance Totals Print Enhancement**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -20,6 +20,7 @@ Current build: **v3.2.6.2 - Schedule Workspace Enhancements**.
 - ~~v3.2.6 - Reports / Data / Admin Redesign~~ Completed
 - ~~v3.2.6.1 - Attendance Review Discipline Code Fix~~ Completed
 - ~~v3.2.6.2 - Schedule Workspace Enhancements~~ Completed
+- ~~v3.2.6.3 - Attendance Totals Print Enhancement~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -38,6 +39,7 @@ Current build: **v3.2.6.2 - Schedule Workspace Enhancements**.
 - The backup-first Clear Shift Report Memory control remains Admin-only and affects only Shift Reports and Shift Intelligence.
 - Operational calibration against additional real reports remains a deferred stabilization item, not a blocker for v3.3.0.
 - v3.2.6.2 adds a controlled schedule workspace: cell copy/paste, backup-first live schedule clearing, and persistent mock schedules that remain excluded from live HPW and labor reporting until explicitly applied.
+- v3.2.6.3 adds a print-ready Attendance Totals list from Attendance Review with employee/shift scope, selectable week/month/90-day periods, canonical CO/NCNS discipline totals, approved-code totals, and optional all-code detail.
 
 ### Governance Lane
 - Report Center answers the management decision and identifies the supporting source data.

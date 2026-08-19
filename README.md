@@ -1,4 +1,27 @@
-# PWADC Security Operations Suite v3.2.6.2
+# PWADC Security Operations Suite v3.2.6.3
+
+
+## v3.2.6.3 Attendance Totals Print Enhancement
+
+This controlled enhancement adds a management-ready attendance totals print workflow directly to Attendance Review without changing attendance records, code meanings, discipline thresholds, or notice logic.
+
+### Print Attendance Totals
+- Adds **Print Attendance Totals** to Attendance Review.
+- Produces one row per active employee with attendance code totals for the selected reporting window.
+- Defaults to the same rolling 90-day ending date used by Attendance Review.
+- Supports all active employees or a selected shift.
+- Supports Current Week, Current Month, or Rolling 90 Days.
+- Supports three detail levels: Discipline Only, Discipline + Approved, or All Attendance Codes.
+- Discipline Total uses the canonical `DISCIPLINE_CODES` source: T, U, UE, CO, NCNS.
+- Approved Total uses the canonical `TRACKING_CODES` source: AL, V, E, LE.
+- Adds a final **ALL EMPLOYEES** totals row for management comparison.
+- Uses a landscape print preview suitable for paper or Save to PDF.
+
+### Scope Control
+- No attendance entries are modified by printing.
+- No discipline or pattern thresholds are changed.
+- No Schedule, Shift Reports, Shift Intelligence, labor, or roster logic is changed.
+- v3.3.0 Code Organization / Modularization remains the next major roadmap phase.
 
 
 ## v3.2.6.2 Schedule Workspace Enhancements
@@ -137,6 +160,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.2.6 - Reports / Data / Admin Redesign~~ Completed
 - ~~v3.2.6.1 - Attendance Review Discipline Code Fix~~ Completed
 - ~~v3.2.6.2 - Schedule Workspace Enhancements~~ Completed
+- ~~v3.2.6.3 - Attendance Totals Print Enhancement~~ Completed
 - **v3.3.0 - Code Organization / Modularization** Next
 - v3.4.0 - Data Layer / Reliability Upgrade
 - v3.5.0 - Reporting / Compliance Maturity
