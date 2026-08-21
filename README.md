@@ -1,4 +1,33 @@
-# PWADC Security Operations Suite v3.3.0.1
+# PWADC Security Operations Suite v3.3.0.2
+
+
+## v3.3.0.2 Attendance Print Customization
+
+This focused Attendance reporting enhancement improves the management printout without changing attendance records, code definitions, discipline thresholds, notice logic, or the v3.3.0 modular architecture.
+
+### Portrait Attendance Totals
+- Attendance Review → Print Attendance Totals now produces a **portrait** report.
+- The printed employee list uses fixed Employee and Shift fields with a portrait-friendly Selected Attendance area rather than expanding into a wide landscape table.
+- The report continues to support all active employees or a selected shift and Current Week, Current Month, or Rolling 90 Days.
+
+### Selectable Attendance Boxes
+- The print setup now lets the user choose exactly which attendance codes appear.
+- Quick selectors are provided for Discipline + Approved, Discipline Only, Approved Only, Select All, and Clear.
+- Any individual attendance code can also be checked or unchecked independently.
+- Discipline Total, Approved Total, and Recorded Total are optional summary boxes and can be independently included or excluded.
+
+### Occurrence Dates
+- Each selected attendance code box shows the employee's total for that code.
+- The occurrence dates for that code are printed beside the total in compact **MM/DD** format.
+- Example: `CO 2 | 08/04, 08/11`.
+- The final ALL EMPLOYEES summary row retains aggregate totals without presenting employee-specific dates.
+
+### Scope Control
+- No Attendance source records are changed by printing.
+- No attendance code meanings or discipline/pattern thresholds are changed.
+- No Schedule, Shift Reports, Shift Intelligence, labor, roster, or shared-data authority rules are changed.
+- v3.4.0 Data Layer / Reliability Upgrade remains the next major roadmap phase.
+
 
 
 ## v3.3.0.1 Schedule Assignment Picker

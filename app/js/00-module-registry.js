@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.3.0.1 | front-end module registry */
+/* PWADC Security Operations Suite v3.3.0.2 | front-end module registry */
 (function(global){
   const state={loaded:[],loadedAt:{}};
   global.PWADCModuleRegistry={

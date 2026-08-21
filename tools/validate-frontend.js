@@ -34,7 +34,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.1'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.2'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
@@ -45,6 +45,46 @@ if(!registry.ok||registry.unexpected.length)throw new Error('Front-end module re
 const major=['home','start-here','attendance','roster','employee-profile','training','office-supplies','shift-reports','shift-intelligence','reports','settings','tasks','data-health','restore','change-log','other-programs'];
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
 for(const view of ['daily','grid','review','patterns','notices','audit']){const out=evalx(`activeAttView='${view}'; renderAttendance()`);if(typeof out!=='string'||out.length<20)throw new Error('Attendance render failed: '+view);}
+
+// Attendance totals print: portrait customization helpers must preserve counts and show MM/DD occurrence dates.
+const attendancePrintTest=evalx(`(()=>{
+  const emp=activeAttendanceEmployees()[0];
+  if(!emp)return {ok:false,reason:'No active attendance employee in seed'};
+  const key=String(emp.id);
+  const prior=JSON.stringify((attendance.attendance||{})[key]||null);
+  attendance.attendance=attendance.attendance||{};
+  attendance.attendance[key]={'2026-08-01':'CO','2026-08-11':'CO','2026-08-15':'T'};
+  const detail=attendanceTotalsDetailForEmployee(emp,'2026-08-01','2026-08-20');
+  const box=attendanceTotalsCodeBox('CO',detail.counts.CO,detail.dates.CO);
+  const short=attendanceTotalsShortDate('2026-08-21');
+  if(prior==='null')delete attendance.attendance[key];else attendance.attendance[key]=JSON.parse(prior);
+  return {ok:detail.counts.CO===2 && detail.counts.T===1 && short==='08/21' && box.includes('CO 2') && box.includes('08/01') && box.includes('08/11'),counts:detail.counts,short,box};
+})()`);
+if(!attendancePrintTest.ok)throw new Error('Attendance totals print validation failed: '+JSON.stringify(attendancePrintTest));
+
+const attendancePrintIntegration=evalx(`(()=>{
+  const emp=activeAttendanceEmployees()[0];
+  if(!emp)return {ok:false,reason:'No active attendance employee in seed'};
+  const key=String(emp.id),prior=JSON.stringify((attendance.attendance||{})[key]||null);
+  attendance.attendance=attendance.attendance||{};
+  attendance.attendance[key]={'2026-08-01':'CO','2026-08-11':'CO'};
+  document.getElementById('attTotalsShift').value='All';
+  document.getElementById('attTotalsPeriod').value='month';
+  document.getElementById('attTotalsEnd').value='2026-08-21';
+  document.getElementById('attTotalsDisciplineTotal').checked=true;
+  document.getElementById('attTotalsApprovedTotal').checked=false;
+  document.getElementById('attTotalsRecordedTotal').checked=false;
+  const oldQuery=document.querySelectorAll,oldShow=showReport,oldClose=closeModal;
+  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'}]:[];
+  let captured={};
+  showReport=(title,subtitle,body,orientation)=>{captured={title,subtitle,body,orientation};};
+  closeModal=()=>{};
+  printAttendanceTotalsList();
+  document.querySelectorAll=oldQuery;showReport=oldShow;closeModal=oldClose;
+  if(prior==='null')delete attendance.attendance[key];else attendance.attendance[key]=JSON.parse(prior);
+  return {ok:captured.orientation==='portrait' && captured.body.includes('CO 2') && captured.body.includes('08/01') && captured.body.includes('08/11') && !captured.body.includes('Approved 0'),orientation:captured.orientation,hasDates:captured.body.includes('08/01')&&captured.body.includes('08/11')};
+})()`);
+if(!attendancePrintIntegration.ok)throw new Error('Attendance totals print integration failed: '+JSON.stringify(attendancePrintIntegration));
 for(const view of ['roster','schedule','training','uniforms','analytics']){const out=evalx(`activeRosterView='${view}'; renderRoster()`);if(typeof out!=='string'||out.length<20)throw new Error('Roster render failed: '+view);}
 
 // Schedule assignment controls: mock schedules must expose the entire active roster,
