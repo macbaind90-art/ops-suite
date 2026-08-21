@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.3.0.2 | module: shift-operations */
+/* PWADC Security Operations Suite v3.3.0.3 | module: shift-operations */
 function normalizeShiftReports(){
   shiftReports=shiftReports&&typeof shiftReports==='object'?shiftReports:{reports:[],issues:[],audit:[],nextIssueId:1,lastSaved:''};
   shiftReports.reports=Array.isArray(shiftReports.reports)?shiftReports.reports:[];

@@ -1,5 +1,23 @@
-# PWADC Security Operations Suite v3.3.0.2
+# PWADC Security Operations Suite v3.3.0.3
 
+
+
+## v3.3.0.3 Attendance Print Zero Suppression
+
+This focused hotfix improves the portrait Attendance Totals printout without changing attendance records, code definitions, thresholds, or the modular architecture.
+
+### Zero-Total Suppression
+- A selected attendance category is printed for an employee only when that employee has a total greater than 0 in the selected reporting period.
+- Example: if T, CO, NCNS, V, and AL are selected but the employee only has two CO entries, only `CO 2` and its MM/DD dates are shown.
+- Selected Discipline Total, Approved Total, and Recorded Total boxes are also suppressed when their calculated value is 0.
+- Employees remain on the report even when all selected attendance categories are zero; their Selected Attendance area is simply blank.
+- The ALL EMPLOYEES summary follows the same rule and omits aggregate categories that total 0.
+
+### Preserved Behavior
+- Portrait orientation remains unchanged.
+- User-selectable attendance boxes remain unchanged.
+- Displayed attendance categories retain their MM/DD occurrence dates.
+- No attendance records or discipline/pattern thresholds are modified.
 
 ## v3.3.0.2 Attendance Print Customization
 

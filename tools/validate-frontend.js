@@ -34,7 +34,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.2'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.3'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
@@ -75,14 +75,14 @@ const attendancePrintIntegration=evalx(`(()=>{
   document.getElementById('attTotalsApprovedTotal').checked=false;
   document.getElementById('attTotalsRecordedTotal').checked=false;
   const oldQuery=document.querySelectorAll,oldShow=showReport,oldClose=closeModal;
-  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'}]:[];
+  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'},{value:'T'}]:[];
   let captured={};
   showReport=(title,subtitle,body,orientation)=>{captured={title,subtitle,body,orientation};};
   closeModal=()=>{};
   printAttendanceTotalsList();
   document.querySelectorAll=oldQuery;showReport=oldShow;closeModal=oldClose;
   if(prior==='null')delete attendance.attendance[key];else attendance.attendance[key]=JSON.parse(prior);
-  return {ok:captured.orientation==='portrait' && captured.body.includes('CO 2') && captured.body.includes('08/01') && captured.body.includes('08/11') && !captured.body.includes('Approved 0'),orientation:captured.orientation,hasDates:captured.body.includes('08/01')&&captured.body.includes('08/11')};
+  return {ok:captured.orientation==='portrait' && captured.body.includes('CO 2') && captured.body.includes('08/01') && captured.body.includes('08/11') && !captured.body.includes('T 0') && !captured.body.includes('Approved 0'),orientation:captured.orientation,hasDates:captured.body.includes('08/01')&&captured.body.includes('08/11'),zeroSuppressed:!captured.body.includes('T 0')};
 })()`);
 if(!attendancePrintIntegration.ok)throw new Error('Attendance totals print integration failed: '+JSON.stringify(attendancePrintIntegration));
 for(const view of ['roster','schedule','training','uniforms','analytics']){const out=evalx(`activeRosterView='${view}'; renderRoster()`);if(typeof out!=='string'||out.length<20)throw new Error('Roster render failed: '+view);}

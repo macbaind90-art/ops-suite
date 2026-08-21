@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PWADC Security Operations Suite v3.3.0.2</title>
+<title>PWADC Security Operations Suite v3.3.0.3</title>
 <link rel="stylesheet" href="assets/styles.css">
 </head>
 <body>
-<div id="lockScreen" class="lock-screen"><div class="lock-card"><div class="suite-title">PWADC Security Operations</div><div class="suite-sub">Command Suite v3.3.0.2</div><p style="color:var(--muted);margin-top:18px">Select user and enter PIN</p><div style="margin-top:14px"><label>User</label><select id="loginUser" onchange="loginUserId=this.value;pinInput='';renderPin()"></select></div><div class="pin-row" id="pinDots"></div><div class="pin-pad" id="pinPad"></div><div class="pin-hint">Keyboard entry enabled: type PIN, Backspace deletes, Enter submits.</div><div class="pin-error" id="pinError"></div></div></div>
-<div id="app" class="hidden"><div class="topbar"><div class="brand"><strong>PWADC Security Operations</strong><span>Command Suite v3.3.0.2</span></div><div class="nav" id="nav"></div><div class="employee-search"><input id="globalEmployeeSearch" placeholder="Search employees..." oninput="employeeSearch=this.value;renderGlobalSearchResults()" onfocus="renderGlobalSearchResults()"><div id="globalEmployeeResults" class="employee-search-results"></div></div><div class="status"><div id="moduleStatus">Loading</div><div id="saveStatus">Initializing...</div><div id="userStatus">Not signed in</div></div><button class="gold" onclick="lockSuite()">Lock</button></div><main class="wrap" id="pages"></main></div>
+<div id="lockScreen" class="lock-screen"><div class="lock-card"><div class="suite-title">PWADC Security Operations</div><div class="suite-sub">Command Suite v3.3.0.3</div><p style="color:var(--muted);margin-top:18px">Select user and enter PIN</p><div style="margin-top:14px"><label>User</label><select id="loginUser" onchange="loginUserId=this.value;pinInput='';renderPin()"></select></div><div class="pin-row" id="pinDots"></div><div class="pin-pad" id="pinPad"></div><div class="pin-hint">Keyboard entry enabled: type PIN, Backspace deletes, Enter submits.</div><div class="pin-error" id="pinError"></div></div></div>
+<div id="app" class="hidden"><div class="topbar"><div class="brand"><strong>PWADC Security Operations</strong><span>Command Suite v3.3.0.3</span></div><div class="nav" id="nav"></div><div class="employee-search"><input id="globalEmployeeSearch" placeholder="Search employees..." oninput="employeeSearch=this.value;renderGlobalSearchResults()" onfocus="renderGlobalSearchResults()"><div id="globalEmployeeResults" class="employee-search-results"></div></div><div class="status"><div id="moduleStatus">Loading</div><div id="saveStatus">Initializing...</div><div id="userStatus">Not signed in</div></div><button class="gold" onclick="lockSuite()">Lock</button></div><main class="wrap" id="pages"></main></div>
 <div class="toast" id="toast"></div>
 <script src="js/00-module-registry.js"></script>
 <script src="js/10-bootstrap.js"></script>
