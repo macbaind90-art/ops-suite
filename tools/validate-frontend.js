@@ -34,7 +34,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.3'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.4'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
@@ -103,6 +103,28 @@ const scheduleTest=evalx(`(()=>{
   return {ok:mockPool.length===active.length && (!eid||byEid.some(e=>String(e.id)===String(sample.id))) && byName.some(e=>String(e.id)===String(sample.id)),active:active.length,mock:mockPool.length,eid,byEid:byEid.length,byName:byName.length};
 })()`);
 if(!scheduleTest.ok)throw new Error('Schedule mock/typeahead validation failed: '+JSON.stringify(scheduleTest));
+
+
+// Schedule employee colors must remain stable per employee while avoiding equal colors
+// for different employees that share a horizontal or vertical schedule border.
+const scheduleColorTest=evalx(`(()=>{
+  const priorSchedule=JSON.stringify(roster.schedule||[]),priorMode=scheduleWorkspaceMode,priorDraft=scheduleWorkspaceDraftId;
+  roster.schedule=[
+    {section:'1st Shift — 0800-1600',post:'Validation A',days:['SO Aiken, Don','SO Brewer, Jazmine','SO Aiken, Don','None','None','None','None']},
+    {section:'2nd Shift — 1600-2400',post:'Validation B',days:['SO Parker, Lacey','SO Ferguson, Matt','None','None','None','None','None']}
+  ];
+  scheduleWorkspaceMode='live';scheduleWorkspaceDraftId='';scheduleColorCache=null;buildScheduleColorCache();
+  const conflicts=scheduleAdjacentColorConflicts();
+  const a=empColorFromCell('SO Aiken, Don','1st Shift — 0800-1600');
+  const aRepeat=empColorFromCell('SO Aiken, Don','1st Shift — 0800-1600');
+  const p=empColorFromCell('SO Parker, Lacey','2nd Shift — 1600-2400');
+  const b=empColorFromCell('SO Brewer, Jazmine','1st Shift — 0800-1600');
+  roster.schedule=JSON.parse(priorSchedule);scheduleWorkspaceMode='live';scheduleWorkspaceDraftId='';scheduleColorCache=null;buildScheduleColorCache();
+  const seedConflicts=scheduleAdjacentColorConflicts();
+  scheduleWorkspaceMode=priorMode;scheduleWorkspaceDraftId=priorDraft;scheduleColorCache=null;
+  return {ok:conflicts.length===0 && seedConflicts.length===0 && a===aRepeat && a!==p && a!==b,conflicts,seedConflicts,a,aRepeat,p,b};
+})()`);
+if(!scheduleColorTest.ok)throw new Error('Schedule adjacency color validation failed: '+JSON.stringify(scheduleColorTest));
 
 const source=[html,...scriptRefs.map(ref=>fs.readFileSync(path.join(appRoot,ref),'utf8'))].join('\n');
 const declarations=[...source.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);

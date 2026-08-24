@@ -73,7 +73,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.3.0.3" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.3.0.4" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -89,7 +89,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.3.0.3", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.3.0.4", baseDirectory = AppContext.BaseDirectory };
 
         private string LatestAttendanceDateFromFile(string path)
         {

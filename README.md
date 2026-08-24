@@ -1,5 +1,23 @@
-# PWADC Security Operations Suite v3.3.0.3
+# PWADC Security Operations Suite v3.3.0.4
 
+
+
+## v3.3.0.4 Schedule Color Adjacency Fix
+
+This focused hotfix improves Schedule visual separation without changing schedule assignments, live/mock authority, HPW calculations, labor reporting, or the v3.3.0 modular architecture.
+
+### Schedule-Wide Color Assignment
+- Employee color allocation now evaluates the full active schedule rather than restarting the palette inside each schedule section.
+- The same employee retains the same color throughout the schedule.
+- Different employees that share a horizontal or vertical cell border are assigned different colors whenever an alternative is available.
+- Cross-section boundaries are included, preventing a color collision where one shift/section ends and another begins.
+- The employee color palette was expanded to reduce reuse on larger staffing layouts.
+
+### Preserved Behavior
+- Live schedule remains the authority for HPW and labor reporting.
+- Mock schedules remain isolated until explicitly applied to live.
+- Copy/paste and name/EID typeahead assignment remain unchanged.
+- No roster, attendance, Shift Intelligence, seed data, or specialist-program records are modified.
 
 
 ## v3.3.0.3 Attendance Print Zero Suppression
