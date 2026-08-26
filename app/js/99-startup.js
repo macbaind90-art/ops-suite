@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.3.0.4 | startup gate */
+/* PWADC Security Operations Suite v3.3.0.5 | startup gate */
 (function(){
   const expected=['bootstrap','data-core','shell-audits','reports-governance','workflows-home','roster-schedule','training-uniforms','attendance','shift-operations','tasks-settings'];
   const result=PWADCModuleRegistry.validate(expected);

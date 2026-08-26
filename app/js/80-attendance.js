@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.3.0.4 | module: attendance */
+/* PWADC Security Operations Suite v3.3.0.5 | module: attendance */
 function renderAttendance(){if(activeAttView==='exceptions')activeAttView='patterns';const views=['daily','grid','review','patterns','notices','audit'];const label=v=>v==='daily'?'Daily Entry':v==='grid'?'90-Day Grid':v==='review'?'Attendance Review':v==='patterns'?'Patterns':v==='notices'?'Notice Workflow':'Audit Log';return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">Fast daily entry, 90-day grid, review, patterns, notice workflow, and shared JSON autosave</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="reloadPackagedAttendanceData()">Use Packaged Recovery JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${workflowBanner('Attendance workflow',['Daily Entry','Attendance Review','Patterns','Notice / Monitor decision'],'Routine attendance is tracked here. Escalate only when policy, pattern, or operational impact justifies it.')}${renderPeopleWorkflowNav('attendance')}<div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${label(v)}</button>`).join('')}</div>${activeAttView==='daily'?renderDaily():activeAttView==='grid'?renderGrid():activeAttView==='review'?renderAttendanceReview():activeAttView==='patterns'?renderPatterns():activeAttView==='notices'?renderAttendanceNotices():renderAudit()}`}
 function shiftRank(shift){let i=SHIFT_ORDER.indexOf(shift||'');return i>=0?i:99}
 function sortedEmployees(){return activeAttendanceEmployees().slice().sort((a,b)=>shiftRank(a.shift)-shiftRank(b.shift)||(a.shift||'').localeCompare(b.shift||'')||(a.name||'').localeCompare(b.name||''))}
@@ -329,18 +329,20 @@ function setAttendanceTotalsCodeSelection(mode){
     else if(mode==='standard')cb.checked=disc.has(cb.value)||approved.has(cb.value);
   });
 }
-function attendanceTotalsCodeBox(code,count,dates){
-  const dateText=(dates||[]).map(attendanceTotalsShortDate).join(', ');
-  return `<div style="border:1px solid #bbb;border-radius:4px;padding:3px 5px;display:flex;align-items:baseline;gap:7px;min-height:25px"><strong style="min-width:48px">${esc(code)} ${Number(count||0)}</strong><span style="font-size:8.5pt;color:#555;line-height:1.15">${esc(dateText||'—')}</span></div>`;
+function attendanceTotalsCodeBox(code,count,dates,totalsOnly=false){
+  const approved=TRACKING_CODES.has(code);
+  const hideDates=totalsOnly||approved;
+  const dateText=hideDates?'':(dates||[]).map(attendanceTotalsShortDate).join(', ');
+  return `<span class="att-print-code ${hideDates?'totals-only':''}"><strong>${esc(code)} ${Number(count||0)}</strong>${dateText?`<span>${esc(dateText)}</span>`:''}</span>`;
 }
 function attendanceTotalsSummaryBox(label,value){
-  return `<div style="border:1px solid #999;border-radius:4px;padding:3px 5px;background:#f5f5f5"><strong>${esc(label)} ${Number(value||0)}</strong></div>`;
+  return `<span class="att-print-summary"><strong>${esc(label)} ${Number(value||0)}</strong></span>`;
 }
 function openAttendanceTotalsPrintModal(){
   const shifts=['All',...SHIFT_ORDER.filter(sh=>activeAttendanceEmployees().some(e=>e.shift===sh)),...Array.from(new Set(activeAttendanceEmployees().map(e=>e.shift).filter(Boolean))).filter(sh=>!SHIFT_ORDER.includes(sh))];
   const defaultCodes=new Set([...DISCIPLINE_CODES,...TRACKING_CODES]);
   const codeChoices=CODES.map(([code,label])=>`<label class="chip" style="display:flex;align-items:center;gap:6px"><input class="att-totals-code" type="checkbox" value="${esc(code)}" ${defaultCodes.has(code)?'checked':''}> <strong>${esc(code)}</strong> ${esc(label)}</label>`).join('');
-  showModal(`<div class="modal-head"><div><div class="modal-title">Print Attendance Totals</div><div class="mini-note">Create a portrait employee attendance list and choose exactly which attendance boxes appear.</div></div><button onclick="closeModal()">Close</button></div><div class="notice">Each selected attendance box prints only when that employee has activity in the category, followed by occurrence dates in MM/DD format. Zero-total attendance categories are automatically suppressed. The report remains read-only and uses the selected Attendance Review reporting window.</div><div class="form-grid"><div><label>Employee Scope</label><select id="attTotalsShift">${shifts.map(sh=>`<option value="${esc(sh)}" ${entryShift===sh?'selected':''}>${esc(sh==='All'?'All Active Employees':sh)}</option>`).join('')}</select></div><div><label>Period</label><select id="attTotalsPeriod"><option value="rolling90" selected>Rolling 90 Days</option><option value="month">Current Month</option><option value="week">Current Week</option></select></div><div><label>Ending Date</label><input id="attTotalsEnd" type="date" value="${esc(gridEnd||new Date().toISOString().slice(0,10))}"></div><div><label>Summary Boxes</label><label class="chip"><input id="attTotalsDisciplineTotal" type="checkbox" checked> Discipline Total</label> <label class="chip"><input id="attTotalsApprovedTotal" type="checkbox" checked> Approved Total</label> <label class="chip"><input id="attTotalsRecordedTotal" type="checkbox"> Recorded Total</label></div><div class="full"><label>Attendance Boxes to Show</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin:5px 0 8px"><button class="sm" onclick="setAttendanceTotalsCodeSelection('standard')">Discipline + Approved</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('discipline')">Discipline Only</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('approved')">Approved Only</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('all')">Select All</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('none')">Clear</button></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px">${codeChoices}</div></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="printAttendanceTotalsList()">Preview / Print</button></div>`);
+  showModal(`<div class="modal-head"><div><div class="modal-title">Print Attendance Totals</div><div class="mini-note">Create a portrait employee attendance list and choose exactly which attendance boxes appear.</div></div><button onclick="closeModal()">Close</button></div><div class="notice">Selected boxes print only when the employee has activity in that category. Discipline and other non-approved codes include MM/DD occurrence dates. Approved codes AL, V, E, and LE print totals only. Zero-total categories are automatically suppressed. The report remains read-only and uses the selected Attendance Review reporting window.</div><div class="form-grid"><div><label>Employee Scope</label><select id="attTotalsShift">${shifts.map(sh=>`<option value="${esc(sh)}" ${entryShift===sh?'selected':''}>${esc(sh==='All'?'All Active Employees':sh)}</option>`).join('')}</select></div><div><label>Period</label><select id="attTotalsPeriod"><option value="rolling90" selected>Rolling 90 Days</option><option value="month">Current Month</option><option value="week">Current Week</option></select></div><div><label>Ending Date</label><input id="attTotalsEnd" type="date" value="${esc(gridEnd||new Date().toISOString().slice(0,10))}"></div><div><label>Summary Boxes</label><label class="chip"><input id="attTotalsDisciplineTotal" type="checkbox" checked> Discipline Total</label> <label class="chip"><input id="attTotalsApprovedTotal" type="checkbox" checked> Approved Total</label> <label class="chip"><input id="attTotalsRecordedTotal" type="checkbox"> Recorded Total</label></div><div class="full"><label>Attendance Boxes to Show</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin:5px 0 8px"><button class="sm" onclick="setAttendanceTotalsCodeSelection('standard')">Discipline + Approved</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('discipline')">Discipline Only</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('approved')">Approved Only</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('all')">Select All</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('none')">Clear</button></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px">${codeChoices}</div></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="printAttendanceTotalsList()">Preview / Print</button></div>`);
 }
 function printAttendanceTotalsList(){
   const shift=val('attTotalsShift')||'All';
@@ -366,19 +368,17 @@ function printAttendanceTotalsList(){
     if(showDiscipline&&disciplineTotal>0)boxes.push(attendanceTotalsSummaryBox('Discipline',disciplineTotal));
     if(showApproved&&approvedTotal>0)boxes.push(attendanceTotalsSummaryBox('Approved',approvedTotal));
     if(showRecorded&&recordedTotal>0)boxes.push(attendanceTotalsSummaryBox('Recorded',recordedTotal));
-    const boxHtml=boxes.join('');
-    return [esc(emp.name),esc(emp.shift||''),`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px">${boxHtml}</div>`];
+    return [`<div class="att-print-employee"><strong>${esc(emp.name)}</strong><span>${esc(emp.shift||'')}</span></div>`,`<div class="att-print-boxes">${boxes.join('')}</div>`];
   });
   if(employees.length){
     const disciplineTotal=disc.reduce((n,c)=>n+Number(aggregate[c]||0),0);
     const approvedTotal=approved.reduce((n,c)=>n+Number(aggregate[c]||0),0);
     const recordedTotal=allCodes.reduce((n,c)=>n+Number(aggregate[c]||0),0);
-    const boxes=codes.filter(c=>Number(aggregate[c]||0)>0).map(c=>attendanceTotalsCodeBox(c,aggregate[c]||0,[]));
+    const boxes=codes.filter(c=>Number(aggregate[c]||0)>0).map(c=>attendanceTotalsCodeBox(c,aggregate[c]||0,[],true));
     if(showDiscipline&&disciplineTotal>0)boxes.push(attendanceTotalsSummaryBox('Discipline',disciplineTotal));
     if(showApproved&&approvedTotal>0)boxes.push(attendanceTotalsSummaryBox('Approved',approvedTotal));
     if(showRecorded&&recordedTotal>0)boxes.push(attendanceTotalsSummaryBox('Recorded',recordedTotal));
-    const boxHtml=boxes.join('');
-    rows.push(['<strong>ALL EMPLOYEES</strong>','',`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px">${boxHtml}</div>`]);
+    rows.push(['<div class="att-print-employee"><strong>ALL EMPLOYEES</strong><span>Report Total</span></div>',`<div class="att-print-boxes">${boxes.join('')}</div>`]);
   }
   const selectedLabels=codes.map(c=>`${c} (${codeLabel(c)})`).join('; ');
   const subtitle=`${range.label} · ${fmtDate(range.start)} through ${fmtDate(range.end)} · ${shift==='All'?'All active employees':shift}`;
@@ -386,7 +386,32 @@ function printAttendanceTotalsList(){
   if(showDiscipline)summaryBits.push('Discipline Total = T + U + UE + CO + NCNS');
   if(showApproved)summaryBits.push('Approved Total = AL + V + E + LE');
   if(showRecorded)summaryBits.push('Recorded Total = all recorded attendance codes');
-  const body=`<div class="report-section report-compact"><div class="report-summary"><strong>Attendance Totals List:</strong> Portrait employee list showing selected attendance boxes only when the employee has activity in that category. Zero-total categories are suppressed. Each displayed code shows its total and MM/DD occurrence dates. ${summaryBits.length?summaryBits.join('. ')+'. ':''}This report does not change attendance records or discipline thresholds.</div></div><div class="report-section report-compact">${reportKpis([{label:'Employees',value:employees.length},{label:'Scope',value:shift==='All'?'All Active':shift},{label:'Period',value:range.label},{label:'Attendance Boxes',value:codes.length}])}</div><div class="report-section report-allow-break"><h2>Employee Attendance Totals</h2>${reportTable(['Employee','Shift','Selected Attendance'],rows)}</div>${codes.length?`<div class="report-section report-compact"><div class="report-method"><strong>Selected Codes:</strong> ${esc(selectedLabels)}</div></div>`:''}`;
+  const compactStyles=`<style>
+    @page{size:letter portrait;margin:.22in}
+    .report-doc .report-header{padding-bottom:5px!important;margin-bottom:5px!important;gap:8px!important}
+    .report-doc h1{font-size:16pt!important;margin:1px 0!important}
+    .report-doc .report-brand{font-size:8.5px!important}
+    .report-doc .report-note,.report-doc .report-meta{font-size:8px!important;line-height:1.15!important}
+    .report-doc .report-footer{font-size:6.8px!important;margin-top:4px!important;padding-top:3px!important;line-height:1.1!important}
+    .attendance-print{font-size:8.5pt;line-height:1.12}
+    .attendance-print .report-section{margin:2px 0!important}
+    .attendance-print h2{font-size:10pt!important;margin:1px 0 3px!important;padding-bottom:2px!important}
+    .attendance-print .att-print-guide{font-size:7.6pt;color:#444;line-height:1.15;margin:0 0 3px;padding:3px 5px;border:1px solid #bbb;background:#fafafa}
+    .attendance-print .report-table{table-layout:fixed;font-size:8pt!important}
+    .attendance-print .report-table th{padding:2px 4px!important;font-size:7.6pt!important}
+    .attendance-print .report-table td{padding:2px 4px!important;line-height:1.08!important}
+    .attendance-print .report-table th:first-child,.attendance-print .report-table td:first-child{width:27%}
+    .attendance-print .att-print-employee{display:flex;align-items:baseline;gap:5px;white-space:nowrap}
+    .attendance-print .att-print-employee strong{font-size:8.2pt}
+    .attendance-print .att-print-employee span{font-size:7pt;color:#555}
+    .attendance-print .att-print-boxes{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;min-height:14px}
+    .attendance-print .att-print-code,.attendance-print .att-print-summary{display:inline-flex;align-items:baseline;gap:3px;border:1px solid #aaa;border-radius:3px;padding:1px 4px;white-space:nowrap;font-size:7.7pt;line-height:1.05}
+    .attendance-print .att-print-code span{font-size:7pt;color:#555}
+    .attendance-print .att-print-summary{background:#f2f2f2;border-color:#888}
+    .attendance-print .att-print-selected{font-size:6.9pt;color:#555;line-height:1.1;margin-top:3px}
+  </style>`;
+  const guide=`<strong>Print format:</strong> Zero-total categories are suppressed. Approved categories AL, V, E, and LE show totals only; discipline and other selected codes include MM/DD dates.${summaryBits.length?' '+summaryBits.join('. ')+'.':''}`;
+  const body=`${compactStyles}<div class="attendance-print"><div class="att-print-guide">${guide}</div><div class="report-section report-allow-break"><h2>Employee Attendance Totals</h2>${reportTable(['Employee / Shift','Attendance'],rows)}</div>${codes.length?`<div class="att-print-selected"><strong>Selected:</strong> ${esc(selectedLabels)}</div>`:''}</div>`;
   closeModal();
   showReport('Attendance Totals List',subtitle,body,'portrait',false);
 }

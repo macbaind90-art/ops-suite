@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.3.0.4 - Schedule Color Adjacency Fix**.
+Current build: **v3.3.0.5 - Attendance Print Density Optimization**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -26,6 +26,7 @@ Current build: **v3.3.0.4 - Schedule Color Adjacency Fix**.
 - ~~v3.3.0.2 - Attendance Print Customization~~ Completed
 - ~~v3.3.0.3 - Attendance Print Zero Suppression~~ Completed
 - ~~v3.3.0.4 - Schedule Color Adjacency Fix~~ Completed
+- ~~v3.3.0.5 - Attendance Print Density Optimization~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -49,6 +50,12 @@ Current build: **v3.3.0.4 - Schedule Color Adjacency Fix**.
 - v3.3.0.2 converts Attendance Totals printing to portrait, adds user-selectable attendance and summary boxes, and prints each selected code total with MM/DD occurrence dates while leaving attendance records and thresholds unchanged.
 - v3.3.0.3 suppresses selected attendance and summary boxes when the employee total is 0, leaving only meaningful attendance activity visible on the portrait management printout.
 - v3.3.0.4 assigns employee colors across the full schedule and prevents different employees sharing horizontal or vertical borders from receiving the same color when an alternative is available, including across section boundaries.
+- v3.3.0.5 makes Attendance Totals printing denser: approved categories AL/V/E/LE show totals only, discipline and other selected codes retain MM/DD dates, and the portrait report uses compact flex-packed activity chips with reduced vertical overhead.
+
+### Repository Documentation
+- Root documentation is controlled to README, ROADMAP, ARCHITECTURE, DESIGN-SYSTEM, CHANGELOG, and current BUILD-VALIDATION.
+- Historical version-specific build/release notes are consolidated under `docs/archive/HISTORICAL-RELEASE-NOTES.md`.
+- Future release notes are appended to `CHANGELOG.md` instead of creating new root-level version-specific Markdown files.
 
 ### Governance Lane
 - Report Center answers the management decision and identifies the supporting source data.

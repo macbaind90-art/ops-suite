@@ -1,4 +1,30 @@
-# PWADC Security Operations Suite v3.3.0.4
+# PWADC Security Operations Suite v3.3.0.5
+
+
+
+## v3.3.0.5 Attendance Print Density Optimization
+
+This focused Attendance reporting hotfix makes the portrait Attendance Totals report more compact while preserving the user-selected categories, zero-total suppression, and attendance source data.
+
+### Approved Categories: Totals Only
+- Approved attendance categories **AL, V, E, and LE** now print the category total only.
+- Approved-category occurrence dates are intentionally suppressed from the printout.
+- Discipline categories **T, U, UE, CO, and NCNS** continue to show compact MM/DD occurrence dates when selected.
+- Other non-approved codes continue to show MM/DD dates when selected.
+
+### Compact Portrait Layout
+- Employee name and shift are combined into one compact print column.
+- Attendance activity uses flex-packed inline chips instead of a fixed two-column inner grid, eliminating unused box space.
+- Large KPI blocks were removed from the print body because the report header already identifies scope and reporting period.
+- Report margins, header spacing, table padding, typography, and footer spacing were tightened specifically for Attendance Totals printing.
+- The ALL EMPLOYEES row remains available as a compact aggregate summary.
+
+### Preserved Behavior
+- Zero-total categories remain suppressed for each employee.
+- Employees with no selected attendance activity remain on the report.
+- User-selectable attendance and summary boxes remain available.
+- Week, month, and rolling 90-day ranges remain available.
+- No attendance records, code definitions, discipline thresholds, notice logic, schedule authority, or shared-data contracts are changed.
 
 
 
@@ -114,10 +140,21 @@ This architecture release reduces regression risk without intentionally changing
 
 ### Build / Maintenance Controls
 - GitHub Actions artifact naming is aligned to v3.3.0.
-- `ARCHITECTURE-v3.3.0.md` defines module ownership, dependency order, and rules for future changes.
+- `ARCHITECTURE.md` defines module ownership, dependency order, and rules for future changes.
 - Existing workflows are intentionally unchanged. The release is a structural refactor, not a UI or policy redesign.
 - v3.4.0 Data Layer / Reliability Upgrade is now the next major roadmap phase.
 
+
+## Repository Documentation
+- `README.md` - current application overview and release context.
+- `ROADMAP-v4.0.md` - controlled roadmap and completed phase history.
+- `ARCHITECTURE.md` - current module ownership, dependency, and maintenance standard.
+- `DESIGN-SYSTEM.md` - current UI/UX design standard.
+- `CHANGELOG.md` - consolidated release history.
+- `BUILD-VALIDATION.md` - current release validation record.
+- `docs/archive/HISTORICAL-RELEASE-NOTES.md` - consolidated historical build and release notes retained for traceability.
+
+Version-specific Markdown files should not be added to the repository root going forward. Release history belongs in `CHANGELOG.md`; current validation belongs in `BUILD-VALIDATION.md`.
 
 ## v3.2.6.3 Attendance Totals Print Enhancement
 
