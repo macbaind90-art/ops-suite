@@ -1,5 +1,21 @@
-# PWADC Security Operations Suite v3.3.0.5
+# PWADC Security Operations Suite v3.3.0.6
 
+
+
+## v3.3.0.6 Attendance Print Date Detail Correction
+
+This focused hotfix corrects Attendance Totals date-detail behavior without changing attendance records, thresholds, or code meanings.
+
+### Date Detail Rule
+- Only discipline codes **T, U, UE, CO, and NCNS** print MM/DD occurrence dates.
+- All non-discipline codes, including **P, AL, V, E, LE, O, FL, and NE**, print totals only.
+- Zero-total suppression remains active.
+- The compact portrait layout from v3.3.0.5 is unchanged.
+
+### Operational Effect
+- A selected Present code now prints as `P 12`, not `P 12 | 08/01, 08/02, ...`.
+- Discipline activity continues to retain dates for review and counseling context.
+- This further reduces unnecessary print density and page consumption.
 
 
 ## v3.3.0.5 Attendance Print Density Optimization

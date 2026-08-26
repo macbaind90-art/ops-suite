@@ -46,20 +46,21 @@ const major=['home','start-here','attendance','roster','employee-profile','train
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
 for(const view of ['daily','grid','review','patterns','notices','audit']){const out=evalx(`activeAttView='${view}'; renderAttendance()`);if(typeof out!=='string'||out.length<20)throw new Error('Attendance render failed: '+view);}
 
-// Attendance totals print: discipline/other codes retain MM/DD dates while approved codes print totals only.
+// Attendance totals print: only discipline codes retain MM/DD dates; all non-discipline codes print totals only.
 const attendancePrintTest=evalx(`(()=>{
   const emp=activeAttendanceEmployees()[0];
   if(!emp)return {ok:false,reason:'No active attendance employee in seed'};
   const key=String(emp.id);
   const prior=JSON.stringify((attendance.attendance||{})[key]||null);
   attendance.attendance=attendance.attendance||{};
-  attendance.attendance[key]={'2026-08-01':'CO','2026-08-11':'CO','2026-08-15':'AL'};
+  attendance.attendance[key]={'2026-08-01':'CO','2026-08-11':'CO','2026-08-15':'AL','2026-08-18':'P'};
   const detail=attendanceTotalsDetailForEmployee(emp,'2026-08-01','2026-08-20');
   const disciplineBox=attendanceTotalsCodeBox('CO',detail.counts.CO,detail.dates.CO);
   const approvedBox=attendanceTotalsCodeBox('AL',detail.counts.AL,detail.dates.AL);
+  const presentBox=attendanceTotalsCodeBox('P',detail.counts.P,detail.dates.P);
   const short=attendanceTotalsShortDate('2026-08-21');
   if(prior==='null')delete attendance.attendance[key];else attendance.attendance[key]=JSON.parse(prior);
-  return {ok:detail.counts.CO===2 && detail.counts.AL===1 && short==='08/21' && disciplineBox.includes('CO 2') && disciplineBox.includes('08/01') && disciplineBox.includes('08/11') && approvedBox.includes('AL 1') && !approvedBox.includes('08/15'),counts:detail.counts,short,disciplineBox,approvedBox};
+  return {ok:detail.counts.CO===2 && detail.counts.AL===1 && detail.counts.P===1 && short==='08/21' && disciplineBox.includes('CO 2') && disciplineBox.includes('08/01') && disciplineBox.includes('08/11') && approvedBox.includes('AL 1') && !approvedBox.includes('08/15') && presentBox.includes('P 1') && !presentBox.includes('08/18'),counts:detail.counts,short,disciplineBox,approvedBox,presentBox};
 })()`);
 if(!attendancePrintTest.ok)throw new Error('Attendance totals print validation failed: '+JSON.stringify(attendancePrintTest));
 
@@ -68,7 +69,7 @@ const attendancePrintIntegration=evalx(`(()=>{
   if(!emp)return {ok:false,reason:'No active attendance employee in seed'};
   const key=String(emp.id),prior=JSON.stringify((attendance.attendance||{})[key]||null);
   attendance.attendance=attendance.attendance||{};
-  attendance.attendance[key]={'2026-08-01':'CO','2026-08-11':'CO','2026-08-15':'AL'};
+  attendance.attendance[key]={'2026-08-01':'CO','2026-08-11':'CO','2026-08-15':'AL','2026-08-18':'P'};
   document.getElementById('attTotalsShift').value='All';
   document.getElementById('attTotalsPeriod').value='month';
   document.getElementById('attTotalsEnd').value='2026-08-21';
@@ -76,7 +77,7 @@ const attendancePrintIntegration=evalx(`(()=>{
   document.getElementById('attTotalsApprovedTotal').checked=true;
   document.getElementById('attTotalsRecordedTotal').checked=false;
   const oldQuery=document.querySelectorAll,oldShow=showReport,oldClose=closeModal;
-  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'},{value:'AL'},{value:'T'}]:[];
+  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'},{value:'AL'},{value:'P'},{value:'T'}]:[];
   let captured={};
   showReport=(title,subtitle,body,orientation)=>{captured={title,subtitle,body,orientation};};
   closeModal=()=>{};
@@ -84,8 +85,8 @@ const attendancePrintIntegration=evalx(`(()=>{
   document.querySelectorAll=oldQuery;showReport=oldShow;closeModal=oldClose;
   if(prior==='null')delete attendance.attendance[key];else attendance.attendance[key]=JSON.parse(prior);
   return {
-    ok:captured.orientation==='portrait' && captured.body.includes('CO 2') && captured.body.includes('08/01') && captured.body.includes('08/11') && captured.body.includes('AL 1') && !captured.body.includes('08/15') && !captured.body.includes('T 0') && captured.body.includes('Employee / Shift') && captured.body.includes('att-print-boxes') && !captured.body.includes('Attendance Boxes</span>'),
-    orientation:captured.orientation,disciplineDates:captured.body.includes('08/01')&&captured.body.includes('08/11'),approvedDateSuppressed:!captured.body.includes('08/15'),compact:captured.body.includes('Employee / Shift')&&captured.body.includes('att-print-boxes'),zeroSuppressed:!captured.body.includes('T 0')
+    ok:captured.orientation==='portrait' && captured.body.includes('CO 2') && captured.body.includes('08/01') && captured.body.includes('08/11') && captured.body.includes('AL 1') && !captured.body.includes('08/15') && captured.body.includes('P 1') && !captured.body.includes('08/18') && !captured.body.includes('T 0') && captured.body.includes('Employee / Shift') && captured.body.includes('att-print-boxes') && !captured.body.includes('Attendance Boxes</span>'),
+    orientation:captured.orientation,disciplineDates:captured.body.includes('08/01')&&captured.body.includes('08/11'),approvedDateSuppressed:!captured.body.includes('08/15'),presentDateSuppressed:!captured.body.includes('08/18'),compact:captured.body.includes('Employee / Shift')&&captured.body.includes('att-print-boxes'),zeroSuppressed:!captured.body.includes('T 0')
   };
 })()`);
 if(!attendancePrintIntegration.ok)throw new Error('Attendance totals print integration failed: '+JSON.stringify(attendancePrintIntegration));

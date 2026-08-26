@@ -39,5 +39,5 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-3-0-5-Windows
+          name: PWADC-Security-Operations-Suite-v3-3-0-6-Windows
           path: publish/**

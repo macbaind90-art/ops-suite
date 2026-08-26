@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.3.0.5 - Attendance Print Density Optimization**.
+Current build: **v3.3.0.6 - Attendance Print Date Detail Correction**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -27,6 +27,7 @@ Current build: **v3.3.0.5 - Attendance Print Density Optimization**.
 - ~~v3.3.0.3 - Attendance Print Zero Suppression~~ Completed
 - ~~v3.3.0.4 - Schedule Color Adjacency Fix~~ Completed
 - ~~v3.3.0.5 - Attendance Print Density Optimization~~ Completed
+- ~~v3.3.0.6 - Attendance Print Date Detail Correction~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -51,6 +52,7 @@ Current build: **v3.3.0.5 - Attendance Print Density Optimization**.
 - v3.3.0.3 suppresses selected attendance and summary boxes when the employee total is 0, leaving only meaningful attendance activity visible on the portrait management printout.
 - v3.3.0.4 assigns employee colors across the full schedule and prevents different employees sharing horizontal or vertical borders from receiving the same color when an alternative is available, including across section boundaries.
 - v3.3.0.5 makes Attendance Totals printing denser: approved categories AL/V/E/LE show totals only, discipline and other selected codes retain MM/DD dates, and the portrait report uses compact flex-packed activity chips with reduced vertical overhead.
+- v3.3.0.6 tightens Attendance Totals date detail so only discipline codes T/U/UE/CO/NCNS carry MM/DD dates; P and all other non-discipline categories print totals only.
 
 ### Repository Documentation
 - Root documentation is controlled to README, ROADMAP, ARCHITECTURE, DESIGN-SYSTEM, CHANGELOG, and current BUILD-VALIDATION.

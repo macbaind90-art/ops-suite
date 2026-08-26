@@ -4,13 +4,18 @@ This file is the controlled release history for the PWADC Security Operations Su
 
 ## Current Release
 
+### v3.3.0.6 - Attendance Print Date Detail Correction
+- Only discipline codes T, U, UE, CO, and NCNS retain MM/DD occurrence dates.
+- P and all other non-discipline attendance codes print totals only.
+- Zero suppression and compact portrait layout remain unchanged.
+
+## v3.3.x
+
 ### v3.3.0.5 - Attendance Print Density Optimization
 - Approved attendance categories AL, V, E, and LE print totals only.
 - Discipline attendance retains MM/DD occurrence dates.
 - Attendance totals printing uses a denser portrait layout with reduced unused space.
 - Zero-value attendance categories remain suppressed.
-
-## v3.3.x
 
 ### v3.3.0.4 - Schedule Color Adjacency Fix
 - Added schedule-wide adjacency-aware employee colors.
