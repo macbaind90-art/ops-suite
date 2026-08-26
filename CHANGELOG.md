@@ -4,12 +4,18 @@ This file is the controlled release history for the PWADC Security Operations Su
 
 ## Current Release
 
+### v3.3.0.7 - Attendance Print Employee Scope
+- Added All Active Employees, By Shift, and Selected Employees print scopes.
+- Selected Employees supports multi-select and name/EID search.
+- Custom-group totals are calculated only from selected employees.
+- Existing portrait, zero-suppression, and discipline-date rules are preserved.
+
+## v3.3.x
+
 ### v3.3.0.6 - Attendance Print Date Detail Correction
 - Only discipline codes T, U, UE, CO, and NCNS retain MM/DD occurrence dates.
 - P and all other non-discipline attendance codes print totals only.
 - Zero suppression and compact portrait layout remain unchanged.
-
-## v3.3.x
 
 ### v3.3.0.5 - Attendance Print Density Optimization
 - Approved attendance categories AL, V, E, and LE print totals only.

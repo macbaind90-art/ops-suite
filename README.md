@@ -1,5 +1,23 @@
-# PWADC Security Operations Suite v3.3.0.6
+# PWADC Security Operations Suite v3.3.0.7
 
+
+
+## v3.3.0.7 Attendance Print Employee Scope
+
+This focused Attendance reporting enhancement adds employee-level print scope without changing attendance records, thresholds, or the compact portrait report format.
+
+### Print Scope
+- Attendance Review → Print Attendance Totals now supports **All Active Employees**, **By Shift**, or **Selected Employees**.
+- Selected Employees supports one employee or a hand-picked multi-employee group.
+- The employee picker includes a search field for name and, when the employee can be matched to the active Roster, employee number/EID.
+- Custom employee reports calculate the report total from the selected employees only.
+
+### Preserved Behavior
+- Only discipline codes T, U, UE, CO, and NCNS show MM/DD occurrence dates.
+- P, AL, V, E, LE, O, FL, and NE remain totals-only.
+- Zero-total categories remain suppressed.
+- Portrait orientation and compact density remain unchanged.
+- No Attendance source records, code meanings, thresholds, notice rules, Schedule authority, or shared-data contracts are changed.
 
 
 ## v3.3.0.6 Attendance Print Date Detail Correction

@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.3.0.5 | module: attendance */
+/* PWADC Security Operations Suite v3.3.0.7 | module: attendance */
 function renderAttendance(){if(activeAttView==='exceptions')activeAttView='patterns';const views=['daily','grid','review','patterns','notices','audit'];const label=v=>v==='daily'?'Daily Entry':v==='grid'?'90-Day Grid':v==='review'?'Attendance Review':v==='patterns'?'Patterns':v==='notices'?'Notice Workflow':'Audit Log';return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">Fast daily entry, 90-day grid, review, patterns, notice workflow, and shared JSON autosave</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="reloadPackagedAttendanceData()">Use Packaged Recovery JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${workflowBanner('Attendance workflow',['Daily Entry','Attendance Review','Patterns','Notice / Monitor decision'],'Routine attendance is tracked here. Escalate only when policy, pattern, or operational impact justifies it.')}${renderPeopleWorkflowNav('attendance')}<div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${label(v)}</button>`).join('')}</div>${activeAttView==='daily'?renderDaily():activeAttView==='grid'?renderGrid():activeAttView==='review'?renderAttendanceReview():activeAttView==='patterns'?renderPatterns():activeAttView==='notices'?renderAttendanceNotices():renderAudit()}`}
 function shiftRank(shift){let i=SHIFT_ORDER.indexOf(shift||'');return i>=0?i:99}
 function sortedEmployees(){return activeAttendanceEmployees().slice().sort((a,b)=>shiftRank(a.shift)-shiftRank(b.shift)||(a.shift||'').localeCompare(b.shift||'')||(a.name||'').localeCompare(b.name||''))}
@@ -338,14 +338,53 @@ function attendanceTotalsCodeBox(code,count,dates,totalsOnly=false){
 function attendanceTotalsSummaryBox(label,value){
   return `<span class="att-print-summary"><strong>${esc(label)} ${Number(value||0)}</strong></span>`;
 }
+function updateAttendanceTotalsScopeUI(){
+  const mode=val('attTotalsScopeMode')||'all';
+  const shiftWrap=document.getElementById('attTotalsShiftWrap');
+  const employeeWrap=document.getElementById('attTotalsEmployeeWrap');
+  if(shiftWrap)shiftWrap.style.display=mode==='shift'?'':'none';
+  if(employeeWrap)employeeWrap.style.display=mode==='employees'?'':'none';
+  if(mode==='employees')setTimeout(()=>document.getElementById('attTotalsEmployeeSearch')?.focus(),0);
+}
+function filterAttendanceTotalsEmployeeChoices(){
+  const q=String(val('attTotalsEmployeeSearch')||'').trim().toLowerCase();
+  document.querySelectorAll('.att-totals-employee-choice').forEach(row=>{
+    const hay=String(row.dataset?.search||'').toLowerCase();
+    row.style.display=!q||hay.includes(q)?'':'none';
+  });
+}
+function setAttendanceTotalsEmployeeSelection(mode){
+  const rows=[...document.querySelectorAll('.att-totals-employee-choice')];
+  rows.forEach(row=>{
+    const cb=row.querySelector?.('.att-totals-employee');
+    if(!cb)return;
+    if(mode==='all')cb.checked=true;
+    else if(mode==='none')cb.checked=false;
+    else if(mode==='visible'&&row.style.display!=='none')cb.checked=true;
+  });
+}
+function attendanceTotalsSelectedEmployeeIds(){
+  return [...document.querySelectorAll('.att-totals-employee:checked')].map(x=>String(x.value||'')).filter(Boolean);
+}
 function openAttendanceTotalsPrintModal(){
-  const shifts=['All',...SHIFT_ORDER.filter(sh=>activeAttendanceEmployees().some(e=>e.shift===sh)),...Array.from(new Set(activeAttendanceEmployees().map(e=>e.shift).filter(Boolean))).filter(sh=>!SHIFT_ORDER.includes(sh))];
+  const active=sortedEmployees();
+  const shifts=[...SHIFT_ORDER.filter(sh=>active.some(e=>e.shift===sh)),...Array.from(new Set(active.map(e=>e.shift).filter(Boolean))).filter(sh=>!SHIFT_ORDER.includes(sh))];
   const defaultCodes=new Set([...DISCIPLINE_CODES,...TRACKING_CODES]);
   const codeChoices=CODES.map(([code,label])=>`<label class="chip" style="display:flex;align-items:center;gap:6px"><input class="att-totals-code" type="checkbox" value="${esc(code)}" ${defaultCodes.has(code)?'checked':''}> <strong>${esc(code)}</strong> ${esc(label)}</label>`).join('');
-  showModal(`<div class="modal-head"><div><div class="modal-title">Print Attendance Totals</div><div class="mini-note">Create a portrait employee attendance list and choose exactly which attendance boxes appear.</div></div><button onclick="closeModal()">Close</button></div><div class="notice">Selected boxes print only when the employee has activity in that category. Only discipline codes T, U, UE, CO, and NCNS include MM/DD occurrence dates. All other selected codes, including P, AL, V, E, LE, O, FL, and NE, print totals only. Zero-total categories are automatically suppressed. The report remains read-only and uses the selected Attendance Review reporting window.</div><div class="form-grid"><div><label>Employee Scope</label><select id="attTotalsShift">${shifts.map(sh=>`<option value="${esc(sh)}" ${entryShift===sh?'selected':''}>${esc(sh==='All'?'All Active Employees':sh)}</option>`).join('')}</select></div><div><label>Period</label><select id="attTotalsPeriod"><option value="rolling90" selected>Rolling 90 Days</option><option value="month">Current Month</option><option value="week">Current Week</option></select></div><div><label>Ending Date</label><input id="attTotalsEnd" type="date" value="${esc(gridEnd||new Date().toISOString().slice(0,10))}"></div><div><label>Summary Boxes</label><label class="chip"><input id="attTotalsDisciplineTotal" type="checkbox" checked> Discipline Total</label> <label class="chip"><input id="attTotalsApprovedTotal" type="checkbox" checked> Approved Total</label> <label class="chip"><input id="attTotalsRecordedTotal" type="checkbox"> Recorded Total</label></div><div class="full"><label>Attendance Boxes to Show</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin:5px 0 8px"><button class="sm" onclick="setAttendanceTotalsCodeSelection('standard')">Discipline + Approved</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('discipline')">Discipline Only</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('approved')">Approved Only</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('all')">Select All</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('none')">Clear</button></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px">${codeChoices}</div></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="printAttendanceTotalsList()">Preview / Print</button></div>`);
+  const employeeChoices=active.map(emp=>{
+    const rosterEmp=rosterEmployeeForAttendance(emp);
+    const eid=String(rosterEmp?.eid||'').trim();
+    const search=[emp.name,eid,emp.shift].filter(Boolean).join(' ').toLowerCase();
+    return `<label class="att-totals-employee-choice" data-search="${esc(search)}" style="display:flex;align-items:center;gap:8px;padding:5px 7px;border-bottom:1px solid #e3e3e3"><input class="att-totals-employee" type="checkbox" value="${esc(emp.id)}"><span style="min-width:0"><strong>${esc(emp.name)}</strong>${eid?` <span class="mini-note">#${esc(eid)}</span>`:''}<br><span class="mini-note">${esc(emp.shift||'Unassigned')}</span></span></label>`;
+  }).join('');
+  const defaultScope=entryShift&&entryShift!=='All'?'shift':'all';
+  showModal(`<div class="modal-head"><div><div class="modal-title">Print Attendance Totals</div><div class="mini-note">Create a portrait employee attendance list and choose exactly who and what appears.</div></div><button onclick="closeModal()">Close</button></div><div class="notice">Choose all active employees, a shift, or a custom employee group. Selected attendance boxes print only when the employee has activity in that category. Only discipline codes T, U, UE, CO, and NCNS include MM/DD occurrence dates; all other selected codes print totals only. Zero-total categories are automatically suppressed.</div><div class="form-grid"><div><label>Print Scope</label><select id="attTotalsScopeMode" onchange="updateAttendanceTotalsScopeUI()"><option value="all" ${defaultScope==='all'?'selected':''}>All Active Employees</option><option value="shift" ${defaultScope==='shift'?'selected':''}>By Shift</option><option value="employees">Selected Employees</option></select></div><div id="attTotalsShiftWrap"><label>Shift</label><select id="attTotalsShift">${shifts.map(sh=>`<option value="${esc(sh)}" ${entryShift===sh?'selected':''}>${esc(sh)}</option>`).join('')}</select></div><div><label>Period</label><select id="attTotalsPeriod"><option value="rolling90" selected>Rolling 90 Days</option><option value="month">Current Month</option><option value="week">Current Week</option></select></div><div><label>Ending Date</label><input id="attTotalsEnd" type="date" value="${esc(gridEnd||new Date().toISOString().slice(0,10))}"></div><div class="full" id="attTotalsEmployeeWrap" style="display:none"><label>Employees to Print</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin:5px 0 7px"><input id="attTotalsEmployeeSearch" placeholder="Start typing name or employee number..." oninput="filterAttendanceTotalsEmployeeChoices()" style="flex:1;min-width:260px"><button class="sm" onclick="setAttendanceTotalsEmployeeSelection('visible')">Select Visible</button><button class="sm" onclick="setAttendanceTotalsEmployeeSelection('all')">Select All</button><button class="sm" onclick="setAttendanceTotalsEmployeeSelection('none')">Clear</button></div><div style="max-height:220px;overflow:auto;border:1px solid #cfcfcf;border-radius:6px">${employeeChoices||'<div class="mini-note" style="padding:8px">No active employees found.</div>'}</div></div><div><label>Summary Boxes</label><label class="chip"><input id="attTotalsDisciplineTotal" type="checkbox" checked> Discipline Total</label> <label class="chip"><input id="attTotalsApprovedTotal" type="checkbox" checked> Approved Total</label> <label class="chip"><input id="attTotalsRecordedTotal" type="checkbox"> Recorded Total</label></div><div class="full"><label>Attendance Boxes to Show</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin:5px 0 8px"><button class="sm" onclick="setAttendanceTotalsCodeSelection('standard')">Discipline + Approved</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('discipline')">Discipline Only</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('approved')">Approved Only</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('all')">Select All</button><button class="sm" onclick="setAttendanceTotalsCodeSelection('none')">Clear</button></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:6px">${codeChoices}</div></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="printAttendanceTotalsList()">Preview / Print</button></div>`);
+  updateAttendanceTotalsScopeUI();
 }
 function printAttendanceTotalsList(){
-  const shift=val('attTotalsShift')||'All';
+  const scopeMode=val('attTotalsScopeMode')||'all';
+  const shift=val('attTotalsShift')||'';
+  const selectedEmployeeIds=attendanceTotalsSelectedEmployeeIds();
   const period=val('attTotalsPeriod')||'rolling90';
   const end=val('attTotalsEnd')||gridEnd||new Date().toISOString().slice(0,10);
   const range=attendanceTotalsRange(period,end);
@@ -355,7 +394,15 @@ function printAttendanceTotalsList(){
   const showRecorded=!!document.getElementById('attTotalsRecordedTotal')?.checked;
   if(!codes.length&&!showDiscipline&&!showApproved&&!showRecorded){toast('Choose at least one attendance or summary box to print');return;}
   let employees=sortedEmployees();
-  if(shift!=='All')employees=employees.filter(e=>e.shift===shift);
+  if(scopeMode==='shift'){
+    if(!shift){toast('Choose a shift to print');return;}
+    employees=employees.filter(e=>e.shift===shift);
+  }else if(scopeMode==='employees'){
+    if(!selectedEmployeeIds.length){toast('Select at least one employee to print');return;}
+    const selected=new Set(selectedEmployeeIds.map(String));
+    employees=employees.filter(e=>selected.has(String(e.id)));
+  }
+  if(!employees.length){toast('No active employees match the selected print scope');return;}
   const disc=Array.from(DISCIPLINE_CODES),approved=Array.from(TRACKING_CODES),allCodes=CODES.map(c=>c[0]);
   const aggregate={};
   const rows=employees.map(emp=>{
@@ -370,7 +417,7 @@ function printAttendanceTotalsList(){
     if(showRecorded&&recordedTotal>0)boxes.push(attendanceTotalsSummaryBox('Recorded',recordedTotal));
     return [`<div class="att-print-employee"><strong>${esc(emp.name)}</strong><span>${esc(emp.shift||'')}</span></div>`,`<div class="att-print-boxes">${boxes.join('')}</div>`];
   });
-  if(employees.length){
+  if(employees.length>1){
     const disciplineTotal=disc.reduce((n,c)=>n+Number(aggregate[c]||0),0);
     const approvedTotal=approved.reduce((n,c)=>n+Number(aggregate[c]||0),0);
     const recordedTotal=allCodes.reduce((n,c)=>n+Number(aggregate[c]||0),0);
@@ -378,10 +425,13 @@ function printAttendanceTotalsList(){
     if(showDiscipline&&disciplineTotal>0)boxes.push(attendanceTotalsSummaryBox('Discipline',disciplineTotal));
     if(showApproved&&approvedTotal>0)boxes.push(attendanceTotalsSummaryBox('Approved',approvedTotal));
     if(showRecorded&&recordedTotal>0)boxes.push(attendanceTotalsSummaryBox('Recorded',recordedTotal));
-    rows.push(['<div class="att-print-employee"><strong>ALL EMPLOYEES</strong><span>Report Total</span></div>',`<div class="att-print-boxes">${boxes.join('')}</div>`]);
+    rows.push(['<div class="att-print-employee"><strong>SELECTED TOTAL</strong><span>Report Total</span></div>',`<div class="att-print-boxes">${boxes.join('')}</div>`]);
   }
   const selectedLabels=codes.map(c=>`${c} (${codeLabel(c)})`).join('; ');
-  const subtitle=`${range.label} · ${fmtDate(range.start)} through ${fmtDate(range.end)} · ${shift==='All'?'All active employees':shift}`;
+  let scopeLabel='All active employees';
+  if(scopeMode==='shift')scopeLabel=shift;
+  if(scopeMode==='employees')scopeLabel=employees.length===1?employees[0].name:`${employees.length} selected employees`;
+  const subtitle=`${range.label} · ${fmtDate(range.start)} through ${fmtDate(range.end)} · ${scopeLabel}`;
   const summaryBits=[];
   if(showDiscipline)summaryBits.push('Discipline Total = T + U + UE + CO + NCNS');
   if(showApproved)summaryBits.push('Approved Total = AL + V + E + LE');
@@ -405,17 +455,16 @@ function printAttendanceTotalsList(){
     .attendance-print .att-print-employee strong{font-size:8.2pt}
     .attendance-print .att-print-employee span{font-size:7pt;color:#555}
     .attendance-print .att-print-boxes{display:flex;flex-wrap:wrap;align-items:center;gap:2px 4px;min-height:14px}
-    .attendance-print .att-print-code,.attendance-print .att-print-summary{display:inline-flex;align-items:baseline;gap:3px;border:1px solid #aaa;border-radius:3px;padding:1px 4px;white-space:nowrap;font-size:7.7pt;line-height:1.05}
-    .attendance-print .att-print-code span{font-size:7pt;color:#555}
-    .attendance-print .att-print-summary{background:#f2f2f2;border-color:#888}
-    .attendance-print .att-print-selected{font-size:6.9pt;color:#555;line-height:1.1;margin-top:3px}
+    .attendance-print .att-print-code,.attendance-print .att-print-summary{display:inline-flex;align-items:baseline;gap:3px;border:1px solid #aaa;border-radius:3px;padding:1px 3px;white-space:nowrap;background:#fff;font-size:7.4pt}
+    .attendance-print .att-print-code span{font-size:6.8pt;color:#555}
+    .attendance-print .att-print-summary{background:#f3f3f3}
+    .attendance-print .att-print-selected{font-size:6.8pt;color:#555;margin-top:3px;line-height:1.1}
   </style>`;
-  const guide=`<strong>Print format:</strong> Zero-total categories are suppressed. Only discipline codes T, U, UE, CO, and NCNS include MM/DD dates. All other selected codes show totals only.${summaryBits.length?' '+summaryBits.join('. ')+'.':''}`;
+  const guide=`${summaryBits.length?`${summaryBits.join(' · ')}. `:''}Only T, U, UE, CO, and NCNS include MM/DD occurrence dates. All other selected attendance codes print totals only. Zero-total boxes are suppressed.`;
   const body=`${compactStyles}<div class="attendance-print"><div class="att-print-guide">${guide}</div><div class="report-section report-allow-break"><h2>Employee Attendance Totals</h2>${reportTable(['Employee / Shift','Attendance'],rows)}</div>${codes.length?`<div class="att-print-selected"><strong>Selected:</strong> ${esc(selectedLabels)}</div>`:''}</div>`;
   closeModal();
   showReport('Attendance Totals List',subtitle,body,'portrait',false);
 }
-
 function renderAttendanceReview(){
   const rows=currentRows().map(emp=>({emp,stats:attendancePeriodStats(emp)}));
   const disc=Array.from(DISCIPLINE_CODES),track=Array.from(TRACKING_CODES);

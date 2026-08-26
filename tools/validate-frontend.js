@@ -34,7 +34,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.5'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.7'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
@@ -70,14 +70,15 @@ const attendancePrintIntegration=evalx(`(()=>{
   const key=String(emp.id),prior=JSON.stringify((attendance.attendance||{})[key]||null);
   attendance.attendance=attendance.attendance||{};
   attendance.attendance[key]={'2026-08-01':'CO','2026-08-11':'CO','2026-08-15':'AL','2026-08-18':'P'};
-  document.getElementById('attTotalsShift').value='All';
+  document.getElementById('attTotalsScopeMode').value='all';
+  document.getElementById('attTotalsShift').value='';
   document.getElementById('attTotalsPeriod').value='month';
   document.getElementById('attTotalsEnd').value='2026-08-21';
   document.getElementById('attTotalsDisciplineTotal').checked=true;
   document.getElementById('attTotalsApprovedTotal').checked=true;
   document.getElementById('attTotalsRecordedTotal').checked=false;
   const oldQuery=document.querySelectorAll,oldShow=showReport,oldClose=closeModal;
-  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'},{value:'AL'},{value:'P'},{value:'T'}]:[];
+  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'},{value:'AL'},{value:'P'},{value:'T'}]:sel==='.att-totals-employee:checked'?[]:[];
   let captured={};
   showReport=(title,subtitle,body,orientation)=>{captured={title,subtitle,body,orientation};};
   closeModal=()=>{};
@@ -90,6 +91,39 @@ const attendancePrintIntegration=evalx(`(()=>{
   };
 })()`);
 if(!attendancePrintIntegration.ok)throw new Error('Attendance totals print integration failed: '+JSON.stringify(attendancePrintIntegration));
+
+
+// Attendance totals print scope must support a hand-picked employee group in addition to shift/all scopes.
+const attendanceEmployeeScopeTest=evalx(`(()=>{
+  const emps=activeAttendanceEmployees().slice(0,2);
+  if(emps.length<2)return {ok:false,reason:'Need two active attendance employees in seed'};
+  const [first,second]=emps;
+  const firstKey=String(first.id),secondKey=String(second.id);
+  const priorFirst=JSON.stringify((attendance.attendance||{})[firstKey]||null),priorSecond=JSON.stringify((attendance.attendance||{})[secondKey]||null);
+  attendance.attendance=attendance.attendance||{};
+  attendance.attendance[firstKey]={'2026-08-05':'CO'};
+  attendance.attendance[secondKey]={'2026-08-06':'CO'};
+  document.getElementById('attTotalsScopeMode').value='employees';
+  document.getElementById('attTotalsShift').value='';
+  document.getElementById('attTotalsPeriod').value='month';
+  document.getElementById('attTotalsEnd').value='2026-08-21';
+  document.getElementById('attTotalsDisciplineTotal').checked=false;
+  document.getElementById('attTotalsApprovedTotal').checked=false;
+  document.getElementById('attTotalsRecordedTotal').checked=false;
+  const oldQuery=document.querySelectorAll,oldShow=showReport,oldClose=closeModal,oldModal=showModal;
+  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'}]:sel==='.att-totals-employee:checked'?[{value:String(second.id)}]:[];
+  let captured={},modal='';
+  showReport=(title,subtitle,body,orientation)=>{captured={title,subtitle,body,orientation};};
+  closeModal=()=>{};
+  printAttendanceTotalsList();
+  showModal=html=>{modal=html;};
+  openAttendanceTotalsPrintModal();
+  document.querySelectorAll=oldQuery;showReport=oldShow;closeModal=oldClose;showModal=oldModal;
+  if(priorFirst==='null')delete attendance.attendance[firstKey];else attendance.attendance[firstKey]=JSON.parse(priorFirst);
+  if(priorSecond==='null')delete attendance.attendance[secondKey];else attendance.attendance[secondKey]=JSON.parse(priorSecond);
+  return {ok:captured.body.includes(second.name) && !captured.body.includes(first.name) && captured.subtitle.includes(second.name) && modal.includes('Selected Employees') && modal.includes('Start typing name or employee number') && modal.includes('att-totals-employee'),first:first.name,second:second.name,subtitle:captured.subtitle,modalEmployeePicker:modal.includes('att-totals-employee')};
+})()`);
+if(!attendanceEmployeeScopeTest.ok)throw new Error('Attendance employee print scope validation failed: '+JSON.stringify(attendanceEmployeeScopeTest));
 for(const view of ['roster','schedule','training','uniforms','analytics']){const out=evalx(`activeRosterView='${view}'; renderRoster()`);if(typeof out!=='string'||out.length<20)throw new Error('Roster render failed: '+view);}
 
 // Schedule assignment controls: mock schedules must expose the entire active roster,
