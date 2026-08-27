@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.3.0.7 | module: roster-schedule */
+/* PWADC Security Operations Suite v3.3.0.8 | module: roster-schedule */
 function programBasePath(){return String(settings.dataRoot||DEFAULT_SETTINGS.dataRoot)+'\\Programs'}
 function programPath(p){return programBasePath()+'\\'+p.folder+'\\'+p.file}
 function programFolderPath(p){return programBasePath()+'\\'+p.folder}
@@ -186,9 +186,52 @@ function printHtmlDirect(title,contentHtml,orientation='portrait'){
   setTimeout(()=>{try{frame.contentWindow.focus();frame.contentWindow.print();}catch(e){toast('Print dialog could not open');}setTimeout(()=>{try{frame.remove();}catch(_){ }},1500);},250);
 }
 
-function openRosterPrintModal(){let cols=['Name','EID','Rank','Shift','Gate Shift','Rate','Type','PT/FT/Temp','HPW','Base Week','Loaded Week','Base Month','Loaded Month','Base Year','Loaded Year','RDO','Uniform','DOH','DOP','Notes'];showModal(`<div class="modal-head"><div class="modal-title">Print Roster</div><button onclick="closeModal()">Close</button></div><div class="notice">Choose columns for a printable roster. Current filters are respected unless you choose all employees.</div><div class="form-grid"><div class="full"><label>Rows to Print</label><select id="rpScope"><option value="filtered">Current filtered roster</option><option value="all">All employees</option></select></div><div class="full"><label>Columns</label><div class="day-grid">${cols.map(c=>`<label class="day-check"><input type="checkbox" class="rpCol" value="${c}" checked> ${c}</label>`).join('')}</div></div></div><div class="modal-actions"><button onclick="setRosterPrintCols(false)">Basic</button><button onclick="setRosterPrintCols(true)">All Columns</button><button onclick="closeModal()">Cancel</button><button class="primary" onclick="printRosterCustom()">Print</button></div>`)}
+function updateRosterPrintScopeUI(){
+  const mode=val('rpScope')||'filtered';
+  const employeeWrap=document.getElementById('rpEmployeeWrap');
+  if(employeeWrap)employeeWrap.style.display=mode==='employees'?'':'none';
+  if(mode==='employees')setTimeout(()=>document.getElementById('rpEmployeeSearch')?.focus(),0);
+}
+function filterRosterPrintEmployeeChoices(){
+  const q=String(val('rpEmployeeSearch')||'').trim().toLowerCase();
+  document.querySelectorAll('.rp-employee-choice').forEach(row=>{
+    const hay=String(row.dataset?.search||'').toLowerCase();
+    row.style.display=!q||hay.includes(q)?'':'none';
+  });
+}
+function setRosterPrintEmployeeSelection(mode){
+  const rows=[...document.querySelectorAll('.rp-employee-choice')];
+  rows.forEach(row=>{
+    const cb=row.querySelector?.('.rpEmployee');
+    if(!cb)return;
+    if(mode==='all')cb.checked=true;
+    else if(mode==='none')cb.checked=false;
+    else if(mode==='visible'&&row.style.display!=='none')cb.checked=true;
+  });
+}
+function rosterPrintSelectedEmployeeIds(){return [...document.querySelectorAll('.rpEmployee:checked')].map(x=>String(x.value||'')).filter(Boolean)}
+function openRosterPrintModal(){
+  let cols=['Name','EID','Rank','Shift','Gate Shift','Rate','Type','PT/FT/Temp','HPW','Base Week','Loaded Week','Base Month','Loaded Month','Base Year','Loaded Year','RDO','Uniform','DOH','DOP','Notes'];
+  const employees=[...(roster.employees||[])].sort((a,b)=>fullName(a).localeCompare(fullName(b),undefined,{numeric:true,sensitivity:'base'}));
+  const employeeChoices=employees.map(e=>{
+    const archived=isArchivedEmployee(e);const search=[fullName(e),e.eid,e.rank,e.shift,e.gateShift,e.type,employmentClass(e)].filter(Boolean).join(' ').toLowerCase();
+    return `<label class="rp-employee-choice" data-search="${esc(search)}" style="display:flex;align-items:center;gap:8px;padding:5px 7px;border-bottom:1px solid #e3e3e3"><input class="rpEmployee" type="checkbox" value="${esc(e.id)}"><span style="min-width:0"><strong>${esc(fullName(e))}</strong>${e.eid?` <span class="mini-note">#${esc(e.eid)}</span>`:''}${archived?' <span class="archive-badge">Archived</span>':''}<br><span class="mini-note">${esc(e.rank||'')} · ${esc(e.shift||'Unassigned')}</span></span></label>`;
+  }).join('');
+  showModal(`<div class="modal-head"><div><div class="modal-title">Print Roster</div><div class="mini-note">Choose the employee scope and the roster columns to include.</div></div><button onclick="closeModal()">Close</button></div><div class="notice">Print the current filtered roster, all roster employees, or a hand-picked employee group. Selected Employees supports name/EID search and multi-select.</div><div class="form-grid"><div class="full"><label>Rows to Print</label><select id="rpScope" onchange="updateRosterPrintScopeUI()"><option value="filtered">Current filtered roster</option><option value="all">All employees</option><option value="employees">Selected employees</option></select></div><div class="full" id="rpEmployeeWrap" style="display:none"><label>Employees to Print</label><div style="display:flex;gap:6px;flex-wrap:wrap;margin:5px 0 7px"><input id="rpEmployeeSearch" placeholder="Start typing name or employee number..." oninput="filterRosterPrintEmployeeChoices()" style="flex:1;min-width:260px"><button class="sm" onclick="setRosterPrintEmployeeSelection('visible')">Select Visible</button><button class="sm" onclick="setRosterPrintEmployeeSelection('all')">Select All</button><button class="sm" onclick="setRosterPrintEmployeeSelection('none')">Clear</button></div><div style="max-height:220px;overflow:auto;border:1px solid #cfcfcf;border-radius:6px">${employeeChoices||'<div class="mini-note" style="padding:8px">No roster employees found.</div>'}</div></div><div class="full"><label>Columns</label><div class="day-grid">${cols.map(c=>`<label class="day-check"><input type="checkbox" class="rpCol" value="${c}" checked> ${c}</label>`).join('')}</div></div></div><div class="modal-actions"><button onclick="setRosterPrintCols(false)">Basic</button><button onclick="setRosterPrintCols(true)">All Columns</button><button onclick="closeModal()">Cancel</button><button class="primary" onclick="printRosterCustom()">Print</button></div>`);
+  updateRosterPrintScopeUI();
+}
 function setRosterPrintCols(all){let basic=['Name','EID','Rank','Shift','Rate','RDO'];document.querySelectorAll('.rpCol').forEach(x=>x.checked=all||basic.includes(x.value))}
-function printRosterCustom(){let scope=val('rpScope');let cols=[...document.querySelectorAll('.rpCol:checked')].map(x=>x.value);if(!cols.length){toast('Choose at least one roster column');return;}let list=scope==='all'?[...roster.employees].sort((a,b)=>fullName(a).localeCompare(fullName(b))):filteredRoster();let cell=(e,c)=>({Name:fullName(e),EID:e.eid,Rank:e.rank,Shift:e.shift,'Gate Shift':e.gateShift,Rate:money(e.rate),Type:e.type,'PT/FT/Temp':employmentClass(e),HPW:employeeCostProfile(e).hours,'Base Week':money(employeeCostProfile(e).baseWeek),'Loaded Week':money(employeeCostProfile(e).loadedWeek),'Base Month':money(employeeCostProfile(e).baseMonth),'Loaded Month':money(employeeCostProfile(e).loadedMonth),'Base Year':money(employeeCostProfile(e).baseYear),'Loaded Year':money(employeeCostProfile(e).loadedYear),RDO:(e.rdo||[]).join('/'),Uniform:['shirt','pants','jacket'].map(k=>`${k}:${e[k]||''} ${e[k+'Status']||''}`).join(' | '),DOH:fmtDate(e.doh),DOP:fmtDate(e.dop),Notes:e.notes}[c]||'');let body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Roster</h1><div class="print-note">${esc(scope==='all'?'All employees':'Current filtered roster')} · ${list.length} employee(s)</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v3.3.0.7</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list.map(e=>`<tr>${cols.map(c=>`<td>${esc(cell(e,c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}">No roster records match the selected scope.</td></tr>`}</tbody></table>`;closeModal();printHtmlDirect('PWADC Security Roster',body,cols.length>8?'landscape':'portrait')}
+function printRosterCustom(){
+  let scope=val('rpScope');let cols=[...document.querySelectorAll('.rpCol:checked')].map(x=>x.value);if(!cols.length){toast('Choose at least one roster column');return;}
+  let list=[],scopeLabel='Current filtered roster';
+  if(scope==='all'){list=[...(roster.employees||[])].sort((a,b)=>fullName(a).localeCompare(fullName(b)));scopeLabel='All employees';}
+  else if(scope==='employees'){
+    const ids=rosterPrintSelectedEmployeeIds();if(!ids.length){toast('Select at least one employee to print');return;}
+    const selected=new Set(ids.map(String));list=(roster.employees||[]).filter(e=>selected.has(String(e.id))).sort((a,b)=>fullName(a).localeCompare(fullName(b)));scopeLabel=list.length===1?fullName(list[0]):`Selected employees (${list.length})`;
+  }else list=filteredRoster();
+  let cell=(e,c)=>({Name:fullName(e),EID:e.eid,Rank:e.rank,Shift:e.shift,'Gate Shift':e.gateShift,Rate:money(e.rate),Type:e.type,'PT/FT/Temp':employmentClass(e),HPW:employeeCostProfile(e).hours,'Base Week':money(employeeCostProfile(e).baseWeek),'Loaded Week':money(employeeCostProfile(e).loadedWeek),'Base Month':money(employeeCostProfile(e).baseMonth),'Loaded Month':money(employeeCostProfile(e).loadedMonth),'Base Year':money(employeeCostProfile(e).baseYear),'Loaded Year':money(employeeCostProfile(e).loadedYear),RDO:(e.rdo||[]).join('/'),Uniform:['shirt','pants','jacket'].map(k=>`${k}:${e[k]||''} ${e[k+'Status']||''}`).join(' | '),DOH:fmtDate(e.doh),DOP:fmtDate(e.dop),Notes:e.notes}[c]||'');
+  let body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Roster</h1><div class="print-note">${esc(scopeLabel)} · ${list.length} employee(s)</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v3.3.0.8</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list.map(e=>`<tr>${cols.map(c=>`<td>${esc(cell(e,c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}">No roster records match the selected scope.</td></tr>`}</tbody></table>`;closeModal();printHtmlDirect('PWADC Security Roster',body,cols.length>8?'landscape':'portrait')
+}
 function cloneScheduleRows(rows){return JSON.parse(JSON.stringify(Array.isArray(rows)?rows:[]))}
 function scheduleDraftList(){roster.scheduleDrafts=Array.isArray(roster.scheduleDrafts)?roster.scheduleDrafts:[];return roster.scheduleDrafts}
 function activeScheduleDraft(){if(scheduleWorkspaceMode!=='draft'||!scheduleWorkspaceDraftId)return null;return scheduleDraftList().find(d=>String(d.id)===String(scheduleWorkspaceDraftId))||null}

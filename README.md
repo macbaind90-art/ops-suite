@@ -1,5 +1,24 @@
-# PWADC Security Operations Suite v3.3.0.7
+# PWADC Security Operations Suite v3.3.0.8
 
+
+
+## v3.3.0.8 Roster Print Employee Scope
+
+This focused Roster reporting enhancement adds employee-level print selection without changing roster records, schedule authority, payroll assumptions, or existing roster filters.
+
+### Print Scope
+- Roster → Print Roster now supports **Current filtered roster**, **All employees**, or **Selected employees**.
+- Selected employees supports one employee or a hand-picked multi-employee group.
+- The employee picker includes name/EID search plus rank and shift context.
+- Select Visible, Select All, and Clear controls support fast group selection.
+- The existing roster column selector remains available and applies to the selected employee group.
+
+### Preserved Behavior
+- Current roster filters remain authoritative when Current filtered roster is selected.
+- All employees retains the existing all-roster scope.
+- Archived records remain identifiable in the selected-employee picker.
+- Print orientation still switches to landscape only when more than eight roster columns are selected.
+- No Roster, Schedule, Attendance, HPW, labor, or shared-data records are changed.
 
 
 ## v3.3.0.7 Attendance Print Employee Scope

@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.3.0.7 - Attendance Print Employee Scope**.
+Current build: **v3.3.0.8 - Roster Print Employee Scope**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -29,6 +29,7 @@ Current build: **v3.3.0.7 - Attendance Print Employee Scope**.
 - ~~v3.3.0.5 - Attendance Print Density Optimization~~ Completed
 - ~~v3.3.0.6 - Attendance Print Date Detail Correction~~ Completed
 - ~~v3.3.0.7 - Attendance Print Employee Scope~~ Completed
+- ~~v3.3.0.8 - Roster Print Employee Scope~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -55,6 +56,7 @@ Current build: **v3.3.0.7 - Attendance Print Employee Scope**.
 - v3.3.0.5 makes Attendance Totals printing denser: approved categories AL/V/E/LE show totals only, discipline and other selected codes retain MM/DD dates, and the portrait report uses compact flex-packed activity chips with reduced vertical overhead.
 - v3.3.0.6 tightens Attendance Totals date detail so only discipline codes T/U/UE/CO/NCNS carry MM/DD dates; P and all other non-discipline categories print totals only.
 - v3.3.0.7 adds employee-level Attendance Totals scope so management can print all active employees, one shift, one employee, or a hand-picked employee group while preserving compact portrait formatting and existing date-detail rules.
+- v3.3.0.8 adds employee-level Roster print scope so management can print the current filtered roster, all roster employees, one employee, or a hand-picked employee group while preserving the existing selectable roster columns.
 
 ### Repository Documentation
 - Root documentation is controlled to README, ROADMAP, ARCHITECTURE, DESIGN-SYSTEM, CHANGELOG, and current BUILD-VALIDATION.

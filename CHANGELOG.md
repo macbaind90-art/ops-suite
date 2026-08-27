@@ -4,13 +4,19 @@ This file is the controlled release history for the PWADC Security Operations Su
 
 ## Current Release
 
+### v3.3.0.8 - Roster Print Employee Scope
+- Added Current filtered roster, All employees, and Selected employees print scopes.
+- Selected employees supports multi-select and name/EID search with rank/shift context.
+- Existing roster column selection and print orientation rules are preserved.
+- No roster or schedule records are changed by the print workflow.
+
+## v3.3.x
+
 ### v3.3.0.7 - Attendance Print Employee Scope
 - Added All Active Employees, By Shift, and Selected Employees print scopes.
 - Selected Employees supports multi-select and name/EID search.
 - Custom-group totals are calculated only from selected employees.
 - Existing portrait, zero-suppression, and discipline-date rules are preserved.
-
-## v3.3.x
 
 ### v3.3.0.6 - Attendance Print Date Detail Correction
 - Only discipline codes T, U, UE, CO, and NCNS retain MM/DD occurrence dates.

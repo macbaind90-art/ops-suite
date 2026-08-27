@@ -34,7 +34,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.7'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.8'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
@@ -125,6 +125,25 @@ const attendanceEmployeeScopeTest=evalx(`(()=>{
 })()`);
 if(!attendanceEmployeeScopeTest.ok)throw new Error('Attendance employee print scope validation failed: '+JSON.stringify(attendanceEmployeeScopeTest));
 for(const view of ['roster','schedule','training','uniforms','analytics']){const out=evalx(`activeRosterView='${view}'; renderRoster()`);if(typeof out!=='string'||out.length<20)throw new Error('Roster render failed: '+view);}
+
+// Roster printing must support a hand-picked employee group with name/EID search.
+const rosterEmployeePrintScopeTest=evalx(`(()=>{
+  const emps=(roster.employees||[]).slice(0,2);
+  if(emps.length<2)return {ok:false,reason:'Need two roster employees in seed'};
+  const [first,second]=emps;
+  const oldQuery=document.querySelectorAll,oldPrint=printHtmlDirect,oldClose=closeModal,oldModal=showModal;
+  let modal='',captured={};
+  showModal=html=>{modal=String(html||'');};
+  openRosterPrintModal();
+  document.getElementById('rpScope').value='employees';
+  document.querySelectorAll=sel=>sel==='.rpCol:checked'?[{value:'Name'},{value:'EID'},{value:'Rank'},{value:'Shift'}]:sel==='.rpEmployee:checked'?[{value:String(second.id)}]:[];
+  printHtmlDirect=(title,body,orientation)=>{captured={title,body,orientation};};
+  closeModal=()=>{};
+  printRosterCustom();
+  document.querySelectorAll=oldQuery;printHtmlDirect=oldPrint;closeModal=oldClose;showModal=oldModal;
+  return {ok:modal.includes('Selected employees') && modal.includes('Start typing name or employee number') && modal.includes('rpEmployee') && captured.body.includes(fullName(second)) && !captured.body.includes(fullName(first)) && captured.body.includes('Selected employees (1)')===false && captured.body.includes(fullName(second)+' · 1 employee(s)'),first:fullName(first),second:fullName(second),modalPicker:modal.includes('rpEmployee'),orientation:captured.orientation};
+})()`);
+if(!rosterEmployeePrintScopeTest.ok)throw new Error('Roster selected-employee print validation failed: '+JSON.stringify(rosterEmployeePrintScopeTest));
 
 // Schedule assignment controls: mock schedules must expose the entire active roster,
 // and typeahead must match employee numbers as well as names.
