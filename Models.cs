@@ -56,6 +56,17 @@ namespace PWADC.SecurityOperationsSuite
         public string Sha256 { get; set; } = "";
     }
 
+
+    internal class DataRevisionInfo
+    {
+        public bool Exists { get; set; } = false;
+        public string Token { get; set; } = "missing";
+        public string Sha256 { get; set; } = "";
+        public string Path { get; set; } = "";
+        public long SizeBytes { get; set; } = 0;
+        public string ModifiedUtc { get; set; } = "";
+    }
+
     internal class DataWriteOutcome
     {
         public string Module { get; set; } = "";

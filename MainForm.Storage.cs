@@ -50,6 +50,7 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Programs"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit"));
+            Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Conflict Audit"));
             foreach (string module in ModuleNames())
             {
                 Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module)));
@@ -67,6 +68,7 @@ namespace PWADC.SecurityOperationsSuite
             public string Path { get; set; } = "";
             public string FileModified { get; set; } = "";
             public bool LiveFileExisted { get; set; } = false;
+            public string Revision { get; set; } = "missing";
         }
 
         private object RunHealthCheck()
@@ -79,7 +81,8 @@ namespace PWADC.SecurityOperationsSuite
             checks.Add(Check("Can create exports folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports")); return true; }));
             checks.Add(Check("Can create locks folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Locks")); return true; }));
             checks.Add(Check("Can create programs folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Programs")); return true; }));
-            checks.Add(Check("Can create data integrity folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit")); return true; }));
+            checks.Add(Check("Can create data integrity folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit"));
+            Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Conflict Audit")); return true; }));
             checks.Add(Check("Atomic write service active", () => typeof(MainForm).GetMethod("WriteJsonAtomically", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null));
             checks.Add(Check("Live JSON integrity", () =>
             {
@@ -117,6 +120,7 @@ namespace PWADC.SecurityOperationsSuite
                 path = info.Path,
                 fileModified = info.FileModified,
                 liveFileExisted = info.LiveFileExisted,
+                revision = info.Revision,
                 dataRoot = settings.DataRoot,
                 loadedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
             };
@@ -141,6 +145,7 @@ namespace PWADC.SecurityOperationsSuite
                     result.Source = "live-invalid";
                     result.SourceDetail = "The live JSON file failed integrity validation and was not replaced automatically. Use Data Health / Backup & Restore before making changes. " + liveIntegrity.Error;
                     result.FileModified = badInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    result.Revision = GetDataRevision(fullPath).Token;
                     return result;
                 }
                 string seedJsonForCompare = File.Exists(seedPath) ? File.ReadAllText(seedPath) : "";
@@ -151,6 +156,7 @@ namespace PWADC.SecurityOperationsSuite
                     result.Source = "live-shared";
                     result.SourceDetail = "Loaded existing JSON from the configured shared Data folder.";
                     result.FileModified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    result.Revision = GetDataRevision(fullPath).Token;
                     return result;
                 }
 
@@ -163,6 +169,7 @@ namespace PWADC.SecurityOperationsSuite
                     result.Source = "packaged-recovery-replaced-empty";
                     result.SourceDetail = "Live file was missing required data or appeared empty, so packaged recovery JSON was copied after creating a backup.";
                     result.FileModified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    result.Revision = GetDataRevision(fullPath).Token;
                     return result;
                 }
 
@@ -170,6 +177,7 @@ namespace PWADC.SecurityOperationsSuite
                 result.Source = "live-shared";
                 result.SourceDetail = "Loaded existing JSON from the configured shared Data folder.";
                 result.FileModified = new FileInfo(fullPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                result.Revision = GetDataRevision(fullPath).Token;
                 return result;
             }
 
@@ -183,12 +191,14 @@ namespace PWADC.SecurityOperationsSuite
                 result.Source = "packaged-recovery-created";
                 result.SourceDetail = "No live JSON file existed, so packaged recovery JSON was copied into the shared Data folder.";
                 result.FileModified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                result.Revision = GetDataRevision(fullPath).Token;
                 return result;
             }
 
             result.Data = "{}";
             result.Source = "missing";
             result.SourceDetail = "No live JSON file or packaged recovery JSON was found.";
+            result.Revision = "missing";
             return result;
         }
 
@@ -259,7 +269,7 @@ namespace PWADC.SecurityOperationsSuite
             return seedJson;
         }
 
-        private object SaveModuleData(string module, string json)
+        private object SaveModuleData(string module, string json, string expectedRevision)
         {
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Save failed because module was not defined.");
             if (!IsKnownJsonModule(module)) throw new InvalidOperationException("Save failed because module is not approved for JSON persistence: " + module);
@@ -274,7 +284,7 @@ namespace PWADC.SecurityOperationsSuite
                 string path = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
                 if (!IsPathUnder(path, dataDir)) throw new InvalidOperationException("Resolved save path is outside the suite Data folder.");
 
-                DataWriteOutcome result = WriteJsonAtomically(module, path, json, "module-save", "auto-before-save");
+                DataWriteOutcome result = WriteJsonAtomically(module, path, json, "module-save", "auto-before-save", expectedRevision);
                 return new
                 {
                     module = result.Module,
@@ -284,7 +294,8 @@ namespace PWADC.SecurityOperationsSuite
                     backupPath = result.BackupPath,
                     sha256 = result.Sha256,
                     writeMethod = result.Method,
-                    verified = result.Verified
+                    verified = result.Verified,
+                    revision = result.Sha256
                 };
             }
             catch (Exception ex)

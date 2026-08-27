@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.4.0.0 | module: shift-operations */
+/* PWADC Security Operations Suite v3.4.1.0 | module: shift-operations */
 function normalizeShiftReports(){
   shiftReports=shiftReports&&typeof shiftReports==='object'?shiftReports:{reports:[],issues:[],audit:[],nextIssueId:1,lastSaved:''};
   shiftReports.reports=Array.isArray(shiftReports.reports)?shiftReports.reports:[];
@@ -8,7 +8,7 @@ function normalizeShiftReports(){
   shiftReports.nextIssueId=Math.max(Number(shiftReports.nextIssueId)||1,maxId+1);
 }
 async function loadShiftReports(){try{const res=await SuiteBridge.send('suite:loadModuleData',{}, {module:'shift-reports'});recordModuleLoadInfo('shift-reports',res);shiftReports=JSON.parse(res.data||'{}');normalizeShiftReports();}catch(e){shiftReports={reports:[],issues:[],audit:[],nextIssueId:1,lastSaved:''};normalizeShiftReports();toast('Shift report data load failed: '+e.message)}}
-async function saveShiftReportsNow(reason='manual'){normalizeShiftReports();shiftReports.lastSaved=new Date().toISOString();try{await SuiteBridge.send('suite:saveModuleData2',{module:'shift-reports',json:JSON.stringify(shiftReports)});document.getElementById('saveStatus').textContent='Shift reports saved';return true;}catch(e){toast('Shift report save failed: '+e.message);return false;}}
+async function saveShiftReportsNow(reason='manual'){normalizeShiftReports();shiftReports.lastSaved=new Date().toISOString();try{await saveModuleDataStrict('shift-reports',shiftReports);document.getElementById('saveStatus').textContent='Shift reports saved';return true;}catch(e){toast('Shift report save failed: '+e.message);return false;}}
 function saveShiftReports(reason='autosave'){clearTimeout(window.shiftReportSaveTimer);window.shiftReportSaveTimer=setTimeout(()=>saveShiftReportsNow(reason),350)}
 function shiftReportAudit(action,detail){normalizeShiftReports();shiftReports.audit.unshift({at:new Date().toISOString(),user:currentUserName()||env.user||'',action,detail});shiftReports.audit=shiftReports.audit.slice(0,500)}
 function shiftReportMetrics(){const open=shiftReports.issues.filter(i=>['Open','Monitoring'].includes(i.status||'Open'));const ref=shiftReports.issues.filter(i=>i.referenceOnly||i.status==='No Action'||i.priority==='Reference');return{reports:shiftReports.reports.length,items:shiftReports.issues.length,open:open.filter(i=>(i.status||'Open')==='Open').length,monitoring:open.filter(i=>i.status==='Monitoring').length,closed:shiftReports.issues.filter(i=>['Closed','No Action'].includes(i.status)).length,active:open.length,reference:ref.length,alarmPatterns:open.filter(i=>i.type==='Alarm Pattern').length,incidents:shiftReports.issues.filter(i=>i.type==='Incident/Event'&&(i.status||'Open')!=='Closed'&&i.status!=='No Action').length,offDuty:open.filter(i=>i.type==='Off-Duty Officer').length};}
@@ -250,7 +250,7 @@ function normalizeShiftIntel(){
   shiftIntel.nextIntakeId=Math.max(Number(shiftIntel.nextIntakeId)||1,maxItem+1);
 }
 async function loadShiftIntel(){try{const res=await SuiteBridge.send('suite:loadModuleData',{}, {module:'shift-intelligence'});recordModuleLoadInfo('shift-intelligence',res);shiftIntel=JSON.parse(res.data||'{}');normalizeShiftIntel();}catch(e){shiftIntel={issues:[],intake:[],reference:[],audit:[],nextIssueId:1,nextIntakeId:1,lastSaved:''};normalizeShiftIntel();toast('Shift Intelligence data load failed: '+e.message)}}
-async function saveShiftIntelNow(reason='manual'){normalizeShiftIntel();shiftIntel.lastSaved=new Date().toISOString();try{await SuiteBridge.send('suite:saveModuleData2',{module:'shift-intelligence',json:JSON.stringify(shiftIntel)});document.getElementById('saveStatus').textContent='Shift Intelligence saved';return true;}catch(e){toast('Shift Intelligence save failed: '+e.message);return false}}
+async function saveShiftIntelNow(reason='manual'){normalizeShiftIntel();shiftIntel.lastSaved=new Date().toISOString();try{await saveModuleDataStrict('shift-intelligence',shiftIntel);document.getElementById('saveStatus').textContent='Shift Intelligence saved';return true;}catch(e){toast('Shift Intelligence save failed: '+e.message);return false}}
 function shiftIntelAudit(action,detail){normalizeShiftIntel();shiftIntel.audit.unshift({at:new Date().toISOString(),user:currentUserName()||env.user||'',action,detail});shiftIntel.audit=shiftIntel.audit.slice(0,500)}
 function siNoise(t){return typeof isShiftReportNoiseText==='function'?isShiftReportNoiseText(t):!String(t||'').trim()}
 function siWords(t){return String(t||'').toLowerCase().replace(/[^a-z0-9\s]/g,' ').split(/\s+/).filter(w=>w.length>2&&!['the','and','for','with','that','this','from','none','note','shift','officer','security'].includes(w))}

@@ -1,4 +1,35 @@
-# PWADC Security Operations Suite v3.4.0.0
+# PWADC Security Operations Suite v3.4.1.0
+
+
+## v3.4.1.0 Stale Write + Conflict Detection
+
+This release adds revision-aware concurrency protection to the v3.4.0 atomic-save foundation. Attendance, Roster/Schedule, Tasks, Shift Reports, and Shift Intelligence now remember the SHA-256 revision loaded from the shared PWADC Data folder and must present that same revision before a normal save can replace the live JSON.
+
+### Revision-Aware Save Gate
+- Every operational module load returns a revision token derived from the live JSON SHA-256.
+- Normal module saves send the workstation's loaded revision back to the Windows host.
+- The host rechecks the current shared-file revision after staging/validating the requested JSON but before creating a live-file safety backup or replacement.
+- If the live revision changed, the transaction is blocked and the shared file is untouched.
+- Successful saves return the new live revision so the workstation can continue saving against the correct baseline.
+
+### Controlled Conflict Workflow
+- A stale-write conflict keeps the user's current in-memory work open.
+- The user can export the unsaved JSON copy to the module Exports folder for comparison/re-entry.
+- **Reload Latest Shared Data** is the controlled path for discarding the stale in-memory copy and resuming from the newest shared revision.
+- **Keep Unsaved Work Open** allows review without forcing an immediate discard, but saving remains blocked until the module is reloaded.
+- Automatic record merging is intentionally not attempted.
+
+### Conflict Audit
+- Blocked conflicts are recorded under `Data Integrity\Conflict Audit`.
+- Records include timestamp, suite version, Windows user, workstation, module, operation, target file, expected revision, current revision, live modified time, live size, and blocked result.
+- The existing v3.4.0 Write Audit continues to capture the failed atomic transaction attempt.
+
+### Release Boundary
+- No automatic merge engine.
+- No long-duration or short-duration file locking yet; save coordination is planned for v3.4.2.0.
+- No database migration.
+- No Attendance policy, Roster, Schedule, HPW, labor, Shift Intelligence classification, or report-calculation changes.
+- Existing `suite:*` message names remain compatible; revision data is carried inside the existing load/save payloads.
 
 ## v3.4.0.0 Atomic Save + Integrity Foundation
 

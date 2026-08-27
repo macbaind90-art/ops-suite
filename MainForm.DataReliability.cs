@@ -52,7 +52,7 @@ namespace PWADC.SecurityOperationsSuite
             return backupPath;
         }
 
-        private DataWriteOutcome WriteJsonAtomically(string module, string targetPath, string json, string operation, string backupKind)
+        private DataWriteOutcome WriteJsonAtomically(string module, string targetPath, string json, string operation, string backupKind, string expectedRevision = "")
         {
             if (!IsKnownJsonModule(module)) throw new InvalidOperationException("Atomic JSON write module is not approved: " + module);
             ValidateJsonPayload(json, ModuleFolder(module));
@@ -75,13 +75,21 @@ namespace PWADC.SecurityOperationsSuite
                     if (!string.Equals(liveIntegrity.Status, "valid", StringComparison.OrdinalIgnoreCase))
                         throw new InvalidDataException("The current live JSON failed integrity validation. Normal save is blocked so damaged data is not silently overwritten. Use Backup & Restore or packaged recovery after review. Details: " + liveIntegrity.Error);
                 }
-                if (existed) backupPath = CreateSafetyBackup(module, fullTarget, backupKind);
+
                 WriteUtf8Durable(tempPath, json);
                 string tempJson = File.ReadAllText(tempPath);
                 ValidateJsonPayload(tempJson, ModuleFolder(module) + " temporary write");
                 string tempHash = Sha256File(tempPath);
                 if (!string.Equals(expectedHash, tempHash, StringComparison.OrdinalIgnoreCase))
                     throw new IOException("Temporary write hash did not match the requested JSON payload.");
+
+                // v3.4.1.0 stale-write gate. This runs after staging/validation but before
+                // the safety backup or live replacement so a conflict does not touch live data.
+                if (operation == "module-save")
+                    VerifyExpectedRevision(module, fullTarget, expectedRevision, operation);
+
+                existed = File.Exists(fullTarget);
+                if (existed) backupPath = CreateSafetyBackup(module, fullTarget, backupKind);
 
                 if (existed)
                 {
@@ -164,7 +172,7 @@ namespace PWADC.SecurityOperationsSuite
                 var record = new
                 {
                     at = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                    version = "3.4.0.0",
+                    version = "3.4.1.0",
                     user = Environment.UserName,
                     machine = Environment.MachineName,
                     module = outcome.Module,

@@ -50,6 +50,30 @@ if(!backupSource.includes('WriteJsonAtomically(module, livePath, json, "restore-
 if(!programsSource.includes('integrityStatus = integrity.Status')||!programsSource.includes('sha256 = integrity.Sha256'))throw new Error('Data Health integrity status contract missing.');
 if(storageSource.includes('File.Copy(tempPath, path, true)'))throw new Error('Legacy temp-file copy-over-live persistence returned.');
 
+
+// v3.4.1.0 stale-write contract: browser load revisions must be returned to the host on save,
+// and the host must block mismatched revisions before touching the live file.
+const conflictPath=path.join(root,'MainForm.ConflictDetection.cs');
+if(!fs.existsSync(conflictPath))throw new Error('Missing MainForm.ConflictDetection.cs stale-write layer.');
+const conflictSource=fs.readFileSync(conflictPath,'utf8');
+const bridgeSource=fs.readFileSync(path.join(root,'MainForm.Bridge.cs'),'utf8');
+const dataCoreSource=fs.readFileSync(path.join(appRoot,'js','20-data-core.js'),'utf8');
+const shiftOpsSource=fs.readFileSync(path.join(appRoot,'js','90-shift-operations.js'),'utf8');
+for(const token of ['GetDataRevision','VerifyExpectedRevision','STALE_WRITE_CONFLICT','WriteDataConflictAudit','blocked-stale-write']){
+  if(!conflictSource.includes(token))throw new Error('Stale-write contract missing: '+token);
+}
+if(!storageSource.includes('revision = info.Revision'))throw new Error('Module load envelope does not expose a revision fingerprint.');
+if(!storageSource.includes('SaveModuleData(string module, string json, string expectedRevision)'))throw new Error('Module save does not accept an expected revision.');
+if(!reliabilitySource.includes('VerifyExpectedRevision(module, fullTarget, expectedRevision, operation)'))throw new Error('Atomic write path does not enforce the loaded revision.');
+const revGateIndex=reliabilitySource.indexOf('VerifyExpectedRevision(module, fullTarget, expectedRevision, operation)');
+const backupIndex=reliabilitySource.indexOf('backupPath = CreateSafetyBackup(module, fullTarget, backupKind)');
+if(revGateIndex<0||backupIndex<0||revGateIndex>backupIndex)throw new Error('Stale-write gate must run before the live-file safety backup/replacement path.');
+if(!bridgeSource.includes('expectedRevision2 = savePayload.TryGetProperty("expectedRevision"'))throw new Error('Desktop bridge does not receive the browser loaded revision.');
+if(!bridgeSource.includes('revision = GetDataRevision(restoredLivePath).Token'))throw new Error('Restore response does not refresh the revision token.');
+if(!dataCoreSource.includes("SuiteBridge.send('suite:saveModuleData2',{module,json,expectedRevision})"))throw new Error('Browser save path does not send expectedRevision.');
+if(!dataCoreSource.includes('showDataConflictModal')||!dataCoreSource.includes('exportConflictCopy')||!dataCoreSource.includes('reloadModuleAfterConflict'))throw new Error('Controlled stale-conflict recovery UI is incomplete.');
+if(!shiftOpsSource.includes("saveModuleDataStrict('shift-reports',shiftReports)")||!shiftOpsSource.includes("saveModuleDataStrict('shift-intelligence',shiftIntel)"))throw new Error('Shift Operations bypasses revision-aware persistence.');
+
 function element(){return {innerHTML:'',textContent:'',value:'',checked:false,dataset:{},style:{setProperty(){},display:''},classList:{add(){},remove(){},toggle(){},contains(){return false}},appendChild(){},remove(){},click(){},focus(){},setAttribute(){},getAttribute(){return null},querySelector(){return null},querySelectorAll(){return []},insertAdjacentHTML(){},files:[],contentWindow:{location:{reload(){}}}};}
 const elements=new Map();
 const document={
@@ -155,6 +179,18 @@ const attendanceEmployeeScopeTest=evalx(`(()=>{
   return {ok:captured.body.includes(second.name) && !captured.body.includes(first.name) && captured.subtitle.includes(second.name) && modal.includes('Selected Employees') && modal.includes('Start typing name or employee number') && modal.includes('att-totals-employee'),first:first.name,second:second.name,subtitle:captured.subtitle,modalEmployeePicker:modal.includes('att-totals-employee')};
 })()`);
 if(!attendanceEmployeeScopeTest.ok)throw new Error('Attendance employee print scope validation failed: '+JSON.stringify(attendanceEmployeeScopeTest));
+
+
+// Revision metadata and controlled conflict UI smoke test.
+const revisionUiTest=evalx(`(()=>{
+  recordModuleLoadInfo('attendance',{source:'live-shared',revision:'abcdef1234567890',path:'X',fileModified:'now',loadedAt:'now',liveFileExisted:true});
+  const loaded=moduleLoadInfo.attendance&&moduleLoadInfo.attendance.revision==='abcdef1234567890'&&!moduleLoadInfo.attendance.conflict;
+  const oldShow=showModal;let modal='';showModal=html=>{modal=String(html||'');};
+  showDataConflictModal('attendance','STALE_WRITE_CONFLICT: newer shared data');
+  showModal=oldShow;
+  return {ok:loaded&&modal.includes('Shared Data Conflict')&&modal.includes('Export Unsaved Copy')&&modal.includes('Reload Latest Shared Data')&&modal.includes('Keep Unsaved Work Open'),loaded,modal};
+})()`);
+if(!revisionUiTest.ok)throw new Error('Revision/conflict UI validation failed: '+JSON.stringify(revisionUiTest));
 for(const view of ['roster','schedule','training','uniforms','analytics']){const out=evalx(`activeRosterView='${view}'; renderRoster()`);if(typeof out!=='string'||out.length<20)throw new Error('Roster render failed: '+view);}
 
 // Roster printing must support a hand-picked employee group with name/EID search.

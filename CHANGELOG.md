@@ -1,5 +1,15 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.4.1.0 - Stale Write + Conflict Detection
+- Added SHA-256 revision fingerprints to operational module load envelopes.
+- Added expected-revision checks to Attendance, Roster/Schedule, Tasks, Shift Reports, and Shift Intelligence saves.
+- Blocks blind overwrites when the shared live file changed after this workstation loaded it.
+- Preserves unsaved in-memory work and offers export, reload latest, or keep-open conflict actions.
+- Added `Data Integrity\Conflict Audit` records with expected/current revision evidence.
+- Restore and packaged-recovery responses now refresh the workstation revision baseline.
+- Automatic merging remains intentionally excluded; save coordination/locking is planned next.
+
+
 
 ### v3.4.0.0 - Atomic Save + Integrity Foundation
 - Added `MainForm.DataReliability.cs` as the centralized shared-JSON transaction layer.
@@ -14,7 +24,7 @@
 
 This file is the controlled release history for the PWADC Security Operations Suite. Detailed historical build notes that previously existed as separate root-level Markdown files are consolidated in `docs/archive/HISTORICAL-RELEASE-NOTES.md`.
 
-## Current Release
+## Prior Release History
 
 ### v3.3.1.0 - Suite-wide Responsive UI Stabilization
 - Replaced full application re-rendering on normal window resize with CSS-driven responsive sizing.

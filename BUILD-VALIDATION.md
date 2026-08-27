@@ -1,52 +1,58 @@
-# Build Validation - v3.4.0.0
+# PWADC Security Operations Suite - Current Build Validation
 
-## Release
-- Version: 3.4.0.0
-- Release name: Atomic Save + Integrity Foundation
-- Baseline: v3.3.1.0 clean repository
+## Build
+- Version: **3.4.1.0**
+- Release: **Stale Write + Conflict Detection**
+- Baseline: v3.4.0.0 Atomic Save + Integrity Foundation
 
-## Data Reliability Scope
-- Central `MainForm.DataReliability.cs` transaction layer present: Passed.
-- Module saves routed through `WriteJsonAtomically`: Passed.
-- Suite Settings saves routed through `WriteJsonAtomically`: Passed.
-- Restore operations routed through `WriteJsonAtomically`: Passed.
-- Packaged recovery/reset writes routed through `WriteJsonAtomically`: Passed.
-- Existing live file backup before critical replacement: Passed.
-- Temporary write uses `FileOptions.WriteThrough` and `Flush(true)`: Passed.
-- Temporary JSON parse + SHA-256 verification before replacement: Passed.
-- Final live JSON parse + SHA-256 verification after replacement: Passed.
-- Malformed live JSON blocks normal save: Passed.
-- Per-event Data Integrity write audit present: Passed.
-- Data Health live JSON integrity status contract present: Passed.
-- Legacy `File.Copy(tempPath, path, true)` live-write path absent: Passed.
+## Controlled Scope
+- Added SHA-256 loaded-revision fingerprints for Attendance, Roster/Schedule, Tasks, Shift Reports, and Shift Intelligence.
+- Added expected-revision enforcement before normal operational module saves can touch live shared JSON.
+- Added conflict audit records under `Data Integrity\Conflict Audit`.
+- Added user-facing conflict controls: Export Unsaved Copy, Reload Latest Shared Data, Keep Unsaved Work Open.
+- Restore and packaged-recovery paths refresh the revision baseline.
+- No automatic merge, database migration, policy, schedule-authority, HPW, labor, or Shift Intelligence classification changes.
 
-## Front-End Regression
-- JavaScript syntax: Passed.
-- Permanent validator: Passed.
-- Front-end module registry: 10/10.
-- Major module render smoke: 16/16.
-- Attendance views: 6/6.
-- Roster/Schedule views: 5/5.
-- Named JavaScript functions: 867 total / 867 unique.
-- Inline action targets: 216/216 resolved.
-- Existing responsive UI contract retained: Passed.
+## Required Validation
+- JavaScript syntax check on every front-end module.
+- Required render-function check.
+- 16-major-module render smoke test.
+- Attendance and Roster/Schedule subview smoke tests.
+- Inline action-handler target sweep.
+- Duplicate named-function sweep.
+- Front-end module registry/startup gate.
+- v3.3.1 responsive UI contract.
+- v3.4.0 atomic persistence contract.
+- v3.4.1 stale-write revision contract.
+- XML project and manifest parsing.
+- Exact manifest XML declaration.
+- Five-part .NET/version sweep with four-part maximum version strings.
+- GitHub Actions workflow and artifact-name verification.
+- Seed/specialist-program integrity comparison against baseline.
+- Clean repository check; no `.git` folder.
+- Finished ZIP integrity and extracted-package revalidation.
 
-## Project / Manifest / Version
-- `SecurityOperationsSuite.csproj` XML parse: Passed.
-- `app.manifest` XML parse: Passed.
-- Exact manifest declaration `<?xml version="1.0" encoding="utf-8"?>`: Passed.
-- Five-part .NET version sweep: 3.4.0.0 across Project, File, Assembly, Manifest, Runtime: Passed.
-- Four-part maximum version format: Passed.
-- GitHub Actions artifact aligned to v3.4.0.0: Passed.
-- `.github/workflows/build-windows.yml` present: Passed.
+## Build Environment
+Local .NET publish may not be available in the ChatGPT sandbox. GitHub Actions remains the authoritative Windows EXE publish path when the local SDK is unavailable.
 
-## Regression / Scope Integrity
-- Baseline seed JSON content unchanged: Passed, 6/6 files byte-for-byte identical.
-- Specialist program content unchanged: Passed, packaged program set byte-for-byte identical.
-- Existing desktop bridge contracts preserved: Passed, 18/18 unchanged.
-- Repository root documentation remains controlled to six Markdown files: Passed.
-- No `.git` directory included: Passed.
-
-## Local Windows Publish
-- .NET SDK is not installed in the ChatGPT sandbox, so local Windows publish cannot be executed here.
-- GitHub Actions remains the Windows EXE build authority.
+## Validation Result
+- Front-end validator: **PASS**
+- Major modules: **16/16 PASS**
+- Attendance views: **6/6 PASS**
+- Roster/Schedule views: **5/5 PASS**
+- Registered front-end functional modules: **10/10 PASS**
+- Named JavaScript functions: **873 unique / no duplicate declarations**
+- Inline action targets: **218 resolved**
+- Revision/conflict modal smoke: **PASS**
+- Shift Reports / Shift Intelligence revision-aware save routing: **PASS**
+- Stale-write gate ordering before live backup/replacement: **PASS**
+- Desktop bridge message names: **18/18 preserved from v3.4.0.0**
+- C# host surface: **4 intentional helper methods added** for revision/conflict detection
+- Seed JSON: **6/6 byte-for-byte unchanged**
+- Specialist programs: **3/3 byte-for-byte unchanged**
+- XML project/manifest parse: **PASS**
+- Manifest XML declaration: **PASS**
+- Version controls: **3.4.1.0 / four-part valid**
+- Root documentation structure: **6 controlled Markdown files**
+- `.git` folder: **not present**
+- Local .NET SDK: **not available in sandbox; GitHub Actions remains authoritative Windows publish path**

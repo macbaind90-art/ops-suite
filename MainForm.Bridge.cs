@@ -47,21 +47,24 @@ namespace PWADC.SecurityOperationsSuite
                     case "suite:resetModuleFromSeed":
                         string resetModule = root.TryGetProperty("module", out JsonElement rm) ? rm.GetString() ?? "" : "";
                         string resetJson = ResetModuleFromSeed(resetModule);
-                        await Respond(requestId, true, new { module = resetModule, data = resetJson });
+                        string resetPath = Path.Combine(settings.DataRoot, "Data", ModuleFileName(resetModule));
+                        await Respond(requestId, true, new { module = resetModule, data = resetJson, revision = GetDataRevision(resetPath).Token });
                         break;
                     case "suite:saveModuleData":
                         string saveModule = root.TryGetProperty("module", out JsonElement sm) ? sm.GetString() ?? "" : "";
                         string json = root.TryGetProperty("payload", out JsonElement dataPayload) ? dataPayload.GetRawText() : "{}";
-                        var saveInfo = SaveModuleData(saveModule, json);
+                        string expectedRevision = root.TryGetProperty("expectedRevision", out JsonElement er) ? er.GetString() ?? "" : "";
+                        var saveInfo = SaveModuleData(saveModule, json, expectedRevision);
                         await Respond(requestId, true, saveInfo);
                         break;
                     case "suite:saveModuleData2":
                         if (!root.TryGetProperty("payload", out JsonElement savePayload)) throw new InvalidOperationException("Missing save payload.");
                         string saveModule2 = savePayload.TryGetProperty("module", out JsonElement sm2) ? sm2.GetString() ?? "" : "";
                         string json2 = savePayload.TryGetProperty("json", out JsonElement js2) ? js2.GetString() ?? "" : "";
+                        string expectedRevision2 = savePayload.TryGetProperty("expectedRevision", out JsonElement er2) ? er2.GetString() ?? "" : "";
                         if (string.IsNullOrWhiteSpace(saveModule2)) throw new InvalidOperationException("Save module was not defined by the interface.");
                         if (string.IsNullOrWhiteSpace(json2) || json2 == "undefined") throw new InvalidOperationException("Save JSON payload was undefined before write.");
-                        var saveInfo2 = SaveModuleData(saveModule2, json2);
+                        var saveInfo2 = SaveModuleData(saveModule2, json2, expectedRevision2);
                         await Respond(requestId, true, saveInfo2);
                         break;
                     case "suite:createBackup":
@@ -120,7 +123,8 @@ namespace PWADC.SecurityOperationsSuite
                         string restoreModule = restorePayload.TryGetProperty("module", out JsonElement rsm) ? rsm.GetString() ?? "" : "";
                         string restorePath = restorePayload.TryGetProperty("path", out JsonElement rsp) ? rsp.GetString() ?? "" : "";
                         string restoredJson = RestoreBackup(restoreModule, restorePath);
-                        await Respond(requestId, true, new { module = restoreModule, data = restoredJson, restoredFrom = restorePath });
+                        string restoredLivePath = Path.Combine(settings.DataRoot, "Data", ModuleFileName(restoreModule));
+                        await Respond(requestId, true, new { module = restoreModule, data = restoredJson, restoredFrom = restorePath, revision = GetDataRevision(restoredLivePath).Token });
                         break;
                     default:
                         await Respond(requestId, false, new { error = "Unknown message type: " + type });

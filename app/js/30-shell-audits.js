@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.4.0.0 | module: shell-audits */
+/* PWADC Security Operations Suite v3.4.1.0 | module: shell-audits */
 function navModule(id){return MODULES.find(m=>m.id===id)}
 function navGroupFor(id){return NAV_GROUPS.find(g=>(g.items||[]).includes(id))}
 function renderNavGroup(g,visible){const items=(g.items||[]).map(id=>visible.find(m=>m.id===id)).filter(Boolean);if(!items.length)return '';if(items.length===1){const m=items[0];return `<button class="nav-single" data-module="${m.id}" onclick="navigate('${m.id}')">${esc(m.label)}</button>`;}return `<div class="nav-group" data-group="${esc(g.label)}"><button class="nav-group-btn" type="button">${esc(g.label)} ▾</button><div class="nav-menu">${items.map(m=>`<button data-module="${m.id}" onclick="navigate('${m.id}')">${esc(m.label)}</button>`).join('')}</div></div>`}

@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.4.0.0 - Atomic Save + Integrity Foundation**.
+Current build: **v3.4.1.0 - Stale Write + Conflict Detection**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -32,6 +32,7 @@ Current build: **v3.4.0.0 - Atomic Save + Integrity Foundation**.
 - ~~v3.3.0.8 - Roster Print Employee Scope~~ Completed
 - ~~v3.3.1.0 - Suite-wide Responsive UI Stabilization~~ Completed
 - ~~v3.4.0.0 - Atomic Save + Integrity Foundation~~ Completed
+- ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -93,13 +94,14 @@ Current build: **v3.4.0.0 - Atomic Save + Integrity Foundation**.
 - `ARCHITECTURE.md` is the standing maintenance map for future development.
 
 ## Next
-### v3.4.0 - Data Layer / Reliability Upgrade
+### v3.4.x - Data Layer / Reliability Upgrade
 Primary objectives:
-- Add explicit read/write conflict detection for shared JSON files.
-- Strengthen atomic-save, validation, and recovery behavior.
+- ~~Atomic-save, validation, and live-file integrity foundation.~~ Completed in v3.4.0.0.
+- ~~Explicit stale-write/read-revision conflict detection for shared operational JSON.~~ Completed in v3.4.1.0.
+- Add short-duration save coordination/locking to close the remaining compare-to-replace race window.
+- Add recovery/last-known-good hardening.
 - Add schema/version awareness and safer migration boundaries.
-- Improve source freshness and stale-write protection.
-- Preserve backup-first recovery and auditable high-impact actions.
+- Integrate reliability conditions into Data Health.
 - Evaluate SQLite only after persistence requirements and migration controls are documented.
 
 ## Future Phases
@@ -111,10 +113,11 @@ Primary objectives:
 - v4.0 - Platform Architecture Release
 
 ## Architecture Direction
-The project remains on C# / WebView2 / HTML / CSS / JavaScript in the near term. v3.3.0 resolves the immediate code-concentration risk by establishing controlled front-end and Windows-host modules. The primary remaining platform risk is shared-file concurrency and data reliability. v3.4.0 should strengthen persistence, conflict handling, validation, and recovery. A structured data layer such as SQLite should be evaluated only after those requirements and migration controls are documented.
+The project remains on C# / WebView2 / HTML / CSS / JavaScript in the near term. v3.3.0 resolves the immediate code-concentration risk by establishing controlled front-end and Windows-host modules. The primary remaining platform risk is shared-file concurrency and data reliability. v3.4.0 established atomic persistence and v3.4.1 adds stale-write detection; v3.4.2 should add short-duration save coordination to close the remaining compare-to-replace race window. A structured data layer such as SQLite should be evaluated only after those requirements and migration controls are documented.
 
 
 ## Current / Next Phase
 - ~~v3.4.0.0 - Atomic Save + Integrity Foundation~~ Completed.
-- **Next: v3.4.1.0 - Stale Write / Conflict Detection.** Track the revision/hash loaded by each workstation and block blind overwrites when the shared file changed after load.
-- Planned follow-ons: v3.4.2 save coordination/locking, v3.4.3 recovery hardening, v3.4.4 schema migration framework, v3.4.5 Data Health reliability maturity.
+- ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed.
+- **Next: v3.4.2.0 - Save Coordination + Short-Duration Locks.** Close the remaining race window between revision comparison and atomic replacement without creating long-lived operational locks.
+- Planned follow-ons: v3.4.3.0 recovery hardening, v3.4.4.0 schema migration framework, v3.4.5.0 Data Health reliability maturity.

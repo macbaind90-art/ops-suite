@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.4.0.0 | module: data-core */
+/* PWADC Security Operations Suite v3.4.1.0 | module: data-core */
 async function loadAttendance(){try{const res=await SuiteBridge.send('suite:loadModuleData',{}, {module:'attendance'});recordModuleLoadInfo('attendance',res);let raw=res.data;if(typeof raw==='string')attendance=JSON.parse(raw||'{}');else attendance=raw||{};normalizeAttendance();}catch(e){toast('Attendance load failed: '+e.message);normalizeAttendance()}}
 function normalizeAttendance(){attendance.employees=Array.isArray(attendance.employees)?attendance.employees:[];attendance.attendance=attendance.attendance&&typeof attendance.attendance==='object'?attendance.attendance:{};attendance.notes=attendance.notes&&typeof attendance.notes==='object'?attendance.notes:{};attendance.audit=Array.isArray(attendance.audit)?attendance.audit:[];attendance.flagActions=attendance.flagActions&&typeof attendance.flagActions==='object'?attendance.flagActions:{};attendance.patternActions=attendance.patternActions&&typeof attendance.patternActions==='object'?attendance.patternActions:{};attendance.notices=Array.isArray(attendance.notices)?attendance.notices:[];attendance.nextNoticeId=Number(attendance.nextNoticeId||0)||((attendance.notices.reduce((m,n)=>Math.max(m,Number(n.id)||0),0))+1);attendance.settings={weekThreshold:3,monthThreshold:5,rollingThreshold:6,patternThreshold:3,...(attendance.settings||{})}}
 function isIsoDateKey(d){return /^\d{4}-\d{2}-\d{2}$/.test(String(d||'')) && !Number.isNaN(Date.parse(String(d)+'T00:00:00'))}
@@ -20,10 +20,11 @@ function latestAttendanceDataDate(src=attendance){
 function focusAttendanceOnLatestDataDate(){const d=latestAttendanceDataDate(attendance);entryDate=d;gridEnd=d;return d}
 function recordModuleLoadInfo(module,res){
   moduleLoadInfo=moduleLoadInfo&&typeof moduleLoadInfo==='object'?moduleLoadInfo:{};
-  moduleLoadInfo[module]={module,source:res&&res.source||'unknown',sourceDetail:res&&res.sourceDetail||'',path:res&&res.path||'',fileModified:res&&res.fileModified||'',loadedAt:res&&res.loadedAt||new Date().toLocaleString(),dataRoot:res&&res.dataRoot||settings.dataRoot||'',liveFileExisted:!!(res&&res.liveFileExisted)};
+  moduleLoadInfo[module]={module,source:res&&res.source||'unknown',sourceDetail:res&&res.sourceDetail||'',path:res&&res.path||'',fileModified:res&&res.fileModified||'',loadedAt:res&&res.loadedAt||new Date().toLocaleString(),dataRoot:res&&res.dataRoot||settings.dataRoot||'',liveFileExisted:!!(res&&res.liveFileExisted),revision:res&&res.revision||'missing',conflict:false};
 }
-function markModuleImported(module,fileName,detail){moduleLoadInfo[module]={module,source:'imported-backup',sourceDetail:detail||('Imported JSON: '+(fileName||'')),path:fileName||'',fileModified:'',loadedAt:new Date().toLocaleString(),dataRoot:settings.dataRoot||''};}
-function markModuleRestored(module,path){moduleLoadInfo[module]={module,source:'restored-backup',sourceDetail:'Restored from previewed backup.',path:path||'',fileModified:'',loadedAt:new Date().toLocaleString(),dataRoot:settings.dataRoot||''};}
+function markModuleImported(module,fileName,detail){const prior=moduleLoadInfo[module]||{};moduleLoadInfo[module]={module,source:'imported-backup',sourceDetail:detail||('Imported JSON: '+(fileName||'')),path:fileName||'',fileModified:'',loadedAt:new Date().toLocaleString(),dataRoot:settings.dataRoot||'',revision:prior.revision||'',conflict:false};}
+function markModuleRestored(module,path,revision=''){moduleLoadInfo[module]={module,source:'restored-backup',sourceDetail:'Restored from previewed backup.',path:path||'',fileModified:new Date().toLocaleString(),loadedAt:new Date().toLocaleString(),dataRoot:settings.dataRoot||'',revision:revision||'',conflict:false};}
+function updateModuleRevisionAfterSave(module,res){moduleLoadInfo=moduleLoadInfo&&typeof moduleLoadInfo==='object'?moduleLoadInfo:{};const prior=moduleLoadInfo[module]||{};moduleLoadInfo[module]={...prior,module,source:'live-shared',sourceDetail:'Saved and revision-verified against the shared Data folder.',path:res&&res.path||prior.path||'',fileModified:res&&res.savedAt||new Date().toLocaleString(),loadedAt:new Date().toLocaleString(),dataRoot:settings.dataRoot||prior.dataRoot||'',liveFileExisted:true,revision:res&&res.revision||res&&res.sha256||prior.revision||'',conflict:false};}
 function sourceKey(info){return String(info&&info.source||'unknown').toLowerCase();}
 function sourceLabel(info){const k=sourceKey(info);if(k==='live-shared')return 'Live Shared Data';if(k==='live-invalid')return 'Live Data Integrity Failure';if(k.includes('packaged'))return 'Packaged Recovery Data';if(k.includes('imported'))return 'Imported Backup';if(k.includes('restored'))return 'Restored Backup';if(k==='missing')return 'Missing Data File';return 'Unknown Source';}
 function sourceClass(info){const k=sourceKey(info);if(k==='live-shared')return 'source-live';if(k==='live-invalid')return 'source-missing';if(k.includes('packaged'))return 'source-recovery';if(k.includes('imported'))return 'source-imported';if(k.includes('restored'))return 'source-imported';if(k==='missing')return 'source-missing';return 'source-unknown';}
@@ -316,16 +317,26 @@ async function repairAttendanceHistoryFromRoster(){
 }
 
 
+function moduleDataObject(module){if(module==='attendance')return attendance;if(module==='roster')return roster;if(module==='tasks')return tasks;if(module==='shift-reports')return shiftReports;if(module==='shift-intelligence')return shiftIntel;return null;}
+function isStaleWriteConflictError(e){return String(e&&e.message||e||'').includes('STALE_WRITE_CONFLICT');}
+function showDataConflictModal(module,message){const label=moduleLabel(module);const detail=String(message||'').replace(/^.*STALE_WRITE_CONFLICT:\s*/,'');showModal(`<div class="modal-head"><div><div class="modal-title">Shared Data Conflict · ${esc(label)}</div><div class="mini-note">A newer shared-file revision was detected before your save could replace it.</div></div><button onclick="closeModal()">Close</button></div><div class="notice warn"><strong>Your changes were NOT written to the shared file.</strong><br>${esc(detail)}</div><div class="card"><div class="card-title">Controlled Next Step</div><ol class="clean-list"><li><strong>Export Unsaved Copy</strong> if you may need to compare or re-enter your work.</li><li><strong>Reload Latest Shared Data</strong> when you are ready to discard the stale in-memory copy and continue from the newest revision.</li><li><strong>Keep Unsaved Work Open</strong> if you need to review it before deciding. Saving remains blocked until the module is reloaded.</li></ol></div><div class="modal-actions"><button onclick="exportConflictCopy('${esc(module)}')">Export Unsaved Copy</button><button class="primary" onclick="reloadModuleAfterConflict('${esc(module)}')">Reload Latest Shared Data</button><button onclick="closeModal()">Keep Unsaved Work Open</button></div>`);}
+async function exportConflictCopy(module){const data=moduleDataObject(module);if(!data){toast('No in-memory data is available to export for '+moduleLabel(module));return false;}const stamp=new Date().toISOString().replace(/[:.]/g,'-');const fileName=`${module.replace(/[^a-z0-9_-]/gi,'-')}-UNSAVED-CONFLICT-${stamp}.json`;try{const r=await SuiteBridge.send('suite:writeExport',JSON.stringify(data,null,2),{module,fileName});toast('Unsaved conflict copy exported');return r;}catch(e){toast('Unsaved copy export failed: '+e.message);return false;}}
+async function reloadModuleAfterConflict(module){if(!confirm('Reload the latest shared '+moduleLabel(module)+' data? Any unsaved changes currently open in this module will be discarded from this window.'))return false;closeModal();try{if(module==='attendance')await loadAttendance();else if(module==='roster')await loadRoster();else if(module==='tasks')await loadTasks();else if(module==='shift-reports')await loadShiftReports();else if(module==='shift-intelligence')await loadShiftIntel();else throw new Error('Reload is not available for '+moduleLabel(module));safeRenderPages({preserveScroll:true});toast(moduleLabel(module)+' reloaded from the latest shared revision');return true;}catch(e){toast('Reload latest failed: '+e.message);return false;}}
 async function saveModuleDataStrict(module,obj){
   if(!module) throw new Error('Save module name is missing.');
   const json=JSON.stringify(obj||{});
   if(!json||json==='undefined') throw new Error('Save payload is undefined before bridge write.');
+  const info=moduleLoadInfo[module]||{};
+  if(info.conflict){showDataConflictModal(module,info.conflictMessage||'A newer shared revision has already been detected. Reload latest shared data before saving.');throw new Error(`${module} save blocked by unresolved shared-data conflict.`);}
+  const expectedRevision=String(info.revision||'');
   try{
-    const res=await SuiteBridge.send('suite:saveModuleData2',{module,json});
+    const res=await SuiteBridge.send('suite:saveModuleData2',{module,json,expectedRevision});
     window.__lastSaveResult={module,...(res||{})};
+    updateModuleRevisionAfterSave(module,res||{});
     return res;
   }catch(e){
-    throw new Error(`${module} save failed. Confirm the shared drive is online and not locked, then retry. ${e.message||e}`);
+    if(isStaleWriteConflictError(e)){moduleLoadInfo[module]={...info,conflict:true,conflictMessage:e.message||String(e)};const save=document.getElementById('saveStatus');if(save)save.textContent=moduleLabel(module)+' conflict · reload required';showDataConflictModal(module,e.message||String(e));throw new Error(`${module} save blocked because newer shared data exists. Your unsaved changes remain open.`);}
+    throw new Error(`${module} save failed. Confirm the shared drive is online and retry. ${e.message||e}`);
   }
 }
 async function saveRosterNow(reason='manual'){

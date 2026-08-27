@@ -114,3 +114,8 @@ Rules:
 - A transaction is successful only after the final live file parses and matches the expected SHA-256.
 - v3.4.0 does not yet resolve concurrent edits; stale-write detection is intentionally deferred to v3.4.1.
 - Shared JSON remains the active persistence layer; no database dependency is introduced.
+
+
+## v3.4 Data Reliability Boundary
+Operational shared JSON modules load through the Windows host and receive a revision fingerprint. Normal saves return that expected revision through the existing bridge payload and are rejected when the live shared file no longer matches. v3.4.0 provides validated atomic replacement; v3.4.1 adds stale-write blocking. No feature module should bypass `saveModuleDataStrict` for operational shared JSON. Save coordination/short-duration locks are intentionally deferred to v3.4.2.
+
