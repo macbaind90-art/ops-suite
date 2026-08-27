@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.3.0.8 - Roster Print Employee Scope**.
+Current build: **v3.3.1.0 - Suite-wide Responsive UI Stabilization**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -30,6 +30,7 @@ Current build: **v3.3.0.8 - Roster Print Employee Scope**.
 - ~~v3.3.0.6 - Attendance Print Date Detail Correction~~ Completed
 - ~~v3.3.0.7 - Attendance Print Employee Scope~~ Completed
 - ~~v3.3.0.8 - Roster Print Employee Scope~~ Completed
+- ~~v3.3.1.0 - Suite-wide Responsive UI Stabilization~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -57,6 +58,7 @@ Current build: **v3.3.0.8 - Roster Print Employee Scope**.
 - v3.3.0.6 tightens Attendance Totals date detail so only discipline codes T/U/UE/CO/NCNS carry MM/DD dates; P and all other non-discipline categories print totals only.
 - v3.3.0.7 adds employee-level Attendance Totals scope so management can print all active employees, one shift, one employee, or a hand-picked employee group while preserving compact portrait formatting and existing date-detail rules.
 - v3.3.0.8 adds employee-level Roster print scope so management can print the current filtered roster, all roster employees, one employee, or a hand-picked employee group while preserving the existing selectable roster columns.
+- v3.3.1.0 stabilizes the suite-wide UI foundation: resize behavior is CSS-driven, shared controls are normalized, dense workspaces collapse or scroll locally, and the Windows minimum supported size is reduced to 900×600 without changing operational logic.
 
 ### Repository Documentation
 - Root documentation is controlled to README, ROADMAP, ARCHITECTURE, DESIGN-SYSTEM, CHANGELOG, and current BUILD-VALIDATION.
@@ -87,7 +89,7 @@ Current build: **v3.3.0.8 - Roster Print Employee Scope**.
 - Existing render-function guardrails remain active.
 - `MainForm` is separated into partial classes for the WebView shell, bridge routing, storage, backups, programs/environment, and shared models.
 - Existing UI workflows, shared JSON contracts, `suite:*` bridge message types, schedule authority, attendance codes, reporting behavior, and role controls are intentionally preserved.
-- `ARCHITECTURE-v3.3.0.md` is the maintenance map for future development.
+- `ARCHITECTURE.md` is the standing maintenance map for future development.
 
 ## Next
 ### v3.4.0 - Data Layer / Reliability Upgrade

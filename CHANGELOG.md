@@ -4,13 +4,20 @@ This file is the controlled release history for the PWADC Security Operations Su
 
 ## Current Release
 
+### v3.3.1.0 - Suite-wide Responsive UI Stabilization
+- Replaced full application re-rendering on normal window resize with CSS-driven responsive sizing.
+- Normalized checkbox/radio, button, input, select, textarea, toolbar, modal, and action-group behavior.
+- Added progressive responsive behavior across headers, forms, workspaces, dense tables, Schedule, Reports, Data Health, Restore, Settings, Attendance, and Shift Operations.
+- Reduced the Windows minimum supported size from 1100×700 to 900×600.
+- Preserved operational workflows, shared-data contracts, reporting logic, attendance rules, and schedule authority.
+
+## v3.3.x
+
 ### v3.3.0.8 - Roster Print Employee Scope
 - Added Current filtered roster, All employees, and Selected employees print scopes.
 - Selected employees supports multi-select and name/EID search with rank/shift context.
 - Existing roster column selection and print orientation rules are preserved.
 - No roster or schedule records are changed by the print workflow.
-
-## v3.3.x
 
 ### v3.3.0.7 - Attendance Print Employee Scope
 - Added All Active Employees, By Shift, and Selected Employees print scopes.

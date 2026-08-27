@@ -19,6 +19,19 @@ if(!fs.existsSync(path.join(appRoot,'assets','styles.css')))throw new Error('Mis
 if(/<script>([\s\S]*?)<\/script>/.test(html))throw new Error('Inline application script detected in index.html.');
 if(/<style>([\s\S]*?)<\/style>/.test(html))throw new Error('Inline application stylesheet detected in index.html.');
 
+
+// v3.3.1.0 responsive UI contract: shared controls resize through CSS without page re-render churn.
+const styles=fs.readFileSync(path.join(appRoot,'assets','styles.css'),'utf8');
+if(!styles.includes('v3.3.1.0 Suite-wide responsive UI and control normalization'))throw new Error('Missing v3.3.1.0 responsive UI layer.');
+if(!/input\[type=checkbox\][\s\S]*?width:16px!important/.test(styles)||!/input\[type=radio\][\s\S]*?width:16px!important/.test(styles))throw new Error('Checkbox/radio normalization contract missing.');
+if(!/\.wrap\{width:100%;max-width:min\(var\(--page-max\),calc\(100vw - 20px\)\)/.test(styles))throw new Error('Responsive application wrap contract missing.');
+if(!/\.schedule-grid\{grid-template-columns:minmax\(118px,.9fr\) repeat\(7,minmax\(100px,1fr\)\);min-width:850px/.test(styles))throw new Error('Schedule local resize/scroll contract missing.');
+const taskSettingsSource=fs.readFileSync(path.join(appRoot,'js','95-tasks-settings.js'),'utf8');
+const resizeHandler=(taskSettingsSource.match(/window\.addEventListener\('resize',[^;]+;/)||[''])[0];
+if(!resizeHandler||resizeHandler.includes('safeRenderPages'))throw new Error('Window resize must not full-render application pages.');
+const mainFormSource=fs.readFileSync(path.join(root,'MainForm.cs'),'utf8');
+if(!mainFormSource.includes('MinimumSize = new System.Drawing.Size(900, 600);'))throw new Error('Windows minimum-size responsive contract missing.');
+
 function element(){return {innerHTML:'',textContent:'',value:'',checked:false,dataset:{},style:{setProperty(){},display:''},classList:{add(){},remove(){},toggle(){},contains(){return false}},appendChild(){},remove(){},click(){},focus(){},setAttribute(){},getAttribute(){return null},querySelector(){return null},querySelectorAll(){return []},insertAdjacentHTML(){},files:[],contentWindow:{location:{reload(){}}}};}
 const elements=new Map();
 const document={
@@ -34,7 +47,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.0.8'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.1.0'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));

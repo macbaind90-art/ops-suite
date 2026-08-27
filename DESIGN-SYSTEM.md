@@ -1,4 +1,29 @@
-# v3.2.2.1 High-Intelligence Professional Design System Rerun
+# PWADC Security Operations Suite Design System
+
+## v3.3.1.0 Responsive UI Standard
+
+The shared design system now treats responsiveness as a platform rule rather than a screen-specific enhancement. Major pages must remain operational from the maximized desktop view down to the supported 900×600 Windows host minimum. Dense operational grids may use local scrolling, but routine controls and page structure should reflow rather than clip.
+
+### Standing UI Rules
+- Window resize behavior should be CSS-driven. Do not re-render whole application pages merely because the viewport changed.
+- Text inputs, selects, and textareas may use available width; checkboxes and radio buttons must retain native compact dimensions.
+- Page headers, button groups, toolbars, filters, modal actions, and navigation must wrap cleanly.
+- Multi-column workspaces should use `minmax(0, ...)` and progressively collapse at narrower widths.
+- Schedule and other genuinely dense tables should scroll inside their own workspace instead of forcing whole-page horizontal overflow.
+- Modals must stay within the visible viewport and keep their action area accessible.
+- Keyboard focus must remain visible on interactive controls.
+- Fixed pixel dimensions should be reserved for controls that genuinely require them; use responsive `min()`, `max()`, `clamp()`, flex, and grid behavior for normal layout.
+
+### Supported Window Range
+- Normal operating target: maximized desktop window.
+- Supported minimum Windows host size: 900×600.
+- Smaller CSS breakpoints remain defensive for browser/WebView edge conditions, but the desktop host does not intentionally shrink below 900×600.
+
+### Release Boundary
+The v3.3.1.0 stabilization changes shared presentation and resizing behavior only. Operational logic, attendance classifications, schedule authority, reporting calculations, persistence contracts, and role controls remain outside this UI layer.
+
+
+## Historical Foundation: v3.2.2.1
 
 ## Purpose
 

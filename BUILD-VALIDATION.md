@@ -1,53 +1,57 @@
-# Build Validation - v3.3.0.8
+# Build Validation - v3.3.1.0
 
 ## Release
-- Version: 3.3.0.8
-- Release name: Roster Print Employee Scope
-- Baseline: v3.3.0.7 clean repository
+- Version: 3.3.1.0
+- Release name: Suite-wide Responsive UI Stabilization
+- Baseline: v3.3.0.8 clean repository
 
-## Functional Scope
-- Roster Print supports Current filtered roster: Passed.
-- Roster Print supports All employees: Passed.
-- Roster Print supports Selected employees: Passed.
-- Selected employees supports one or multiple roster records: Passed.
-- Employee picker includes name/EID search with rank and shift context: Passed.
-- Select Visible / Select All / Clear controls present: Passed.
-- Selected-employee output excludes non-selected roster records: Passed.
-- Existing roster column selector remains active: Passed.
-- Existing portrait/landscape threshold remains active: Passed.
+## UI / UX Scope
+- Normal window resize is CSS-driven and no longer calls the full-page `safeRenderPages()` path: Passed.
+- Windows host minimum size reduced from 1100×700 to 900×600: Passed.
+- Shared checkbox/radio controls normalized to compact native dimensions: Passed.
+- Shared button, input, select, textarea, toolbar, modal, and action-group responsive rules present: Passed.
+- Header/navigation can wrap without forcing whole-page overflow: Passed.
+- Navigation dropdown positioning overrides the legacy fixed mobile dropdown rule: Passed.
+- Form grids and multi-column workspaces progressively collapse at narrower widths: Passed.
+- Dense Schedule / Training / Settings / table surfaces use local overflow rather than forcing the application shell wider: Passed.
+- Schedule retains an intentional locally-scrollable minimum grid width for seven-day operations: Passed.
+- No operational workflow or shared-data contract changes are part of this release.
 
 ## Front-End Validation
 - JavaScript syntax check across all front-end modules and validator: Passed.
 - Permanent front-end validator: Passed.
-- Required render/action function guard: Passed.
+- Registered front-end modules: 10/10 Passed.
 - Major module render smoke: 16/16 Passed.
 - Attendance view render smoke: 6/6 Passed.
 - Roster/Schedule view render smoke: 5/5 Passed.
-- Seeded selected-employee Roster print test: Passed.
-- Roster print modal selected-employee controls: Passed.
+- Named JavaScript functions: 867 total / 867 unique.
+- Inline action targets: 216/216 resolved.
+- Required render/action function guard: Passed.
+- Responsive UI contract checks added to permanent validator: Passed.
 
 ## Project / Manifest / Version Validation
-- SecurityOperationsSuite.csproj XML parse: Passed.
-- app.manifest XML parse: Passed.
+- `SecurityOperationsSuite.csproj` XML parse: Passed.
+- `app.manifest` XML parse: Passed.
 - Manifest XML declaration exact match `<?xml version="1.0" encoding="utf-8"?>`: Passed.
 - Five-Part .NET Version Sweep: Passed.
-  1. Project Version = 3.3.0.8.
-  2. File Version = 3.3.0.8.
-  3. Assembly Version = 3.3.0.8.
-  4. Manifest `assemblyIdentity` = 3.3.0.8.
-  5. Runtime environment version = 3.3.0.8.
+  1. Project Version = 3.3.1.0.
+  2. File Version = 3.3.1.0.
+  3. Assembly Version = 3.3.1.0.
+  4. Manifest `assemblyIdentity` = 3.3.1.0.
+  5. Runtime environment version = 3.3.1.0.
 - All controlled version values contain no more than four numeric components: Passed.
-- GitHub Actions Windows artifact name aligned to v3.3.0.8: Passed.
+- GitHub Actions Windows artifact name aligned to v3.3.1.0: Passed.
 - `.github/workflows/build-windows.yml` present: Passed.
 
 ## Regression / Scope Integrity
-- Seed data unchanged from v3.3.0.7: Passed.
-- Packaged specialist programs unchanged from v3.3.0.7: Passed.
+- Seed data unchanged from v3.3.0.8: Passed, 6/6 files byte-for-byte identical.
+- Packaged specialist programs unchanged from v3.3.0.8: Passed, 3/3 files byte-for-byte identical.
 - C# method inventory preserved: 52/52.
 - Desktop bridge contracts preserved: 18/18.
-- No Attendance, Shift Operations, Schedule assignment, HPW, labor, or shared JSON contract changes.
-- Clean root documentation structure preserved.
-- No `.git` directory included: Passed.
+- No files added or removed from the non-document application/build surface: Passed.
+- Root documentation remains controlled to six standing Markdown files: Passed.
+- Historical release archive remains under `docs/archive/HISTORICAL-RELEASE-NOTES.md`: Passed.
+- No `.git` directory included in repository source: Passed.
 
 ## Local Windows Publish
 - .NET SDK is not installed in the ChatGPT sandbox, so local Windows publish was not run.

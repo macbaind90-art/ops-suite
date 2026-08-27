@@ -1,5 +1,30 @@
-# PWADC Security Operations Suite v3.3.0.8
+# PWADC Security Operations Suite v3.3.1.0
 
+
+
+## v3.3.1.0 Suite-wide Responsive UI Stabilization
+
+This release is a suite-wide UI/UX stabilization pass on the v3.3 modular architecture. It improves window resizing and control consistency without changing operational records, workflow authority, attendance rules, schedule logic, reporting calculations, or shared-data contracts.
+
+### Responsive Layout Foundation
+- Normal window resizing is CSS-driven and no longer triggers a full application re-render.
+- The Windows minimum size is reduced from 1100×700 to 900×600 now that major workspaces can collapse safely.
+- Header/navigation, page actions, toolbars, forms, cards, modals, and multi-column workspaces now use shared responsive rules.
+- Dense Schedule, Training, Settings, and table surfaces use local scrolling instead of stretching or clipping the entire application.
+- Navigation dropdown positioning is normalized so wrapped navigation remains usable at narrower widths.
+
+### Control Normalization
+- Checkbox and radio inputs now use intentional control dimensions instead of inheriting full-width text-input styling.
+- Buttons, selects, text fields, textareas, action groups, and modal footers use common sizing and wrapping behavior.
+- Focus-visible treatment is standardized for keyboard operation.
+- Narrow-window form grids and schedule-draft controls collapse progressively instead of forcing fixed desktop geometry.
+
+### Release Boundary
+- No Attendance records or thresholds changed.
+- No Roster or Schedule assignments changed.
+- No Shift Operations intelligence logic changed.
+- No HPW, labor, report, role, backup, or shared JSON contracts changed.
+- v3.4.0 Data Layer / Reliability Upgrade remains the next major roadmap phase.
 
 
 ## v3.3.0.8 Roster Print Employee Scope
