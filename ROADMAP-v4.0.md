@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.3.1.0 - Suite-wide Responsive UI Stabilization**.
+Current build: **v3.4.0.0 - Atomic Save + Integrity Foundation**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -31,6 +31,7 @@ Current build: **v3.3.1.0 - Suite-wide Responsive UI Stabilization**.
 - ~~v3.3.0.7 - Attendance Print Employee Scope~~ Completed
 - ~~v3.3.0.8 - Roster Print Employee Scope~~ Completed
 - ~~v3.3.1.0 - Suite-wide Responsive UI Stabilization~~ Completed
+- ~~v3.4.0.0 - Atomic Save + Integrity Foundation~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -111,3 +112,9 @@ Primary objectives:
 
 ## Architecture Direction
 The project remains on C# / WebView2 / HTML / CSS / JavaScript in the near term. v3.3.0 resolves the immediate code-concentration risk by establishing controlled front-end and Windows-host modules. The primary remaining platform risk is shared-file concurrency and data reliability. v3.4.0 should strengthen persistence, conflict handling, validation, and recovery. A structured data layer such as SQLite should be evaluated only after those requirements and migration controls are documented.
+
+
+## Current / Next Phase
+- ~~v3.4.0.0 - Atomic Save + Integrity Foundation~~ Completed.
+- **Next: v3.4.1.0 - Stale Write / Conflict Detection.** Track the revision/hash loaded by each workstation and block blind overwrites when the shared file changed after load.
+- Planned follow-ons: v3.4.2 save coordination/locking, v3.4.3 recovery hardening, v3.4.4 schema migration framework, v3.4.5 Data Health reliability maturity.

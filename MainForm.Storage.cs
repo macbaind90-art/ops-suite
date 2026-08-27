@@ -35,7 +35,9 @@ namespace PWADC.SecurityOperationsSuite
         {
             string dataFolder = Path.Combine(settings.DataRoot, "Data");
             Directory.CreateDirectory(dataFolder);
-            File.WriteAllText(Path.Combine(dataFolder, SettingsFileName), JsonSerializer.Serialize(settings, JsonOptions));
+            string path = Path.GetFullPath(Path.Combine(dataFolder, SettingsFileName));
+            if (!IsPathUnder(path, dataFolder)) throw new InvalidOperationException("Resolved settings path is outside the suite Data folder.");
+            WriteJsonAtomically("suite-settings", path, JsonSerializer.Serialize(settings, JsonOptions), "settings-save", "auto-before-settings-save");
         }
 
         private void EnsureFolders()
@@ -46,6 +48,8 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Programs"));
+            Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity"));
+            Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit"));
             foreach (string module in ModuleNames())
             {
                 Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module)));
@@ -75,6 +79,22 @@ namespace PWADC.SecurityOperationsSuite
             checks.Add(Check("Can create exports folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports")); return true; }));
             checks.Add(Check("Can create locks folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Locks")); return true; }));
             checks.Add(Check("Can create programs folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Programs")); return true; }));
+            checks.Add(Check("Can create data integrity folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit")); return true; }));
+            checks.Add(Check("Atomic write service active", () => typeof(MainForm).GetMethod("WriteJsonAtomically", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null));
+            checks.Add(Check("Live JSON integrity", () =>
+            {
+                string dataDir = Path.Combine(settings.DataRoot, "Data");
+                foreach (string module in ModuleNames())
+                {
+                    if (!IsKnownJsonModule(module)) continue;
+                    string p = Path.Combine(dataDir, ModuleFileName(module));
+                    if (!File.Exists(p)) continue;
+                    JsonIntegrityInfo state = JsonIntegrityStatus(p);
+                    if (!string.Equals(state.Status, "valid", StringComparison.OrdinalIgnoreCase))
+                        throw new InvalidDataException(ModuleFolder(module) + " failed JSON integrity: " + state.Error);
+                }
+                return true;
+            }));
             checks.Add(Check("Open path guard active", () => IsSafeOpenPath(settings.DataRoot)));
             return new { dataRoot = settings.DataRoot, checks, moduleFiles = ModuleFileStatuses() };
         }
@@ -113,6 +133,16 @@ namespace PWADC.SecurityOperationsSuite
             if (File.Exists(fullPath))
             {
                 string existingJson = File.ReadAllText(fullPath);
+                JsonIntegrityInfo liveIntegrity = JsonIntegrityStatus(fullPath);
+                if (!string.Equals(liveIntegrity.Status, "valid", StringComparison.OrdinalIgnoreCase))
+                {
+                    FileInfo badInfo = new FileInfo(fullPath);
+                    result.Data = existingJson;
+                    result.Source = "live-invalid";
+                    result.SourceDetail = "The live JSON file failed integrity validation and was not replaced automatically. Use Data Health / Backup & Restore before making changes. " + liveIntegrity.Error;
+                    result.FileModified = badInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
+                    return result;
+                }
                 string seedJsonForCompare = File.Exists(seedPath) ? File.ReadAllText(seedPath) : "";
                 if (!ShouldReplaceWithSeed(module, existingJson, seedJsonForCompare))
                 {
@@ -126,12 +156,8 @@ namespace PWADC.SecurityOperationsSuite
 
                 if (File.Exists(seedPath))
                 {
-                    string backupDir = Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module));
-                    Directory.CreateDirectory(backupDir);
-                    string backupName = Path.GetFileNameWithoutExtension(ModuleFileName(module)) + "__pre-recovery-replace__" + DateTime.Now.ToString("yyyy-MM-dd_HHmmssfff") + ".json";
-                    File.WriteAllText(Path.Combine(backupDir, backupName), existingJson);
                     string seedJson = File.ReadAllText(seedPath);
-                    File.WriteAllText(fullPath, seedJson);
+                    WriteJsonAtomically(module, fullPath, seedJson, "packaged-recovery-replace-empty", "pre-recovery-atomic");
                     FileInfo info = new FileInfo(fullPath);
                     result.Data = seedJson;
                     result.Source = "packaged-recovery-replaced-empty";
@@ -151,7 +177,7 @@ namespace PWADC.SecurityOperationsSuite
             {
                 string seedJson = File.ReadAllText(seedPath);
                 Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-                File.WriteAllText(fullPath, seedJson);
+                WriteJsonAtomically(module, fullPath, seedJson, "packaged-recovery-create", "pre-recovery-atomic");
                 FileInfo info = new FileInfo(fullPath);
                 result.Data = seedJson;
                 result.Source = "packaged-recovery-created";
@@ -229,64 +255,43 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(dataDir);
             string path = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
             if (!IsPathUnder(path, dataDir)) throw new InvalidOperationException("Resolved recovery path is outside the suite Data folder.");
-            if (File.Exists(path))
-            {
-                string backupDir = ModuleBackupDir(module);
-                Directory.CreateDirectory(backupDir);
-                string backupName = Path.GetFileNameWithoutExtension(path) + "__pre-recovery__" + DateTime.Now.ToString("yyyy-MM-dd_HHmmssfff") + ".json";
-                string backupPath = Path.GetFullPath(Path.Combine(backupDir, backupName));
-                if (!IsPathUnder(backupPath, backupDir)) throw new InvalidOperationException("Recovery backup path resolved outside the module backup folder.");
-                File.Copy(path, backupPath, true);
-            }
-            File.WriteAllText(path, seedJson);
+            WriteJsonAtomically(module, path, seedJson, "reset-from-packaged-seed", "pre-recovery");
             return seedJson;
         }
 
         private object SaveModuleData(string module, string json)
         {
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Save failed because module was not defined.");
-            if (!IsKnownModule(module)) throw new InvalidOperationException("Save failed because module is not approved: " + module);
+            if (!IsKnownJsonModule(module)) throw new InvalidOperationException("Save failed because module is not approved for JSON persistence: " + module);
             if (string.IsNullOrWhiteSpace(json) || json == "undefined") throw new InvalidOperationException("Save failed because JSON payload was undefined for module: " + ModuleFolder(module));
 
             try
             {
-                JsonDocument.Parse(json).Dispose(); // validate before touching live file
+                ValidateJsonPayload(json, ModuleFolder(module));
                 EnsureFolders();
                 string dataDir = Path.Combine(settings.DataRoot, "Data");
                 Directory.CreateDirectory(dataDir);
                 string path = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
                 if (!IsPathUnder(path, dataDir)) throw new InvalidOperationException("Resolved save path is outside the suite Data folder.");
 
-                string backupPath = "";
-                if (File.Exists(path))
+                DataWriteOutcome result = WriteJsonAtomically(module, path, json, "module-save", "auto-before-save");
+                return new
                 {
-                    string backupDir = ModuleBackupDir(module);
-                    Directory.CreateDirectory(backupDir);
-                    string backupName = Path.GetFileNameWithoutExtension(path) + "__auto-before-save__" + DateTime.Now.ToString("yyyy-MM-dd_HHmmssfff") + ".json";
-                    backupPath = Path.GetFullPath(Path.Combine(backupDir, backupName));
-                    if (!IsPathUnder(backupPath, backupDir)) throw new InvalidOperationException("Pre-save backup path resolved outside the module backup folder.");
-                    File.Copy(path, backupPath, true);
-                }
-
-                string tempPath = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
-                File.WriteAllText(tempPath, json);
-                try
-                {
-                    if (File.Exists(path)) File.Copy(tempPath, path, true);
-                    else File.Move(tempPath, path);
-                }
-                finally
-                {
-                    try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
-                }
-
-                FileInfo info = new FileInfo(path);
-                return new { module, path = info.FullName, savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), sizeBytes = info.Length, backupPath };
+                    module = result.Module,
+                    path = result.Path,
+                    savedAt = result.SavedAt,
+                    sizeBytes = result.SizeBytes,
+                    backupPath = result.BackupPath,
+                    sha256 = result.Sha256,
+                    writeMethod = result.Method,
+                    verified = result.Verified
+                };
             }
             catch (Exception ex)
             {
-                throw new InvalidOperationException("Save failed for " + ModuleFolder(module) + ". Check shared-drive access and retry. Details: " + ex.Message, ex);
+                throw new InvalidOperationException("Save failed for " + ModuleFolder(module) + ". The live JSON was not intentionally replaced unless the validated transaction completed. Check shared-drive access and retry. Details: " + ex.Message, ex);
             }
         }
+
     }
 }

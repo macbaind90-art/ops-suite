@@ -47,6 +47,28 @@ namespace PWADC.SecurityOperationsSuite
         public object ToResponse() => new { module = Module, label = Label, name = Name, path = Path, modified = Modified, sizeBytes = SizeBytes, kind = Kind, reason = Reason };
     }
 
+
+
+    internal class JsonIntegrityInfo
+    {
+        public string Status { get; set; } = "missing";
+        public string Error { get; set; } = "";
+        public string Sha256 { get; set; } = "";
+    }
+
+    internal class DataWriteOutcome
+    {
+        public string Module { get; set; } = "";
+        public string Operation { get; set; } = "";
+        public string Path { get; set; } = "";
+        public string SavedAt { get; set; } = "";
+        public long SizeBytes { get; set; } = 0;
+        public string BackupPath { get; set; } = "";
+        public string Sha256 { get; set; } = "";
+        public string Method { get; set; } = "";
+        public bool Verified { get; set; } = false;
+    }
+
     public class SuiteSettings
     {
         public string Theme { get; set; } = "dark";

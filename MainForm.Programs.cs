@@ -73,7 +73,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.3.1.0" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.4.0.0" };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -89,7 +89,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.3.1.0", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.4.0.0", baseDirectory = AppContext.BaseDirectory };
 
         private string LatestAttendanceDateFromFile(string path)
         {
@@ -195,8 +195,9 @@ namespace PWADC.SecurityOperationsSuite
                 else if (module == "tasks") newestDataDate = NewestDatePropertyFromFile(info.FullName, "tasks", "audit");
                 else if (module == "roster") newestDataDate = NewestDatePropertyFromFile(info.FullName, "employees", "schedule", "audit");
             }
-            string sourceStatus = info == null ? "missing" : "live-shared";
-            return new { module, label = ModuleFolder(module), fileName, path, exists = info != null, sizeBytes = info?.Length ?? 0, modified = info?.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "", lastSaved, newestBackup, newestBackupModified, newestBackupSize, newestDataDate, sourceStatus };
+            JsonIntegrityInfo integrity = JsonIntegrityStatus(path);
+            string sourceStatus = info == null ? "missing" : integrity.Status == "valid" ? "live-shared" : "live-invalid";
+            return new { module, label = ModuleFolder(module), fileName, path, exists = info != null, sizeBytes = info?.Length ?? 0, modified = info?.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "", lastSaved, newestBackup, newestBackupModified, newestBackupSize, newestDataDate, sourceStatus, integrityStatus = integrity.Status, integrityError = integrity.Error, sha256 = integrity.Sha256 };
         }
 
         private string ModuleBackupDir(string module)

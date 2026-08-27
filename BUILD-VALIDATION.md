@@ -1,58 +1,52 @@
-# Build Validation - v3.3.1.0
+# Build Validation - v3.4.0.0
 
 ## Release
-- Version: 3.3.1.0
-- Release name: Suite-wide Responsive UI Stabilization
-- Baseline: v3.3.0.8 clean repository
+- Version: 3.4.0.0
+- Release name: Atomic Save + Integrity Foundation
+- Baseline: v3.3.1.0 clean repository
 
-## UI / UX Scope
-- Normal window resize is CSS-driven and no longer calls the full-page `safeRenderPages()` path: Passed.
-- Windows host minimum size reduced from 1100×700 to 900×600: Passed.
-- Shared checkbox/radio controls normalized to compact native dimensions: Passed.
-- Shared button, input, select, textarea, toolbar, modal, and action-group responsive rules present: Passed.
-- Header/navigation can wrap without forcing whole-page overflow: Passed.
-- Navigation dropdown positioning overrides the legacy fixed mobile dropdown rule: Passed.
-- Form grids and multi-column workspaces progressively collapse at narrower widths: Passed.
-- Dense Schedule / Training / Settings / table surfaces use local overflow rather than forcing the application shell wider: Passed.
-- Schedule retains an intentional locally-scrollable minimum grid width for seven-day operations: Passed.
-- No operational workflow or shared-data contract changes are part of this release.
+## Data Reliability Scope
+- Central `MainForm.DataReliability.cs` transaction layer present: Passed.
+- Module saves routed through `WriteJsonAtomically`: Passed.
+- Suite Settings saves routed through `WriteJsonAtomically`: Passed.
+- Restore operations routed through `WriteJsonAtomically`: Passed.
+- Packaged recovery/reset writes routed through `WriteJsonAtomically`: Passed.
+- Existing live file backup before critical replacement: Passed.
+- Temporary write uses `FileOptions.WriteThrough` and `Flush(true)`: Passed.
+- Temporary JSON parse + SHA-256 verification before replacement: Passed.
+- Final live JSON parse + SHA-256 verification after replacement: Passed.
+- Malformed live JSON blocks normal save: Passed.
+- Per-event Data Integrity write audit present: Passed.
+- Data Health live JSON integrity status contract present: Passed.
+- Legacy `File.Copy(tempPath, path, true)` live-write path absent: Passed.
 
-## Front-End Validation
-- JavaScript syntax check across all front-end modules and validator: Passed.
-- Permanent front-end validator: Passed.
-- Registered front-end modules: 10/10 Passed.
-- Major module render smoke: 16/16 Passed.
-- Attendance view render smoke: 6/6 Passed.
-- Roster/Schedule view render smoke: 5/5 Passed.
+## Front-End Regression
+- JavaScript syntax: Passed.
+- Permanent validator: Passed.
+- Front-end module registry: 10/10.
+- Major module render smoke: 16/16.
+- Attendance views: 6/6.
+- Roster/Schedule views: 5/5.
 - Named JavaScript functions: 867 total / 867 unique.
 - Inline action targets: 216/216 resolved.
-- Required render/action function guard: Passed.
-- Responsive UI contract checks added to permanent validator: Passed.
+- Existing responsive UI contract retained: Passed.
 
-## Project / Manifest / Version Validation
+## Project / Manifest / Version
 - `SecurityOperationsSuite.csproj` XML parse: Passed.
 - `app.manifest` XML parse: Passed.
-- Manifest XML declaration exact match `<?xml version="1.0" encoding="utf-8"?>`: Passed.
-- Five-Part .NET Version Sweep: Passed.
-  1. Project Version = 3.3.1.0.
-  2. File Version = 3.3.1.0.
-  3. Assembly Version = 3.3.1.0.
-  4. Manifest `assemblyIdentity` = 3.3.1.0.
-  5. Runtime environment version = 3.3.1.0.
-- All controlled version values contain no more than four numeric components: Passed.
-- GitHub Actions Windows artifact name aligned to v3.3.1.0: Passed.
+- Exact manifest declaration `<?xml version="1.0" encoding="utf-8"?>`: Passed.
+- Five-part .NET version sweep: 3.4.0.0 across Project, File, Assembly, Manifest, Runtime: Passed.
+- Four-part maximum version format: Passed.
+- GitHub Actions artifact aligned to v3.4.0.0: Passed.
 - `.github/workflows/build-windows.yml` present: Passed.
 
 ## Regression / Scope Integrity
-- Seed data unchanged from v3.3.0.8: Passed, 6/6 files byte-for-byte identical.
-- Packaged specialist programs unchanged from v3.3.0.8: Passed, 3/3 files byte-for-byte identical.
-- C# method inventory preserved: 52/52.
-- Desktop bridge contracts preserved: 18/18.
-- No files added or removed from the non-document application/build surface: Passed.
-- Root documentation remains controlled to six standing Markdown files: Passed.
-- Historical release archive remains under `docs/archive/HISTORICAL-RELEASE-NOTES.md`: Passed.
-- No `.git` directory included in repository source: Passed.
+- Baseline seed JSON content unchanged: Passed, 6/6 files byte-for-byte identical.
+- Specialist program content unchanged: Passed, packaged program set byte-for-byte identical.
+- Existing desktop bridge contracts preserved: Passed, 18/18 unchanged.
+- Repository root documentation remains controlled to six Markdown files: Passed.
+- No `.git` directory included: Passed.
 
 ## Local Windows Publish
-- .NET SDK is not installed in the ChatGPT sandbox, so local Windows publish was not run.
+- .NET SDK is not installed in the ChatGPT sandbox, so local Windows publish cannot be executed here.
 - GitHub Actions remains the Windows EXE build authority.

@@ -32,6 +32,24 @@ if(!resizeHandler||resizeHandler.includes('safeRenderPages'))throw new Error('Wi
 const mainFormSource=fs.readFileSync(path.join(root,'MainForm.cs'),'utf8');
 if(!mainFormSource.includes('MinimumSize = new System.Drawing.Size(900, 600);'))throw new Error('Windows minimum-size responsive contract missing.');
 
+// v3.4.0.0 data reliability contract: critical shared JSON writes use one validated transaction service.
+const reliabilityPath=path.join(root,'MainForm.DataReliability.cs');
+if(!fs.existsSync(reliabilityPath))throw new Error('Missing MainForm.DataReliability.cs atomic persistence layer.');
+const reliabilitySource=fs.readFileSync(reliabilityPath,'utf8');
+const storageSource=fs.readFileSync(path.join(root,'MainForm.Storage.cs'),'utf8');
+const backupSource=fs.readFileSync(path.join(root,'MainForm.Backups.cs'),'utf8');
+const programsSource=fs.readFileSync(path.join(root,'MainForm.Programs.cs'),'utf8');
+for(const token of ['WriteJsonAtomically','FileOptions.WriteThrough','stream.Flush(true)','File.Replace(tempPath, fullTarget','Sha256File(tempPath)','Sha256File(fullTarget)','CreateSafetyBackup','WriteDataReliabilityAudit']){
+  if(!reliabilitySource.includes(token))throw new Error('Atomic persistence contract missing: '+token);
+}
+if(!reliabilitySource.includes('Normal save is blocked so damaged data is not silently overwritten'))throw new Error('Malformed-live-file overwrite guard missing.');
+if(!storageSource.includes('WriteJsonAtomically("suite-settings"'))throw new Error('Settings save is not routed through atomic persistence.');
+if(!storageSource.includes('DataWriteOutcome result = WriteJsonAtomically(module, path, json, "module-save"'))throw new Error('Module save is not routed through atomic persistence.');
+if(!storageSource.includes('Source = "live-invalid"'))throw new Error('Invalid live JSON load status is not preserved.');
+if(!backupSource.includes('WriteJsonAtomically(module, livePath, json, "restore-backup", "pre-restore")'))throw new Error('Restore path is not routed through atomic persistence.');
+if(!programsSource.includes('integrityStatus = integrity.Status')||!programsSource.includes('sha256 = integrity.Sha256'))throw new Error('Data Health integrity status contract missing.');
+if(storageSource.includes('File.Copy(tempPath, path, true)'))throw new Error('Legacy temp-file copy-over-live persistence returned.');
+
 function element(){return {innerHTML:'',textContent:'',value:'',checked:false,dataset:{},style:{setProperty(){},display:''},classList:{add(){},remove(){},toggle(){},contains(){return false}},appendChild(){},remove(){},click(){},focus(){},setAttribute(){},getAttribute(){return null},querySelector(){return null},querySelectorAll(){return []},insertAdjacentHTML(){},files:[],contentWindow:{location:{reload(){}}}};}
 const elements=new Map();
 const document={
@@ -47,7 +65,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.3.1.0'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'3.4.0.0'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));

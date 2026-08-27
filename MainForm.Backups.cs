@@ -22,7 +22,11 @@ namespace PWADC.SecurityOperationsSuite
             string backupName = Path.GetFileNameWithoutExtension(ModuleFileName(module)) + "__manual__" + DateTime.Now.ToString("yyyy-MM-dd_HHmmssfff") + ".json";
             string path = Path.GetFullPath(Path.Combine(backupDir, backupName));
             if (!IsPathUnder(path, backupDir)) throw new InvalidOperationException("Backup path is outside the suite backup folder.");
-            File.WriteAllText(path, json);
+            WriteUtf8Durable(path, json);
+            string verifyJson = File.ReadAllText(path);
+            ValidateJsonPayload(verifyJson, "Manual backup");
+            if (!string.Equals(Sha256Text(json), Sha256File(path), StringComparison.OrdinalIgnoreCase))
+                throw new IOException("Manual backup verification failed.");
             return path;
         }
 
@@ -292,26 +296,7 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(dataDir);
             string livePath = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
             if (!IsPathUnder(livePath, dataDir)) throw new InvalidOperationException("Resolved restore target is outside the suite Data folder.");
-            if (File.Exists(livePath))
-            {
-                string preRestoreDir = ModuleBackupDir(module);
-                Directory.CreateDirectory(preRestoreDir);
-                string preRestoreName = Path.GetFileNameWithoutExtension(livePath) + "__pre-restore__" + DateTime.Now.ToString("yyyy-MM-dd_HHmmssfff") + ".json";
-                string preRestorePath = Path.GetFullPath(Path.Combine(preRestoreDir, preRestoreName));
-                if (!IsPathUnder(preRestorePath, preRestoreDir)) throw new InvalidOperationException("Pre-restore backup path resolved outside the module backup folder.");
-                File.Copy(livePath, preRestorePath, true);
-            }
-            string tempPath = livePath + "." + Guid.NewGuid().ToString("N") + ".restore.tmp";
-            File.WriteAllText(tempPath, json);
-            try
-            {
-                if (File.Exists(livePath)) File.Copy(tempPath, livePath, true);
-                else File.Move(tempPath, livePath);
-            }
-            finally
-            {
-                try { if (File.Exists(tempPath)) File.Delete(tempPath); } catch { }
-            }
+            WriteJsonAtomically(module, livePath, json, "restore-backup", "pre-restore");
             return json;
         }
     }

@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite Architecture - v3.3.0
+# PWADC Security Operations Suite Architecture - v3.4.0.0
 
 ## Purpose
 v3.3.0 establishes a maintainable module boundary without changing PWADC operational workflows, shared JSON contracts, or the C# / WebView2 platform.
@@ -61,10 +61,11 @@ Feature-specific print styles embedded inside JavaScript-generated report window
 
 - `MainForm.cs` - WinForms/WebView lifecycle and primary fields
 - `MainForm.Bridge.cs` - `suite:*` message routing and WebView response handling
-- `MainForm.Storage.cs` - settings, folder creation, module load/save, storage health and seed recovery
+- `MainForm.Storage.cs` - settings, folder creation, module load orchestration, storage health and seed recovery
+- `MainForm.DataReliability.cs` - validated JSON transactions, durable staging, SHA-256 verification, pre-write recovery copies and write-audit records
 - `MainForm.Backups.cs` - backup creation, retention, cleanup, inventory and restore
 - `MainForm.Programs.cs` - approved path handling, packaged programs, suite lock files, environment information and module file status
-- `Models.cs` - backup models, Suite Settings, coverage requirements and suite users
+- `Models.cs` - backup models, data-integrity/write outcomes, Suite Settings, coverage requirements and suite users
 
 ## Desktop Bridge Contract
 v3.3.0 does not rename or remove existing WebView message contracts. Current contracts remain the compatibility boundary between the JavaScript application and the Windows host.
@@ -99,3 +100,17 @@ At minimum, future changes should continue to run:
 
 ## Next Architecture Risk
 After code concentration, the primary platform risk is shared-file concurrency and data reliability. v3.4.0 should address stale writes, conflict detection, atomic persistence, schema/version awareness, validation, and recovery before a database migration is considered.
+
+
+## v3.4 Persistence Contract
+Critical shared JSON writes follow this host-side sequence:
+
+`UI → existing suite:* bridge → JSON validation → live-file integrity guard → pre-write backup → same-directory durable temp write → temp parse/hash verification → atomic replace/move → final parse/hash verification → write audit`
+
+Rules:
+- Feature modules do not implement their own filesystem persistence.
+- Normal saves must not overwrite malformed live JSON.
+- Existing live data is preserved before replacement.
+- A transaction is successful only after the final live file parses and matches the expected SHA-256.
+- v3.4.0 does not yet resolve concurrent edits; stale-write detection is intentionally deferred to v3.4.1.
+- Shared JSON remains the active persistence layer; no database dependency is introduced.

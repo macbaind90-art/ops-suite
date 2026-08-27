@@ -1,5 +1,17 @@
 # PWADC Security Operations Suite - Changelog
 
+
+### v3.4.0.0 - Atomic Save + Integrity Foundation
+- Added `MainForm.DataReliability.cs` as the centralized shared-JSON transaction layer.
+- Routed live module saves, Suite Settings saves, Backup & Restore writes, and packaged-recovery writes through validated atomic persistence.
+- Added durable temporary writes, forced flush, temporary/final JSON parsing, and SHA-256 verification.
+- Added automatic pre-write safety backups for existing live data.
+- Added malformed-live-file protection that blocks normal saves rather than silently overwriting damaged JSON.
+- Added per-write user/workstation/module audit records under `Data Integrity\Write Audit`.
+- Added Data Health integrity status for shared JSON files.
+- Added permanent CI/static validation for the v3.4.0 persistence contract.
+- No WebView bridge names, source data, schedule authority, attendance policy, or reporting calculations changed.
+
 This file is the controlled release history for the PWADC Security Operations Suite. Detailed historical build notes that previously existed as separate root-level Markdown files are consolidated in `docs/archive/HISTORICAL-RELEASE-NOTES.md`.
 
 ## Current Release

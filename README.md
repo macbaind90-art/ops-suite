@@ -1,4 +1,38 @@
-# PWADC Security Operations Suite v3.3.1.0
+# PWADC Security Operations Suite v3.4.0.0
+
+## v3.4.0.0 Atomic Save + Integrity Foundation
+
+This release hardens PWADC Security Operations Suite shared JSON persistence without changing operational workflows or moving to a database. Critical live-data writes now pass through one Windows-host transaction service.
+
+### Controlled JSON Transaction
+- Validate the requested JSON before any live-file replacement.
+- Preserve the current live file to the module backup folder when one exists.
+- Stage the new JSON to a temporary file in the same directory as the live file.
+- Write with `FileOptions.WriteThrough` and force a disk flush.
+- Re-read and parse the temporary JSON before replacement.
+- Verify the staged file SHA-256 against the requested payload.
+- Replace the live JSON with `File.Replace` when available, with same-directory overwrite move fallback.
+- Re-read, parse, and SHA-256 verify the final live file before reporting success.
+- Remove abandoned transaction temp files in the transaction cleanup path.
+
+### Integrity Safeguards
+- Normal module/settings saves are blocked when the existing live JSON is malformed, preventing silent overwrite of damaged data.
+- Restore and packaged-recovery operations remain controlled replacement paths and create pre-operation backups when a live file exists.
+- Manual JSON backups now use durable writes and hash verification.
+- Data Health reports live JSON as VALID, MISSING, or INVALID JSON and exposes integrity errors when present.
+
+### Write Audit
+- Each critical write records a per-event audit file under `Data Integrity\Write Audit`.
+- Audit records include timestamp, suite version, Windows user, workstation, module, operation, target path, success state, verification state, replacement method, SHA-256, file size, backup path, and error detail when applicable.
+- Audit-log failure does not block the operational save after the live-data transaction itself has been verified.
+
+### Release Boundary
+- No database migration.
+- No stale-write/conflict detection yet; that is v3.4.1.
+- No long-duration file locking.
+- No Attendance, Roster, Schedule, Shift Intelligence, HPW, labor, or report calculation changes.
+- Existing WebView `suite:*` bridge message names remain compatible.
+
 
 
 
