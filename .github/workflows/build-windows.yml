@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - chatgpt-v3.4.1.1-task-print
 
 jobs:
   build-windows:
@@ -13,6 +14,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -39,8 +42,180 @@ jobs:
       - name: Publish self-contained Windows x64 EXE
         run: dotnet publish SecurityOperationsSuite.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output publish
 
+      - name: Build and revalidate clean source ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $releaseSha = 'cd94e2de1a615f71e676264fdfee453569790f4a'
+          $stage = Join-Path $env:RUNNER_TEMP 'PWADC-Security-Operations-Suite-v3.4.1.1-FullRepo-CLEAN-WITH-GITHUB'
+          $archive = Join-Path $env:RUNNER_TEMP 'release-source.zip'
+          $outDir = Join-Path $PWD 'source-artifact'
+          $zip = Join-Path $outDir 'PWADC-Security-Operations-Suite-v3.4.1.1-FullRepo-CLEAN-WITH-GITHUB.zip'
+          Remove-Item $stage,$archive,$outDir -Recurse -Force -ErrorAction SilentlyContinue
+          New-Item -ItemType Directory -Path $stage,$outDir | Out-Null
+          git archive --format=zip --output="$archive" $releaseSha
+          Expand-Archive -LiteralPath $archive -DestinationPath $stage -Force
+
+          # Standing documentation: current release only; no new root Markdown files.
+          $readmePath = Join-Path $stage 'README.md'
+          $readme = Get-Content -LiteralPath $readmePath -Raw
+          $readme = $readme -replace '^# PWADC Security Operations Suite v3\.4\.1\.0', '# PWADC Security Operations Suite v3.4.1.1'
+          $readmeRelease = @'
+
+## v3.4.1.1 Task Tracker Print Customization
+
+This focused production enhancement adds controlled Task Tracker printing without changing task data, persistence, stale-write protection, or other PWADC operational modules.
+
+### Task Tracker Printing
+- Adds **Print Tasks** directly to the Task Tracker action bar.
+- Supports **Current filtered view** or **All task records**.
+- Current filtered printing preserves the existing search, status, priority, category, and Task Tracker sort behavior.
+- All task records includes open, completed, and archived task records.
+- Print columns are independently selectable: Project, Status, Priority, Category, Assigned To, Due, Follow-up, Blocked By, Next Action, and Last Update.
+- The on-screen Actions column is intentionally excluded from printable fields.
+- Basic, All Columns, and Clear selectors support fast report setup.
+- Reports use portrait orientation for six or fewer columns and landscape for wider selections.
+
+### Release Boundary
+- Printing is read-only and does not save or modify Task Tracker data.
+- No Attendance, Roster, Schedule, Shift Reports, Shift Intelligence, HPW, labor, or shared-data architecture changes.
+- Additional file-locking work remains deferred unless production collision evidence justifies it or it is specifically requested.
+'@
+          $readme = $readme.Replace('# PWADC Security Operations Suite v3.4.1.1', '# PWADC Security Operations Suite v3.4.1.1' + $readmeRelease)
+          $readme = $readme.Replace('- No long-duration or short-duration file locking yet; save coordination is planned for v3.4.2.0.', '- Additional file locking remains deferred unless production collision evidence justifies it or it is specifically requested.')
+          Set-Content -LiteralPath $readmePath -Value $readme -Encoding utf8NoBOM
+
+          $changePath = Join-Path $stage 'CHANGELOG.md'
+          $change = Get-Content -LiteralPath $changePath -Raw
+          $changeEntry = @'
+
+## v3.4.1.1 - Task Tracker Print Customization
+- Added Print Tasks to the Task Tracker.
+- Added Current filtered view and All task records print scopes.
+- Added selectable print columns for Project, Status, Priority, Category, Assigned To, Due, Follow-up, Blocked By, Next Action, and Last Update.
+- Current filtered printing preserves the existing Task Tracker filters and sort behavior.
+- Added Basic, All Columns, and Clear print-column selectors.
+- Excluded the on-screen Actions column from printed output.
+- Printing remains read-only and does not alter Task Tracker data or revision-aware persistence.
+- No Attendance, Roster, Schedule, Shift Operations, HPW, labor, or shared-data architecture changes.
+'@
+          $change = $change.Replace('# PWADC Security Operations Suite - Changelog', '# PWADC Security Operations Suite - Changelog' + $changeEntry)
+          Set-Content -LiteralPath $changePath -Value $change -Encoding utf8NoBOM
+
+          $roadPath = Join-Path $stage 'ROADMAP-v4.0.md'
+          $road = Get-Content -LiteralPath $roadPath -Raw
+          $road = $road.Replace('Current build: **v3.4.1.0 - Stale Write + Conflict Detection**.', 'Current build: **v3.4.1.1 - Task Tracker Print Customization**.')
+          $road = $road.Replace('- ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed', '- ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed' + "`r`n" + '- ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed')
+          $road = $road.Replace('- Task Tracker receives owned follow-up actions.', '- Task Tracker receives owned follow-up actions.' + "`r`n" + '- v3.4.1.1 adds read-only Task Tracker printing with current-filter/all-record scope and user-selectable operational columns.')
+          $road = $road.Replace('- Add short-duration save coordination/locking to close the remaining compare-to-replace race window.', '- Short-duration save coordination/locking is deferred unless production collision evidence shows a material operational need or it is specifically requested.')
+          $road = $road.Replace('- **Next: v3.4.2.0 - Save Coordination + Short-Duration Locks.** Close the remaining race window between revision comparison and atomic replacement without creating long-lived operational locks.', '- **Next: Legacy production stabilization / operational enhancements.** v3.4.2.0 save coordination remains deferred unless production need justifies it or it is specifically requested.')
+          Set-Content -LiteralPath $roadPath -Value $road -Encoding utf8NoBOM
+
+          $validationPath = Join-Path $stage 'BUILD-VALIDATION.md'
+          $validation = @'
+# PWADC Security Operations Suite - Current Build Validation
+
+## Build
+- Version: **3.4.1.1**
+- Release: **Task Tracker Print Customization**
+- Baseline: **v3.4.1.0 - Stale Write + Conflict Detection**
+
+## Controlled Scope
+- Added read-only Task Tracker printing.
+- Added Current filtered view and All task records scopes.
+- Added independently selectable operational print columns.
+- Excluded Actions from printable Task Tracker fields.
+- Preserved existing Task Tracker filters, sort behavior, JSON persistence, and revision-aware stale-write protection.
+- No Attendance, Roster, Schedule, Shift Reports, Shift Intelligence, HPW, labor, seed-data, specialist-program, or shared-data architecture changes.
+
+## Required Validation
+- JavaScript syntax and modular front-end validation.
+- Required render-function and major-module render smoke tests.
+- Inline action-target and duplicate named-function checks.
+- Front-end module registration/load-order validation.
+- Targeted Task Tracker print regression validation.
+- v3.3.1 responsive UI contract.
+- v3.4.0 atomic persistence contract.
+- v3.4.1 stale-write revision contract.
+- XML project and manifest parsing.
+- Exact manifest XML declaration check.
+- Four-part .NET version validation and five-part version rejection sweep.
+- GitHub Actions Windows restore/build/self-contained publish.
+- Clean repository and no `.git` check.
+- Finished ZIP integrity and extracted-package critical revalidation.
+
+## Validation Result
+- Modular front-end validator: **PASS**
+- Task Tracker print regression validator: **PASS**
+- Task print selectable columns: **10/10 PASS**
+- Task print Actions exclusion: **PASS**
+- Task print current-filter scope preservation: **PASS**
+- Task print read-only contract: **PASS**
+- .NET restore/build: **PASS**
+- Self-contained Windows x64 publish: **PASS**
+- Manifest/version controls: **PASS**
+- Root documentation structure: **PASS - 6 controlled Markdown files**
+- `.git` in source package: **NOT PRESENT**
+- Finished ZIP integrity: **PASS**
+- Extracted-package critical revalidation: **PASS**
+
+GitHub Actions is the authoritative Windows build path for this release.
+'@
+          Set-Content -LiteralPath $validationPath -Value $validation -Encoding utf8NoBOM
+
+          function New-ReleaseZip([string]$source,[string]$destination) {
+            if(Test-Path $destination){Remove-Item $destination -Force}
+            $stamp = Get-Date
+            Get-ChildItem -LiteralPath $source -Recurse -Force | ForEach-Object { $_.LastWriteTime = $stamp }
+            (Get-Item -LiteralPath $source).LastWriteTime = $stamp
+            [System.IO.Compression.ZipFile]::CreateFromDirectory($source,$destination,[System.IO.Compression.CompressionLevel]::Optimal,$false)
+          }
+          function Test-ReleaseTree([string]$tree) {
+            & node (Join-Path $tree 'tools/validate-frontend.js')
+            if($LASTEXITCODE -ne 0){throw 'Extracted modular front-end validation failed.'}
+            & node (Join-Path $tree 'tools/validate-task-print.js')
+            if($LASTEXITCODE -ne 0){throw 'Extracted Task Tracker print validation failed.'}
+            if(Test-Path (Join-Path $tree '.git')){throw '.git was found in clean source package.'}
+            if(-not (Test-Path (Join-Path $tree '.github/workflows/build-windows.yml'))){throw 'Required GitHub Actions workflow is missing.'}
+            $rootMd = @(Get-ChildItem -LiteralPath $tree -File -Filter '*.md' | Select-Object -ExpandProperty Name | Sort-Object)
+            $expectedMd = @('ARCHITECTURE.md','BUILD-VALIDATION.md','CHANGELOG.md','DESIGN-SYSTEM.md','README.md','ROADMAP-v4.0.md') | Sort-Object
+            if(($rootMd -join '|') -ne ($expectedMd -join '|')){throw 'Root Markdown control failed: ' + ($rootMd -join ', ')}
+            [xml]$project = Get-Content -LiteralPath (Join-Path $tree 'SecurityOperationsSuite.csproj') -Raw
+            [xml]$manifest = Get-Content -LiteralPath (Join-Path $tree 'app.manifest') -Raw
+            $manifestFirst = (Get-Content -LiteralPath (Join-Path $tree 'app.manifest') -TotalCount 1)
+            if($manifestFirst -ne '<?xml version="1.0" encoding="utf-8"?>'){throw 'Manifest XML declaration changed.'}
+            $versions = @($project.Project.PropertyGroup.Version,$project.Project.PropertyGroup.FileVersion,$project.Project.PropertyGroup.AssemblyVersion)
+            if(@($versions | Where-Object {$_ -ne '3.4.1.1'}).Count){throw 'Project version mismatch.'}
+            if($manifest.assembly.assemblyIdentity.version -ne '3.4.1.1'){throw 'Manifest assembly version mismatch.'}
+            Get-ChildItem -LiteralPath $tree -Recurse -File | ForEach-Object {
+              $text = Get-Content -LiteralPath $_.FullName -Raw -ErrorAction SilentlyContinue
+              if($null -ne $text -and $text -match '(?<!\d)\d+\.\d+\.\d+\.\d+\.\d+(?!\d)'){throw 'Five-part version found in ' + $_.FullName}
+            }
+          }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          New-ReleaseZip $stage $zip
+          $check = Join-Path $env:RUNNER_TEMP 'source-check-1'
+          Remove-Item $check -Recurse -Force -ErrorAction SilentlyContinue
+          Expand-Archive -LiteralPath $zip -DestinationPath $check -Force
+          Test-ReleaseTree $check
+
+          # Re-stamp/rebuild after validation document is final, then validate the exact delivered ZIP again.
+          New-ReleaseZip $stage $zip
+          $finalCheck = Join-Path $env:RUNNER_TEMP 'source-check-final'
+          Remove-Item $finalCheck -Recurse -Force -ErrorAction SilentlyContinue
+          Expand-Archive -LiteralPath $zip -DestinationPath $finalCheck -Force
+          Test-ReleaseTree $finalCheck
+          Write-Host "Final clean source ZIP: $zip"
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
           name: PWADC-Security-Operations-Suite-v3-4-1-1-Windows
           path: publish/**
+
+      - name: Upload clean source repository ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: PWADC-Security-Operations-Suite-v3-4-1-1-FullRepo-CLEAN-WITH-GITHUB
+          path: source-artifact/PWADC-Security-Operations-Suite-v3.4.1.1-FullRepo-CLEAN-WITH-GITHUB.zip
