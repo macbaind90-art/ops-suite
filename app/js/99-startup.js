@@ -37,13 +37,15 @@ function printTaskTrackerCustom(){
   printHtmlDirect('PWADC Security Task Tracker',body,cols.length>6?'landscape':'portrait');
 }
 
-const renderTasksV3411Base=renderTasks;
-renderTasks=function(){
-  const html=renderTasksV3411Base();
-  const anchor='<button onclick="exportTasksCSV()">Export CSV</button>';
-  const printButton='<button onclick="openTaskPrintModal()">Print Tasks</button>';
-  return html.includes(anchor)?html.replace(anchor,printButton+anchor):html;
-};
+if(typeof renderTasks==='function'){
+  const renderTasksV3411Base=renderTasks;
+  renderTasks=function(){
+    const html=renderTasksV3411Base();
+    const anchor='<button onclick="exportTasksCSV()">Export CSV</button>';
+    const printButton='<button onclick="openTaskPrintModal()">Print Tasks</button>';
+    return html.includes(anchor)?html.replace(anchor,printButton+anchor):html;
+  };
+}
 
 (function(){
   const expected=['bootstrap','data-core','shell-audits','reports-governance','workflows-home','roster-schedule','training-uniforms','attendance','shift-operations','tasks-settings'];
