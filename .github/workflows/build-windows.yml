@@ -22,6 +22,9 @@ jobs:
       - name: Validate modular front end
         run: node tools/validate-frontend.js
 
+      - name: Validate Task Tracker print regression
+        run: node tools/validate-task-print.js
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -39,5 +42,5 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-4-1-0-Windows
+          name: PWADC-Security-Operations-Suite-v3-4-1-1-Windows
           path: publish/**
