@@ -1,5 +1,15 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.4.1.1 - Task Tracker Print Customization
+- Added Print Tasks to the Task Tracker.
+- Added Current filtered view and All task records print scopes.
+- Added selectable print columns for Project, Status, Priority, Category, Assigned To, Due, Follow-up, Blocked By, Next Action, and Last Update.
+- Current filtered printing preserves the existing Task Tracker filters and sort behavior.
+- Added Basic, All Columns, and Clear print-column selectors.
+- Excluded the on-screen Actions column from printed output.
+- Printing remains read-only and does not alter Task Tracker data or revision-aware persistence.
+- No Attendance, Roster, Schedule, Shift Operations, HPW, labor, or shared-data architecture changes.
+
 ## v3.4.1.0 - Stale Write + Conflict Detection
 - Added SHA-256 revision fingerprints to operational module load envelopes.
 - Added expected-revision checks to Attendance, Roster/Schedule, Tasks, Shift Reports, and Shift Intelligence saves.

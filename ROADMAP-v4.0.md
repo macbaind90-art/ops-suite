@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.4.1.0 - Stale Write + Conflict Detection**.
+Current build: **v3.4.1.1 - Task Tracker Print Customization**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -33,6 +33,7 @@ Current build: **v3.4.1.0 - Stale Write + Conflict Detection**.
 - ~~v3.3.1.0 - Suite-wide Responsive UI Stabilization~~ Completed
 - ~~v3.4.0.0 - Atomic Save + Integrity Foundation~~ Completed
 - ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed
+- ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed
 
 ## Current Governance Model
 ### Command Center
@@ -48,6 +49,7 @@ Current build: **v3.4.1.0 - Stale Write + Conflict Detection**.
 - Shift Intelligence is the decision center and active watchlist.
 - The operating path remains Import → Extract → Decide → Follow Up → Close.
 - Task Tracker receives owned follow-up actions.
+- v3.4.1.1 adds read-only Task Tracker printing with current-filter/all-record scope and user-selectable operational columns.
 - The backup-first Clear Shift Report Memory control remains Admin-only and affects only Shift Reports and Shift Intelligence.
 - Operational calibration against additional real reports remains a deferred stabilization item, not a blocker for v3.3.0.
 - v3.2.6.2 adds a controlled schedule workspace: cell copy/paste, backup-first live schedule clearing, and persistent mock schedules that remain excluded from live HPW and labor reporting until explicitly applied.
@@ -98,7 +100,7 @@ Current build: **v3.4.1.0 - Stale Write + Conflict Detection**.
 Primary objectives:
 - ~~Atomic-save, validation, and live-file integrity foundation.~~ Completed in v3.4.0.0.
 - ~~Explicit stale-write/read-revision conflict detection for shared operational JSON.~~ Completed in v3.4.1.0.
-- Add short-duration save coordination/locking to close the remaining compare-to-replace race window.
+- Short-duration save coordination/locking is deferred unless production collision evidence shows a material operational need or it is specifically requested.
 - Add recovery/last-known-good hardening.
 - Add schema/version awareness and safer migration boundaries.
 - Integrate reliability conditions into Data Health.
@@ -119,5 +121,5 @@ The project remains on C# / WebView2 / HTML / CSS / JavaScript in the near term.
 ## Current / Next Phase
 - ~~v3.4.0.0 - Atomic Save + Integrity Foundation~~ Completed.
 - ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed.
-- **Next: v3.4.2.0 - Save Coordination + Short-Duration Locks.** Close the remaining race window between revision comparison and atomic replacement without creating long-lived operational locks.
+- **Next: Legacy production stabilization / operational enhancements.** v3.4.2.0 save coordination remains deferred unless production need justifies it or it is specifically requested.
 - Planned follow-ons: v3.4.3.0 recovery hardening, v3.4.4.0 schema migration framework, v3.4.5.0 Data Health reliability maturity.

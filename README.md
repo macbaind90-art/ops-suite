@@ -1,4 +1,23 @@
-# PWADC Security Operations Suite v3.4.1.0
+# PWADC Security Operations Suite v3.4.1.1
+
+## v3.4.1.1 Task Tracker Print Customization
+
+This focused production enhancement adds controlled Task Tracker printing without changing task data, persistence, stale-write protection, or unrelated PWADC operational modules.
+
+### Task Tracker Printing
+- Adds **Print Tasks** directly to the Task Tracker action bar.
+- Supports **Current filtered view** or **All task records**.
+- Current filtered printing preserves the existing search, status, priority, category, and Task Tracker sort behavior.
+- All task records includes open, completed, and archived task records.
+- Print columns are independently selectable: Project, Status, Priority, Category, Assigned To, Due, Follow-up, Blocked By, Next Action, and Last Update.
+- The on-screen Actions column is intentionally excluded from printable fields.
+- Basic, All Columns, and Clear selectors support fast report setup.
+- Reports use portrait orientation for six or fewer columns and landscape for wider selections.
+
+### Release Boundary
+- Printing is read-only and does not save or modify Task Tracker data.
+- No Attendance, Roster, Schedule, Shift Reports, Shift Intelligence, HPW, labor, or shared-data architecture changes.
+- Additional file-locking work remains deferred unless production collision evidence justifies it or it is specifically requested.
 
 
 ## v3.4.1.0 Stale Write + Conflict Detection
@@ -26,7 +45,7 @@ This release adds revision-aware concurrency protection to the v3.4.0 atomic-sav
 
 ### Release Boundary
 - No automatic merge engine.
-- No long-duration or short-duration file locking yet; save coordination is planned for v3.4.2.0.
+- Additional file locking remains deferred unless production collision evidence justifies it or it is specifically requested.
 - No database migration.
 - No Attendance policy, Roster, Schedule, HPW, labor, Shift Intelligence classification, or report-calculation changes.
 - Existing `suite:*` message names remain compatible; revision data is carried inside the existing load/save payloads.
@@ -460,7 +479,10 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.2.6.2 - Schedule Workspace Enhancements~~ Completed
 - ~~v3.2.6.3 - Attendance Totals Print Enhancement~~ Completed
 - ~~v3.3.0 - Code Organization / Modularization~~ Completed
-- **v3.4.0 - Data Layer / Reliability Upgrade** Next
+- ~~v3.4.0 - Data Layer / Reliability Upgrade~~ Completed
+- ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed
+- ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed
+- **Legacy production stabilization / operational enhancements** Current
 - v3.5.0 - Reporting / Compliance Maturity
 - v3.6.0 - Role / Security Maturity
 - v3.7.0 - Workflow Intelligence / Smart Assist
