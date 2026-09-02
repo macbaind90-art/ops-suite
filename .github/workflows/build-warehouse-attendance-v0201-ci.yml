@@ -1,0 +1,109 @@
+name: Build Warehouse Attendance Tracker v0.2.0.1 CI
+
+on:
+  push:
+    branches:
+      - warehouse-attendance-v0.2.0.1-ci
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout CI branch
+        uses: actions/checkout@v4
+
+      - name: Rehydrate verified v0.2.0.0 source
+        shell: pwsh
+        run: |
+          $files = @(
+            'warehouse-v0200-ci/chunk00.txt',
+            'warehouse-v0200-ci/chunk01.txt',
+            'warehouse-v0200-ci/chunk02a.txt',
+            'warehouse-v0200-ci/chunk02b.txt',
+            'warehouse-v0200-ci/chunk03.txt',
+            'warehouse-v0200-ci/chunk04.txt',
+            'warehouse-v0200-ci/chunk05.txt',
+            'warehouse-v0200-ci/chunk06.txt'
+          )
+          $expected = @(
+            '35a1f79faffa44ee427c51f68a77b5696572330876aae253e4deb498dc7f7793',
+            '413c64e22b8233b8981c3710c545039219bca78ceb1259c2346b5a639eed7ea5',
+            'd789242417d2ab32f3d5cc1a7bce7b188c766afd2087074221ce83556009fee1',
+            '5112b6312952ea62af0ce1cb2c5785aa3133d3a2085b2303ab7fbecf9a99b733',
+            '89d63a07d22c4c57088c216404554c71ad64346fc5c53a1cb54e36d655bf756b',
+            'd8944a6c87269ac885724fcf6651a2f318fcb3e23a1d00a767b2e6ff442674a6',
+            'bdc329d85da0dc6f795c6a31d7c8e4c1943831e4ae1ab1941a4013320af71786',
+            '8ad3dfb3c0b74a010f75c883f8499a89e7c26a2ac8c583946aab0a56b2cbbc39'
+          )
+          for ($i=0; $i -lt $files.Count; $i++) {
+            $hash = (Get-FileHash $files[$i] -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($hash -ne $expected[$i]) { throw "Source chunk $i SHA-256 mismatch: $hash" }
+          }
+          $b64 = ($files | ForEach-Object { Get-Content $_ -Raw }) -join ''
+          if ($b64.Length -ne 45048) { throw "Unexpected base64 length: $($b64.Length)." }
+          [IO.File]::WriteAllBytes('warehouse-attendance-v0200-source.zip',[Convert]::FromBase64String($b64))
+          $hash = (Get-FileHash 'warehouse-attendance-v0200-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '913f2e468405b88255c1349163bc40e17675c63ff02683a3f561274a731bc319') { throw "Source ZIP SHA-256 mismatch: $hash" }
+          Expand-Archive warehouse-attendance-v0200-source.zip -DestinationPath warehouse-ci -Force
+
+      - name: Apply v0.2.0.1 PWADC theme patch
+        shell: pwsh
+        run: |
+          $root = 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker'
+          Add-Content -Path "$root/app/styles.css" -Value "`n" -Encoding utf8
+          Add-Content -Path "$root/app/styles.css" -Value (Get-Content 'warehouse-v0201-theme.css' -Raw) -Encoding utf8
+          $plainFiles = @(
+            "$root/PWADCWarehouseAttendanceTracker.csproj",
+            "$root/app.manifest",
+            "$root/WarehouseStore.cs",
+            "$root/app/app.js",
+            "$root/README.md",
+            "$root/ARCHITECTURE.md",
+            "$root/BUILD-VALIDATION.md"
+          )
+          foreach ($file in $plainFiles) {
+            $text = Get-Content $file -Raw
+            $text = $text.Replace('0.2.0.0','0.2.0.1')
+            Set-Content -Path $file -Value $text -NoNewline -Encoding utf8
+          }
+          $validator = Get-Content "$root/tools/validate.js" -Raw
+          $validator = $validator.Replace('0.2.0.0','0.2.0.1').Replace('0\.2\.0\.0','0\.2\.0\.1')
+          Set-Content -Path "$root/tools/validate.js" -Value $validator -NoNewline -Encoding utf8
+          if (-not (Select-String -Path "$root/app/styles.css" -Pattern '#C0272D' -Quiet)) { throw 'PWADC red missing.' }
+          if (-not (Select-String -Path "$root/app/styles.css" -Pattern '#C6B273' -Quiet)) { throw 'PWADC gold missing.' }
+          if (-not (Select-String -Path "$root/app/styles.css" -Pattern '#1E2330' -Quiet)) { throw 'PWADC charcoal missing.' }
+          if (-not (Select-String -Path "$root/app/styles.css" -Pattern 'Threshold attention/elevated/high/critical colors intentionally remain semantic' -Quiet)) { throw 'Threshold semantic-color guard missing.' }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate standalone source
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: node tools/validate.js
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet restore PWADCWarehouseAttendanceTracker.csproj
+
+      - name: Build
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet build PWADCWarehouseAttendanceTracker.csproj --configuration Release --no-restore
+
+      - name: Publish Windows x64
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet publish PWADCWarehouseAttendanceTracker.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishReadyToRun=false -o publish
+
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: PWADC-Warehouse-Attendance-Tracker-v0-2-0-1-Windows
+          path: warehouse-ci/PWADC-Warehouse-Attendance-Tracker/publish/**
+          if-no-files-found: error
