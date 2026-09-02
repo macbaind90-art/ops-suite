@@ -1,0 +1,54 @@
+name: Build Warehouse Attendance Tracker CI
+
+on:
+  push:
+    branches:
+      - warehouse-attendance-v0.1.0.0-ci
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout CI branch
+        uses: actions/checkout@v4
+
+      - name: Rehydrate standalone source
+        shell: pwsh
+        run: |
+          $b64 = Get-Content warehouse-attendance-source-v0.1.0.0.b64 -Raw
+          [IO.File]::WriteAllBytes('warehouse-attendance-source.zip',[Convert]::FromBase64String($b64))
+          Expand-Archive warehouse-attendance-source.zip -DestinationPath warehouse-ci -Force
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate standalone source
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: node tools/validate.js
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet restore PWADCWarehouseAttendanceTracker.csproj
+
+      - name: Build
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet build PWADCWarehouseAttendanceTracker.csproj --configuration Release --no-restore
+
+      - name: Publish Windows x64
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet publish PWADCWarehouseAttendanceTracker.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishReadyToRun=false -o publish
+
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: PWADC-Warehouse-Attendance-Tracker-v0-1-0-0-Windows
+          path: warehouse-ci/PWADC-Warehouse-Attendance-Tracker/publish/**
+          if-no-files-found: error
