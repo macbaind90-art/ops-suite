@@ -19,7 +19,8 @@ jobs:
           $files = @(
             'warehouse-v0200-ci/chunk00.txt',
             'warehouse-v0200-ci/chunk01.txt',
-            'warehouse-v0200-ci/chunk02.txt',
+            'warehouse-v0200-ci/chunk02a.txt',
+            'warehouse-v0200-ci/chunk02b.txt',
             'warehouse-v0200-ci/chunk03.txt',
             'warehouse-v0200-ci/chunk04.txt',
             'warehouse-v0200-ci/chunk05.txt',
@@ -28,7 +29,8 @@ jobs:
           $expected = @(
             '35a1f79faffa44ee427c51f68a77b5696572330876aae253e4deb498dc7f7793',
             '413c64e22b8233b8981c3710c545039219bca78ceb1259c2346b5a639eed7ea5',
-            'acd94950c7f825b6856961e5b75030a8e48c893a272dd72b184f314ba811b9da',
+            'd789242417d2ab32f3d5cc1a7bce7b188c766afd2087074221ce83556009fee1',
+            '5112b6312952ea62af0ce1cb2c5785aa3133d3a2085b2303ab7fbecf9a99b733',
             '89d63a07d22c4c57088c216404554c71ad64346fc5c53a1cb54e36d655bf756b',
             'd8944a6c87269ac885724fcf6651a2f318fcb3e23a1d00a767b2e6ff442674a6',
             'bdc329d85da0dc6f795c6a31d7c8e4c1943831e4ae1ab1941a4013320af71786',
