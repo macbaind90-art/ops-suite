@@ -16,22 +16,30 @@ jobs:
       - name: Rehydrate verified standalone source
         shell: pwsh
         run: |
+          $files = @(
+            'warehouse-ci-chunks/chunk00.txt',
+            'warehouse-ci-chunks/chunk01.txt',
+            'warehouse-ci-chunks/chunk02a.txt',
+            'warehouse-ci-chunks/chunk02b.txt',
+            'warehouse-ci-chunks/chunk03.txt',
+            'warehouse-ci-chunks/chunk04.txt',
+            'warehouse-ci-chunks/chunk05.txt'
+          )
           $expected = @(
             '78263183fe4422b71c6b38edd301508fd86c57acc2b064033ea094dac4a09266',
             '1ddecaf02d64fceafcb1ea258ad17d9fb20b4e6304cade435340cc7173cff532',
-            'd3adf8df19cec7f5e9d974d2d0c43214ae8634ad93a00a063dbac1422afe6c7f',
+            '18c9ae1242aec638d5b0eed5907d30af54c83482bc1e3a9c92de6cd56b39d0af',
+            'c6745d5de6983291c494d1b3ed9033b287710e6d7c5a4ab5c9a368e4405932fd',
             '3753d3dd8fbf74a042a1b20041f33e39a1f23dad3dfae44ed6769ffb54668b91',
             '1daad59fda328e4b6e4d710c01eb8c8a667ed34ed8ca74e7ed1de3d5b6d5430a',
             '63c9cb7b774ff4d17fab83827250cd67843e4bff98c631019d1daf805e4e65c6'
           )
-          $chunks = Get-ChildItem 'warehouse-ci-chunks/chunk*.txt' | Sort-Object Name
-          if ($chunks.Count -ne 6) { throw "Expected 6 source chunks; found $($chunks.Count)." }
-          for ($i=0; $i -lt $chunks.Count; $i++) {
-            $hash = (Get-FileHash $chunks[$i].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-            Write-Host "$($chunks[$i].Name) $hash"
-            if ($hash -ne $expected[$i]) { throw "Chunk $i SHA-256 mismatch: $hash" }
+          for ($i=0; $i -lt $files.Count; $i++) {
+            $hash = (Get-FileHash $files[$i] -Algorithm SHA256).Hash.ToLowerInvariant()
+            Write-Host "$($files[$i]) $hash"
+            if ($hash -ne $expected[$i]) { throw "Source chunk $i SHA-256 mismatch: $hash" }
           }
-          $b64 = ($chunks | ForEach-Object { Get-Content $_.FullName -Raw }) -join ''
+          $b64 = ($files | ForEach-Object { Get-Content $_ -Raw }) -join ''
           if ($b64.Length -ne 38856) { throw "Unexpected base64 length: $($b64.Length)." }
           [IO.File]::WriteAllBytes('warehouse-attendance-source.zip',[Convert]::FromBase64String($b64))
           $hash = (Get-FileHash 'warehouse-attendance-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
