@@ -16,27 +16,10 @@ jobs:
       - name: Rehydrate verified standalone source
         shell: pwsh
         run: |
-          $files = @(
-            'warehouse-ci-chunks/chunk00.txt',
-            'warehouse-ci-chunks/chunk01.txt',
-            'warehouse-ci-chunks/chunk02a.txt',
-            'warehouse-ci-chunks/chunk02b.txt',
-            'warehouse-ci-chunks/chunk03.txt',
-            'warehouse-ci-chunks/chunk04.txt',
-            'warehouse-ci-chunks/chunk05.txt'
-          )
-          $expected = @(
-            '78263183fe4422b71c6b38edd301508fd86c57acc2b064033ea094dac4a09266',
-            '1ddecaf02d64fceafcb1ea258ad17d9fb20b4e6304cade435340cc7173cff532',
-            '18c9ae1242aec638d5b0eed5907d30af54c83482bc1e3a9c92de6cd56b39d0af',
-            'c6745d5de6983291c494d1b3ed9033b287710e6d7c5a4ab5c9a368e4405932fd',
-            '3753d3dd8fbf74a042a1b20041f33e39a1f23dad3dfae44ed6769ffb54668b91',
-            '1daad59fda328e4b6e4d710c01eb8c8a667ed34ed8ca74e7ed1de3d5b6d5430a',
-            '63c9cb7b774ff4d17fab83827250cd67843e4bff98c631019d1daf805e4e65c6'
-          )
+          $files = @('warehouse-ci-chunks/chunk00.txt','warehouse-ci-chunks/chunk01.txt','warehouse-ci-chunks/chunk02a.txt','warehouse-ci-chunks/chunk02b.txt','warehouse-ci-chunks/chunk03.txt','warehouse-ci-chunks/chunk04.txt','warehouse-ci-chunks/chunk05.txt')
+          $expected = @('78263183fe4422b71c6b38edd301508fd86c57acc2b064033ea094dac4a09266','1ddecaf02d64fceafcb1ea258ad17d9fb20b4e6304cade435340cc7173cff532','18c9ae1242aec638d5b0eed5907d30af54c83482bc1e3a9c92de6cd56b39d0af','c6745d5de6983291c494d1b3ed9033b287710e6d7c5a4ab5c9a368e4405932fd','3753d3dd8fbf74a042a1b20041f33e39a1f23dad3dfae44ed6769ffb54668b91','1daad59fda328e4b6e4d710c01eb8c8a667ed34ed8ca74e7ed1de3d5b6d5430a','63c9cb7b774ff4d17fab83827250cd67843e4bff98c631019d1daf805e4e65c6')
           for ($i=0; $i -lt $files.Count; $i++) {
             $hash = (Get-FileHash $files[$i] -Algorithm SHA256).Hash.ToLowerInvariant()
-            Write-Host "$($files[$i]) $hash"
             if ($hash -ne $expected[$i]) { throw "Source chunk $i SHA-256 mismatch: $hash" }
           }
           $b64 = ($files | ForEach-Object { Get-Content $_ -Raw }) -join ''
@@ -47,38 +30,11 @@ jobs:
           Expand-Archive warehouse-attendance-source.zip -DestinationPath warehouse-ci -Force
           New-Item -ItemType Directory -Force -Path 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker/.github/workflows' | Out-Null
           Copy-Item 'warehouse-standalone-build-windows.yml' 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker/.github/workflows/build-windows.yml' -Force
-
           $storePath = 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker/WarehouseStore.cs'
           $store = [IO.File]::ReadAllText($storePath).Replace("`r`n", "`n")
-          $replacement = @'
-        var html = $$"""
-<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<style>
-body { font-family: Arial, sans-serif; margin: 42px; color: #111; }
-h1 { font-size: 22px; }
-table { width: 100%; border-collapse: collapse; margin-top: 18px; }
-th, td { border: 1px solid #999; padding: 7px; text-align: left; }
-.sig { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
-.line { border-top: 1px solid #222; padding-top: 6px; }
-</style>
-</head>
-<body>
-<h1>{{Html(notice.Title)}}</h1>
-<p><strong>Employee:</strong> {{Html(record.Profile.Name)}} &nbsp; <strong>EID:</strong> {{Html(record.Profile.Eid)}}</p>
-<p><strong>RDO:</strong> {{Html(record.Profile.Rdo)}} &nbsp; <strong>Active 9-Month Points:</strong> {{notice.PointsAtGeneration:0.##}}</p>
-<p><strong>Threshold:</strong> {{Html(notice.ThresholdName)}}</p>
-<p>{{Html(notice.Body)}}</p>
-<h2>Active Attendance Record</h2>
-<table><thead><tr><th>Date</th><th>Event</th><th>Points</th><th>Notes</th></tr></thead><tbody>{{rows}}</tbody></table>
-<div class="sig"><div class="line">Employee Signature / Date</div><div class="line">Supervisor Signature / Date</div></div>
-</body>
-</html>
-""";
-'@.Replace("`r`n", "`n")
-          $pattern = '(?s)        var html = \$""".*?""";'
+          $replacementB64 = 'ICAgICAgICB2YXIgaHRtbCA9ICQkIiIiCjwhZG9jdHlwZSBodG1sPgo8aHRtbD4KPGhlYWQ+CjxtZXRhIGNoYXJzZXQ9InV0Zi04Ij4KPHN0eWxlPgpib2R5IHsgZm9udC1mYW1pbHk6IEFyaWFsLCBzYW5zLXNlcmlmOyBtYXJnaW46IDQycHg7IGNvbG9yOiAjMTExOyB9CmgxIHsgZm9udC1zaXplOiAyMnB4OyB9CnRhYmxlIHsgd2lkdGg6IDEwMCU7IGJvcmRlci1jb2xsYXBzZTogY29sbGFwc2U7IG1hcmdpbi10b3A6IDE4cHg7IH0KdGgsIHRkIHsgYm9yZGVyOiAxcHggc29saWQgIzk5OTsgcGFkZGluZzogN3B4OyB0ZXh0LWFsaWduOiBsZWZ0OyB9Ci5zaWcgeyBtYXJnaW4tdG9wOiA2MHB4OyBkaXNwbGF5OiBncmlkOyBncmlkLXRlbXBsYXRlLWNvbHVtbnM6IDFmciAxZnI7IGdhcDogNTBweDsgfQoubGluZSB7IGJvcmRlci10b3A6IDFweCBzb2xpZCAjMjIyOyBwYWRkaW5nLXRvcDogNnB4OyB9Cjwvc3R5bGU+CjwvaGVhZD4KPGJvZHk+CjxoMT57e0h0bWwobm90aWNlLlRpdGxlKX19PC9oMT4KPHA+PHN0cm9uZz5FbXBsb3llZTo8L3N0cm9uZz4ge3tIdG1sKHJlY29yZC5Qcm9maWxlLk5hbWUpfX0gJm5ic3A7IDxzdHJvbmc+RUlEOjwvc3Ryb25nPiB7e0h0bWwocmVjb3JkLlByb2ZpbGUuRWlkKX19PC9wPgo8cD48c3Ryb25nPlJETzo8L3N0cm9uZz4ge3tIdG1sKHJlY29yZC5Qcm9maWxlLlJkbyl9fSAmbmJzcDsgPHN0cm9uZz5BY3RpdmUgOS1Nb250aCBQb2ludHM6PC9zdHJvbmc+IHt7bm90aWNlLlBvaW50c0F0R2VuZXJhdGlvbjowLiMjfX08L3A+CjxwPjxzdHJvbmc+VGhyZXNob2xkOjwvc3Ryb25nPiB7e0h0bWwobm90aWNlLlRocmVzaG9sZE5hbWUpfX08L3A+CjxwPnt7SHRtbChub3RpY2UuQm9keSl9fTwvcD4KPGgyPkFjdGl2ZSBBdHRlbmRhbmNlIFJlY29yZDwvaDI+Cjx0YWJsZT48dGhlYWQ+PHRyPjx0aD5EYXRlPC90aD48dGg+RXZlbnQ8L3RoPjx0aD5Qb2ludHM8L3RoPjx0aD5Ob3RlczwvdGg+PC90cj48L3RoZWFkPjx0Ym9keT57e3Jvd3N9fTwvdGJvZHk+PC90YWJsZT4KPGRpdiBjbGFzcz0ic2lnIj48ZGl2IGNsYXNzPSJsaW5lIj5FbXBsb3llZSBTaWduYXR1cmUgLyBEYXRlPC9kaXY+PGRpdiBjbGFzcz0ibGluZSI+U3VwZXJ2aXNvciBTaWduYXR1cmUgLyBEYXRlPC9kaXY+PC9kaXY+CjwvYm9keT4KPC9odG1sPgoiIiI7Cg=='
+          $replacement = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($replacementB64))
+          $pattern = '(?s)        var html = \$""".*?""";\n'
           $patched = [regex]::Replace($store, $pattern, [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $replacement }, 1)
           if ($patched -eq $store) { throw 'WarehouseStore notice template patch did not apply.' }
           [IO.File]::WriteAllText($storePath, $patched, [Text.UTF8Encoding]::new($false))
