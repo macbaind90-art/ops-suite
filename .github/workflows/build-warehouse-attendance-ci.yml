@@ -13,11 +13,16 @@ jobs:
       - name: Checkout CI branch
         uses: actions/checkout@v4
 
-      - name: Rehydrate standalone source
+      - name: Rehydrate verified standalone source
         shell: pwsh
         run: |
-          $b64 = Get-Content warehouse-attendance-source-v0.1.0.0.b64 -Raw
+          $chunks = Get-ChildItem 'warehouse-ci-chunks/chunk*.txt' | Sort-Object Name
+          if ($chunks.Count -ne 6) { throw "Expected 6 source chunks; found $($chunks.Count)." }
+          $b64 = ($chunks | ForEach-Object { Get-Content $_.FullName -Raw }) -join ''
+          if ($b64.Length -ne 38856) { throw "Unexpected base64 length: $($b64.Length)." }
           [IO.File]::WriteAllBytes('warehouse-attendance-source.zip',[Convert]::FromBase64String($b64))
+          $hash = (Get-FileHash 'warehouse-attendance-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($hash -ne '9f45d28d11428475c4871980284631d599d843273d81a81192fb0a734104b41a') { throw "Source ZIP SHA-256 mismatch: $hash" }
           Expand-Archive warehouse-attendance-source.zip -DestinationPath warehouse-ci -Force
 
       - name: Setup Node
