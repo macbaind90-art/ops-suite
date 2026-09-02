@@ -48,6 +48,43 @@ jobs:
           New-Item -ItemType Directory -Force -Path 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker/.github/workflows' | Out-Null
           Copy-Item 'warehouse-standalone-build-windows.yml' 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker/.github/workflows/build-windows.yml' -Force
 
+          $storePath = 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker/WarehouseStore.cs'
+          $store = [IO.File]::ReadAllText($storePath).Replace("`r`n", "`n")
+          $replacement = @'
+        var html = $$"""
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: Arial, sans-serif; margin: 42px; color: #111; }
+h1 { font-size: 22px; }
+table { width: 100%; border-collapse: collapse; margin-top: 18px; }
+th, td { border: 1px solid #999; padding: 7px; text-align: left; }
+.sig { margin-top: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 50px; }
+.line { border-top: 1px solid #222; padding-top: 6px; }
+</style>
+</head>
+<body>
+<h1>{{Html(notice.Title)}}</h1>
+<p><strong>Employee:</strong> {{Html(record.Profile.Name)}} &nbsp; <strong>EID:</strong> {{Html(record.Profile.Eid)}}</p>
+<p><strong>RDO:</strong> {{Html(record.Profile.Rdo)}} &nbsp; <strong>Active 9-Month Points:</strong> {{notice.PointsAtGeneration:0.##}}</p>
+<p><strong>Threshold:</strong> {{Html(notice.ThresholdName)}}</p>
+<p>{{Html(notice.Body)}}</p>
+<h2>Active Attendance Record</h2>
+<table><thead><tr><th>Date</th><th>Event</th><th>Points</th><th>Notes</th></tr></thead><tbody>{{rows}}</tbody></table>
+<div class="sig"><div class="line">Employee Signature / Date</div><div class="line">Supervisor Signature / Date</div></div>
+</body>
+</html>
+""";
+'@.Replace("`r`n", "`n")
+          $pattern = '(?s)        var html = \$""".*?""";'
+          $patched = [regex]::Replace($store, $pattern, [System.Text.RegularExpressions.MatchEvaluator]{ param($m) $replacement }, 1)
+          if ($patched -eq $store) { throw 'WarehouseStore notice template patch did not apply.' }
+          [IO.File]::WriteAllText($storePath, $patched, [Text.UTF8Encoding]::new($false))
+          $storeHash = (Get-FileHash $storePath -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($storeHash -ne '085fe09a0c9d41171156d49b701b0430a702ebe46b2cf3478282832f5fe49d73') { throw "Corrected WarehouseStore SHA-256 mismatch: $storeHash" }
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
