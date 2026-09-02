@@ -1,0 +1,47 @@
+/* v0.2.0.1 PWADC brand scheme */
+:root{
+  --red:#C0272D;--red2:#E03840;--red-dark:#8B1A1E;
+  --gold:#C6B273;--gold2:#DDCE91;--gold-light:#FBF7EC;
+  --charcoal:#1E2330;--ink:#1D2430;--pwadc-bg:#F3F2EF;
+  --nav:#1E2330;--nav2:#C0272D;--line:#D7DCE5;--muted:#697386;
+  --card:#FFFFFF;--shadow:0 8px 22px rgba(20,30,45,.10);
+}
+body{background:var(--pwadc-bg);color:var(--ink)}
+.topbar{background:var(--charcoal);border-bottom:3px solid var(--red);box-shadow:0 3px 10px rgba(0,0,0,.16)}
+.brand{color:var(--gold);font-weight:800;letter-spacing:.02em}
+.brand small{color:#d8dce4;opacity:1;font-weight:600}
+.nav button{color:#e9ebef;border-color:rgba(255,255,255,.18);font-weight:700}
+.nav button:hover{background:#2a3140;color:#fff;border-color:rgba(198,178,115,.45)}
+.nav button.active{background:var(--gold);border-color:var(--gold);color:var(--charcoal)}
+.title{color:var(--ink);font-weight:800}
+.page-head{border-bottom:1px solid var(--line);padding-bottom:12px}
+.card{box-shadow:var(--shadow);position:relative;overflow:hidden}
+.card:before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:var(--red)}
+.card-title,.section-title,.modal-title{color:var(--red-dark);font-weight:800}
+button{color:var(--ink);transition:.15s}
+button:hover{border-color:var(--gold);background:var(--gold-light)}
+button.primary{background:var(--red);border-color:var(--red);color:#fff;font-weight:700}
+button.primary:hover{background:var(--red2);border-color:var(--red2);color:#fff}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(198,178,115,.22)}
+tr.clickable:hover{background:var(--gold-light)}
+th{background:#F2F4F7;color:#4d5665;border-bottom:2px solid #E8D9A0}
+.table-wrap{background:#fff;box-shadow:0 3px 12px rgba(20,30,45,.04)}
+.chip{border-color:#D9C98F;background:var(--gold-light);color:#5F5121}
+.kpi{box-shadow:0 3px 12px rgba(20,30,45,.06);border-top:3px solid var(--gold)}
+.toast{background:var(--charcoal);border-top:3px solid var(--red)}
+.daily-person-row{box-shadow:0 2px 8px rgba(20,30,45,.04)}
+.daily-person-row:hover{border-color:#D9C98F}
+.daily-code-btn:not(.active):hover{border-color:var(--gold);background:var(--gold-light)}
+.daily-code-btn.active{background:var(--red);border-color:var(--red);color:#fff;box-shadow:0 0 0 2px rgba(198,178,115,.24)}
+.daily-current-code{background:var(--gold-light);border:1px solid #E8D9A0;color:var(--red-dark)}
+.grid-name{border-right:2px solid var(--gold)!important}
+.nine-grid thead .grid-name{background:#F2F4F7!important}
+.grid-date.today{background:var(--gold-light)!important;color:var(--red-dark)!important}
+.grid-cell.has-entry{background:#FFF7F7}
+.grid-cell.weekend.has-entry{background:#FFF4F4}
+.grid-cell.has-entry:hover{outline:2px solid var(--gold);outline-offset:-2px}
+.grid-code{background:#FFF0F0;border:1px solid #F5C0C2;color:var(--red-dark)}
+.modal{border-top:4px solid var(--red);box-shadow:0 18px 45px rgba(20,30,45,.22)}
+.path{background:#F2F4F7;border-left:3px solid var(--gold);padding:7px 9px;border-radius:4px}
+/* Threshold attention/elevated/high/critical colors intentionally remain semantic. */
+@media print{.card:before{display:none!important}body{background:#fff;color:#111}}
