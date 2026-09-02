@@ -45,6 +45,8 @@ jobs:
           $hash = (Get-FileHash 'warehouse-attendance-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($hash -ne '9f45d28d11428475c4871980284631d599d843273d81a81192fb0a734104b41a') { throw "Source ZIP SHA-256 mismatch: $hash" }
           Expand-Archive warehouse-attendance-source.zip -DestinationPath warehouse-ci -Force
+          New-Item -ItemType Directory -Force -Path 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker/.github/workflows' | Out-Null
+          Copy-Item 'warehouse-standalone-build-windows.yml' 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker/.github/workflows/build-windows.yml' -Force
 
       - name: Setup Node
         uses: actions/setup-node@v4
