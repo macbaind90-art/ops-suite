@@ -1,0 +1,106 @@
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/.github/workflows/build-windows.yml b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/.github/workflows/build-windows.yml
+index b90e6c1..8cd5947 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/.github/workflows/build-windows.yml
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/.github/workflows/build-windows.yml
+@@ -37,6 +37,6 @@ jobs:
+       - name: Upload Windows application
+         uses: actions/upload-artifact@v4
+         with:
+-          name: PWADC-Warehouse-Attendance-Tracker-v0-3-0-0-Windows
++          name: PWADC-Warehouse-Attendance-Tracker-v0-3-0-1-Windows
+           path: publish/**
+           if-no-files-found: error
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/ARCHITECTURE.md b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/ARCHITECTURE.md
+index 6e381da..fcb4dc6 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/ARCHITECTURE.md
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/ARCHITECTURE.md
+@@ -1,6 +1,6 @@
+ # PWADC Warehouse Attendance Tracker Architecture
+ 
+-Version: **0.3.0.0**  
++Version: **0.3.0.1**  
+ Policy baseline: **Attendance & Tardiness Policy effective 2025-02-23**
+ 
+ ## Runtime
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/AttendancePolicy.cs b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/AttendancePolicy.cs
+index 9d06e31..c81375e 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/AttendancePolicy.cs
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/AttendancePolicy.cs
+@@ -12,12 +12,7 @@ public sealed partial class WarehouseStore
+     {
+         new() { Id="present", Code="P", Label="Present", Points=0m, Active=true, PolicyManaged=true, Classification="worked", PointRule="Counts toward 40 clean worked days" },
+         new() { Id="off", Code="OFF", Label="Off", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
+-        new() { Id="vacation", Code="VAC", Label="Approved Vacation", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
+-        new() { Id="jury-duty", Code="JURY", Label="Jury Duty", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
+-        new() { Id="military-leave", Code="MIL", Label="Military Leave", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
+-        new() { Id="approved-leave", Code="LEAVE", Label="Approved Medical / Family / Workers Compensation Leave", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
+-        new() { Id="bereavement", Code="BRV", Label="Approved Funeral / Bereavement Leave", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
+-        new() { Id="approved-absence", Code="APR", Label="Other Approved Absence - 48+ Hours Advance", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
++        new() { Id="approved-absence", Code="APPABS", Label="Approved Absence", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
+         new() { Id="tardy-under-2", Code="T<2", Label="Tardy Less Than 2 Hours", Points=1m, Active=true, PolicyManaged=true, Classification="negative", PointRule="1 point" },
+         new() { Id="call-out", Code="CO", Label="Call Out", Points=1m, Active=true, PolicyManaged=true, Classification="negative", PointRule="1 point · Sunday automatically becomes 3" },
+         new() { Id="early-clock-out", Code="ECO", Label="Early Clock Out", Points=1m, Active=true, PolicyManaged=true, Classification="negative", PointRule="1 point first occurrence · 2 thereafter within 9 months" },
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/BUILD-VALIDATION.md b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/BUILD-VALIDATION.md
+index 33713d9..ca961c4 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/BUILD-VALIDATION.md
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/BUILD-VALIDATION.md
+@@ -1,9 +1,9 @@
+ # PWADC Warehouse Attendance Tracker - Build Validation
+ 
+ ## Build
+-- Version: **0.3.0.0**
+-- Release: **Approved Warehouse Attendance Policy + Positive Attendance Credits**
+-- Baseline: **v0.2.0.2 Attendance Notice Packet**
++- Version: **0.3.0.1**
++- Release: **Employee Navigation + Simplified Approved Absence + Daily Button Readability**
++- Baseline: **v0.3.0.0 Approved Warehouse Attendance Policy + Positive Attendance Credits**
+ 
+ ## Controlled scope
+ - Applied approved policy event definitions and dynamic point-assessment rules.
+@@ -16,7 +16,7 @@
+ - JavaScript syntax: PASS locally.
+ - Standalone regression validator: PASS locally.
+ - Policy rule contract tokens: PASS locally.
+-- Project/manifest strict version alignment at 0.3.0.0: PASS locally.
++- Project/manifest strict version alignment at 0.3.0.1: PASS locally.
+ - `.github/workflows/build-windows.yml`: required.
+ - `.git`: excluded from release ZIP.
+ - Exact local source reconstruction on Windows runner: PASS (ZIP SHA-256 `c23070e08425ea0994ce71c65e6b05a999efae353816981ac87d44b02ece7bc8`; 19 release files individually verified).
+@@ -25,7 +25,7 @@
+ 
+ ## Policy regression expectations
+ - Present advances clean-work progress by one day.
+-- Approved scheduled absence pauses progress without reset.
++- Approved Absence pauses progress without reset.
+ - Any negative assessed attendance point resets progress to 0.
+ - Recorded corrective action resets progress to 0.
+ - 40 clean worked days earns +1 Positive Attendance Point.
+@@ -35,3 +35,9 @@
+ - First ordinary NCNS = 2; second/subsequent ordinary NCNS within nine months = 3; Sunday/Mandatory NCNS = 4.
+ - Notice thresholds use net points after positive-credit application.
+ - Historical corrections/voids cause credit/progress calculations to recompute from dated history.
++
++## v0.3.0.1 targeted regression scope
++- Employee names open Employee Record from Daily Entry, Roster, and 9-Month Grid.
++- Policy pause choices are limited to Off and Approved Absence.
++- Daily Entry code buttons use a fixed six-character tile footprint and solid high-contrast fills.
++- No positive-credit, negative-point, rolling-nine-month, threshold, notice, Excel, or storage behavior changed.
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/CHANGELOG.md b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/CHANGELOG.md
+index 77e2755..b068770 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/CHANGELOG.md
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/CHANGELOG.md
+@@ -1,3 +1,11 @@
++## 0.3.0.1 - Employee Navigation + Approved Absence + Daily Button Readability
++- Made employee names direct links to Employee Record from Daily Entry, Roster, and the 9-Month Grid.
++- Consolidated all non-resetting approved absence choices into one policy option: **Approved Absence**.
++- Kept Off as the only other zero-point pause status.
++- Changed Daily Entry event controls to fixed six-character-width solid tiles with high-contrast PWADC fills.
++- Removed the small WORK/PAUSE/points line from each Daily Entry button; full rule details remain available in tooltips and the policy legend.
++- Preserved all v0.3.0.0 policy assessment, positive-credit, rolling-nine-month, notice, Excel, storage, and audit behavior.
++
+ # Changelog
+ 
+ ## 0.3.0.0 - Approved Warehouse Attendance Policy + Positive Attendance Credits
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/PWADCWarehouseAttendanceTracker.csproj b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/PWADCWarehouseAttendanceTracker.csproj
+index 0c64f0f..e09d252 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/PWADCWarehouseAttenda

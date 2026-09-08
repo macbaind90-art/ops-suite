@@ -1,0 +1,70 @@
+nceTracker.csproj
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/PWADCWarehouseAttendanceTracker.csproj
+@@ -8,9 +8,9 @@
+     <ApplicationManifest>app.manifest</ApplicationManifest>
+     <AssemblyName>PWADC_Warehouse_Attendance_Tracker</AssemblyName>
+     <RootNamespace>PWADC.WarehouseAttendanceTracker</RootNamespace>
+-    <Version>0.3.0.0</Version>
+-    <FileVersion>0.3.0.0</FileVersion>
+-    <AssemblyVersion>0.3.0.0</AssemblyVersion>
++    <Version>0.3.0.1</Version>
++    <FileVersion>0.3.0.1</FileVersion>
++    <AssemblyVersion>0.3.0.1</AssemblyVersion>
+   </PropertyGroup>
+   <ItemGroup>
+     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/README.md b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/README.md
+index 46d2c06..18e3d0a 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/README.md
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/README.md
+@@ -1,4 +1,4 @@
+-# PWADC Warehouse Attendance Tracker v0.3.0.0
++# PWADC Warehouse Attendance Tracker v0.3.0.1
+ 
+ Standalone PWADC warehouse attendance application using the approved warehouse Attendance & Tardiness policy and a true rolling nine-month accountability period.
+ 
+@@ -14,7 +14,7 @@ Policy assignments are fixed to the approved policy effective 2025-02-23. Superv
+ 
+ ### Scheduled / non-point statuses
+ - Present: counts toward the 40 clean worked-day requirement.
+-- Off, Approved Vacation, Jury Duty, Military Leave, approved medical/family/workers compensation leave, bereavement, and other management-approved absences at least 48 hours in advance: no negative points and do not advance or reset the 40-day counter.
++- Off and Approved Absence: no negative points and do not advance or reset the 40-day counter.
+ 
+ ### Negative attendance rules
+ - Tardy less than 2 hours: 1 point.
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/WarehouseStore.cs b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/WarehouseStore.cs
+index 65ba05d..97a3983 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/WarehouseStore.cs
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/WarehouseStore.cs
+@@ -31,7 +31,7 @@ public sealed partial class WarehouseStore
+ 
+     public object GetInitialState() => new
+     {
+-        version = "0.3.0.0",
++        version = "0.3.0.1",
+         policyVersion = PolicyVersion,
+         user = Environment.UserName,
+         machine = Environment.MachineName,
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/app/app.js b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/app/app.js
+index 6e5ed19..c948013 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/app/app.js
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/app/app.js
+@@ -1,5 +1,5 @@
+-/* PWADC Warehouse Attendance Tracker v0.3.0.0 */
+-const APP_VERSION='0.3.0.0';
++/* PWADC Warehouse Attendance Tracker v0.3.0.1 */
++const APP_VERSION='0.3.0.1';
+ const state={page:'daily',init:null,employees:[],selectedEid:'',employee:null,search:'',historyMode:'active',dailyDate:localDateISO(),daily:null,dailySearch:'',gridEnd:localDateISO(),grid:null,gridSearch:''};
+ const pending=new Map();let requestSeq=0;
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+@@ -34,11 +34,11 @@ function renderDaily(){
+   return `<div class="page-head"><div><div class="title">Daily Attendance Entry</div><div class="sub">Mark normal days Present, then code only the exceptions. Policy rules assign the actual points automatically.</div></div><div class="actions no-print"><button onclick="go('roster')">Manage Roster</button><button onclick="go('grid')">9-Month Grid</button><button onclick="go('settings')">Policy Rules</button></div></div>
+   <div class="kpis"><div class="kpi"><div class="value">${all.length}</div><div class="label">Active Employees</div></div><div class="kpi"><div class="value">${entered}</div><div class="label">Entries for ${esc(shortDate(state.dailyDate))}</div></div><div class="kpi"><div class="value">${all.length-entered}</div><div class="label">No Entry Yet</div></div><div class="kpi"><div class="value">${money(negativeToday)}</div><div class="label">Negative Points Entered Today</div></div></div>
+   <div class="card"><div class="toolbar"><div><label>Date</label><input type="date" value="${esc(state.dailyDate)}" onchange="changeDailyDate(this.value)"></div><div class="grow"><label>Search Name / EID / RDO</label><input class="search" value="${esc(state.dailySearch)}" oninput="state.dailySearch=this.value;render()" placeholder="Start typing..."></div><button class="primary" onclick="markAllPresent()">Mark All Blank as Present</button></div>
+-  <div class="notice"><strong>40-day rule:</strong> Present advances the clean-work counter. Approved scheduled absences pause it. Any negative attendance point or recorded corrective action resets it to 0. At 40 clean worked days, the employee earns +1 positive attendance point, up to a balance of 5.</div>
++  <div class="notice"><strong>40-day rule:</strong> Present advances the clean-work counter. Approved Absence pauses it. Any negative attendance point or recorded corrective action resets it to 0. At 40 clean worked days, the employee earns +1 positive attendance point, up to a balance of 5.</div>
+   <div class="daily-legend">${types.map(t=>`<span class="chip" title="${esc(pointRule(t))}"><strong>${esc(t.code)}</strong> ${esc(t.label)} · ${esc(pointRule(t))}</span>`).join(' ')}</div></div>
+   <div class="people-list">${rows.length?rows.map(r=>renderDailyRow(r,types)).join(''):`<div class="card muted">${all.length?'No employees match the current search.':'No employees are on the active roster yet.'}</div>`}</div>`;
+ }
+-function renderDailyRow(r,types){const e=r.event,current=e?.eventTypeId||'',hit=thresholdClass(r.threshold);return `<div class="daily-person-row ${hit}"><div class="daily-person"><strong>${esc(r.name)}</strong>${r.threshold?`<div>${thresholdChip(r.threshold)}</div>`:''}<span>EID ${esc(r.eid)} · RDO ${esc(r.rdo||'Not set')}</span><span class="positive-progress">Clean days: <strong>${r.cleanWorkedDays||0}/40</strong> · Positive balance: <strong>+${money(r.positiveBalance)}</strong></span></div><div class="daily-code-pad">${types.map(t=>`<button class="daily-code-btn ${current===t.id?'active':''}" title="${esc(t.label)} · ${esc(pointRule(t))}" onclick="setDailyEvent('${esc(r.eid)}','${esc(t.id)}')"><strong>${esc(t.code||'ATT')}</strong><small>${t.classification==='negative'?money(t.points):t.classification==='worked'?'WORK':'PAUSE'}</small></button>`).join('')}</div><div class="daily-current">${e?`<span class="daily-current-code">${esc(e.code||'')}</span><div><strong>${esc(e.type)}</strong><small>${money(e.points)} negative pt${Number(e.points)===1?'':'s'}${e.notes?` · ${esc(e.notes)}`:''}</small></div>`:'<span class="muted">No entry</span>'}</div><div class="daily-total"><span>Net Total</span><strong>${money(r.total)}</strong></div><div class="daily-row-actions"><button class="sm" ${e?'':'disabled'} onclick="editDailyNote('${esc(r.eid)}')">Note</button><button class="sm danger" ${e?'':'disabled'} onclick="clearDailyEvent('${esc(r.eid)}')">Clear</button></div></div>`}
++function renderDailyRow(r,types){const e=r.event,current=e?.eventTypeId||'',hit=thresholdClass(r.threshold);return `<div class="daily-person-row ${hit}"><div class="daily-person"><button class="employee-name-link" onclick="loadEmployee('${esc(r.eid)}')">${esc(r.name)}</button>${r.threshold?`<div>${thresholdChip(r.threshold)}</div>`:''}<span>EID ${esc(r.eid)} · RDO ${esc(r.rdo||'Not set')}</span><span class="positive-progress">Clean days: <strong>${r.cleanWorkedDays||0}/40</strong> · Positive balance: <strong>+${money(r.positiveBalance)}</strong></span></div><div class="daily-code-pad">${types.map(t=>`<button class="daily-code-btn daily-code-${esc(t.classification||'negative')} ${current===t.id?'active':''}" title="$

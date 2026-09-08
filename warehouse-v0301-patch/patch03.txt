@@ -1,0 +1,49 @@
+yees</div></div><div class="kpi"><div class="value">${money(k.points)}</div><div class="label">Net Attendance Points</div></div><div class="kpi"><div class="value">+${money(k.credits)}</div><div class="label">Banked Positive Points</div></div><div class="kpi"><div class="value">${k.thresholded}</div><div class="label">At Configured Threshold</div></div></div><div class="card"><div class="toolbar no-print"><div class="grow"><label>Search Name / EID / RDO</label><input class="search" value="${esc(state.search)}" oninput="state.search=this.value;render()" placeholder="Start typing..."></div><div><label>Shared Data Folder</label><div class="path">${esc(state.init?.dataRoot||'')}</div></div><button onclick="changeDataRoot()">Change Data Folder</button></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>EID</th><th>RDO</th><th class="num">Total</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr class="clickable ${thresholdClass(r.threshold)}" onclick="loadEmployee('${esc(r.eid)}')"><td><strong>${esc(r.name)}</strong>${r.threshold?`<div>${thresholdChip(r.threshold)}</div>`:''}</td><td>${esc(r.eid)}</td><td>${esc(r.rdo)}</td><td class="num total">${money(r.total)}</td></tr>`).join(''):`<tr><td colspan="4" class="muted">No employees match the current roster search.</td></tr>`}</tbody></table></div></div>`}
++function renderRoster(){const rows=rosterFiltered(),k=rosterStats();return `<div class="page-head"><div><div class="title">Warehouse Attendance Roster</div><div class="sub">Name, EID, RDO, and current net attendance total after positive credits.</div></div><div class="actions no-print"><button onclick="openEmployeeModal()">Add Employee</button><button onclick="printRoster()">Print Roster</button><button onclick="exportRoster()">Export Roster Excel</button><button class="primary" onclick="exportAll()">Export All Excel</button></div></div><div class="kpis"><div class="kpi"><div class="value">${k.people}</div><div class="label">Active Employees</div></div><div class="kpi"><div class="value">${money(k.points)}</div><div class="label">Net Attendance Points</div></div><div class="kpi"><div class="value">+${money(k.credits)}</div><div class="label">Banked Positive Points</div></div><div class="kpi"><div class="value">${k.thresholded}</div><div class="label">At Configured Threshold</div></div></div><div class="card"><div class="toolbar no-print"><div class="grow"><label>Search Name / EID / RDO</label><input class="search" value="${esc(state.search)}" oninput="state.search=this.value;render()" placeholder="Start typing..."></div><div><label>Shared Data Folder</label><div class="path">${esc(state.init?.dataRoot||'')}</div></div><button onclick="changeDataRoot()">Change Data Folder</button></div><div class="table-wrap"><table><thead><tr><th>Name</th><th>EID</th><th>RDO</th><th class="num">Total</th></tr></thead><tbody>${rows.length?rows.map(r=>`<tr class="clickable ${thresholdClass(r.threshold)}" onclick="loadEmployee('${esc(r.eid)}')"><td><button class="employee-name-link" onclick="event.stopPropagation();loadEmployee('${esc(r.eid)}')">${esc(r.name)}</button>${r.threshold?`<div>${thresholdChip(r.threshold)}</div>`:''}</td><td>${esc(r.eid)}</td><td>${esc(r.rdo)}</td><td class="num total">${money(r.total)}</td></tr>`).join(''):`<tr><td colspan="4" class="muted">No employees match the current roster search.</td></tr>`}</tbody></table></div></div>`}
+ function openEmployeeModal(existing=false){const p=existing?state.employee?.record?.profile:null;modal(`<div class="modal-head"><div class="modal-title">${existing?'Edit Employee':'Add Employee'}</div><button onclick="closeModal()">Close</button></div><div class="form-grid"><div><label>Name</label><input id="empName" value="${esc(p?.name||'')}" placeholder="Last, First or First Last"></div><div><label>EID</label><input id="empEid" value="${esc(p?.eid||'')}" ${existing?'readonly':''}></div><div class="full"><label>RDO</label><input id="empRdo" value="${esc(p?.rdo||'')}" placeholder="Example: Sat/Sun or Wed/Thu"></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="saveEmployee(${existing?'true':'false'})">Save Employee</button></div>`)}
+ async function saveEmployee(existing){try{const name=document.getElementById('empName').value.trim(),eid=document.getElementById('empEid').value.trim(),rdo=document.getElementById('empRdo').value.trim();if(!name||!eid)return toast('Name and EID are required.');await bridge('employee:save',{name,eid,rdo,active:true});closeModal();await refreshRoster();if(existing)await loadEmployee(eid,false);render();toast(existing?'Employee updated.':'Employee added.')}catch(e){toast(e.message)}}
+ 
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/app/styles.css b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/app/styles.css
+index 0faf6c7..6e90032 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/app/styles.css
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/app/styles.css
+@@ -57,3 +57,31 @@ th{background:#F2F4F7;color:#4d5665;border-bottom:2px solid #E8D9A0}
+ 
+ /* v0.3 positive attendance + policy workflow */
+ .positive-progress{margin-top:5px!important;color:#356244!important}.positive-kpi{border-top-color:#5d9a6c!important}.positive-text{color:#287443;font-weight:800}.positive-notice{border-left-color:#4d8c60;background:#eef8f0}.grid-code.positive{background:#edf8ef;border-color:#a9d2b2;color:#236238}.daily-legend{line-height:2.15}.daily-code-pad{align-content:flex-start}.daily-code-btn{min-width:54px}.daily-code-btn small{max-width:62px;overflow:hidden;text-overflow:ellipsis}.kpis{align-items:stretch}
++
++/* v0.3.0.1 daily-entry readability + employee navigation */
++.employee-name-link{
++  appearance:none;border:0;background:transparent;padding:0;margin:0;
++  color:var(--red-dark);font:inherit;font-weight:800;text-align:left;cursor:pointer;
++  text-decoration:underline;text-decoration-color:rgba(139,26,30,.28);text-underline-offset:2px;
++}
++.employee-name-link:hover{background:transparent;border:0;color:var(--red);text-decoration-color:var(--red)}
++.employee-name-link:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:2px}
++.daily-person .employee-name-link{font-size:16px}
++.grid-employee-link{font-size:13px;max-width:225px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
++.daily-code-pad{gap:7px}
++.daily-code-btn{
++  width:7.2ch;min-width:7.2ch;height:38px;padding:0;
++  display:inline-grid;place-items:center;border-radius:6px;border-width:1px;
++  box-shadow:0 2px 4px rgba(20,30,45,.14);font-weight:800;
++}
++.daily-code-btn strong{font-family:Consolas,"Courier New",monospace;font-size:13px;line-height:1;letter-spacing:.01em}
++.daily-code-btn.daily-code-worked{background:var(--charcoal);border-color:var(--charcoal);color:#fff}
++.daily-code-btn.daily-code-pause{background:var(--gold);border-color:#A8924F;color:var(--charcoal)}
++.daily-code-btn.daily-code-negative{background:var(--red);border-color:var(--red-dark);color:#fff}
++.daily-code-btn.daily-code-worked:hover{background:#303747;border-color:var(--gold);color:#fff}
++.daily-code-btn.daily-code-pause:hover{background:var(--gold2);border-color:var(--red-dark);color:var(--charcoal)}
++.daily-code-btn.daily-code-negative:hover{background:var(--red2);border-color:var(--gold);color:#fff}
++.daily-code-btn.active{
++  outline:3px solid var(--gold);outline-offset:2px;
++  box-shadow:0 0 0 1px var(--charcoal),0 3px 7px rgba(20,30,45,.22);
++}
+diff --git a/v0300_base/PWADC-Warehouse-Attendance-Tracker/app.manifest b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/app.manifest
+index 45ce89b..afb2e99 100644
+--- a/v0300_base/PWADC-Warehouse-Attendance-Tracker/app.manifest
++++ b/warehouse_v0301/PWADC-Warehouse-Attendance-Tracker/app.manifest
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+-  <assemblyIdentity version="0.3.0.0" name="PWADC.W
