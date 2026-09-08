@@ -1,0 +1,36 @@
+   new() { Id="ncns", Code="NCNS", Label="No Call / No Show", Points=2m, Active=true, PolicyManaged=true, Classification="negative", PointRule="2 points first ordinary occurrence · 3 on RDO/subsequent · 4 Sunday" },
++        new() { Id="call-out-mandatory", Code="COM", Label="Call Out Mandatory Day", Points=3m, Active=true, PolicyManaged=true, Classification="negative", PointRule="3 points" },
++        new() { Id="ncns-mandatory", Code="NCM", Label="NCNS Mandatory Day", Points=4m, Active=true, PolicyManaged=true, Classification="negative", PointRule="4 points" }
+     };
+ 
+     private static EventTypeSetting? PolicyType(string id) => PolicyEventTypes().FirstOrDefault(x => x.Id == id);
+@@ -36,23 +34,20 @@ public sealed partial class WarehouseStore
+         if (type.Classification != "negative") return new PolicyAssessment(label, code, points);
+ 
+         var sunday = eventDate.DayOfWeek == DayOfWeek.Sunday;
++        var rdo = IsEmployeeRdo(record, eventDate);
+         switch (type.Id)
+         {
+             case "call-out-mandatory":
+-                return new PolicyAssessment("Call Out Mandatory Period", "COM", 3m);
++                return new PolicyAssessment("Call Out Mandatory Day", "COM", 3m);
+             case "ncns-mandatory":
+-                return new PolicyAssessment("NCNS Mandatory Period", "NCM", 4m);
++                return new PolicyAssessment("NCNS Mandatory Day", "NCM", 4m);
+             case "call-out":
+                 if (sunday) return new PolicyAssessment("Call Out Sunday", "COS", 3m);
++                if (rdo) return new PolicyAssessment("Call Out - RDO", "CO-RDO", 2m);
+                 return new PolicyAssessment("Call Out", "CO", 1m);
+-            case "call-out-voluntary":
+-                if (sunday) return new PolicyAssessment("Call Out Sunday", "COS", 3m);
+-                return new PolicyAssessment("Call Out Voluntary", "COV", 2m);
+-            case "ncns-voluntary":
+-                if (sunday) return new PolicyAssessment("NCNS Sunday", "NCS", 4m);
+-                return new PolicyAssessment("NCNS Voluntary", "NCV", 3m);
+             case "ncns":
+                 if (sunday) return new PolicyAssessment("NCNS Sunday", "NCS", 4m);
++                if (rdo) return new PolicyAssessment("NCNS - RDO", "NC-RDO", 3m);
+                 var priorNcns = CountPriorFamily(record, eventDate, IsNcnsEvent);
+                 return priorNcns >= 1
+                     ? new PolicyAssessment("NCNS - Second/Subsequent", "NC2", 3m)
+@@ -71,13 +
