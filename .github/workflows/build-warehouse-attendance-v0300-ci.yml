@@ -1,0 +1,57 @@
+name: Build Warehouse Attendance Tracker v0.3.0.0 CI
+
+on:
+  push:
+    branches:
+      - warehouse-attendance-v0.3.0.0-ci
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout CI branch
+        uses: actions/checkout@v4
+
+      - name: Verify and extract standalone source
+        shell: pwsh
+        run: |
+          $source = 'warehouse-v0300-source.zip'
+          $expected = 'c23070e08425ea0994ce71c65e6b05a999efae353816981ac87d44b02ece7bc8'
+          $hash = (Get-FileHash $source -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "Source SHA-256: $hash"
+          if ($hash -ne $expected) { throw "Source ZIP SHA-256 mismatch: $hash" }
+          Expand-Archive $source -DestinationPath warehouse-ci -Force
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate standalone source
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: node tools/validate.js
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet restore PWADCWarehouseAttendanceTracker.csproj
+
+      - name: Build
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet build PWADCWarehouseAttendanceTracker.csproj --configuration Release --no-restore
+
+      - name: Publish Windows x64
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet publish PWADCWarehouseAttendanceTracker.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishReadyToRun=false -o publish
+
+      - name: Upload Windows app
+        uses: actions/upload-artifact@v4
+        with:
+          name: PWADC-Warehouse-Attendance-Tracker-v0-3-0-0-Windows
+          path: warehouse-ci/PWADC-Warehouse-Attendance-Tracker/publish/**
+          if-no-files-found: error
