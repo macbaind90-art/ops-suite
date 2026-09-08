@@ -17,11 +17,38 @@ jobs:
         shell: pwsh
         run: |
           $source = 'warehouse-v0300-source.zip'
-          $expected = 'c23070e08425ea0994ce71c65e6b05a999efae353816981ac87d44b02ece7bc8'
-          $hash = (Get-FileHash $source -Algorithm SHA256).Hash.ToLowerInvariant()
-          Write-Host "Source SHA-256: $hash"
-          if ($hash -ne $expected) { throw "Source ZIP SHA-256 mismatch: $hash" }
+          $transportExpected = 'c753368baf8295143d1163c1d6a078104bd869ed74e09c3092f040c0c320b05a'
+          $transportHash = (Get-FileHash $source -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "Transport ZIP SHA-256: $transportHash"
+          if ($transportHash -ne $transportExpected) { throw "Transport ZIP SHA-256 mismatch: $transportHash" }
           Expand-Archive $source -DestinationPath warehouse-ci -Force
+
+          $root = Join-Path $PWD 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker'
+          $manifest = Get-Content 'warehouse-v0300-source-manifest.sha256'
+          $expectedPaths = @()
+          foreach ($line in $manifest) {
+            if ([string]::IsNullOrWhiteSpace($line)) { continue }
+            if ($line -notmatch '^([0-9a-f]{64})  (.+)$') { throw "Malformed source manifest line: $line" }
+            $expectedHash = $Matches[1]
+            $relative = $Matches[2]
+            $expectedPaths += $relative
+            $file = Join-Path $root ($relative -replace '/', [IO.Path]::DirectorySeparatorChar)
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Required source file missing: $relative" }
+            $actualHash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            if ($actualHash -ne $expectedHash) { throw "Source file SHA-256 mismatch: $relative -> $actualHash" }
+          }
+          $actualPaths = Get-ChildItem -LiteralPath $root -File -Recurse | ForEach-Object {
+            $_.FullName.Substring($root.Length + 1).Replace([IO.Path]::DirectorySeparatorChar, '/')
+          } | Sort-Object
+          $expectedPaths = $expectedPaths | Sort-Object
+          if (($actualPaths -join "`n") -ne ($expectedPaths -join "`n")) {
+            Write-Host 'Expected source files:'
+            $expectedPaths | ForEach-Object { Write-Host "  $_" }
+            Write-Host 'Actual source files:'
+            $actualPaths | ForEach-Object { Write-Host "  $_" }
+            throw 'Extracted source file set does not match the verified local manifest.'
+          }
+          Write-Host "Verified $($expectedPaths.Count) source files against the local release manifest."
 
       - name: Setup Node
         uses: actions/setup-node@v4
