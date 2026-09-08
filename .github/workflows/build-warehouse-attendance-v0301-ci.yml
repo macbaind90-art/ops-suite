@@ -71,11 +71,20 @@ jobs:
             '1b0af6808a62cb4554d2347d30976dfafca0fb3825bc5366aea2054af3f87445',
             'b188f3b8b06751b3ba4453e52b03be672b461bffb9f68d4649dc9a6d998eeaac'
           )
+          $normalizedParts = @()
           for ($i = 0; $i -lt $patchFiles.Count; $i++) {
-            $hash = (Get-FileHash $patchFiles[$i] -Algorithm SHA256).Hash.ToLowerInvariant()
-            if ($hash -ne $patchExpected[$i]) { throw "Patch segment $i SHA-256 mismatch: $hash" }
+            $text = (Get-Content $patchFiles[$i] -Raw).Replace("`r`n", "`n")
+            $bytes = [Text.UTF8Encoding]::new($false).GetBytes($text)
+            $sha256 = [Security.Cryptography.SHA256]::Create()
+            try {
+              $hash = ([BitConverter]::ToString($sha256.ComputeHash($bytes)) -replace '-', '').ToLowerInvariant()
+            } finally {
+              $sha256.Dispose()
+            }
+            if ($hash -ne $patchExpected[$i]) { throw "Patch segment $i normalized SHA-256 mismatch: $hash" }
+            $normalizedParts += $text
           }
-          $patch = ($patchFiles | ForEach-Object { Get-Content $_ -Raw }) -join ''
+          $patch = $normalizedParts -join ''
           [IO.File]::WriteAllText('warehouse-v0301.patch', $patch, [Text.UTF8Encoding]::new($false))
           $patchHash = (Get-FileHash 'warehouse-v0301.patch' -Algorithm SHA256).Hash.ToLowerInvariant()
           Write-Host "v0.3.0.1 patch SHA-256: $patchHash"
