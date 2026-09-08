@@ -23,7 +23,7 @@ jobs:
           if ($transportHash -ne $transportExpected) { throw "Transport ZIP SHA-256 mismatch: $transportHash" }
           Expand-Archive $source -DestinationPath warehouse-ci -Force
 
-          $root = Join-Path $PWD 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker'
+          $root = [IO.Path]::GetFullPath((Join-Path $PWD 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker'))
           $manifest = Get-Content 'warehouse-v0300-source-manifest.sha256'
           $expectedPaths = @()
           foreach ($line in $manifest) {
@@ -32,13 +32,14 @@ jobs:
             $expectedHash = $Matches[1]
             $relative = $Matches[2]
             $expectedPaths += $relative
-            $file = Join-Path $root ($relative -replace '/', [IO.Path]::DirectorySeparatorChar)
+            $file = Join-Path $root $relative
             if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Required source file missing: $relative" }
             $actualHash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
+            Write-Host "$relative $actualHash"
             if ($actualHash -ne $expectedHash) { throw "Source file SHA-256 mismatch: $relative -> $actualHash" }
           }
           $actualPaths = Get-ChildItem -LiteralPath $root -File -Recurse | ForEach-Object {
-            $_.FullName.Substring($root.Length + 1).Replace([IO.Path]::DirectorySeparatorChar, '/')
+            $_.FullName.Substring($root.Length + 1) -replace '\\','/'
           } | Sort-Object
           $expectedPaths = $expectedPaths | Sort-Object
           if (($actualPaths -join "`n") -ne ($expectedPaths -join "`n")) {
