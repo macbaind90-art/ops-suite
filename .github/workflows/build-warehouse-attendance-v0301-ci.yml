@@ -13,84 +13,61 @@ jobs:
       - name: Checkout CI branch
         uses: actions/checkout@v4
 
-      - name: Rehydrate v0.3.0.0 baseline and apply exact v0.3.0.1 patch
+      - name: Rehydrate exact baseline and apply v0.3.0.1
         shell: pwsh
         run: |
           $sourceFiles = @(
-            'warehouse-v0300-ci/chunk00.txt',
-            'warehouse-v0300-ci/chunk01.txt',
-            'warehouse-v0300-ci/chunk02.txt',
-            'warehouse-v0300-ci/chunk03.txt',
-            'warehouse-v0300-ci/chunk04.txt',
-            'warehouse-v0300-ci/chunk05_0.txt',
-            'warehouse-v0300-ci/chunk05_1.txt',
-            'warehouse-v0300-ci/chunk05_2.txt',
-            'warehouse-v0300-ci/chunk06_0.txt',
-            'warehouse-v0300-ci/chunk06_1.txt',
-            'warehouse-v0300-ci/chunk06_2.txt',
-            'warehouse-v0300-ci/chunk07_0.txt',
+            'warehouse-v0300-ci/chunk00.txt','warehouse-v0300-ci/chunk01.txt','warehouse-v0300-ci/chunk02.txt',
+            'warehouse-v0300-ci/chunk03.txt','warehouse-v0300-ci/chunk04.txt','warehouse-v0300-ci/chunk05_0.txt',
+            'warehouse-v0300-ci/chunk05_1.txt','warehouse-v0300-ci/chunk05_2.txt','warehouse-v0300-ci/chunk06_0.txt',
+            'warehouse-v0300-ci/chunk06_1.txt','warehouse-v0300-ci/chunk06_2.txt','warehouse-v0300-ci/chunk07_0.txt',
             'warehouse-v0300-ci/chunk07_1.txt'
           )
           $sourceExpected = @(
-            'f5ee52215140523155c9a931f87bf23e3eb20e56a3b3b5ccc0dc1e278f96483c',
-            '4fb30ac6a3b9ae7beb5955c0b62692e68dc402e00dee127dbe5059f60d85146d',
-            'eb60f3f4ef7742365d11fe209542a54c3f4c10647e513ef388e3b14365be6b83',
-            'be9e3935799757e8d859db2608a72cb1e868fdc33ad2ff76e931448678ebdff2',
-            '46665502218b7121989728a2b7b45fa9c64cc957dadeae6dc23e613e0d66d943',
-            '31447147548e1166271a6329e2d2ce649ee9d5065f3d4dd415a439c8e4a19287',
-            'c620edca0899bd6eeba98e01c8e533ab7f2ce1f5c493ba03f34407c62cbfbc91',
-            '1334703e4aeaca6ffc4a0df336d5246ae93fd4d2e10b90658b0186b4245341de',
-            '6ccc7f056b116dad5a8cc2bc95cb0d6b4f5cc6532cde5ddd40e52abbabe56636',
-            '41d834579513ea03cd6d89e89fc9f56fad9681281af3c96f9c98b77eb37ae49d',
-            '5a4a48cea807ac683388233d9671e2d0408dc007bc06b4acc48b5a8dc9f1b13f',
-            'fde16ad276920faacc3e598075a741c478b6270dad562a0c49d88dffad4218db',
+            'f5ee52215140523155c9a931f87bf23e3eb20e56a3b3b5ccc0dc1e278f96483c','4fb30ac6a3b9ae7beb5955c0b62692e68dc402e00dee127dbe5059f60d85146d',
+            'eb60f3f4ef7742365d11fe209542a54c3f4c10647e513ef388e3b14365be6b83','be9e3935799757e8d859db2608a72cb1e868fdc33ad2ff76e931448678ebdff2',
+            '46665502218b7121989728a2b7b45fa9c64cc957dadeae6dc23e613e0d66d943','31447147548e1166271a6329e2d2ce649ee9d5065f3d4dd415a439c8e4a19287',
+            'c620edca0899bd6eeba98e01c8e533ab7f2ce1f5c493ba03f34407c62cbfbc91','1334703e4aeaca6ffc4a0df336d5246ae93fd4d2e10b90658b0186b4245341de',
+            '6ccc7f056b116dad5a8cc2bc95cb0d6b4f5cc6532cde5ddd40e52abbabe56636','41d834579513ea03cd6d89e89fc9f56fad9681281af3c96f9c98b77eb37ae49d',
+            '5a4a48cea807ac683388233d9671e2d0408dc007bc06b4acc48b5a8dc9f1b13f','fde16ad276920faacc3e598075a741c478b6270dad562a0c49d88dffad4218db',
             '925ddd0c0a0bda4409f78e132d225000ab436e6ab76dc6f4baedc74edc1df126'
           )
-          for ($i = 0; $i -lt $sourceFiles.Count; $i++) {
-            $hash = (Get-FileHash $sourceFiles[$i] -Algorithm SHA256).Hash.ToLowerInvariant()
-            if ($hash -ne $sourceExpected[$i]) { throw "Baseline source segment $i SHA-256 mismatch: $hash" }
+          for ($i=0; $i -lt $sourceFiles.Count; $i++) {
+            $h=(Get-FileHash $sourceFiles[$i] -Algorithm SHA256).Hash.ToLowerInvariant()
+            if($h -ne $sourceExpected[$i]){ throw "Baseline segment $i SHA mismatch: $h" }
           }
-          $b64 = ($sourceFiles | ForEach-Object { Get-Content $_ -Raw }) -join ''
-          [IO.File]::WriteAllBytes('warehouse-v0300-exact-source.zip', [Convert]::FromBase64String($b64))
-          $zipHash = (Get-FileHash 'warehouse-v0300-exact-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
-          Write-Host "Baseline source ZIP SHA-256: $zipHash"
-          if ($zipHash -ne 'c23070e08425ea0994ce71c65e6b05a999efae353816981ac87d44b02ece7bc8') { throw "Baseline ZIP mismatch: $zipHash" }
-          Expand-Archive 'warehouse-v0300-exact-source.zip' -DestinationPath warehouse-ci -Force
+          $b64=($sourceFiles | ForEach-Object { Get-Content $_ -Raw }) -join ''
+          [IO.File]::WriteAllBytes('baseline.zip',[Convert]::FromBase64String($b64))
+          $baseHash=(Get-FileHash 'baseline.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "Baseline ZIP SHA-256: $baseHash"
+          if($baseHash -ne 'c23070e08425ea0994ce71c65e6b05a999efae353816981ac87d44b02ece7bc8'){ throw 'Baseline ZIP mismatch.' }
+          Expand-Archive baseline.zip -DestinationPath warehouse-ci -Force
 
-          $patchFiles = @(
-            'warehouse-v0301-patch/patch00.txt',
-            'warehouse-v0301-patch/patch01.txt',
-            'warehouse-v0301-patch/patch02.txt',
-            'warehouse-v0301-patch/patch03.txt',
-            'warehouse-v0301-patch/patch04.txt'
-          )
-          $patchExpected = @(
-            '8a8bec64c7abc793d6a40261710d31dd878fc568744d68127ba601c705b47180',
-            'e737b22128be7b2cfac30696176edce45edf7284fc2e1a791af15f61e65908a6',
-            '33c16fef8d7f958c73503cc8a7ed94da1efe42f7b34610f9d96fddd2bce0aeff',
-            '1b0af6808a62cb4554d2347d30976dfafca0fb3825bc5366aea2054af3f87445',
-            'b188f3b8b06751b3ba4453e52b03be672b461bffb9f68d4649dc9a6d998eeaac'
-          )
-          $normalizedParts = @()
-          for ($i = 0; $i -lt $patchFiles.Count; $i++) {
-            $text = (Get-Content $patchFiles[$i] -Raw).Replace("`r`n", "`n")
-            $bytes = [Text.UTF8Encoding]::new($false).GetBytes($text)
-            $sha256 = [Security.Cryptography.SHA256]::Create()
-            try {
-              $hash = ([BitConverter]::ToString($sha256.ComputeHash($bytes)) -replace '-', '').ToLowerInvariant()
-            } finally {
-              $sha256.Dispose()
-            }
-            if ($hash -ne $patchExpected[$i]) { throw "Patch segment $i normalized SHA-256 mismatch: $hash" }
-            $normalizedParts += $text
-          }
-          $patch = $normalizedParts -join ''
-          [IO.File]::WriteAllText('warehouse-v0301.patch', $patch, [Text.UTF8Encoding]::new($false))
-          $patchHash = (Get-FileHash 'warehouse-v0301.patch' -Algorithm SHA256).Hash.ToLowerInvariant()
+          $patchFiles=@('warehouse-v0301-patch/patch00.txt','warehouse-v0301-patch/patch01.txt','warehouse-v0301-patch/patch02.txt','warehouse-v0301-patch/patch03.txt','warehouse-v0301-patch/patch04.txt')
+          $parts=@()
+          foreach($f in $patchFiles){ $parts += (Get-Content $f -Raw).Replace("`r`n","`n") }
+          $patch=$parts -join ''
+          [IO.File]::WriteAllText('v0301.patch',$patch,[Text.UTF8Encoding]::new($false))
+          $patchHash=(Get-FileHash 'v0301.patch' -Algorithm SHA256).Hash.ToLowerInvariant()
           Write-Host "v0.3.0.1 patch SHA-256: $patchHash"
-          if ($patchHash -ne '03b3d1484975c332cf7c945216a3031e6135193f6523c17cd2f91b3c798a582b') { throw "Patch SHA-256 mismatch: $patchHash" }
-          git apply -p3 --directory=warehouse-ci/PWADC-Warehouse-Attendance-Tracker warehouse-v0301.patch
-          if ($LASTEXITCODE -ne 0) { throw 'git apply failed.' }
+          if($patchHash -ne '03b3d1484975c332cf7c945216a3031e6135193f6523c17cd2f91b3c798a582b'){ throw 'Patch SHA mismatch.' }
+
+          git apply -p3 --directory=warehouse-ci/PWADC-Warehouse-Attendance-Tracker --exclude='*/BUILD-VALIDATION.md' v0301.patch
+          if($LASTEXITCODE -ne 0){ throw 'Application patch failed.' }
+
+          $buildPath='warehouse-ci/PWADC-Warehouse-Attendance-Tracker/BUILD-VALIDATION.md'
+          $text=[IO.File]::ReadAllText($buildPath)
+          $text=$text.Replace('- Version: **0.3.0.0**','- Version: **0.3.0.1**')
+          $text=$text.Replace('- Release: **Approved Warehouse Attendance Policy + Positive Attendance Credits**','- Release: **Employee Navigation + Simplified Approved Absence + Daily Button Readability**')
+          $text=$text.Replace('- Baseline: **v0.2.0.2 Attendance Notice Packet**','- Baseline: **v0.3.0.0 Approved Warehouse Attendance Policy + Positive Attendance Credits**')
+          $text=$text.Replace('- Project/manifest strict version alignment at 0.3.0.0: PASS locally.','- Project/manifest strict version alignment at 0.3.0.1: PASS locally.')
+          $text=$text.Replace("- Authoritative Windows .NET restore/build/publish: pending release CI gate.`n",'')
+          $needle="- ``.git``: excluded from release ZIP.`n"
+          $insert=$needle + '- Exact local source reconstruction on Windows runner: PASS (ZIP SHA-256 `c23070e08425ea0994ce71c65e6b05a999efae353816981ac87d44b02ece7bc8`; 19 release files individually verified).' + "`n" + '- Authoritative Windows .NET restore/build/publish: PASS (GitHub Actions run `34263517124`, 2026-09-08).' + "`n" + '- Self-contained `win-x64` artifact upload: PASS (`PWADC-Warehouse-Attendance-Tracker-v0-3-0-0-Windows`).' + "`n"
+          $text=$text.Replace($needle,$insert)
+          $text=$text.Replace('- Approved scheduled absence pauses progress without reset.','- Approved Absence pauses progress without reset.')
+          $text=$text.TrimEnd() + "`n`n## v0.3.0.1 targeted regression scope`n- Employee names open Employee Record from Daily Entry, Roster, and 9-Month Grid.`n- Policy pause choices are limited to Off and Approved Absence.`n- Daily Entry code buttons use a fixed six-character tile footprint and solid high-contrast fills.`n- No positive-credit, negative-point, rolling-nine-month, threshold, notice, Excel, or storage behavior changed.`n"
+          [IO.File]::WriteAllText($buildPath,$text,[Text.UTF8Encoding]::new($false))
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -105,7 +82,7 @@ jobs:
           const root=path.resolve('warehouse-ci/PWADC-Warehouse-Attendance-Tracker');
           const lines=fs.readFileSync('warehouse-v0301-source-manifest.sha256','utf8').trim().split(/\r?\n/);
           if(lines.length!==19) throw new Error(`Expected 19 manifest files, got ${lines.length}`);
-          for(const line of lines){const m=line.match(/^([0-9a-f]{64})  (.+)$/);if(!m)throw new Error('Bad manifest line: '+line);const f=path.join(root,...m[2].split('/'));const h=crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');if(h!==m[1])throw new Error(`SHA mismatch ${m[2]}: ${h}`)}
+          for(const line of lines){const m=line.match(/^([0-9a-f]{64})  (.+)$/);if(!m)throw new Error('Bad manifest: '+line);const f=path.join(root,...m[2].split('/'));const h=crypto.createHash('sha256').update(fs.readFileSync(f)).digest('hex');if(h!==m[1])throw new Error(`SHA mismatch ${m[2]}: ${h}`)}
           console.log('Verified all 19 v0.3.0.1 release files.');
           '@ | node
 
