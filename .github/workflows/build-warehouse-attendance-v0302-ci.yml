@@ -14,32 +14,54 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify and extract source
+      - name: Reconstruct, verify, and extract exact source
         shell: pwsh
         run: |
+          $chunks = 0..7 | ForEach-Object { "warehouse-v0302-ci/chunk{0:D2}.txt" -f $_ }
+          $expectedChunkHashes = @(
+            'a1d59466dd718c077cb54fbd00180f4003a165700d71b72f78cbca1b1d918c39',
+            'ffe78cfb561beac53d3aa4f9a9d66dcbbebd380514a2fa16a437c0797667f76a',
+            'cd1c3bebf807949e582486c32d15cde094a74c6df053646791d808dbbf59d1ae',
+            'd68a160bf6c93a4456dddd2df8b5a5282c969a88dfbd259cbc43fbcc47748a86',
+            'a0cc767340e4a5996cb6fbfe55f068f656bd58618f6371f4d06a1476edea0666',
+            'bcd86b3e99314849874ddeb0d9ed0d75f1037ab7de0a65a610d8f46afa90ce4c',
+            'c3ff51a466912ef08da728cf0ada370c0545d94b4ac4833aede66cf1201b3039',
+            '2f3d71ad5255c75a49afadbceb1decf850c5e62cf6484d30e5fa9e0f535b4445'
+          )
+          $parts = @()
+          for ($i = 0; $i -lt $chunks.Count; $i++) {
+            $text = [IO.File]::ReadAllText($chunks[$i]).Replace("`r", '').Replace("`n", '')
+            $bytes = [Text.Encoding]::ASCII.GetBytes($text)
+            $hash = [Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()
+            Write-Host "Chunk $i SHA-256: $hash"
+            if ($hash -ne $expectedChunkHashes[$i]) { throw "Chunk $i SHA mismatch: $hash" }
+            $parts += $text
+          }
+          $b64 = $parts -join ''
+          [IO.File]::WriteAllBytes('warehouse-v0302-reconstructed.zip', [Convert]::FromBase64String($b64))
           $expected = 'b54c29f2adeef1795599608552e9b634a3a66a50cc577201d85f2c87c539726e'
-          $actual = (Get-FileHash 'warehouse-v0302-ci-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          $actual = (Get-FileHash 'warehouse-v0302-reconstructed.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
           Write-Host "Source ZIP SHA-256: $actual"
           if ($actual -ne $expected) { throw "Source ZIP mismatch: $actual" }
-          Expand-Archive 'warehouse-v0302-ci-source.zip' -DestinationPath 'warehouse-v0302-ci' -Force
+          Expand-Archive 'warehouse-v0302-reconstructed.zip' -DestinationPath 'warehouse-v0302-ci-build' -Force
       - name: Validate frontend and policy contracts
-        working-directory: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker
+        working-directory: warehouse-v0302-ci-build/PWADC-Warehouse-Attendance-Tracker
         run: node tools/validate.js
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
       - name: Restore
-        working-directory: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker
+        working-directory: warehouse-v0302-ci-build/PWADC-Warehouse-Attendance-Tracker
         run: dotnet restore PWADCWarehouseAttendanceTracker.csproj
       - name: Build Release
-        working-directory: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker
+        working-directory: warehouse-v0302-ci-build/PWADC-Warehouse-Attendance-Tracker
         run: dotnet build PWADCWarehouseAttendanceTracker.csproj --configuration Release --no-restore
       - name: Publish self-contained win-x64
-        working-directory: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker
+        working-directory: warehouse-v0302-ci-build/PWADC-Warehouse-Attendance-Tracker
         run: dotnet publish PWADCWarehouseAttendanceTracker.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishReadyToRun=false -o publish
       - name: Upload Windows application
         uses: actions/upload-artifact@v4
         with:
           name: PWADC-Warehouse-Attendance-Tracker-v0-3-0-2-Windows
-          path: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker/publish/**
+          path: warehouse-v0302-ci-build/PWADC-Warehouse-Attendance-Tracker/publish/**
           if-no-files-found: error
