@@ -1,0 +1,45 @@
+name: Warehouse Attendance v0.3.0.2 CI
+
+on:
+  push:
+    branches:
+      - warehouse-attendance-v0.3.0.2-ci
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify and extract source
+        shell: pwsh
+        run: |
+          $expected = 'b54c29f2adeef1795599608552e9b634a3a66a50cc577201d85f2c87c539726e'
+          $actual = (Get-FileHash 'warehouse-v0302-ci-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "Source ZIP SHA-256: $actual"
+          if ($actual -ne $expected) { throw "Source ZIP mismatch: $actual" }
+          Expand-Archive 'warehouse-v0302-ci-source.zip' -DestinationPath 'warehouse-v0302-ci' -Force
+      - name: Validate frontend and policy contracts
+        working-directory: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker
+        run: node tools/validate.js
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        working-directory: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet restore PWADCWarehouseAttendanceTracker.csproj
+      - name: Build Release
+        working-directory: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet build PWADCWarehouseAttendanceTracker.csproj --configuration Release --no-restore
+      - name: Publish self-contained win-x64
+        working-directory: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet publish PWADCWarehouseAttendanceTracker.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishReadyToRun=false -o publish
+      - name: Upload Windows application
+        uses: actions/upload-artifact@v4
+        with:
+          name: PWADC-Warehouse-Attendance-Tracker-v0-3-0-2-Windows
+          path: warehouse-v0302-ci/PWADC-Warehouse-Attendance-Tracker/publish/**
+          if-no-files-found: error
