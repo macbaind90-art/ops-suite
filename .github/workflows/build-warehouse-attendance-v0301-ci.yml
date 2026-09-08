@@ -55,7 +55,8 @@ jobs:
           git apply -p3 --directory=warehouse-ci/PWADC-Warehouse-Attendance-Tracker --exclude='*/BUILD-VALIDATION.md' v0301.patch
           if($LASTEXITCODE -ne 0){ throw 'Application patch failed.' }
 
-          $buildPath='warehouse-ci/PWADC-Warehouse-Attendance-Tracker/BUILD-VALIDATION.md'
+          $root='warehouse-ci/PWADC-Warehouse-Attendance-Tracker'
+          $buildPath=Join-Path $root 'BUILD-VALIDATION.md'
           $text=[IO.File]::ReadAllText($buildPath)
           $text=$text.Replace('- Version: **0.3.0.0**','- Version: **0.3.0.1**')
           $text=$text.Replace('- Release: **Approved Warehouse Attendance Policy + Positive Attendance Credits**','- Release: **Employee Navigation + Simplified Approved Absence + Daily Button Readability**')
@@ -68,6 +69,13 @@ jobs:
           $text=$text.Replace('- Approved scheduled absence pauses progress without reset.','- Approved Absence pauses progress without reset.')
           $text=$text.TrimEnd() + "`n`n## v0.3.0.1 targeted regression scope`n- Employee names open Employee Record from Daily Entry, Roster, and 9-Month Grid.`n- Policy pause choices are limited to Off and Approved Absence.`n- Daily Entry code buttons use a fixed six-character tile footprint and solid high-contrast fills.`n- No positive-credit, negative-point, rolling-nine-month, threshold, notice, Excel, or storage behavior changed.`n"
           [IO.File]::WriteAllText($buildPath,$text,[Text.UTF8Encoding]::new($false))
+
+          $changed=@('.github/workflows/build-windows.yml','ARCHITECTURE.md','AttendancePolicy.cs','BUILD-VALIDATION.md','CHANGELOG.md','PWADCWarehouseAttendanceTracker.csproj','README.md','WarehouseStore.cs','app/app.js','app/styles.css','app.manifest','tools/validate.js')
+          foreach($rel in $changed){
+            $p=Join-Path $root $rel
+            $s=[IO.File]::ReadAllText($p).Replace("`r`n","`n")
+            [IO.File]::WriteAllText($p,$s,[Text.UTF8Encoding]::new($false))
+          }
 
       - name: Setup Node
         uses: actions/setup-node@v4
