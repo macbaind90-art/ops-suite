@@ -15,4 +15,4 @@ index c81375e..bc40a28 100644
 -        new() { Id="ncns-voluntary", Code="NCV", Label="NCNS Voluntary", Points=3m, Active=true, PolicyManaged=true, Classification="negative", PointRule="3 points · Sunday automatically becomes 4" },
 -        new() { Id="call-out-mandatory", Code="COM", Label="Call Out Mandatory Period", Points=3m, Active=true, PolicyManaged=true, Classification="negative", PointRule="3 points" },
 -        new() { Id="ncns-mandatory", Code="NCM", Label="NCNS Mandatory Period", Points=4m, Active=true, PolicyManaged=true, Classification="negative", PointRule="4 points" }
-+      
++     
