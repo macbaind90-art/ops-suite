@@ -1,0 +1,48 @@
+66,37 @@ public sealed partial class WarehouseStore
+         }
+     }
+ 
++    private static bool IsEmployeeRdo(EmployeeRecord record, DateOnly date)
++    {
++        var raw = record.Profile.Rdo?.Trim();
++        if (string.IsNullOrWhiteSpace(raw)) return false;
++        var normalized = raw.Replace("/", " ").Replace(",", " ").Replace("&", " ").Replace("-", " ")
++            .Replace("and", " ", StringComparison.OrdinalIgnoreCase);
++        foreach (var token in normalized.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
++        {
++            var day = token.Trim().TrimEnd('.').ToLowerInvariant() switch
++            {
++                "sun" or "sunday" => DayOfWeek.Sunday,
++                "mon" or "monday" => DayOfWeek.Monday,
++                "tue" or "tues" or "tuesday" => DayOfWeek.Tuesday,
++                "wed" or "weds" or "wednesday" => DayOfWeek.Wednesday,
++                "thu" or "thur" or "thurs" or "thursday" => DayOfWeek.Thursday,
++                "fri" or "friday" => DayOfWeek.Friday,
++                "sat" or "saturday" => DayOfWeek.Saturday,
++                _ => (DayOfWeek?)null
++            };
++            if (day == date.DayOfWeek) return true;
++        }
++        return false;
++    }
++
+     private int CountPriorFamily(EmployeeRecord record, DateOnly currentDate, Func<AttendanceEvent, bool> family)
+     {
+         var start = AddMonthsClamped(currentDate, -9).AddDays(1);
+         return record.Events.Count(e => !e.Voided && family(e) && DateOnly.TryParse(e.Date, out var d) && d >= start && d < currentDate);
+     }
+ 
+-    private static bool IsNcnsEvent(AttendanceEvent e) => e.EventTypeId is "ncns" or "ncns-voluntary" or "ncns-mandatory";
++    private static bool IsNcnsEvent(AttendanceEvent e) => e.EventTypeId is "ncns" or "ncns-mandatory";
+     private static bool IsCallOutForPhysicianNote(AttendanceEvent e) => e.EventTypeId is "call-out" or "call-out-mandatory";
+ 
+     private AttendanceMetrics CalculateMetrics(EmployeeRecord record, DateOnly? asOf = null)
+diff --git a/PWADCWarehouseAttendanceTracker.csproj b/PWADCWarehouseAttendanceTracker.csproj
+index e09d252..4c6670c 100644
+--- a/PWADCWarehouseAttendanceTracker.csproj
++++ b/PWADCWarehouseAttendanceTracker.csproj
+@@ -8,9 +8,9 @@
+     <ApplicationManifest>app.manifest</ApplicationManifest>
+     <AssemblyName>PWADC_Warehouse_Attendance_Tracker</AssemblyName>
+     <RootNamespace>PWADC.WarehouseAttendanceTracker</RootNamespace>
+-    <Version
