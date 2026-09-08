@@ -13,43 +13,70 @@ jobs:
       - name: Checkout CI branch
         uses: actions/checkout@v4
 
-      - name: Verify and extract standalone source
+      - name: Rehydrate exact verified standalone source
         shell: pwsh
         run: |
-          $source = 'warehouse-v0300-source.zip'
-          $transportExpected = 'c753368baf8295143d1163c1d6a078104bd869ed74e09c3092f040c0c320b05a'
-          $transportHash = (Get-FileHash $source -Algorithm SHA256).Hash.ToLowerInvariant()
-          Write-Host "Transport ZIP SHA-256: $transportHash"
-          if ($transportHash -ne $transportExpected) { throw "Transport ZIP SHA-256 mismatch: $transportHash" }
-          Expand-Archive $source -DestinationPath warehouse-ci -Force
+          $files = @(
+            'warehouse-v0300-ci/chunk00.txt',
+            'warehouse-v0300-ci/chunk01.txt',
+            'warehouse-v0300-ci/chunk02.txt',
+            'warehouse-v0300-ci/chunk03.txt',
+            'warehouse-v0300-ci/chunk04.txt',
+            'warehouse-v0300-ci/chunk05_0.txt',
+            'warehouse-v0300-ci/chunk05_1.txt',
+            'warehouse-v0300-ci/chunk05_2.txt',
+            'warehouse-v0300-ci/chunk06_0.txt',
+            'warehouse-v0300-ci/chunk06_1.txt',
+            'warehouse-v0300-ci/chunk06_2.txt',
+            'warehouse-v0300-ci/chunk07_0.txt',
+            'warehouse-v0300-ci/chunk07_1.txt'
+          )
+          $expected = @(
+            'f5ee52215140523155c9a931f87bf23e3eb20e56a3b3b5ccc0dc1e278f96483c',
+            '4fb30ac6a3b9ae7beb5955c0b62692e68dc402e00dee127dbe5059f60d85146d',
+            'eb60f3f4ef7742365d11fe209542a54c3f4c10647e513ef388e3b14365be6b83',
+            'be9e3935799757e8d859db2608a72cb1e868fdc33ad2ff76e931448678ebdff2',
+            '46665502218b7121989728a2b7b45fa9c64cc957dadeae6dc23e613e0d66d943',
+            '31447147548e1166271a6329e2d2ce649ee9d5065f3d4dd415a439c8e4a19287',
+            'c620edca0899bd6eeba98e01c8e533ab7f2ce1f5c493ba03f34407c62cbfbc91',
+            '1334703e4aeaca6ffc4a0df336d5246ae93fd4d2e10b90658b0186b4245341de',
+            '6ccc7f056b116dad5a8cc2bc95cb0d6b4f5cc6532cde5ddd40e52abbabe56636',
+            '41d834579513ea03cd6d89e89fc9f56fad9681281af3c96f9c98b77eb37ae49d',
+            '5a4a48cea807ac683388233d9671e2d0408dc007bc06b4acc48b5a8dc9f1b13f',
+            'fde16ad276920faacc3e598075a741c478b6270dad562a0c49d88dffad4218db',
+            '925ddd0c0a0bda4409f78e132d225000ab436e6ab76dc6f4baedc74edc1df126'
+          )
+          for ($i = 0; $i -lt $files.Count; $i++) {
+            $hash = (Get-FileHash $files[$i] -Algorithm SHA256).Hash.ToLowerInvariant()
+            Write-Host "$($files[$i]) $hash"
+            if ($hash -ne $expected[$i]) { throw "Source segment $i SHA-256 mismatch: $hash" }
+          }
+          $b64 = ($files | ForEach-Object { Get-Content $_ -Raw }) -join ''
+          if ($b64.Length -ne 66380) { throw "Unexpected reconstructed base64 length: $($b64.Length)." }
+          [IO.File]::WriteAllBytes('warehouse-v0300-exact-source.zip', [Convert]::FromBase64String($b64))
+          $zipHash = (Get-FileHash 'warehouse-v0300-exact-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "Reconstructed release ZIP SHA-256: $zipHash"
+          if ($zipHash -ne 'c23070e08425ea0994ce71c65e6b05a999efae353816981ac87d44b02ece7bc8') {
+            throw "Reconstructed release ZIP SHA-256 mismatch: $zipHash"
+          }
+          Expand-Archive 'warehouse-v0300-exact-source.zip' -DestinationPath warehouse-ci -Force
 
           $root = [IO.Path]::GetFullPath((Join-Path $PWD 'warehouse-ci/PWADC-Warehouse-Attendance-Tracker'))
           $manifest = Get-Content 'warehouse-v0300-source-manifest.sha256'
-          $expectedPaths = @()
+          $verified = 0
           foreach ($line in $manifest) {
             if ([string]::IsNullOrWhiteSpace($line)) { continue }
             if ($line -notmatch '^([0-9a-f]{64})  (.+)$') { throw "Malformed source manifest line: $line" }
             $expectedHash = $Matches[1]
             $relative = $Matches[2]
-            $expectedPaths += $relative
             $file = Join-Path $root $relative
             if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { throw "Required source file missing: $relative" }
             $actualHash = (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLowerInvariant()
-            Write-Host "$relative $actualHash"
             if ($actualHash -ne $expectedHash) { throw "Source file SHA-256 mismatch: $relative -> $actualHash" }
+            $verified++
           }
-          $actualPaths = Get-ChildItem -LiteralPath $root -File -Recurse | ForEach-Object {
-            $_.FullName.Substring($root.Length + 1) -replace '\\','/'
-          } | Sort-Object
-          $expectedPaths = $expectedPaths | Sort-Object
-          if (($actualPaths -join "`n") -ne ($expectedPaths -join "`n")) {
-            Write-Host 'Expected source files:'
-            $expectedPaths | ForEach-Object { Write-Host "  $_" }
-            Write-Host 'Actual source files:'
-            $actualPaths | ForEach-Object { Write-Host "  $_" }
-            throw 'Extracted source file set does not match the verified local manifest.'
-          }
-          Write-Host "Verified $($expectedPaths.Count) source files against the local release manifest."
+          if ($verified -ne 19) { throw "Expected 19 verified source files, got $verified." }
+          Write-Host "Verified all $verified release files."
 
       - name: Setup Node
         uses: actions/setup-node@v4
