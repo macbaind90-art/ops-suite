@@ -1,0 +1,21 @@
+olid #A8924F}
++.daily-definition-negative .daily-definition-code{background:var(--red);color:#fff}
++.daily-definition-copy{min-width:0}
++.daily-definition-copy strong,.daily-definition-copy span{display:block;overflow-wrap:anywhere}
++.daily-definition-copy strong{font-size:12px;color:var(--ink);line-height:1.2}
++.daily-definition-copy span{font-size:11px;color:var(--muted);margin-top:3px;line-height:1.25}
++.daily-code-pad{display:grid;grid-template-columns:repeat(auto-fit,minmax(7.2ch,1fr));gap:7px;width:100%;min-width:0}
++.daily-code-btn{width:100%;min-width:7.2ch;max-width:none;min-height:42px}.daily-code-btn strong{font-family:Consolas,"Courier New",monospace;font-size:13px;letter-spacing:.2px;white-space:nowrap}
++@media(max-width:1250px){
++  .daily-person-row{grid-template-columns:minmax(190px,1fr) minmax(300px,2.1fr) minmax(170px,.9fr);}
++  .daily-total,.daily-row-actions{grid-column:auto}
++}
++@media(max-width:980px){
++  .daily-person-row{grid-template-columns:1fr}
++  .daily-code-pad{grid-template-columns:repeat(auto-fit,minmax(7.2ch,1fr))}
++  .daily-current,.daily-total,.daily-row-actions{min-width:0}
++}
++@media(max-width:620px){
++  .daily-legend{grid-template-columns:1fr}
++  .daily-code-pad{grid-template-columns:repeat(3,minmax(0,1fr))}
++}
