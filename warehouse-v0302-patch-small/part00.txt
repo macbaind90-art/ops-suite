@@ -1,0 +1,18 @@
+diff --git a/AttendancePolicy.cs b/AttendancePolicy.cs
+index c81375e..bc40a28 100644
+--- a/AttendancePolicy.cs
++++ b/AttendancePolicy.cs
+@@ -14,14 +14,12 @@ public sealed partial class WarehouseStore
+         new() { Id="off", Code="OFF", Label="Off", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
+         new() { Id="approved-absence", Code="APPABS", Label="Approved Absence", Points=0m, Active=true, PolicyManaged=true, Classification="pause", PointRule="No points · does not count toward 40" },
+         new() { Id="tardy-under-2", Code="T<2", Label="Tardy Less Than 2 Hours", Points=1m, Active=true, PolicyManaged=true, Classification="negative", PointRule="1 point" },
+-        new() { Id="call-out", Code="CO", Label="Call Out", Points=1m, Active=true, PolicyManaged=true, Classification="negative", PointRule="1 point · Sunday automatically becomes 3" },
++        new() { Id="call-out", Code="CO", Label="Call Out", Points=1m, Active=true, PolicyManaged=true, Classification="negative", PointRule="1 point · 2 on RDO · 3 Sunday" },
+         new() { Id="early-clock-out", Code="ECO", Label="Early Clock Out", Points=1m, Active=true, PolicyManaged=true, Classification="negative", PointRule="1 point first occurrence · 2 thereafter within 9 months" },
+         new() { Id="tardy-over-2", Code="T2+", Label="Tardy More Than 2 Hours", Points=2m, Active=true, PolicyManaged=true, Classification="negative", PointRule="2 points" },
+-        new() { Id="ncns", Code="NCNS", Label="No Call / No Show", Points=2m, Active=true, PolicyManaged=true, Classification="negative", PointRule="2 points first ordinary occurrence · 3 thereafter · Sunday 4" },
+-        new() { Id="call-out-voluntary", Code="COV", Label="Call Out Voluntary", Points=2m, Active=true, PolicyManaged=true, Classification="negative", PointRule="2 points · Sunday automatically becomes 3" },
+-        new() { Id="ncns-voluntary", Code="NCV", Label="NCNS Voluntary", Points=3m, Active=true, PolicyManaged=true, Classification="negative", PointRule="3 points · Sunday automatically becomes 4" },
+-        new() { Id="call-out-mandatory", Code="COM", Label="Call Out Mandatory Period", Points=3m, Active=true, PolicyManaged=true, Classification="negative", PointRule="3 points" },
+-        new() { Id="ncns-mandatory", Code="NCM", Label="NCNS Mandatory Period", Points=4m, Active=true, PolicyManaged=true, Classification="negative", PointRule="4 points" }
++      
