@@ -1,0 +1,25 @@
+}.daily-total{text-align:right}.daily-total span{display:block;font-size:10px;text-transform:uppercase;color:var(--muted)}.daily-total strong{font-size:20px}.daily-row-actions{display:flex;gap:5px}.daily-legend{line-height:1.35}.grid-wrap{max-height:calc(100vh - 260px);overflow:auto}.nine-grid{width:max-content;min-width:100%}.nine-grid th,.nine-grid td{padding:4px 5px}.grid-name{position:sticky!important;left:0;z-index:4!important;min-width:245px;max-width:245px;background:#fff!important;border-right:2px solid #c8d0d5!important}.nine-grid thead .grid-name{z-index:6!important;background:#f7f8f9!important}.grid-date{min-width:52px;width:52px;text-align:center!important;font-size:10px!important;white-space:nowrap}.grid-date.today{background:#dfece7!important}.grid-cell{height:38px;text-align:center!important;cursor:default}.grid-cell.has-entry{cursor:pointer;background:#f4f8f6}.grid-cell.has-entry:hover{outline:2px solid #6d9284;outline-offset:-2px}.grid-cell.weekend{background:#fafafa}.grid-cell.weekend.has-entry{background:#f1f5f3}.grid-code{display:inline-grid;place-items:center;min-width:28px;min-height:24px;padding:2px 4px;border-radius:5px;background:#e0ebe6;font-weight:800;font-size:10px}.settings-row{grid-template-columns:1.4fr .45fr .55fr .5fr auto}
+ @media(max-width:1100px){.daily-person-row{grid-template-columns:1fr}.daily-total{text-align:left}.daily-row-actions{justify-content:flex-start}}
+ 
+ /* v0.2.0.1 PWADC brand scheme */
+@@ -85,3 +85,40 @@ th{background:#F2F4F7;color:#4d5665;border-bottom:2px solid #E8D9A0}
+   outline:3px solid var(--gold);outline-offset:2px;
+   box-shadow:0 0 0 1px var(--charcoal),0 3px 7px rgba(20,30,45,.22);
+ }
++
++
++/* v0.3.0.2 responsive Daily Entry definitions + compact display codes */
++.daily-legend{
++  display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));
++  gap:8px;width:100%;max-width:none;margin-top:10px;
++}
++.daily-definition{
++  min-width:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:9px;align-items:start;
++  border:1px solid var(--line);border-radius:7px;padding:8px 9px;background:#fff;
++}
++.daily-definition-code{
++  min-width:7.2ch;padding:6px 7px;border-radius:5px;text-align:center;
++  font-family:Consolas,"Courier New",monospace;font-size:12px;font-weight:900;line-height:1;
++}
++.daily-definition-worked .daily-definition-code{background:var(--charcoal);color:#fff}
++.daily-definition-pause .daily-definition-code{background:var(--gold);color:var(--charcoal);border:1px s
