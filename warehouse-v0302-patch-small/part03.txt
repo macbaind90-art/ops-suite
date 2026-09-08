@@ -1,0 +1,59 @@
+>0.3.0.1</Version>
+-    <FileVersion>0.3.0.1</FileVersion>
+-    <AssemblyVersion>0.3.0.1</AssemblyVersion>
++    <Version>0.3.0.2</Version>
++    <FileVersion>0.3.0.2</FileVersion>
++    <AssemblyVersion>0.3.0.2</AssemblyVersion>
+   </PropertyGroup>
+   <ItemGroup>
+     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+diff --git a/WarehouseStore.cs b/WarehouseStore.cs
+index 97a3983..204ff31 100644
+--- a/WarehouseStore.cs
++++ b/WarehouseStore.cs
+@@ -31,7 +31,7 @@ public sealed partial class WarehouseStore
+ 
+     public object GetInitialState() => new
+     {
+-        version = "0.3.0.1",
++        version = "0.3.0.2",
+         policyVersion = PolicyVersion,
+         user = Environment.UserName,
+         machine = Environment.MachineName,
+diff --git a/app.manifest b/app.manifest
+index afb2e99..904e1e3 100644
+--- a/app.manifest
++++ b/app.manifest
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+-  <assemblyIdentity version="0.3.0.1" name="PWADC.WarehouseAttendanceTracker.app" />
++  <assemblyIdentity version="0.3.0.2" name="PWADC.WarehouseAttendanceTracker.app" />
+   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+     <security>
+       <requestedPrivileges>
+diff --git a/app/app.js b/app/app.js
+index c948013..ce107f3 100644
+--- a/app/app.js
++++ b/app/app.js
+@@ -1,5 +1,17 @@
+-/* PWADC Warehouse Attendance Tracker v0.3.0.1 */
+-const APP_VERSION='0.3.0.1';
++/* PWADC Warehouse Attendance Tracker v0.3.0.2 */
++const APP_VERSION='0.3.0.2';
++const DISPLAY_CODES={
++  'P':'PRESNT','OFF':'OFFDAY','APPABS':'APPABS','T<2':'TARD<2','CO':'CALOUT','COS':'CO-SUN',
++  'ECO':'ERLYCO','ECO2':'ERLY2+','T2+':'TARD2+','NCNS':'NCNS','NCS':'NC-SUN','NC2':'NCNS2+',
++  'CO-RDO':'CO-RDO','NC-RDO':'NC-RDO','COM':'CO-MAN','NCM':'NC-MAN'
++};
++function displayCode(code){
++  const raw=String(code||'').trim();
++  if(!raw)return '';
++  if(DISPLAY_CODES[raw])return DISPLAY_CODES[raw];
++  if(raw.includes('/'))return raw.split('/').map(part=>DISPLAY_CODES[part]||part).join('/');
++  return raw;
++}
+ const state={page:'daily',init:null,employees:[],selectedEid:'',employee:null,search:'',historyMode:'active',dailyDate:localDateISO(),daily:null,dailySearch:'',gridEnd:localDateISO(),grid:null,gridSearch:''};
+ const pending=new Map();let requestSeq=0;
+ const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+@@ -35,10 +47,10 @@ function re
