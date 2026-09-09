@@ -1,0 +1,13 @@
+ot,'app/notice-overrides.js'),'utf8');
++const autoNoticeCs=fs.readFileSync(path.join(root,'AutomaticNotices.cs'),'utf8');
+ try{new vm.Script(js);pass('JavaScript syntax')}catch(e){fail('JavaScript syntax: '+e.message)}
++try{new vm.Script(noticeJs);pass('notice override JavaScript syntax')}catch(e){fail('notice override JavaScript syntax: '+e.message)}
+ for(const fn of ['renderDaily','renderDailyRow','setDailyEvent','markAllPresent','renderGrid','openGridCell','renderRoster','renderEmployee','renderSettings','openEventModal','addEvent','openCorrectiveModal','recordCorrective','openPhysicianNoteModal','groupPhysicianNote','createNotice','exportRoster','exportEmployee','printRoster','printEmployee'])new RegExp(`function\\s+${fn}\\s*\\(`).test(js)?pass('function '+fn):fail('missing function '+fn);
+ for(const token of ['Daily Attendance Entry','Rolling 9-Month Grid','daily:set','grid:get','rolling 9-month','Active 9-Month','export:roster-xlsx','export:employee-xlsx','threshold','Create Notice','Void / Correct','Attendance Notice Packet','Point Threshold Finding','Delivery Checklist','Employee Response / Manager Notes','40 clean worked days','Mark All Blank as Present','Banked Positive Points','Possible Job Abandonment','Policy point assignments are locked'])js.toLowerCase().includes(token.toLowerCase())?pass('feature token '+token):fail('missing feature token '+token);
+ const cs=fs.readFileSync(path.join(root,'WarehouseStore.cs'),'utf8');
+@@ -14,21 +17,21 @@ for(const token of ['RollingMonths = 9','today < AddMonthsClamped','GetDaily','S
+ for(const token of ['PositiveCreditWorkDays = 40','PositiveCreditMaximum = 5m','PolicyVersion = "2025-02-23"','Tardy Less Than 2 Hours','Call Out Sunday','Early Clock Out - Second/Subsequent','NCNS - Second/Subsequent','NCNS Mandatory Day','CalculateMetrics','RecordCorrectiveAction','GroupPhysicianNoteOccurrence','HasPossibleJobAbandonment'])policy.includes(token)?pass('policy contract '+token):fail('missing policy contract '+token);
+ const proj=fs.readFileSync(path.join(root,'PWADCWarehouseAttendanceTracker.csproj'),'utf8');
+ const versions=[...proj.matchAll(/<(Version|FileVersion|AssemblyVersion)>([^<]+)<\//g)].map(x=>x[2]);
+-versions.length===3&&versions.every(v=>v==='0.3.0.2')?pass('project version alignment 0.3.0.2'):fail('project versions '+versions.join(','));
++versions.length===3&&versions.every(v=>v==='0.3.1.0')?pass('p
