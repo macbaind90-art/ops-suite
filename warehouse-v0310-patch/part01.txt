@@ -1,0 +1,36 @@
+try";
++            VoidNoticesForEvent(record, evt.Id, "Cleared from Daily Entry");
+         }
+         SaveEmployeeRecord(record, $"Daily Entry cleared for {date}");
+         return new { row = BuildDailyRow(record, date) };
+@@ -216,11 +220,13 @@ public sealed partial class WarehouseStore
+         var assessment = AssessPolicyEvent(record, configured, date);
+         var evt = NewAttendanceEvent(date, configured.Id, assessment, "manual", payload.TryGetProperty("notes", out var n) ? n.GetString() ?? "" : "");
+         record.Events.Add(evt);
+-        SaveEmployeeRecord(record, $"Attendance event added: {assessment.Label} {assessment.Points:0.##} point(s) on {date}");
++        var automaticNotice = CreateAutomaticNoticeForEvent(record, evt);
++        SaveEmployeeRecord(record, $"Attendance event added: {assessment.Label} {assessment.Points:0.##} point(s) on {date}" + (automaticNotice is null ? "" : $"; automatic {automaticNotice.Title} generated"));
++        if (automaticNotice is not null) WriteAutomaticNoticeHtml(record, automaticNotice);
+         var after = CalculateMetrics(record).NetPoints;
+         var crossed = _trackerSettings.Thresholds.Where(t => t.Active && before < t.MinPoints && after >= t.MinPoints)
+             .OrderBy(t => t.MinPoints).ToList();
+-        return new { employee = GetEmployee(eid), crossedThresholds = crossed, jobAbandonmentAlert = HasPossibleJobAbandonment(record) };
++        return new { employee = GetEmployee(eid), crossedThresholds = crossed, notice = automaticNotice, jobAbandonmentAlert = HasPossibleJobAbandonment(record) };
+     }
+ 
+     public object VoidEvent(JsonElement payload)
+@@ -236,6 +242,7 @@ public sealed partial class WarehouseStore
+         evt.VoidedAt = DateTimeOffset.Now.ToString("O");
+         evt.VoidedBy = Environment.UserName;
+         evt.VoidReason = reason;
++        VoidNoticesForEvent(record, evt.Id, reason);
+         SaveEmployeeRecord(record, $"Attendance event voided: {evt.Type} on {evt.Date}. Reason: {reason}");
+         return GetEmployee(eid);
+     }
+@@ -698,6 +705,11 @@ public sealed class AttendanceNotice
+     public string Id { get; set; } = "";
+     public string ThresholdId { get; set; } = "";
+     public string ThresholdName { get; set; } = "";
++    public string NoticeType { get; set; } = "";
++    public string TriggerEventId { get; set; } = "";
++    public string TriggerEventDate { get
