@@ -1,0 +1,53 @@
+name: Warehouse Attendance v0.3.2.0 CI
+
+on:
+  push:
+    branches:
+      - warehouse-attendance-v0.3.2.0-ci
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify and extract exact v0.3.2.0 source
+        shell: pwsh
+        run: |
+          $expected = '649d0005c989e1faa9117956f02ca3f4bbc40b9ed879ba292ab59aa0d59c3d99'
+          $actual = (Get-FileHash 'warehouse-v0320-source.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          Write-Host "v0.3.2.0 source ZIP SHA-256: $actual"
+          if ($actual -ne $expected) { throw "Source ZIP mismatch: $actual" }
+          Expand-Archive 'warehouse-v0320-source.zip' -DestinationPath 'warehouse-ci' -Force
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate standalone source
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: node tools/validate.js
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet restore PWADCWarehouseAttendanceTracker.csproj
+
+      - name: Build Release
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet build PWADCWarehouseAttendanceTracker.csproj --configuration Release --no-restore
+
+      - name: Publish self-contained win-x64
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet publish PWADCWarehouseAttendanceTracker.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishReadyToRun=false -o publish
+
+      - name: Upload Windows application
+        uses: actions/upload-artifact@v4
+        with:
+          name: PWADC-Warehouse-Attendance-Tracker-v0-3-2-0-Windows
+          path: warehouse-ci/PWADC-Warehouse-Attendance-Tracker/publish/**
+          if-no-files-found: error
