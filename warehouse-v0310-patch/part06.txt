@@ -1,0 +1,46 @@
+ (js.includes(token)||css.includes(token))?pass('v0.3.0.2 display/responsive token '+token):fail('missing v0.3.0.2 token '+token);
++  (js.includes(token)||css.includes(token))?pass('v0.3.1.0 display/responsive token '+token):fail('missing v0.3.1.0 token '+token);
+ /css[^]*grid-template-columns:repeat\(auto-fit,minmax\(min\(100%,220px\),1fr\)\)/.test('css'+css)?pass('responsive definition auto-fit grid'):fail('responsive definition auto-fit grid missing');
+ !css.includes('max-width:720px')?pass('removed fixed 720px legend cap'):fail('fixed 720px legend cap remains');
+ js.includes("'NCNS':'NCNS'")?pass('standard NCNS display retained'):fail('NCNS display mapping changed unexpectedly');
+diff --git a/a/.github/workflows/build-windows.yml b/b/.github/workflows/build-windows.yml
+index 1945b43..6bfdf33 100644
+--- a/a/.github/workflows/build-windows.yml
++++ b/b/.github/workflows/build-windows.yml
+@@ -37,6 +37,6 @@ jobs:
+       - name: Upload Windows application
+         uses: actions/upload-artifact@v4
+         with:
+-          name: PWADC-Warehouse-Attendance-Tracker-v0-3-0-2-Windows
++          name: PWADC-Warehouse-Attendance-Tracker-v0-3-1-0-Windows
+           path: publish/**
+           if-no-files-found: error
+diff --git a/b/AutomaticNotices.cs b/b/AutomaticNotices.cs
+new file mode 100644
+index 0000000..4e414d7
+--- /dev/null
++++ b/b/AutomaticNotices.cs
+@@ -0,0 +1,82 @@
++using System.Globalization;
++using System.Text;
++
++namespace PWADC.WarehouseAttendanceTracker;
++
++public sealed partial class WarehouseStore
++{
++    private AttendanceNotice? CreateAutomaticNoticeForEvent(EmployeeRecord record, AttendanceEvent evt)
++    {
++        if (evt.Voided || evt.Points <= 0m) return null;
++        var existing = record.Notices.FirstOrDefault(n => n.TriggerEventId == evt.Id && !string.Equals(n.Status, "Voided", StringComparison.OrdinalIgnoreCase));
++        if (existing is not null) return existing;
++
++        var metrics = CalculateMetrics(record);
++        var confirming = metrics.NetPoints >= 5m;
++        var notice = new AttendanceNotice
++        {
++            Id = Guid.NewGuid().ToString("N"),
++            ThresholdId = confirming ? "automatic-5-plus" : "automatic-4-or-fewer",
++            ThresholdName = confirming ? "5 Points or More" : "4 Points or Fewer",
++            NoticeType = confirming ? "confirming" : "points",
++            TriggerEventId = evt.Id,
++      
