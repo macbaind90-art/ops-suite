@@ -1,0 +1,12 @@
+xt-align:center;color:#8b1a1e;font:700 8pt Georgia,serif}.title{text-align:center;font-size:19pt;font-weight:900;margin:0 0 24px}.info{display:grid;grid-template-columns:72px 1fr;gap:14px 4px}.lbl,.from,.subj{font-weight:900}.from{margin-top:38px}.subj{margin-top:18px}.body{font-size:12.5pt;line-height:1.25;margin-top:36px}.rule{border-top:1.5px solid #222;margin:18px 0}.warning,.receipt{font-size:11.5pt;line-height:1.25}.sig{display:grid;grid-template-columns:1fr 1fr;column-gap:1.8in;margin-top:.7in}.sigline{border-top:1px solid #222;padding-top:3px;font-size:10.5pt}.witness{width:42%;margin-top:.65in}.comments-page{page-break-before:always}.comments{border:1px solid #555;height:6.3in;padding:8px;font-size:14pt}.voided{border:2px solid #c0272d;color:#8b1a1e;padding:7px;text-align:center;margin-bottom:10px}@page{size:letter portrait;margin:.35in}";
++        var sb = new StringBuilder($"<!doctype html><html><head><meta charset='utf-8'><style>{css}</style></head><body><div class='page'>");
++        if (notice.Status == "Voided") sb.Append($"<div class='voided'><strong>VOIDED / CORRECTED</strong>{(string.IsNullOrWhiteSpace(notice.VoidReason) ? "" : " - " + Html(notice.VoidReason))}</div>");
++        sb.Append(header).Append($"<div class='title'>{(confirming ? "Confirming Notice" : "Points Notification")}</div>")
++          .Append($"<div class='info'><div class='lbl'>Date:</div><div>{generated:MM/dd/yyyy}</div><div class='lbl'>To:</div><div>{Html(record.Profile.Name)} #{Html(record.Profile.Eid)}{(string.IsNullOrWhiteSpace(record.Profile.Rdo) ? "" : "<br>RDO: " + Html(record.Profile.Rdo))}</div></div>")
++          .Append($"<div class='from'>From: {Html(notice.GeneratedBy)}</div><div class='subj'>Subj: Attendance</div><div class='body'>");
++        var when = eventDate.ToString("dddd M/d/yyyy", CultureInfo.InvariantCulture);
++        if (!confirming)
++            sb.Append($"This is to confirm our conversation today during which I communicated that you have been assessed <strong>{P(assessed)}</strong> points for your violation of the company’s Absenteeism and Tardiness Policy on {Html(when)}, {Html(eventType)}.<br><br>You currently have a total of <strong>{P(notice.PointsAtGeneration)}</strong> Attendance points.</div>");
++        else
++        {
++            sb.Append($"This is to confirm our conversation of today during which I communicated that:<br><br>You ha
