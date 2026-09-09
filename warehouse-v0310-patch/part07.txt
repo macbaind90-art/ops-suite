@@ -1,0 +1,39 @@
+      TriggerEventDate = evt.Date,
++            TriggerEventType = evt.Type,
++            PointsAssessed = evt.Points,
++            PointsAtGeneration = metrics.NetPoints,
++            NegativePointsAtGeneration = metrics.ActiveNegativePoints,
++            PositiveCreditsAppliedAtGeneration = metrics.ActiveCreditsApplied,
++            PositiveBalanceAtGeneration = metrics.PositiveBalance,
++            GeneratedAt = DateTimeOffset.Now.ToString("O"),
++            GeneratedBy = Environment.UserName,
++            Status = "Drafted",
++            Title = confirming ? "Confirming Notice" : "Points Notification",
++            EventIds = new List<string> { evt.Id }
++        };
++        record.Notices.Add(notice);
++        return notice;
++    }
++
++    private void VoidNoticesForEvent(EmployeeRecord record, string eventId, string reason)
++    {
++        foreach (var notice in record.Notices.Where(n => n.TriggerEventId == eventId && !string.Equals(n.Status, "Voided", StringComparison.OrdinalIgnoreCase)))
++        {
++            notice.Status = "Voided";
++            notice.VoidReason = reason;
++        }
++    }
++
++    private void WriteAutomaticNoticeHtml(EmployeeRecord record, AttendanceNotice notice)
++    {
++        Directory.CreateDirectory(NoticesDir);
++        var path = Path.Combine(NoticesDir, $"{Sanitize(record.Profile.Eid)}-{notice.Id}.html");
++        var evt = record.Events.FirstOrDefault(e => e.Id == notice.TriggerEventId);
++        var generated = DateTimeOffset.TryParse(notice.GeneratedAt, out var at) ? at.LocalDateTime : DateTime.Now;
++        var eventDate = evt is not null && DateOnly.TryParse(evt.Date, out var d) ? d : DateOnly.FromDateTime(generated);
++        var eventType = evt?.Type ?? notice.TriggerEventType;
++        var assessed = notice.PointsAssessed > 0 ? notice.PointsAssessed : evt?.Points ?? 0m;
++        var confirming = notice.NoticeType == "confirming" || notice.PointsAtGeneration >= 5m;
++        string P(decimal v) => v > 0 ? $"(-{v:0.##})" : "(0)";
++        var header = "<div class='logo'>piggly<br>wiggly</div><div class='tag'>Down Home, Down The Street</div>";
++        var css = "*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;margin:0;font-size:12pt}.page{width:8in;min-height:10in;margin:.2in auto;padding:.15in}.logo{text-align:center;font-weight:900;color:#c0272d;font-size:24pt;line-height:20pt}.tag{te
