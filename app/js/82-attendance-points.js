@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.0 | Attendance Point System */
+/* PWADC Security Operations Suite v3.5.0.1 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -30,6 +30,9 @@ const ATT_ACTION_LEVELS=[
 let selectedPointEmployeeId='';
 let pointReviewShift='All';
 let pointReviewSearch='';
+let pointGridMode='all';
+let pointGridShift='All';
+const ATTENDANCE_DAILY_SHIFT_ORDER=['3rd Shift','1st Shift','2nd Shift','Gate','Reception'];
 
 const _normalizeAttendanceV3411=normalizeAttendance;
 normalizeAttendance=function(){
@@ -230,18 +233,33 @@ renderAttendance=function(){
   return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> T&lt;5 = .5 · T&gt;5 = 1 · CO1 = 1.5 · CO2 = 3 · NCNS = 9 · LE = 1 · EIA = 2. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit, maximum 2. Credits automatically offset and are consumed by chargeable points.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
 };
 
+function attendanceDailyShiftRank(shift){const i=ATTENDANCE_DAILY_SHIFT_ORDER.indexOf(String(shift||''));return i>=0?i:99;}
+function attendanceDailyShiftList(){
+  const present=Array.from(new Set(activeAttendanceEmployees().map(e=>e.shift).filter(Boolean)));
+  return [...ATTENDANCE_DAILY_SHIFT_ORDER.filter(s=>present.includes(s)),...present.filter(s=>!ATTENDANCE_DAILY_SHIFT_ORDER.includes(s)).sort()];
+}
 function pointDailyRows(){
-  let rows=sortedEmployees();
+  let rows=activeAttendanceEmployees().slice().sort((a,b)=>attendanceDailyShiftRank(a.shift)-attendanceDailyShiftRank(b.shift)||(a.shift||'').localeCompare(b.shift||'')||(a.name||'').localeCompare(b.name||''));
   if(entryShift!=='All')rows=rows.filter(e=>e.shift===entryShift);
   if(showBlanks)rows=rows.filter(e=>!getCode(e.id,entryDate));
   return rows;
 }
+function pointDailyGroups(rows){
+  const map=new Map();
+  for(const e of rows){const shift=e.shift||'Unassigned';if(!map.has(shift))map.set(shift,[]);map.get(shift).push(e);}
+  return [...map.entries()].map(([shift,items])=>({shift,rows:items})).sort((a,b)=>attendanceDailyShiftRank(a.shift)-attendanceDailyShiftRank(b.shift)||a.shift.localeCompare(b.shift));
+}
 function renderPointDaily(){
   autoFillRdosForDate(entryDate);
-  const shifts=['All',...Array.from(new Set(activeAttendanceEmployees().map(e=>e.shift).filter(Boolean)))];
+  const shifts=['All',...attendanceDailyShiftList()];
   const rows=pointDailyRows();
+  const groups=pointDailyGroups(rows);
   const locked=attendanceMigrationPending();
-  return `<div class="card"><div class="card-title">Daily Attendance Entry</div><div class="toolbar"><div><label>Date</label><input type="date" value="${entryDate}" onchange="entryDate=this.value;safeRenderPages()"></div><div><label>Shift</label><select onchange="entryShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${entryShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><button onclick="showBlanks=!showBlanks;safeRenderPages()">${showBlanks?'Show All':'Missing Entries Only'}</button></div>${locked?'<div class="notice warn">Entry is locked until the legacy Attendance migration is committed.</div>':''}</div><div class="people-list">${rows.map(e=>renderPointDailyRow(e,locked)).join('')}</div>`;
+  return `<div class="card"><div class="card-title">Daily Attendance Entry</div><div class="toolbar"><div><label>Date</label><input type="date" value="${entryDate}" onchange="entryDate=this.value;safeRenderPages()"></div><div><label>Shift</label><select onchange="entryShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${entryShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><button onclick="showBlanks=!showBlanks;safeRenderPages()">${showBlanks?'Show All':'Missing Entries Only'}</button></div><div class="mini-note">Daily Entry order: 3rd Shift → 1st Shift → 2nd Shift → Gate → Reception.</div>${locked?'<div class="notice warn">Entry is locked until the legacy Attendance migration is committed.</div>':''}</div><div class="people-list">${groups.map(g=>renderPointDailyGroup(g,locked)).join('')}</div>`;
+}
+function renderPointDailyGroup(g,locked=false){
+  const counts=dailyCounts(g.rows||[]);
+  return `<div class="shift-card"><div class="shift-head"><div>${esc(g.shift)} (${(g.rows||[]).length})</div><div>${counts.entered} / ${counts.total} entered · ${counts.blank} missing</div></div>${(g.rows||[]).map(e=>renderPointDailyRow(e,locked)).join('')}</div>`;
 }
 function applyAttendancePointCode(empId,date,code){if(setAttendancePointCode(empId,date,code))safeRenderPages({preserveScroll:true});}
 function renderPointDailyRow(e,locked=false){
@@ -250,16 +268,30 @@ function renderPointDailyRow(e,locked=false){
   return `<div class="person-row"><div class="person-name"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span><span class="mini-note">Active Points: ${snap.activePoints} · Positive Credit: ${snap.bank} · Clean Workdays: ${snap.cleanWorkingDays}/12</span></div><div class="row-code-pad">${ATT_POINT_CODES.map(x=>`<button class="row-code-btn ${current===x.code||(['CO1','CO2'].includes(current)&&x.code==='CO')?'active':''}" title="${esc(x.label+(x.points===null?'':` · ${x.points} pt`))}" ${locked?'disabled':''} onclick="event.stopPropagation();applyAttendancePointCode('${esc(e.id)}','${entryDate}','${x.code}')">${esc(x.code)}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(current)}">${esc(current||'Blank')}</span></div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button></div></div>`;
 }
 
+function pointGridEmployees(){
+  let emps=activeAttendanceEmployees().slice().sort((a,b)=>attendanceDailyShiftRank(a.shift)-attendanceDailyShiftRank(b.shift)||(a.shift||'').localeCompare(b.shift||'')||(a.name||'').localeCompare(b.name||''));
+  if(pointGridShift!=='All')emps=emps.filter(e=>e.shift===pointGridShift);
+  return emps;
+}
+function pointGridCell(emp,d){
+  const c=getCode(emp.id,d),pts=pointValue(c);
+  return `<td title="${esc(d+' · '+pointCodeLabel(c)+(pts?' · '+pts+' pt':''))}" style="text-align:center;min-width:38px"><div>${esc(c||'')}</div><div class="mini-note">${pts||''}</div></td>`;
+}
 function renderPointGrid(){
   const end=gridEnd||pointSystemAsOf();
   const dates=[];for(let d=addDays(end,-89);d<=end;d=addDays(d,1))dates.push(d);
-  const emps=sortedEmployees();
-  if(!selectedGridEmpId&&emps.length)selectedGridEmpId=String(emps[0].id);
-  const emp=emps.find(e=>String(e.id)===String(selectedGridEmpId))||emps[0];
+  const allEmps=activeAttendanceEmployees().slice().sort((a,b)=>attendanceDailyShiftRank(a.shift)-attendanceDailyShiftRank(b.shift)||(a.shift||'').localeCompare(b.shift||'')||(a.name||'').localeCompare(b.name||''));
+  const shifts=['All',...attendanceDailyShiftList()];
+  const emps=pointGridEmployees();
+  if(!selectedGridEmpId&&allEmps.length)selectedGridEmpId=String(allEmps[0].id);
+  const emp=allEmps.find(e=>String(e.id)===String(selectedGridEmpId))||allEmps[0];
   if(!emp)return '<div class="card">No active Attendance employees.</div>';
+  const single=pointGridMode==='single';
   const snap=attendancePointSnapshot(emp.id,end);
-  const cells=dates.map(d=>{const c=getCode(emp.id,d);const pts=pointValue(c);return `<td title="${esc(d+' · '+pointCodeLabel(c)+(pts?' · '+pts+' pt':''))}" style="text-align:center;min-width:38px"><div>${esc(c||'')}</div><div class="mini-note">${pts||''}</div></td>`}).join('');
-  return `<div class="card"><div class="card-title">90-Day Grid</div><div class="toolbar"><div><label>Employee</label><select onchange="selectedGridEmpId=this.value;safeRenderPages()">${emps.map(e=>`<option value="${esc(e.id)}" ${String(e.id)===String(emp.id)?'selected':''}>${esc(e.name)} · ${esc(e.shift)}</option>`).join('')}</select></div><div><label>Ending Date</label><input type="date" value="${end}" onchange="gridEnd=this.value;safeRenderPages()"></div></div><div class="health-row"><span>Gross Negative Points</span><strong>${snap.gross90}</strong></div><div class="health-row"><span>Credit Applied</span><strong>${snap.offsets90}</strong></div><div class="health-row"><span>Active Disciplinary Points</span><strong>${snap.activePoints}</strong></div><div class="health-row"><span>Positive Credit Bank</span><strong>${snap.bank} / 2</strong></div></div><div class="table-wrap"><table><thead><tr><th>Employee</th>${dates.map(d=>`<th style="min-width:38px">${d.slice(5)}</th>`).join('')}</tr></thead><tbody><tr><td class="name"><strong>${esc(emp.name)}</strong><div class="mini-note">${esc(emp.shift)}</div></td>${cells}</tr></tbody></table></div>`;
+  const controls=`<div class="toolbar"><div><label>View</label><select onchange="pointGridMode=this.value;safeRenderPages()"><option value="all" ${!single?'selected':''}>All Employees</option><option value="single" ${single?'selected':''}>Single Employee</option></select></div>${single?`<div><label>Employee</label><select onchange="selectedGridEmpId=this.value;safeRenderPages()">${allEmps.map(e=>`<option value="${esc(e.id)}" ${String(e.id)===String(emp.id)?'selected':''}>${esc(e.name)} · ${esc(e.shift)}</option>`).join('')}</select></div>`:`<div><label>Shift</label><select onchange="pointGridShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${pointGridShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>`}<div><label>Ending Date</label><input type="date" value="${end}" onchange="gridEnd=this.value;safeRenderPages()"></div></div>`;
+  const summary=single?`<div class="health-row"><span>Gross Negative Points</span><strong>${snap.gross90}</strong></div><div class="health-row"><span>Credit Applied</span><strong>${snap.offsets90}</strong></div><div class="health-row"><span>Active Disciplinary Points</span><strong>${snap.activePoints}</strong></div><div class="health-row"><span>Positive Credit Bank</span><strong>${snap.bank} / 2</strong></div>`:`<div class="mini-note">Showing ${emps.length} active employee(s)${pointGridShift==='All'?'':' · '+esc(pointGridShift)}. Use Single Employee view for an individual point summary.</div>`;
+  const rows=single?[emp]:emps;
+  return `<div class="card"><div class="card-title">90-Day Grid</div>${controls}${summary}</div><div class="table-wrap" id="attendancePointGridWrap"><table><thead><tr><th class="name">Employee</th>${dates.map(d=>`<th style="min-width:38px">${d.slice(5)}</th>`).join('')}</tr></thead><tbody>${rows.map(e=>`<tr><td class="name"><strong>${esc(e.name)}</strong><div class="mini-note">${esc(e.shift)} · ${esc(e.title||'')}</div></td>${dates.map(d=>pointGridCell(e,d)).join('')}</tr>`).join('')||`<tr><td colspan="${dates.length+1}">No employees match the selected shift.</td></tr>`}</tbody></table></div>`;
 }
 
 function pointReviewRows(){

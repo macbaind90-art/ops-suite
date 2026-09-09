@@ -1,4 +1,13 @@
-# PWADC Security Operations Suite v3.5.0.0
+# PWADC Security Operations Suite v3.5.0.1
+
+
+## v3.5.0.1 - Attendance Daily/Grid Usability
+- Daily Entry is again broken into visible shift sections instead of one flat employee list.
+- Attendance Daily Entry uses the operational order: 3rd Shift, 1st Shift, 2nd Shift, Gate, Reception. Any unexpected legacy shift labels remain visible after those standard groups rather than being hidden.
+- The 90-Day Grid adds **All Employees** and **Single Employee** view options.
+- All Employees restores the legacy management-style grid with one row per active employee across the full 90-day window and includes an optional shift filter.
+- Single Employee retains the individual gross-points, credit-used, active-points, and positive-credit summary.
+- No attendance point values, 90-day calculation rules, 14-day call-off rules, positive-credit rules, migration rules, or shared-data persistence controls were changed.
 
 ## v3.5.0.0 - Attendance Point System
 - Replaces Attendance pattern enforcement with a rolling 90-day point system.

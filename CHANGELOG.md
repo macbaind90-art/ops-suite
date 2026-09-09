@@ -1,5 +1,12 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.0.1 - Attendance Daily/Grid Usability
+- Restored grouped Daily Entry sections with the requested order: 3rd Shift, 1st Shift, 2nd Shift, Gate, Reception.
+- Added All Employees and Single Employee options to the 90-Day Grid.
+- Added an All Employees shift filter while preserving full active-employee visibility when All is selected.
+- Retained individual point-summary cards in Single Employee grid mode.
+- Attendance point policy, positive-credit calculations, migration behavior, and data-reliability controls are unchanged.
+
 ## v3.5.0.0 - Attendance Point System
 - Added rolling 90-day attendance points and 3/6/9 corrective-action thresholds.
 - Added automatic rolling 14-day CO1/CO2 classification.

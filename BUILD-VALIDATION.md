@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.0**
-- Release: **Attendance Point System**
-- Baseline: **v3.4.1.1 - Task Tracker Print Customization**
+- Version: **3.5.0.1**
+- Release: **Attendance Daily/Grid Usability**
+- Baseline: **v3.5.0.0 - Attendance Point System**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -14,16 +14,20 @@
 - Corrective thresholds: **3 / 6 / 9**
 - NE remains zero-point Not Employed
 - Backup-first controlled legacy-data migration
+- Daily Entry grouped in operational shift order: **3rd / 1st / 2nd / Gate / Reception**
+- 90-Day Grid supports **All Employees** and **Single Employee** views
 
 ## Source Validation Result
 - Full modular front-end validator: **PASS**
 - Major modules: **16/16 PASS**
 - Attendance view smoke tests: **6/6 PASS**
 - Roster/Schedule view smoke tests: **5/5 PASS**
-- Named JavaScript functions: **906 / no duplicate declaration failure**
+- Named JavaScript functions: **912 / no duplicate declaration failure**
 - Inline action targets: **225 resolved**
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
+- Daily Entry grouped-shift/order regression: **PASS**
+- 90-Day Grid All Employees option regression: **PASS**
 - JavaScript syntax sweep: **PASS**
 - Actual 2026-09-09 Attendance backup parsed successfully: **7,911 entries / 42 employee records**
 - Actual-data migration simulation: **552 legacy records converted; 2 legacy U records preserved for manual review**
