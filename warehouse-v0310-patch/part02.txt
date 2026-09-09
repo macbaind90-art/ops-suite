@@ -1,0 +1,51 @@
+; set; } = "";
++    public string TriggerEventType { get; set; } = "";
++    public decimal PointsAssessed { get; set; }
+     public decimal PointsAtGeneration { get; set; }
+     public decimal NegativePointsAtGeneration { get; set; }
+     public decimal PositiveCreditsAppliedAtGeneration { get; set; }
+@@ -707,6 +719,7 @@ public sealed class AttendanceNotice
+     public string Status { get; set; } = "Drafted";
+     public string Title { get; set; } = "";
+     public string Body { get; set; } = "";
++    public string VoidReason { get; set; } = "";
+     public List<string> EventIds { get; set; } = new();
+ }
+ public sealed class RosterRow
+diff --git a/a/AttendancePolicy.cs b/b/AttendancePolicy.cs
+index bc40a28..ac7da13 100644
+--- a/a/AttendancePolicy.cs
++++ b/b/AttendancePolicy.cs
+@@ -280,6 +280,7 @@ public sealed partial class WarehouseStore
+             e.OccurrenceGroupType = "physician-note";
+             e.OccurrenceGroupPrimary = i == 0;
+             e.Points = i == 0 ? e.BasePoints : 0m;
++            if (i > 0) VoidNoticesForEvent(record, e.Id, "Grouped into physician-note illness occurrence");
+         }
+         SaveEmployeeRecord(record, $"Physician-note illness occurrence grouped {startText} through {endText}; {eligible.Count} call-out dates treated as one occurrence");
+         return GetEmployee(eid);
+diff --git a/a/PWADCWarehouseAttendanceTracker.csproj b/b/PWADCWarehouseAttendanceTracker.csproj
+index 4c6670c..8566e1f 100644
+--- a/a/PWADCWarehouseAttendanceTracker.csproj
++++ b/b/PWADCWarehouseAttendanceTracker.csproj
+@@ -8,9 +8,9 @@
+     <ApplicationManifest>app.manifest</ApplicationManifest>
+     <AssemblyName>PWADC_Warehouse_Attendance_Tracker</AssemblyName>
+     <RootNamespace>PWADC.WarehouseAttendanceTracker</RootNamespace>
+-    <Version>0.3.0.2</Version>
+-    <FileVersion>0.3.0.2</FileVersion>
+-    <AssemblyVersion>0.3.0.2</AssemblyVersion>
++    <Version>0.3.1.0</Version>
++    <FileVersion>0.3.1.0</FileVersion>
++    <AssemblyVersion>0.3.1.0</AssemblyVersion>
+   </PropertyGroup>
+   <ItemGroup>
+     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.2903.40" />
+diff --git a/a/app.manifest b/b/app.manifest
+index 904e1e3..68fd035 100644
+--- a/a/app.manifest
++++ b/b/app.manifest
+@@ -1,6 +1,6 @@
+ <?xml version="1.0" encoding="utf-8"?>
+ <assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+-  <assemblyIdentity version
