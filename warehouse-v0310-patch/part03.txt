@@ -1,0 +1,42 @@
+="0.3.0.2" name="PWADC.WarehouseAttendanceTracker.app" />
++  <assemblyIdentity version="0.3.1.0" name="PWADC.WarehouseAttendanceTracker.app" />
+   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
+     <security>
+       <requestedPrivileges>
+diff --git a/a/app/app.js b/b/app/app.js
+index ce107f3..228b752 100644
+--- a/a/app/app.js
++++ b/b/app/app.js
+@@ -1,5 +1,5 @@
+-/* PWADC Warehouse Attendance Tracker v0.3.0.2 */
+-const APP_VERSION='0.3.0.2';
++/* PWADC Warehouse Attendance Tracker v0.3.1.0 */
++const APP_VERSION='0.3.1.0';
+ const DISPLAY_CODES={
+   'P':'PRESNT','OFF':'OFFDAY','APPABS':'APPABS','T<2':'TARD<2','CO':'CALOUT','COS':'CO-SUN',
+   'ECO':'ERLYCO','ECO2':'ERLY2+','T2+':'TARD2+','NCNS':'NCNS','NCS':'NC-SUN','NC2':'NCNS2+',
+diff --git a/a/app/index.html b/b/app/index.html
+index 8ff1983..a87e389 100644
+--- a/a/app/index.html
++++ b/b/app/index.html
+@@ -11,5 +11,6 @@
+   <div id="modal" class="modal-shell hidden"><div id="modalBody" class="modal"></div></div>
+   <div id="toast" class="toast hidden"></div>
+   <script src="app.js"></script>
++  <script src="notice-overrides.js"></script>
+ </body>
+ </html>
+diff --git a/a/tools/validate.js b/b/tools/validate.js
+index c703cc3..b8512be 100644
+--- a/a/tools/validate.js
++++ b/b/tools/validate.js
+@@ -1,11 +1,14 @@
+ const fs=require('fs'),path=require('path'),vm=require('vm');
+ const root=path.resolve(__dirname,'..');
+ function pass(m){console.log('PASS:',m)}function fail(m){console.error('FAIL:',m);process.exitCode=1}
+-const req=['PWADCWarehouseAttendanceTracker.csproj','app.manifest','Program.cs','MainForm.cs','WarehouseStore.cs','AttendancePolicy.cs','ExcelExporter.cs','app/index.html','app/styles.css','app/app.js','.github/workflows/build-windows.yml','README.md','CHANGELOG.md','ARCHITECTURE.md','BUILD-VALIDATION.md'];
++const req=['PWADCWarehouseAttendanceTracker.csproj','app.manifest','Program.cs','MainForm.cs','WarehouseStore.cs','AttendancePolicy.cs','AutomaticNotices.cs','ExcelExporter.cs','app/index.html','app/styles.css','app/app.js','.github/workflows/build-windows.yml','README.md','CHANGELOG.md','ARCHITECTURE.md','BUILD-VALIDATION.md'];
+ for(const f of req)fs.existsSync(path.join(root,f))?pass('required '+f):fail('missing '+f);
+ const js=fs.readFileSync(path.join(root,'app/app.js'),'utf8');
+ const css=fs.readFileSync(path.join(root,'app/styles.css'),'utf8');
++const noticeJs=fs.readFileSync(path.join(ro
