@@ -1,0 +1,19 @@
+roject version alignment 0.3.1.0'):fail('project versions '+versions.join(','));
+ const bad=[...proj.matchAll(/\b\d+\.\d+\.\d+\.\d+\.\d+\b/g)];bad.length?fail('five-part .NET version found'):pass('no five-part .NET version');
+ const manifest=fs.readFileSync(path.join(root,'app.manifest'),'utf8');
+ manifest.startsWith('<?xml version="1.0" encoding="utf-8"?>\n')?pass('manifest declaration exact'):fail('manifest declaration incorrect');
+-/assemblyIdentity version="0\.3\.0\.2"/.test(manifest)?pass('manifest version 0.3.0.2'):fail('manifest version mismatch');
++/assemblyIdentity version="0\.3\.1\.0"/.test(manifest)?pass('manifest version 0.3.1.0'):fail('manifest version mismatch');
+ const workflow=fs.readFileSync(path.join(root,'.github/workflows/build-windows.yml'),'utf8');
+ for(const token of ['actions/checkout@v4','actions/setup-node@v4','node tools/validate.js','actions/setup-dotnet@v4','dotnet publish','actions/upload-artifact@v4'])workflow.includes(token)?pass('workflow '+token):fail('workflow missing '+token);
+-// v0.3.0.2 targeted UX/policy checks
+-for(const token of ['employee-name-link','grid-employee-link','Approved Absence','APPABS','daily-code-worked','daily-code-pause','daily-code-negative'])js.includes(token)||css.includes(token)||cs.includes(token)||policy.includes(token)?pass('v0.3.0.2 token '+token):fail('missing v0.3.0.2 token '+token);
++// v0.3.1.0 targeted UX/policy checks
++for(const token of ['employee-name-link','grid-employee-link','Approved Absence','APPABS','daily-code-worked','daily-code-pause','daily-code-negative'])js.includes(token)||css.includes(token)||cs.includes(token)||policy.includes(token)?pass('v0.3.1.0 token '+token):fail('missing v0.3.1.0 token '+token);
+ for(const removed of ['Approved Vacation','Jury Duty','Military Leave','Approved Medical / Family / Workers Compensation Leave','Approved Funeral / Bereavement Leave','Other Approved Absence - 48+ Hours Advance'])!policy.includes(removed)?pass('removed separate approved absence '+removed):fail('legacy approved absence remains '+removed);
+ /height:38px/.test(css)?pass('daily button height retained'):fail('daily button height missing');
+ 
+-// v0.3.0.2 responsive definition/display-code checks
++// v0.3.1.0 responsive definition/display-code checks
+ for(const token of ['PRESNT','OFFDAY','TARD<2','CALOUT','ERLYCO','TARD2+','CO-MAN','NC-MAN','daily-definition','displayCode'])
+-  
