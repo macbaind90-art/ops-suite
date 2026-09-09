@@ -1,0 +1,39 @@
+diff --git a/a/WarehouseStore.cs b/b/WarehouseStore.cs
+index 204ff31..29f0d4e 100644
+--- a/a/WarehouseStore.cs
++++ b/b/WarehouseStore.cs
+@@ -31,7 +31,7 @@ public sealed partial class WarehouseStore
+ 
+     public object GetInitialState() => new
+     {
+-        version = "0.3.0.2",
++        version = "0.3.1.0",
+         policyVersion = PolicyVersion,
+         user = Environment.UserName,
+         machine = Environment.MachineName,
+@@ -84,16 +84,19 @@ public sealed partial class WarehouseStore
+             existing.VoidedAt = DateTimeOffset.Now.ToString("O");
+             existing.VoidedBy = Environment.UserName;
+             existing.VoidReason = "Replaced from Daily Entry";
++            VoidNoticesForEvent(record, existing.Id, "Replaced from Daily Entry");
+         }
+ 
+         var assessment = AssessPolicyEvent(record, type, date);
+         var evt = NewAttendanceEvent(date, type.Id, assessment, "daily", payload.TryGetProperty("notes", out var notes) ? notes.GetString() ?? "" : "");
+         record.Events.Add(evt);
+-        SaveEmployeeRecord(record, $"Daily Entry set: {assessment.Label} ({assessment.Code}) {assessment.Points:0.##} point(s) on {date}");
++        var automaticNotice = CreateAutomaticNoticeForEvent(record, evt);
++        SaveEmployeeRecord(record, $"Daily Entry set: {assessment.Label} ({assessment.Code}) {assessment.Points:0.##} point(s) on {date}" + (automaticNotice is null ? "" : $"; automatic {automaticNotice.Title} generated"));
++        if (automaticNotice is not null) WriteAutomaticNoticeHtml(record, automaticNotice);
+         var after = CalculateMetrics(record).NetPoints;
+         var crossed = _trackerSettings.Thresholds.Where(t => t.Active && before < t.MinPoints && after >= t.MinPoints)
+             .OrderBy(t => t.MinPoints).ToList();
+-        return new { row = BuildDailyRow(record, date), crossedThresholds = crossed, jobAbandonmentAlert = HasPossibleJobAbandonment(record) };
++        return new { row = BuildDailyRow(record, date), crossedThresholds = crossed, notice = automaticNotice, jobAbandonmentAlert = HasPossibleJobAbandonment(record) };
+     }
+ 
+     public object ClearDailyEvent(JsonElement payload)
+@@ -110,6 +113,7 @@ public sealed partial class WarehouseStore
+             evt.VoidedAt = DateTimeOffset.Now.ToString("O");
+             evt.VoidedBy = Environment.UserName;
+             evt.VoidReason = "Cleared from Daily En
