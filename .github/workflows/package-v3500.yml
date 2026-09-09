@@ -1,0 +1,121 @@
+name: Package v3.5.0.0 Source
+
+on:
+  push:
+    branches:
+      - chatgpt-attendance-points-v3.5.0.0
+  workflow_dispatch:
+
+jobs:
+  package-source:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Prepare clean v3.5.0.0 source tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/PWADC-Security-Operations-Suite-v3.5.0.0"
+          rm -rf "$STAGE" "$GITHUB_WORKSPACE/source-artifact"
+          mkdir -p "$STAGE" "$GITHUB_WORKSPACE/source-artifact"
+          rsync -a --exclude '.git' ./ "$STAGE/"
+          python - "$STAGE" <<'PY'
+          import sys
+          from pathlib import Path
+          root=Path(sys.argv[1])
+
+          # Release-version alignment in runtime/UI surfaces.
+          for rel in ['MainForm.Programs.cs','MainForm.ConflictDetection.cs','app/js/10-bootstrap.js','app/js/99-startup.js']:
+              p=root/rel
+              if p.exists():
+                  s=p.read_text(encoding='utf-8')
+                  s=s.replace('3.4.1.1','3.5.0.0').replace('3.4.1.0','3.5.0.0')
+                  p.write_text(s,encoding='utf-8')
+
+          # The modular validator has an explicit architecture load-order contract.
+          p=root/'tools/validate-frontend.js'
+          s=p.read_text(encoding='utf-8')
+          old="'js/70-training-uniforms.js','js/80-attendance.js','js/90-shift-operations.js',"
+          new="'js/70-training-uniforms.js','js/80-attendance.js','js/82-attendance-points.js','js/90-shift-operations.js',"
+          if old not in s:
+              raise SystemExit('Could not patch validator load-order contract for Attendance Point System.')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          # While legacy data is waiting for controlled migration, legacy LE must remain approved.
+          p=root/'app/js/82-attendance-points.js'
+          s=p.read_text(encoding='utf-8')
+          old="  const events=attendanceEventsForEmployee(empId).filter(e=>e.date<=asOf);\n  let bank=0,cleanWorkingDays=0;"
+          new="  const events=attendanceEventsForEmployee(empId).filter(e=>e.date<=asOf);\n  const legacyMode=attendanceMigrationPending();\n  let bank=0,cleanWorkingDays=0;"
+          if old not in s:
+              raise SystemExit('Could not apply legacy-mode Attendance snapshot guard.')
+          s=s.replace(old,new,1)
+          old="    if(code==='UE')code='LE';\n    if(code==='E'||code==='AL'||code==='FL')code='AA';"
+          new="    if(legacyMode&&code==='LE')code='ALE';\n    if(code==='UE')code='LE';\n    if(code==='E'||code==='AL'||code==='FL')code='AA';"
+          if old not in s:
+              raise SystemExit('Could not apply legacy LE migration interpretation.')
+          s=s.replace(old,new,1)
+          p.write_text(s,encoding='utf-8')
+
+          # Remove this packaging-only workflow from the deliverable. The production build workflow remains.
+          temp=root/'.github/workflows/package-v3500.yml'
+          if temp.exists(): temp.unlink()
+
+          # Standing release documentation, preserving the six-root-document control.
+          readme=root/'README.md'
+          s=readme.read_text(encoding='utf-8')
+          s=s.replace('# PWADC Security Operations Suite v3.4.1.1','# PWADC Security Operations Suite v3.5.0.0',1)
+          note='''\n\n## v3.5.0.0 - Attendance Point System\n- Replaces Attendance pattern enforcement with a rolling 90-day point system.\n- Point values: T<5 .5, T>5 1, CO1 1.5, CO2 3, NCNS 9, LE 1, EIA 2.\n- Zero-point codes: P, ALE, AT, V, O, AA, NE.\n- Call-offs are classified automatically using a rolling 14-day window.\n- Every 12 clean working days earns +1 positive attendance credit, capped at 2.\n- Positive credits automatically offset and are consumed by chargeable attendance points.\n- Corrective thresholds: Verbal Counseling at 3, Written Warning at 6, Final Written Warning at 9.\n- Preserves the 90-Day Grid and adds Point Review and Corrective Action views.\n- Existing Attendance JSON is protected by a backup-first migration gate. Legacy T becomes T<5; legacy LE becomes ALE; legacy UE becomes LE; E/AL/FL become AA; AE becomes ALE; CO becomes CO1/CO2. Legacy U is preserved for manual review rather than guessed.\n'''
+          s=s.replace('# PWADC Security Operations Suite v3.5.0.0','# PWADC Security Operations Suite v3.5.0.0'+note,1)
+          readme.write_text(s,encoding='utf-8')
+
+          changelog=root/'CHANGELOG.md'
+          s=changelog.read_text(encoding='utf-8')
+          entry='''\n## v3.5.0.0 - Attendance Point System\n- Added rolling 90-day attendance points and 3/6/9 corrective-action thresholds.\n- Added automatic rolling 14-day CO1/CO2 classification.\n- Added positive attendance credits: +1 every 12 clean working days, maximum 2, consumed against negative points.\n- Added Daily Entry, 90-Day Grid, Point Review, Corrective Action, and Audit attendance workflow.\n- Added backup-first legacy Attendance migration and preserved NE as a zero-point Not Employed code.\n- Legacy T migrates to T<5 (.5); legacy approved/early/absence codes migrate to their new equivalents.\n- Legacy U records are preserved for manual review instead of being assigned an unsupported point value.\n\n'''
+          s=s.replace('# PWADC Security Operations Suite - Changelog','# PWADC Security Operations Suite - Changelog\n'+entry,1)
+          changelog.write_text(s,encoding='utf-8')
+
+          validation=root/'BUILD-VALIDATION.md'
+          validation.write_text('''# PWADC Security Operations Suite - Current Build Validation\n\n## Build\n- Version: **3.5.0.0**\n- Release: **Attendance Point System**\n- Baseline: **v3.4.1.1 - Task Tracker Print Customization**\n\n## Source Validation Required\n- Full modular front-end validator\n- Task Tracker print regression validator\n- Attendance Point System validator\n- JavaScript syntax sweep\n- .NET restore/build/publish through GitHub Actions after upload to `main`\n\n## Attendance Policy Contract\n- Rolling negative-point window: 90 days\n- Rolling call-off classification window: 14 days\n- Positive attendance award: +1 after 12 clean working days\n- Maximum positive credit bank: 2\n- Positive credits offset and are consumed by negative points\n- Corrective thresholds: 3 / 6 / 9\n- NE remains zero-point Not Employed\n- Backup-first controlled legacy-data migration\n\nThe final Windows compile/publish is intentionally left for the repository GitHub Actions run after this source package is uploaded.\n''',encoding='utf-8')
+
+          roadmap=root/'ROADMAP-v4.0.md'
+          s=roadmap.read_text(encoding='utf-8')
+          s=s.replace('Current build: **v3.4.1.1 - Task Tracker Print Customization**.','Current build: **v3.5.0.0 - Attendance Point System**.')
+          if 'v3.5.0.0 - Attendance Point System' not in s:
+              s+='\n- ~~v3.5.0.0 - Attendance Point System~~ Completed\n'
+          roadmap.write_text(s,encoding='utf-8')
+          PY
+
+      - name: Validate prepared source
+        shell: bash
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/PWADC-Security-Operations-Suite-v3.5.0.0"
+          node "$STAGE/tools/validate-frontend.js"
+          node "$STAGE/tools/validate-task-print.js"
+          node "$STAGE/tools/validate-attendance-points.js"
+          find "$STAGE/app/js" "$STAGE/tools" -type f -name '*.js' -print0 | while IFS= read -r -d '' f; do node --check "$f"; done
+
+      - name: Package clean source ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          STAGE="$RUNNER_TEMP/PWADC-Security-Operations-Suite-v3.5.0.0"
+          OUT="$GITHUB_WORKSPACE/source-artifact/PWADC-Security-Operations-Suite-v3.5.0.0-FullRepo-CLEAN-WITH-GITHUB.zip"
+          cd "$STAGE"
+          zip -qr "$OUT" .
+          unzip -t "$OUT"
+          echo "SHA256=$(sha256sum "$OUT" | awk '{print $1}')"
+
+      - name: Upload source artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PWADC-Security-Operations-Suite-v3-5-0-0-FullRepo-CLEAN-WITH-GITHUB
+          path: source-artifact/PWADC-Security-Operations-Suite-v3.5.0.0-FullRepo-CLEAN-WITH-GITHUB.zip
