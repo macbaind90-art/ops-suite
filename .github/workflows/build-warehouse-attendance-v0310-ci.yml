@@ -1,0 +1,130 @@
+name: Warehouse Attendance v0.3.1.0 CI
+
+on:
+  push:
+    branches:
+      - warehouse-attendance-v0.3.1.0-ci
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rehydrate proven v0.3.0.2 and apply v0.3.1.0 notice engine
+        shell: pwsh
+        run: |
+          $sourceFiles = @(
+            'warehouse-v0300-ci/chunk00.txt','warehouse-v0300-ci/chunk01.txt','warehouse-v0300-ci/chunk02.txt',
+            'warehouse-v0300-ci/chunk03.txt','warehouse-v0300-ci/chunk04.txt','warehouse-v0300-ci/chunk05_0.txt',
+            'warehouse-v0300-ci/chunk05_1.txt','warehouse-v0300-ci/chunk05_2.txt','warehouse-v0300-ci/chunk06_0.txt',
+            'warehouse-v0300-ci/chunk06_1.txt','warehouse-v0300-ci/chunk06_2.txt','warehouse-v0300-ci/chunk07_0.txt',
+            'warehouse-v0300-ci/chunk07_1.txt'
+          )
+          $b64=($sourceFiles | ForEach-Object { Get-Content $_ -Raw }) -join ''
+          [IO.File]::WriteAllBytes('baseline.zip',[Convert]::FromBase64String($b64))
+          $baseHash=(Get-FileHash 'baseline.zip' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($baseHash -ne 'c23070e08425ea0994ce71c65e6b05a999efae353816981ac87d44b02ece7bc8'){ throw "v0.3.0.0 baseline mismatch: $baseHash" }
+          Expand-Archive baseline.zip -DestinationPath warehouse-ci -Force
+
+          $v301Files=@('warehouse-v0301-patch/patch00.txt','warehouse-v0301-patch/patch01.txt','warehouse-v0301-patch/patch02.txt','warehouse-v0301-patch/patch03.txt','warehouse-v0301-patch/patch04.txt')
+          $v301Parts=@()
+          foreach($f in $v301Files){ $v301Parts += (Get-Content $f -Raw).Replace("`r`n","`n") }
+          [IO.File]::WriteAllText('v0301.patch',($v301Parts -join ''),[Text.UTF8Encoding]::new($false))
+          $v301Hash=(Get-FileHash 'v0301.patch' -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($v301Hash -ne '03b3d1484975c332cf7c945216a3031e6135193f6523c17cd2f91b3c798a582b'){ throw "v0.3.0.1 patch mismatch: $v301Hash" }
+          git apply -p3 --directory=warehouse-ci/PWADC-Warehouse-Attendance-Tracker --exclude='*/BUILD-VALIDATION.md' v0301.patch
+          if($LASTEXITCODE -ne 0){ throw 'v0.3.0.1 patch failed.' }
+
+          $root='warehouse-ci/PWADC-Warehouse-Attendance-Tracker'
+          $v301Changed=@('.github/workflows/build-windows.yml','ARCHITECTURE.md','AttendancePolicy.cs','CHANGELOG.md','PWADCWarehouseAttendanceTracker.csproj','README.md','WarehouseStore.cs','app/app.js','app/styles.css','app.manifest','tools/validate.js')
+          foreach($rel in $v301Changed){
+            $p=Join-Path $root $rel
+            $s=[IO.File]::ReadAllText($p).Replace("`r`n","`n")
+            [IO.File]::WriteAllText($p,$s,[Text.UTF8Encoding]::new($false))
+          }
+
+          $v302Files=0..15 | ForEach-Object { "warehouse-v0302-patch-small/part{0:D2}.txt" -f $_ }
+          $v302Parts=@()
+          foreach($f in $v302Files){ $v302Parts += [IO.File]::ReadAllText($f).Replace("`r`n","`n") }
+          [IO.File]::WriteAllText('v0302.patch',($v302Parts -join ''),[Text.UTF8Encoding]::new($false))
+          git apply --directory=$root v0302.patch
+          if($LASTEXITCODE -ne 0){ throw 'v0.3.0.2 patch failed.' }
+
+          $v302Normalize=@('AttendancePolicy.cs','WarehouseStore.cs','PWADCWarehouseAttendanceTracker.csproj','app.manifest','app/app.js','app/styles.css')
+          foreach($rel in $v302Normalize){
+            $p=Join-Path $root $rel
+            $s=[IO.File]::ReadAllText($p).Replace("`r`n","`n")
+            [IO.File]::WriteAllText($p,$s,[Text.UTF8Encoding]::new($false))
+          }
+          $v302Expected=@{
+            'AttendancePolicy.cs'='a3cbae2f478731963669504aad6bca1b64ace2b2c1a2b39682d8f1a8871a40e4';
+            'WarehouseStore.cs'='946a0e2274ca03af182155d02d99f33de828e4d261414ed5ad9211656a1257bd';
+            'PWADCWarehouseAttendanceTracker.csproj'='155632042764f07b3689e4ce3bc86354e07a34963e4fe48620aba63bb36f7819';
+            'app.manifest'='8883fabb0795ae897e959bcfe2f5276cedb1da4f547c1f658d2446e7f052318b';
+            'app/app.js'='1f09ab99117e074fac9e1c29847e953debd29918cf7a317d3040d246df33eb73';
+            'app/styles.css'='cacdf8b2b431a7a6a0b4de60e44ca5c278ed4795ab8512463dc41e6313a566c2'
+          }
+          foreach($rel in $v302Normalize){
+            $h=(Get-FileHash (Join-Path $root $rel) -Algorithm SHA256).Hash.ToLowerInvariant()
+            if($h -ne $v302Expected[$rel]){ throw "v0.3.0.2 reconstruction mismatch: $rel $h" }
+          }
+          Write-Host 'Verified proven v0.3.0.2 runtime baseline.'
+
+          $v310Files=0..13 | ForEach-Object { "warehouse-v0310-patch/part{0:D2}.txt" -f $_ }
+          $v310Parts=@()
+          foreach($f in $v310Files){ $v310Parts += [IO.File]::ReadAllText($f).Replace("`r`n","`n") }
+          [IO.File]::WriteAllText('v0310.patch',($v310Parts -join ''),[Text.UTF8Encoding]::new($false))
+          git apply -p2 --directory=$root v0310.patch
+          if($LASTEXITCODE -ne 0){ throw 'v0.3.1.0 notice patch failed.' }
+
+          $finalFiles=@('WarehouseStore.cs','AttendancePolicy.cs','AutomaticNotices.cs','PWADCWarehouseAttendanceTracker.csproj','app.manifest','app/app.js','app/index.html','app/notice-overrides.js','tools/validate.js')
+          foreach($rel in $finalFiles){
+            $p=Join-Path $root $rel
+            $s=[IO.File]::ReadAllText($p).Replace("`r`n","`n")
+            [IO.File]::WriteAllText($p,$s,[Text.UTF8Encoding]::new($false))
+          }
+          $expected=@{
+            'WarehouseStore.cs'='5822bcbe11a77572a48310b0955fb07d10d5b59a5350a1280e53e49fceb614b8';
+            'AttendancePolicy.cs'='693b5346df576cd20f7aa4eecd53ca16493e52043142724266d403ec83f6d47f';
+            'AutomaticNotices.cs'='45fa29bfb0ab60ab5e25b0424b7222d9dbd93f01d2e64b9e47eca2d14bebbc18';
+            'PWADCWarehouseAttendanceTracker.csproj'='819fdde357b10d96fda52376d9502bade6151e2174f9a07ad23a74097e7f27d4';
+            'app.manifest'='c481091b9bbc1d51403b84626046959f3d401fea82fc2a22bcb92c61bb419353';
+            'app/app.js'='2237c2a668e42b07c5d448d34508ad738dcde4e9a578f0a71b15cd905962e758';
+            'app/index.html'='0997f9a148f49d8c77c098b6c9a23c7c20958038bb38bd97c490e1d05ad8401c';
+            'app/notice-overrides.js'='4560f6c4e14106a21db7f88970add0826add60cee991793afac2ac3e39353b06';
+            'tools/validate.js'='df4df4a1990e45d3ccb1524c2d3d4d7973fe19b33dd76bdacd6c0141c54e7f13'
+          }
+          foreach($rel in $finalFiles){
+            $h=(Get-FileHash (Join-Path $root $rel) -Algorithm SHA256).Hash.ToLowerInvariant()
+            Write-Host "$rel SHA-256: $h"
+            if($h -ne $expected[$rel]){ throw "Final v0.3.1.0 file mismatch: $rel" }
+          }
+          Write-Host 'Verified exact v0.3.1.0 notice-engine runtime source.'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate standalone source
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: node tools/validate.js
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      - name: Restore
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet restore PWADCWarehouseAttendanceTracker.csproj
+      - name: Build Release
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet build PWADCWarehouseAttendanceTracker.csproj --configuration Release --no-restore
+      - name: Publish self-contained win-x64
+        working-directory: warehouse-ci/PWADC-Warehouse-Attendance-Tracker
+        run: dotnet publish PWADCWarehouseAttendanceTracker.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=false -p:PublishReadyToRun=false -o publish
+      - name: Upload Windows application
+        uses: actions/upload-artifact@v4
+        with:
+          name: PWADC-Warehouse-Attendance-Tracker-v0-3-1-0-Windows
+          path: warehouse-ci/PWADC-Warehouse-Attendance-Tracker/publish/**
+          if-no-files-found: error
