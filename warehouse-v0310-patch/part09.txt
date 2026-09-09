@@ -1,0 +1,19 @@
+ve been assessed <strong>{P(assessed)}</strong> points for your violation of the company’s Absenteeism and Tardiness Policy on {Html(when)}, {Html(eventType)}.<br><br>You currently have a total of <strong>{P(notice.PointsAtGeneration)}</strong> points.</div>")
++              .Append("<div class='rule'></div><div class='warning'>Your points record has been attached to this form.</div><div class='rule'></div>")
++              .Append("<div class='warning'>This Confirmation Notice serves as a <strong>Written Warning</strong> that your violation of the company’s attendance policy is unacceptable and must not reoccur. Please understand that future instances may result in further action up to and including termination of your employment.</div><div class='rule'></div>")
++              .Append("<div class='receipt'>By signing this document, you acknowledge only that you have received it. Your signature does not indicate that you agree or disagree with what has been communicated to you. You are invited to add comments below.</div>")
++              .Append("<div class='sig'><div class='sigline'>Employee Signature and Date</div><div class='sigline'>Manager Name and Date</div></div><div class='witness sigline'>Witness Signature and Date</div></div>")
++              .Append($"<div class='page comments-page'>{header}<div style='height:.35in'></div><div class='comments'>Employee Comments:</div>");
++        }
++        sb.Append("</div></body></html>");
++        File.WriteAllText(path, sb.ToString());
++    }
++}
+diff --git a/b/app/notice-overrides.js b/b/app/notice-overrides.js
+new file mode 100644
+index 0000000..a2cbb6e
+--- /dev/null
++++ b/b/app/notice-overrides.js
+@@ -0,0 +1,8 @@
++/* v0.3.1.0 automatic warehouse attendance notices */
++function showAutomaticNotice(row,n,jobAlert=false){const extra=jobAlert?'<div class="notice critical" style="margin-top:10px"><strong>Possible Job Abandonment:</strong> three consecutive scheduled NCNS records require Management/HR review.</div>':'';modal(`<div class="modal-head"><div class="modal-title">${esc(n.title||'Attendance Notice')} Created</div><button onclick="closeModal()">Close</button></div><div class="notice"><strong>${esc(row.name)}</strong> was assessed <strong>${money(n.pointsAssessed)}</strong> negative point(s). Current net total: <strong>${money(n.pointsAtGeneration)}</strong>.<br>The required <strong>${esc(n.title||'attend
