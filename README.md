@@ -1,4 +1,16 @@
-# PWADC Security Operations Suite v3.4.1.1
+# PWADC Security Operations Suite v3.5.0.0
+
+## v3.5.0.0 - Attendance Point System
+- Replaces Attendance pattern enforcement with a rolling 90-day point system.
+- Point values: T<5 .5, T>5 1, CO1 1.5, CO2 3, NCNS 9, LE 1, EIA 2.
+- Zero-point codes: P, ALE, AT, V, O, AA, NE.
+- Call-offs are classified automatically using a rolling 14-day window.
+- Every 12 clean working days earns +1 positive attendance credit, capped at 2.
+- Positive credits automatically offset and are consumed by chargeable attendance points.
+- Corrective thresholds: Verbal Counseling at 3, Written Warning at 6, Final Written Warning at 9.
+- Preserves the 90-Day Grid and adds Point Review and Corrective Action views.
+- Existing Attendance JSON is protected by a backup-first migration gate. Legacy T becomes T<5; legacy LE becomes ALE; legacy UE becomes LE; E/AL/FL become AA; AE becomes ALE; CO becomes CO1/CO2. Legacy U is preserved for manual review rather than guessed.
+
 
 ## v3.4.1.1 Task Tracker Print Customization
 

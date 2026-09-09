@@ -1,41 +1,34 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.4.1.1**
-- Release: **Task Tracker Print Customization**
-- Baseline: **v3.4.1.0 - Stale Write + Conflict Detection**
+- Version: **3.5.0.0**
+- Release: **Attendance Point System**
+- Baseline: **v3.4.1.1 - Task Tracker Print Customization**
 
-## Controlled Scope
-- Added read-only Task Tracker printing.
-- Added Current filtered view and All task records scopes.
-- Added independently selectable operational print columns.
-- Excluded Actions from printable Task Tracker fields.
-- Preserved existing Task Tracker filters, sort behavior, JSON persistence, and revision-aware stale-write protection.
-- No Attendance, Roster, Schedule, Shift Reports, Shift Intelligence, HPW, labor, seed-data, specialist-program, or shared-data architecture changes.
+## Attendance Policy Contract
+- Rolling negative-point window: **90 days**
+- Rolling call-off classification window: **14 days**
+- Positive attendance award: **+1 after 12 clean working days**
+- Maximum positive credit bank: **2**
+- Positive credits offset and are consumed by negative points
+- Corrective thresholds: **3 / 6 / 9**
+- NE remains zero-point Not Employed
+- Backup-first controlled legacy-data migration
 
-## Validation Result
-- GitHub Actions Windows run **#200**: **PASS**.
-- Full modular front-end validator: **PASS**.
-- Major modules: **16/16 PASS**.
-- Attendance views: **6/6 PASS**.
-- Roster/Schedule views: **5/5 PASS**.
-- Registered front-end modules: **10/10 PASS**.
-- Named JavaScript functions: **879 / no duplicate declaration failure**.
-- Inline action targets: **221 resolved**.
-- Task Tracker print regression validator: **PASS**.
-- Selectable Task Tracker columns: **10/10 PASS**.
-- Actions column exclusion: **PASS**.
-- Current-filter scope preservation: **PASS**.
-- Read-only Task Tracker print contract: **PASS**.
-- .NET restore: **PASS**.
-- .NET build: **PASS with 0 errors**; the runner reported one WindowsBase/WebView2 reference-resolution warning.
-- Self-contained Windows x64 publish: **PASS**.
-- Windows build artifact upload: **PASS**.
-- Manifest XML declaration/version checks: **PASS**.
-- Four-part version controls / five-part version rejection sweep: **PASS**.
-- Root documentation structure: **PASS - 6 controlled Markdown files**.
-- `.git` in clean source package: **NOT PRESENT**.
-- Final ZIP integrity: **PASS**.
-- Extracted final ZIP critical revalidation: **PASS**.
+## Source Validation Result
+- Full modular front-end validator: **PASS**
+- Major modules: **16/16 PASS**
+- Attendance view smoke tests: **6/6 PASS**
+- Roster/Schedule view smoke tests: **5/5 PASS**
+- Named JavaScript functions: **906 / no duplicate declaration failure**
+- Inline action targets: **225 resolved**
+- Task Tracker print regression: **PASS**
+- Attendance Point System regression: **PASS**
+- JavaScript syntax sweep: **PASS**
+- Actual 2026-09-09 Attendance backup parsed successfully: **7,911 entries / 42 employee records**
+- Actual-data migration simulation: **552 legacy records converted; 2 legacy U records preserved for manual review**
+- `.git` in source package: **NOT PRESENT**
+- Root Markdown control: **6 standing documents**
 
-GitHub Actions remains the authoritative Windows EXE build path for this release.
+## Windows Build Status
+The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs restore, build, self-contained `win-x64` publish, front-end validation, Task Tracker print validation, and Attendance Point System validation.

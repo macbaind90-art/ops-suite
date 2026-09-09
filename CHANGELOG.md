@@ -1,5 +1,16 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.0.0 - Attendance Point System
+- Added rolling 90-day attendance points and 3/6/9 corrective-action thresholds.
+- Added automatic rolling 14-day CO1/CO2 classification.
+- Added positive attendance credits: +1 every 12 clean working days, maximum 2, consumed against negative points.
+- Added Daily Entry, 90-Day Grid, Point Review, Corrective Action, and Audit attendance workflow.
+- Added backup-first legacy Attendance migration and preserved NE as a zero-point Not Employed code.
+- Legacy T migrates to T<5 (.5); legacy approved/early/absence codes migrate to their new equivalents.
+- Legacy U records are preserved for manual review instead of being assigned an unsupported point value.
+
+
+
 ## v3.4.1.1 - Task Tracker Print Customization
 - Added Print Tasks to the Task Tracker.
 - Added Current filtered view and All task records print scopes.

@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.4.1.1 - Task Tracker Print Customization**.
+Current build: **v3.5.0.0 - Attendance Point System**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -123,3 +123,5 @@ The project remains on C# / WebView2 / HTML / CSS / JavaScript in the near term.
 - ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed.
 - **Next: Legacy production stabilization / operational enhancements.** v3.4.2.0 save coordination remains deferred unless production need justifies it or it is specifically requested.
 - Planned follow-ons: v3.4.3.0 recovery hardening, v3.4.4.0 schema migration framework, v3.4.5.0 Data Health reliability maturity.
+
+- ~~v3.5.0.0 - Attendance Point System~~ Completed

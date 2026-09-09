@@ -10,7 +10,7 @@ const scriptRefs=[...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m=>
 const expectedRefs=[
   'js/00-module-registry.js','js/10-bootstrap.js','js/20-data-core.js','js/30-shell-audits.js',
   'js/40-reports-governance.js','js/50-workflows-home.js','js/60-roster-schedule.js',
-  'js/70-training-uniforms.js','js/80-attendance.js','js/90-shift-operations.js',
+  'js/70-training-uniforms.js','js/80-attendance.js','js/82-attendance-points.js','js/90-shift-operations.js',
   'js/95-tasks-settings.js','js/99-startup.js'
 ];
 if(JSON.stringify(scriptRefs)!==JSON.stringify(expectedRefs)) throw new Error('Front-end script load order does not match the v3.3.0 architecture contract.');
