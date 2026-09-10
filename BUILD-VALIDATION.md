@@ -1,40 +1,44 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.2**
-- Release: **Attendance Grid Visual Status**
-- Baseline: **v3.5.0.1 - Attendance Daily/Grid Usability**
+- Version: **3.5.0.3**
+- Release: **Attendance Point Controls**
+- Baseline: **v3.5.0.2 - Attendance Grid Visual Status**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
 - Rolling call-off classification window: **14 days**
+- Tardy points: **T<5 = 0 / T5-14 = 0.5 / T15+ = 1**
+- Legacy generic tardies migrated under v3.5.0.0 retain **0.5 points** unless intentionally reclassified
 - Positive attendance award: **+1 after 12 clean working days**
-- Maximum positive credit bank: **2**
+- Maximum positive credit bank: **3**
 - Positive credits offset and are consumed by negative points
 - Corrective thresholds: **3 / 6 / 9**
 - NE remains zero-point Not Employed
-- Backup-first controlled legacy-data migration
 - Daily Entry grouped in operational shift order: **3rd / 1st / 2nd / Gate / Reception**
-- 90-Day Grid supports **All Employees** and **Single Employee** views
-- All Employees grid is separated into **operational shift sections**
-- Grid visual status: **Present green / approved blue / Off unhighlighted / NE blacked out**
-- Point-action visual status: **0.5-1.5 yellow / 2+ red / earned positive credit green +1**
-- Employee-name point status: **green <3 / yellow 3-6.99 / red 7+**
+- 90-Day Grid supports **All Employees** and **Single Employee** views with operational shift sections
+- 90-Day Grid date order: **ending/current date left; older dates right**
+- Historical grid edits require a reason and create correction-history/audit records
+- Manual current-point adjustments require a reason and pre-save backup; incidents through the effective date are excluded from future active-point calculations
+- Grid visual status retained: **Present green / approved blue / Off unhighlighted / NE blacked out / low point actions yellow / high point actions red / positive award green**
+- Employee-name point status retained: **green <3 / yellow 3-6.99 / red 7+**
 
 ## Source Validation Result
 - Full modular front-end validator: **PASS**
 - Major modules: **16/16 PASS**
 - Attendance view smoke tests: **6/6 PASS**
 - Roster/Schedule view smoke tests: **5/5 PASS**
-- Named JavaScript functions: **917 / no duplicate declaration failure**
-- Inline action targets: **225 resolved**
+- Named JavaScript functions: **926 / no duplicate declaration failure**
+- Inline action targets: **229 resolved**
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
-- Daily Entry grouped-shift/order regression: **PASS**
-- 90-Day Grid All Employees option regression: **PASS**
-- 90-Day Grid shift-section regression: **PASS**
-- 90-Day Grid status-color regression: **PASS**
-- Employee-name point-status color regression: **PASS**
+- New tardy-tier regression: **PASS**
+- Legacy generic-tardy 0.5 preservation regression: **PASS**
+- 3-point positive bank regression: **PASS**
+- 90-Day Grid newest-to-oldest regression: **PASS**
+- 90-Day Grid reason-required historical-edit regression: **PASS**
+- Manual point-adjustment / future-exclusion regression: **PASS**
+- Point-adjustment backup/audit controls: **PASS**
 - JavaScript syntax sweep: **PASS**
 - Actual 2026-09-09 Attendance backup parsed successfully: **7,911 entries / 42 employee records**
 - Actual-data migration simulation: **552 legacy records converted; 2 legacy U records preserved for manual review**

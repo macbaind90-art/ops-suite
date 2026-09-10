@@ -624,12 +624,14 @@ label:has(>input[type=checkbox]),label:has(>input[type=radio]){display:flex;alig
   .modal-backdrop{padding:6px;place-items:stretch}.modal-card{width:100%;max-height:calc(100vh - 12px);border-radius:10px;padding:12px}.modal-actions button{flex:1 1 130px}.day-grid{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))!important}.toast{left:10px;right:10px;bottom:10px}
 }
 
-/* v3.5.0.2 Attendance point grid visual status */
+/* v3.5.0.3 Attendance point grid visual status */
 .att-employee-name-wrap{border-left:4px solid transparent;border-radius:7px;padding:6px 8px;min-width:0}
 .att-employee-name-wrap.att-emp-risk-green{border-left-color:var(--green);background:rgba(82,180,122,.14)}
 .att-employee-name-wrap.att-emp-risk-yellow{border-left-color:var(--gold);background:rgba(255,196,87,.16)}
 .att-employee-name-wrap.att-emp-risk-red{border-left-color:var(--red);background:rgba(255,107,107,.18)}
 .att-point-cell{position:relative;text-align:center;min-width:38px;padding:7px 5px}
+.att-point-cell.att-point-editable{cursor:pointer}
+.att-point-cell.att-point-editable:hover{outline:2px solid var(--gold);outline-offset:-2px}
 .att-point-cell.att-status-present{background:rgba(82,180,122,.18)}
 .att-point-cell.att-status-approved{background:rgba(83,146,214,.20)}
 .att-point-cell.att-status-issue-low{background:rgba(255,196,87,.22)}

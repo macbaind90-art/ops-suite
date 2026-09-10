@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.5.0.2 - Attendance Grid Visual Status**.
+Current build: **v3.5.0.3 - Attendance Point Controls**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -37,6 +37,7 @@ Current build: **v3.5.0.2 - Attendance Grid Visual Status**.
 - ~~v3.5.0.0 - Attendance Point System~~ Completed
 - ~~v3.5.0.1 - Attendance Daily/Grid Usability~~ Completed
 - ~~v3.5.0.2 - Attendance Grid Visual Status~~ Completed
+- ~~v3.5.0.3 - Attendance Point Controls~~ Completed
 
 ## Current Governance Model
 ### Command Center

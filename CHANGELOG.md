@@ -1,6 +1,16 @@
 # PWADC Security Operations Suite - Changelog
 
 
+## v3.5.0.3 - Attendance Point Controls
+- Reversed the 90-Day Grid date direction so the ending/current date is on the left and older dates continue to the right.
+- Added reason-required editing of historical 90-Day Grid records with preserved correction history and Attendance audit entries.
+- Updated tardy points to T<5 = 0, T5-14 = 0.5, and T15+ = 1.
+- Preserved migrated legacy generic tardies at the previously approved 0.5-point value unless intentionally reclassified.
+- Added controlled manual current-point adjustments with required reason, pre-save backup, effective date, audit record, and exclusion of pre-adjustment attendance incidents from future active-point calculations.
+- Increased the maximum positive attendance credit bank from 2 to 3.
+- Retained 90-day point aging, 12 clean working-day earning, 14-day call-off classification, 3/6/9 corrective thresholds, shift grouping, visual status colors, atomic saves, and stale-write protection.
+
+
 ## v3.5.0.2 - Attendance Grid Visual Status
 - Broke the 90-Day Grid into shift sections while retaining All Employees, Single Employee, and shift-filter controls.
 - Added 90-Day Grid status colors: Present green, approved blue, Off unhighlighted, Not Employed blacked out.
