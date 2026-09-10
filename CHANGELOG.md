@@ -1,5 +1,13 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.0.4 - Historical Tardy Point Correction
+- Corrected historical and migrated T<5 records to use the current 0-point tardy policy.
+- Removed the v3.5.0.3 legacy 0.5-point override for generic tardies previously migrated to T<5.
+- Existing saved T<5 attendance records recalculate automatically at 0 points without deleting or rewriting attendance history.
+- T<5 continues to reset the 12-clean-working-day positive attendance streak because it remains an attendance issue despite carrying 0 negative points.
+- T5-14 remains 0.5 points and T15+ remains 1 point.
+- Retained rolling 90-day calculations, 14-day call-off classification, manual current-point adjustments, positive credit maximum of 3, corrective thresholds, visual status controls, atomic saves, and stale-write protection.
+
 
 ## v3.5.0.3 - Attendance Point Controls
 - Reversed the 90-Day Grid date direction so the ending/current date is on the left and older dates continue to the right.

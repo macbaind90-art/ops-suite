@@ -1,15 +1,15 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.3**
-- Release: **Attendance Point Controls**
-- Baseline: **v3.5.0.2 - Attendance Grid Visual Status**
+- Version: **3.5.0.4**
+- Release: **Historical Tardy Point Correction**
+- Baseline: **v3.5.0.3 - Attendance Point Controls**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
 - Rolling call-off classification window: **14 days**
 - Tardy points: **T<5 = 0 / T5-14 = 0.5 / T15+ = 1**
-- Legacy generic tardies migrated under v3.5.0.0 retain **0.5 points** unless intentionally reclassified
+- Historical generic tardies migrated to T<5 under v3.5.0.0 now calculate at **0 points** under the current tardy policy
 - Positive attendance award: **+1 after 12 clean working days**
 - Maximum positive credit bank: **3**
 - Positive credits offset and are consumed by negative points
@@ -33,7 +33,7 @@
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - New tardy-tier regression: **PASS**
-- Legacy generic-tardy 0.5 preservation regression: **PASS**
+- Historical/migrated T<5 zero-point regression: **PASS**
 - 3-point positive bank regression: **PASS**
 - 90-Day Grid newest-to-oldest regression: **PASS**
 - 90-Day Grid reason-required historical-edit regression: **PASS**
@@ -42,6 +42,7 @@
 - JavaScript syntax sweep: **PASS**
 - Actual 2026-09-09 Attendance backup parsed successfully: **7,911 entries / 42 employee records**
 - Actual-data migration simulation: **552 legacy records converted; 2 legacy U records preserved for manual review**
+- Actual backup historical tardy check: **233 legacy T records identified; all migrate/recalculate as T<5 = 0 points in v3.5.0.4**
 - `.git` in source package: **NOT PRESENT**
 - Root Markdown control: **6 standing documents**
 

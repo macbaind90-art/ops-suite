@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.3 | Attendance Point System */
+/* PWADC Security Operations Suite v3.5.0.4 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -72,7 +72,7 @@ function pointCodeLabel(code){
 }
 function pointValue(code){
   if(Object.prototype.hasOwnProperty.call(ATT_NEGATIVE_POINTS,code))return ATT_NEGATIVE_POINTS[code];
-  if(code==='T')return 0.5;
+  if(code==='T')return 0;
   if(code==='T>5')return 1;
   if(code==='CO')return 1.5;
   if(code==='UE')return 1;
@@ -80,13 +80,10 @@ function pointValue(code){
 }
 function tardyRecordKey(empId,date){return String(empId)+'|'+String(date);}
 function isLegacyMigratedTardy(empId,date,code){
-  if(code!=='T<5')return false;
-  if(attendance.tardyReclassifications&&attendance.tardyReclassifications[tardyRecordKey(empId,date)])return false;
-  const migrated=String(attendance.pointSystem&&attendance.pointSystem.migratedAt||'').slice(0,10);
-  const migratedCount=Number(attendance.pointSystem&&attendance.pointSystem.migrationSummary&&attendance.pointSystem.migrationSummary.summary&&attendance.pointSystem.migrationSummary.summary.T||0);
-  return !!(migrated&&migratedCount>0&&date<=migrated);
+  // Compatibility helper retained for older saved Attendance metadata. Historical T<5 records now use the current 0-point policy.
+  return false;
 }
-function attendanceEventPointValue(empId,date,code){return isLegacyMigratedTardy(empId,date,code)?0.5:pointValue(code);}
+function attendanceEventPointValue(empId,date,code){return pointValue(code);}
 function latestPointAdjustment(empId,asOf=pointSystemAsOf()){
   return (attendance.pointAdjustments||[]).filter(a=>String(a.empId)===String(empId)&&isIsoDateKey(a.effectiveDate)&&a.effectiveDate<=asOf).sort((a,b)=>String(b.effectiveDate).localeCompare(String(a.effectiveDate))||String(b.at||'').localeCompare(String(a.at||'')))[0]||null;
 }
@@ -158,11 +155,11 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
       continue;
     }
     if(ATT_ISSUE_CODES.has(code)||rawCode==='T>5'){
-      const gross=rawCode==='T'?0.5:attendanceEventPointValue(empId,e.date,code);
+      const gross=attendanceEventPointValue(empId,e.date,code);
       const offset=Math.min(bank,gross);
       bank=Number((bank-offset).toFixed(2));
       const net=Number((gross-offset).toFixed(2));
-      issues.push({date:e.date,code,gross,offset,net,legacyTardy:isLegacyMigratedTardy(empId,e.date,code)});
+      issues.push({date:e.date,code,gross,offset,net,legacyTardy:false});
       cleanWorkingDays=0;
       continue;
     }
@@ -339,8 +336,7 @@ function pointGridCell(emp,d,earnedDates=new Set()){
   const statusClass=pointGridStatusClass(c,pts);
   const classes=['att-point-cell','att-point-editable',statusClass,earned?'att-positive-earned':''].filter(Boolean).join(' ');
   const pointText=pts>0?String(pts):'';
-  const legacyNote=isLegacyMigratedTardy(emp.id,d,c)?' · legacy generic tardy retained at .5 point':'';
-  return `<td class="${classes}" onclick="openPointGridEditModal('${esc(emp.id)}','${esc(d)}')" title="${esc(d+' · '+pointCodeLabel(c)+(pts?' · '+pts+' pt':'')+legacyNote+(earned?' · +1 positive attendance point earned':'')+' · Click to edit with required reason')}"><div class="att-point-code">${esc(c||'')}</div>${pointText?`<div class="mini-note">${esc(pointText)}</div>`:''}${earned?'<span class="point-positive-award">+1</span>':''}</td>`;
+  return `<td class="${classes}" onclick="openPointGridEditModal('${esc(emp.id)}','${esc(d)}')" title="${esc(d+' · '+pointCodeLabel(c)+(pts?' · '+pts+' pt':'')+(earned?' · +1 positive attendance point earned':'')+' · Click to edit with required reason')}"><div class="att-point-code">${esc(c||'')}</div>${pointText?`<div class="mini-note">${esc(pointText)}</div>`:''}${earned?'<span class="point-positive-award">+1</span>':''}</td>`;
 }
 function openPointGridEditModal(empId,date){
   if(attendanceMigrationPending()){toast('Commit the Attendance Point System migration before editing historical records.');return;}
