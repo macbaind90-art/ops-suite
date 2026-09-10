@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.1 | Attendance Point System */
+/* PWADC Security Operations Suite v3.5.0.2 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -71,6 +71,31 @@ function pointValue(code){
   if(code==='CO')return 1.5;
   if(code==='UE')return 1;
   return 0;
+}
+
+function attendanceEmployeePointClass(empId,asOf=pointSystemAsOf()){
+  const points=attendancePointSnapshot(empId,asOf).activePoints;
+  if(points<3)return 'att-emp-risk-green';
+  if(points<7)return 'att-emp-risk-yellow';
+  return 'att-emp-risk-red';
+}
+function attendanceEmployeeNameHtml(emp,asOf=pointSystemAsOf(),meta=''){
+  const risk=attendanceEmployeePointClass(emp.id,asOf);
+  const snap=attendancePointSnapshot(emp.id,asOf);
+  const detail=meta||[emp.title,emp.shift].filter(Boolean).join(' · ');
+  return `<div class="att-employee-name-wrap ${risk}"><strong>${esc(emp.name)}</strong>${detail?`<div class="mini-note">${esc(detail)}</div>`:''}<div class="mini-note">${snap.activePoints} active point${snap.activePoints===1?'':'s'}</div></div>`;
+}
+function pointGridStatusClass(code){
+  const c=String(code||'');
+  if(!c)return '';
+  if(c==='NE')return 'att-status-ne';
+  if(c==='O')return '';
+  if(c==='P')return 'att-status-present';
+  if(['AT','ALE','AA','V','AL','E','AE','FL'].includes(c))return 'att-status-approved';
+  const pts=pointValue(c);
+  if(pts>0)return pts>=2?'att-status-issue-high':'att-status-issue-low';
+  if(c==='U')return 'att-status-issue-high';
+  return '';
 }
 function isChargeableAttendanceCode(code){return ATT_ISSUE_CODES.has(code)||ATT_OLD_ISSUE_CODES.has(code);}
 function attendanceActionLevel(points){
@@ -265,7 +290,8 @@ function applyAttendancePointCode(empId,date,code){if(setAttendancePointCode(emp
 function renderPointDailyRow(e,locked=false){
   const current=getCode(e.id,entryDate);
   const snap=attendancePointSnapshot(e.id,entryDate);
-  return `<div class="person-row"><div class="person-name"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span><span class="mini-note">Active Points: ${snap.activePoints} · Positive Credit: ${snap.bank} · Clean Workdays: ${snap.cleanWorkingDays}/12</span></div><div class="row-code-pad">${ATT_POINT_CODES.map(x=>`<button class="row-code-btn ${current===x.code||(['CO1','CO2'].includes(current)&&x.code==='CO')?'active':''}" title="${esc(x.label+(x.points===null?'':` · ${x.points} pt`))}" ${locked?'disabled':''} onclick="event.stopPropagation();applyAttendancePointCode('${esc(e.id)}','${entryDate}','${x.code}')">${esc(x.code)}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(current)}">${esc(current||'Blank')}</span></div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button></div></div>`;
+  const risk=attendanceEmployeePointClass(e.id,entryDate);
+  return `<div class="person-row"><div class="person-name att-employee-name-wrap ${risk}"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span><span class="mini-note">Active Points: ${snap.activePoints} · Positive Credit: ${snap.bank} · Clean Workdays: ${snap.cleanWorkingDays}/12</span></div><div class="row-code-pad">${ATT_POINT_CODES.map(x=>`<button class="row-code-btn ${current===x.code||(['CO1','CO2'].includes(current)&&x.code==='CO')?'active':''}" title="${esc(x.label+(x.points===null?'':` · ${x.points} pt`))}" ${locked?'disabled':''} onclick="event.stopPropagation();applyAttendancePointCode('${esc(e.id)}','${entryDate}','${x.code}')">${esc(x.code)}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(current)}">${esc(current||'Blank')}</span></div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button></div></div>`;
 }
 
 function pointGridEmployees(){
@@ -273,9 +299,19 @@ function pointGridEmployees(){
   if(pointGridShift!=='All')emps=emps.filter(e=>e.shift===pointGridShift);
   return emps;
 }
-function pointGridCell(emp,d){
+function pointGridCell(emp,d,earnedDates=new Set()){
   const c=getCode(emp.id,d),pts=pointValue(c);
-  return `<td title="${esc(d+' · '+pointCodeLabel(c)+(pts?' · '+pts+' pt':''))}" style="text-align:center;min-width:38px"><div>${esc(c||'')}</div><div class="mini-note">${pts||''}</div></td>`;
+  const earned=earnedDates.has(d);
+  const statusClass=pointGridStatusClass(c);
+  const classes=['att-point-cell',statusClass,earned?'att-positive-earned':''].filter(Boolean).join(' ');
+  const pointText=pts>0?String(pts):'';
+  return `<td class="${classes}" title="${esc(d+' · '+pointCodeLabel(c)+(pts?' · '+pts+' pt':'')+(earned?' · +1 positive attendance point earned':''))}"><div class="att-point-code">${esc(c||'')}</div>${pointText?`<div class="mini-note">${esc(pointText)}</div>`:''}${earned?'<span class="point-positive-award">+1</span>':''}</td>`;
+}
+function pointGridShiftGroups(emps){return pointDailyGroups(emps);}
+function renderPointGridEmployeeRow(e,dates,end){
+  const snap=attendancePointSnapshot(e.id,end);
+  const earnedDates=new Set((snap.earned||[]).map(x=>x.date));
+  return `<tr><td class="name">${attendanceEmployeeNameHtml(e,end)}</td>${dates.map(d=>pointGridCell(e,d,earnedDates)).join('')}</tr>`;
 }
 function renderPointGrid(){
   const end=gridEnd||pointSystemAsOf();
@@ -289,9 +325,15 @@ function renderPointGrid(){
   const single=pointGridMode==='single';
   const snap=attendancePointSnapshot(emp.id,end);
   const controls=`<div class="toolbar"><div><label>View</label><select onchange="pointGridMode=this.value;safeRenderPages()"><option value="all" ${!single?'selected':''}>All Employees</option><option value="single" ${single?'selected':''}>Single Employee</option></select></div>${single?`<div><label>Employee</label><select onchange="selectedGridEmpId=this.value;safeRenderPages()">${allEmps.map(e=>`<option value="${esc(e.id)}" ${String(e.id)===String(emp.id)?'selected':''}>${esc(e.name)} · ${esc(e.shift)}</option>`).join('')}</select></div>`:`<div><label>Shift</label><select onchange="pointGridShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${pointGridShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>`}<div><label>Ending Date</label><input type="date" value="${end}" onchange="gridEnd=this.value;safeRenderPages()"></div></div>`;
-  const summary=single?`<div class="health-row"><span>Gross Negative Points</span><strong>${snap.gross90}</strong></div><div class="health-row"><span>Credit Applied</span><strong>${snap.offsets90}</strong></div><div class="health-row"><span>Active Disciplinary Points</span><strong>${snap.activePoints}</strong></div><div class="health-row"><span>Positive Credit Bank</span><strong>${snap.bank} / 2</strong></div>`:`<div class="mini-note">Showing ${emps.length} active employee(s)${pointGridShift==='All'?'':' · '+esc(pointGridShift)}. Use Single Employee view for an individual point summary.</div>`;
-  const rows=single?[emp]:emps;
-  return `<div class="card"><div class="card-title">90-Day Grid</div>${controls}${summary}</div><div class="table-wrap" id="attendancePointGridWrap"><table><thead><tr><th class="name">Employee</th>${dates.map(d=>`<th style="min-width:38px">${d.slice(5)}</th>`).join('')}</tr></thead><tbody>${rows.map(e=>`<tr><td class="name"><strong>${esc(e.name)}</strong><div class="mini-note">${esc(e.shift)} · ${esc(e.title||'')}</div></td>${dates.map(d=>pointGridCell(e,d)).join('')}</tr>`).join('')||`<tr><td colspan="${dates.length+1}">No employees match the selected shift.</td></tr>`}</tbody></table></div>`;
+  const summary=single?`<div class="health-row"><span>Gross Negative Points</span><strong>${snap.gross90}</strong></div><div class="health-row"><span>Credit Applied</span><strong>${snap.offsets90}</strong></div><div class="health-row"><span>Active Disciplinary Points</span><strong>${snap.activePoints}</strong></div><div class="health-row"><span>Positive Credit Bank</span><strong>${snap.bank} / 2</strong></div>`:`<div class="mini-note">Showing ${emps.length} active employee(s)${pointGridShift==='All'?'':' · '+esc(pointGridShift)}. Employees are separated by shift in operational order.</div>`;
+  const legend=`<div class="att-point-grid-legend"><span class="att-legend present">Present</span><span class="att-legend approved">Approved</span><span class="att-legend low">Low Point Action</span><span class="att-legend high">High Point Action</span><span class="att-legend positive">+ Positive Point Earned</span><span class="att-legend ne">Not Employed</span><span class="att-legend off">Off = no highlight</span></div>`;
+  let body='';
+  if(single){body=renderPointGridEmployeeRow(emp,dates,end);}
+  else{
+    const groups=pointGridShiftGroups(emps);
+    body=groups.map(g=>`<tr class="att-point-grid-shift-row"><td colspan="${dates.length+1}">${esc(g.shift)} · ${g.rows.length} employee(s)</td></tr>${g.rows.map(e=>renderPointGridEmployeeRow(e,dates,end)).join('')}`).join('');
+  }
+  return `<div class="card"><div class="card-title">90-Day Grid</div>${controls}${summary}${legend}</div><div class="table-wrap" id="attendancePointGridWrap"><table><thead><tr><th class="name">Employee</th>${dates.map(d=>`<th style="min-width:38px">${d.slice(5)}</th>`).join('')}</tr></thead><tbody>${body||`<tr><td colspan="${dates.length+1}">No employees match the selected shift.</td></tr>`}</tbody></table></div>`;
 }
 
 function pointReviewRows(){
@@ -303,12 +345,14 @@ function pointReviewRows(){
 function renderPointReview(){
   const shifts=['All',...Array.from(new Set(activeAttendanceEmployees().map(e=>e.shift).filter(Boolean)))];
   const rows=pointReviewRows();
-  return `<div class="card"><div class="card-title">Attendance Point Review</div><div class="toolbar"><div><label>Shift</label><select onchange="pointReviewShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${pointReviewShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><div><label>Search</label><input value="${esc(pointReviewSearch)}" oninput="pointReviewSearch=this.value;safeRenderPages({preserveScroll:true})" placeholder="Employee..."></div><div class="chip">As of ${esc(fmt(pointSystemAsOf()))}</div></div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Gross 90-Day</th><th>Credits Used</th><th>Active Points</th><th>Positive Bank</th><th>Clean Workdays</th><th>Current Threshold</th><th>Next Step</th></tr></thead><tbody>${rows.map(({emp,snap})=>{const last=latestCorrectiveAction(emp.id);const due=attendanceActionRank(snap.level)>attendanceActionRank(last&&last.level||'None');return `<tr><td class="name"><strong>${esc(emp.name)}</strong><div class="mini-note">${esc(emp.title)} · ${esc(emp.shift)}</div></td><td>${snap.gross90}</td><td>${snap.offsets90}</td><td><strong>${snap.activePoints}</strong></td><td>${snap.bank} / 2</td><td>${snap.cleanWorkingDays} / 12</td><td>${esc(snap.level)}</td><td>${due?`<span class="chip critical">Action Due</span> <button class="sm" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Record</button>`:'<span class="chip ok">Current</span>'}</td></tr>`}).join('')}</tbody></table></div>`;
+  const asOf=pointSystemAsOf();
+  return `<div class="card"><div class="card-title">Attendance Point Review</div><div class="toolbar"><div><label>Shift</label><select onchange="pointReviewShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${pointReviewShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><div><label>Search</label><input value="${esc(pointReviewSearch)}" oninput="pointReviewSearch=this.value;safeRenderPages({preserveScroll:true})" placeholder="Employee..."></div><div class="chip">As of ${esc(fmt(asOf))}</div></div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Gross 90-Day</th><th>Credits Used</th><th>Active Points</th><th>Positive Bank</th><th>Clean Workdays</th><th>Current Threshold</th><th>Next Step</th></tr></thead><tbody>${rows.map(({emp,snap})=>{const last=latestCorrectiveAction(emp.id);const due=attendanceActionRank(snap.level)>attendanceActionRank(last&&last.level||'None');return `<tr><td class="name">${attendanceEmployeeNameHtml(emp,asOf)}</td><td>${snap.gross90}</td><td>${snap.offsets90}</td><td><strong>${snap.activePoints}</strong></td><td>${snap.bank} / 2</td><td>${snap.cleanWorkingDays} / 12</td><td>${esc(snap.level)}</td><td>${due?`<span class="chip critical">Action Due</span> <button class="sm" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Record</button>`:'<span class="chip ok">Current</span>'}</td></tr>`}).join('')}</tbody></table></div>`;
 }
 
 function renderPointCorrectiveActions(){
-  const rows=sortedEmployees().map(emp=>({emp,snap:attendancePointSnapshot(emp.id),last:latestCorrectiveAction(emp.id)})).filter(x=>x.snap.level!=='None'||x.last).sort((a,b)=>b.snap.activePoints-a.snap.activePoints||a.emp.name.localeCompare(b.emp.name));
-  return `<div class="card"><div class="card-title">Corrective Action Control</div><div class="notice">Disciplinary thresholds use active points after positive attendance credits are applied: Verbal Counseling at 3, Written Warning at 6, Final Written Warning at 9. Recording an action documents completion; it does not change the point calculation.</div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Active Points</th><th>Required Level</th><th>Last Recorded Action</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows.map(({emp,snap,last})=>{const due=attendanceActionRank(snap.level)>attendanceActionRank(last&&last.level||'None');return `<tr><td class="name"><strong>${esc(emp.name)}</strong><div class="mini-note">${esc(emp.shift)}</div></td><td>${snap.activePoints}</td><td>${esc(snap.level)}</td><td>${last?`${esc(last.level)}<div class="mini-note">${esc(String(last.at||'').slice(0,10))} · ${esc(last.by||'')}</div>`:'None'}</td><td>${due?'<span class="chip critical">Due</span>':'<span class="chip ok">Current</span>'}</td><td><button class="sm" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Record Action</button></td></tr>`}).join('')||'<tr><td colspan="6">No employees are currently at a corrective-action threshold.</td></tr>'}</tbody></table></div>`;
+  const asOf=pointSystemAsOf();
+  const rows=sortedEmployees().map(emp=>({emp,snap:attendancePointSnapshot(emp.id,asOf),last:latestCorrectiveAction(emp.id)})).filter(x=>x.snap.level!=='None'||x.last).sort((a,b)=>b.snap.activePoints-a.snap.activePoints||a.emp.name.localeCompare(b.emp.name));
+  return `<div class="card"><div class="card-title">Corrective Action Control</div><div class="notice">Disciplinary thresholds use active points after positive attendance credits are applied: Verbal Counseling at 3, Written Warning at 6, Final Written Warning at 9. Recording an action documents completion; it does not change the point calculation.</div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Active Points</th><th>Required Level</th><th>Last Recorded Action</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows.map(({emp,snap,last})=>{const due=attendanceActionRank(snap.level)>attendanceActionRank(last&&last.level||'None');return `<tr><td class="name">${attendanceEmployeeNameHtml(emp,asOf,emp.shift)}</td><td>${snap.activePoints}</td><td>${esc(snap.level)}</td><td>${last?`${esc(last.level)}<div class="mini-note">${esc(String(last.at||'').slice(0,10))} · ${esc(last.by||'')}</div>`:'None'}</td><td>${due?'<span class="chip critical">Due</span>':'<span class="chip ok">Current</span>'}</td><td><button class="sm" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Record Action</button></td></tr>`}).join('')||'<tr><td colspan="6">No employees are currently at a corrective-action threshold.</td></tr>'}</tbody></table></div>`;
 }
 
 function openCorrectiveActionModal(empId){

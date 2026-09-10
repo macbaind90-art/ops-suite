@@ -1,4 +1,13 @@
-# PWADC Security Operations Suite v3.5.0.1
+# PWADC Security Operations Suite v3.5.0.2
+
+
+## v3.5.0.2 - Attendance Grid Visual Status
+- The 90-Day Grid now separates All Employees into visible shift sections in operational order.
+- Grid cells use status colors for fast review: Present is green, approved attendance is blue, Off has no highlight, and Not Employed is blacked out.
+- Point-generating attendance is highlighted yellow for lower-value actions (0.5-1.5 points) and red for higher-value actions (2+ points).
+- The workday that earns a positive attendance credit is marked with a green +1 indicator.
+- Employee names are status-highlighted throughout Daily Entry, 90-Day Grid, Point Review, and Corrective Action: green below 3 active points, yellow from 3 through 6.99, and red at 7 or more.
+- Attendance point values, rolling windows, positive-credit earning/consumption, corrective thresholds, migration rules, and shared-data persistence controls are unchanged.
 
 
 ## v3.5.0.1 - Attendance Daily/Grid Usability

@@ -1,5 +1,14 @@
 # PWADC Security Operations Suite - Changelog
 
+
+## v3.5.0.2 - Attendance Grid Visual Status
+- Broke the 90-Day Grid into shift sections while retaining All Employees, Single Employee, and shift-filter controls.
+- Added 90-Day Grid status colors: Present green, approved blue, Off unhighlighted, Not Employed blacked out.
+- Added yellow highlighting for 0.5-1.5 point attendance actions and red highlighting for 2+ point attendance actions.
+- Added a green +1 marker on the workday that earns a positive attendance credit.
+- Added employee-name risk highlighting across the Attendance workflow: green below 3 active points, yellow from 3 through 6.99, red at 7 or more.
+- No changes to point calculations, migration, corrective thresholds, or shared-data write controls.
+
 ## v3.5.0.1 - Attendance Daily/Grid Usability
 - Restored grouped Daily Entry sections with the requested order: 3rd Shift, 1st Shift, 2nd Shift, Gate, Reception.
 - Added All Employees and Single Employee options to the 90-Day Grid.

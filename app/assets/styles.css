@@ -623,3 +623,27 @@ label:has(>input[type=checkbox]),label:has(>input[type=radio]){display:flex;alig
   .btn-group,.top-actions,.schedule-actions,.task-actions,.training-actions,.roster-utility-actions{width:100%}.btn-group button,.top-actions button{flex:1 1 145px}.toolbar>div,.roster-filters>div,.supplies-filters>div,.training-filters>div{flex:1 1 100%;max-width:none}.roster-card-row{grid-template-columns:1fr}
   .modal-backdrop{padding:6px;place-items:stretch}.modal-card{width:100%;max-height:calc(100vh - 12px);border-radius:10px;padding:12px}.modal-actions button{flex:1 1 130px}.day-grid{grid-template-columns:repeat(auto-fit,minmax(92px,1fr))!important}.toast{left:10px;right:10px;bottom:10px}
 }
+
+/* v3.5.0.2 Attendance point grid visual status */
+.att-employee-name-wrap{border-left:4px solid transparent;border-radius:7px;padding:6px 8px;min-width:0}
+.att-employee-name-wrap.att-emp-risk-green{border-left-color:var(--green);background:rgba(82,180,122,.14)}
+.att-employee-name-wrap.att-emp-risk-yellow{border-left-color:var(--gold);background:rgba(255,196,87,.16)}
+.att-employee-name-wrap.att-emp-risk-red{border-left-color:var(--red);background:rgba(255,107,107,.18)}
+.att-point-cell{position:relative;text-align:center;min-width:38px;padding:7px 5px}
+.att-point-cell.att-status-present{background:rgba(82,180,122,.18)}
+.att-point-cell.att-status-approved{background:rgba(83,146,214,.20)}
+.att-point-cell.att-status-issue-low{background:rgba(255,196,87,.22)}
+.att-point-cell.att-status-issue-high{background:rgba(255,107,107,.24)}
+.att-point-cell.att-status-ne{background:#050505!important;color:#4b4b4b}
+.att-point-cell.att-status-ne .att-point-code,.att-point-cell.att-status-ne .mini-note{color:#444!important}
+.att-point-cell.att-positive-earned{box-shadow:inset 0 0 0 3px rgba(82,180,122,.72)}
+.point-positive-award{position:absolute;right:2px;top:2px;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 4px;border-radius:999px;background:var(--green);color:#07150d;font-size:9px;font-weight:950;line-height:1}
+.att-point-grid-shift-row td{position:relative;left:auto!important;text-align:left!important;background:linear-gradient(90deg,rgba(198,178,115,.22),var(--surface2))!important;color:var(--gold);font-weight:950;text-transform:uppercase;letter-spacing:.7px;border-top:2px solid var(--gold);border-bottom:1px solid var(--gold);z-index:1}
+.att-point-grid-legend{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+.att-legend{display:inline-flex;align-items:center;border:1px solid var(--border);border-radius:999px;padding:5px 9px;font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.35px}
+.att-legend.present,.att-legend.positive{background:rgba(82,180,122,.18);border-color:rgba(82,180,122,.55);color:#a8ebc2}
+.att-legend.approved{background:rgba(83,146,214,.20);border-color:rgba(83,146,214,.55);color:#b7d8ff}
+.att-legend.low{background:rgba(255,196,87,.22);border-color:rgba(255,196,87,.55);color:#ffe0a0}
+.att-legend.high{background:rgba(255,107,107,.24);border-color:rgba(255,107,107,.55);color:#ffc0c0}
+.att-legend.ne{background:#050505;color:#777;border-color:#333}
+.att-legend.off{background:transparent;color:var(--muted)}
