@@ -21,7 +21,7 @@ const staticChecks=[
   ['attendance.workdayBasis', 'Positive-attendance workday basis metadata missing'],
   ['function attendanceCleanWorkdayEligible', 'Scheduled-workday eligibility helper missing'],
   ['if(!attendanceCleanWorkdayEligible(empId,e.date,code))continue;', 'Positive credits must require scheduled workdays'],
-  ["autoFillRdosForDate=function(date){return syncAttendanceOffFromAuthority(date);};", 'Legacy RDO auto-fill was not replaced by schedule authority'],
+  ['function autoFillRdosForDate(date){return syncAttendanceOffFromAuthority(date);}', 'Legacy RDO auto-fill was not replaced by schedule authority'],
   ['Live Schedule is the primary authority for scheduled/off days', 'Attendance policy UI must disclose schedule authority'],
   ['Roster RDO fallback', 'Daily Entry must disclose fallback source']
 ];

@@ -172,7 +172,7 @@ namespace PWADC.SecurityOperationsSuite
                 var record = new
                 {
                     at = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                    version = "3.5.0.9",
+                    version = "3.5.0.10",
                     user = Environment.UserName,
                     machine = Environment.MachineName,
                     module = outcome.Module,

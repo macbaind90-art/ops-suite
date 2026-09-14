@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.9**
-- Release: **Attendance Legacy Workflow Retirement / QA Stabilization**
-- Baseline: **v3.5.0.8 - Command Center Attendance Workflow Alignment**
+- Version: **3.5.0.10**
+- Release: **Attendance Startup Binding Hotfix**
+- Baseline: **v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -32,7 +32,7 @@
 - Employee-name point status retained: green <3 / yellow 3-6.99 / red 7+
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 5 Attendance views / 5 Roster views / 817 named functions / 203 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 5 Attendance views / 5 Roster views / 819 named functions / 203 inline action targets / 10 registered modules
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - Roster-to-Attendance population regression: **PASS**
@@ -40,6 +40,7 @@
 - Positive-credit immediate-paydown regression: **PASS**
 - Home Attendance workflow regression: **PASS**
 - Attendance legacy retirement regression: **PASS**
+- Browser startup binding regression: **PASS**
 - September 9 production Attendance backup render smoke: **PASS** - 16 major modules / 5 Attendance views loaded against the real 42-employee backup without render failure
 - Positive-credit partial/fractional carryover regression: **PASS**
 - 3-point balance cap with re-earning after use: **PASS**
@@ -51,6 +52,15 @@
 
 ## Windows Build Status
 The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs front-end and targeted regression validation, restore, build, and self-contained `win-x64` publish.
+
+## v3.5.0.10 Targeted Regression
+- Reproduced the Windows startup symptom: startup required-function gate reported `renderAttendance is not defined`.
+- Root cause confirmed in `82-attendance-points.js`: strict-mode global reassignment remained after the base Attendance declaration was retired.
+- `renderAttendance` is now an explicit function declaration.
+- `autoFillRdosForDate` is now an explicit function declaration.
+- Attendance script order remains `80-attendance.js` → `82-attendance-points.js` → `99-startup.js`.
+- Dedicated browser-startup binding validator: **PASS**.
+- Existing Attendance point, positive-credit, Live Schedule, Roster sync, Home workflow, and legacy-retirement validators remain **PASS**.
 
 ## v3.5.0.9 Targeted Regression
 - Attendance legacy retirement validator: **PASS**.

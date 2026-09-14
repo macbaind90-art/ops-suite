@@ -1,5 +1,12 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.0.10 - Attendance Startup Binding Hotfix
+- Fixed the Windows startup failure reporting `renderAttendance is not defined`.
+- Root cause: the v3.5.0.9 legacy-retirement cleanup removed the original Attendance function declarations while the point-system extension still reassigned two globals under strict-mode script loading.
+- Replaced the unsafe reassignment pattern with explicit declarations for `renderAttendance` and `autoFillRdosForDate`.
+- Added a browser-startup binding regression validator and GitHub Actions validation gate.
+- No Attendance policy, point values, positive-credit rules, Live Schedule authority, Roster-to-Attendance sync, or shared-data behavior changed.
+
 ## v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization
 - Retired the legacy Attendance Pattern, Notice Workflow, exception-flag, and threshold UI/logic from the live application.
 - Preserved historical `patternActions`, `flagActions`, and `notices` fields only when they already exist in older Attendance JSON; no current workflow reads, creates, or acts on them.

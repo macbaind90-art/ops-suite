@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.9 | Attendance Point System */
+/* PWADC Security Operations Suite v3.5.0.10 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -137,7 +137,7 @@ function syncAttendanceOffFromAuthority(date){
   if(changed){audit('Attendance Off synchronized',`${date} · ${added} auto-Off added · ${cleared} stale auto-Off cleared · Live Schedule primary / Roster RDO fallback`);saveAttendance('schedule-off-authority');}
   return {changed,added,cleared};
 }
-autoFillRdosForDate=function(date){return syncAttendanceOffFromAuthority(date);};
+function autoFillRdosForDate(date){return syncAttendanceOffFromAuthority(date);}
 function pointSystemAsOf(){return isIsoDateKey(gridEnd)?gridEnd:(latestAttendanceDataDate(attendance)||new Date().toISOString().slice(0,10));}
 function dayDiff(a,b){return Math.round((parseISO(b)-parseISO(a))/86400000);}
 function pointCodeLabel(code){
@@ -409,14 +409,14 @@ function setAttendancePointCode(empId,date,rawCode){
 
 setCode=function(id,date,code,opts={}){return setAttendancePointCode(id,date,code,opts);};
 
-renderAttendance=function(){
+function renderAttendance(){
   ensureAttendancePointSystem();
   const views=['daily','grid','review','actions','audit'];
   if(!views.includes(activeAttView))activeAttView='review';
   const labels={daily:'Daily Entry',grid:'90-Day Grid',review:'Point Review',actions:'Corrective Action',audit:'Audit Log'};
   const migration=attendanceMigrationPending()?`<div class="notice warn"><strong>Attendance Point Migration Required</strong><br>The current Attendance JSON is being preserved in memory. Daily entry is locked until a backup is created and legacy codes are converted to the v3.5 point model. <button class="primary" onclick="commitAttendancePointMigration()">Commit Migration + Backup</button></div>`:'';
   return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> T&lt;5 = 0 · T5-14 = .5 · T15+ = 1 · CO1 = 1.5 · CO2 = 3 · NCNS = 9 · LE = 1 · EIA = 2. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit. Newly earned credits immediately pay down active negative points first; any unused remainder is banked, with a maximum positive balance of 3 at any one time. Banked credits are consumed by future chargeable points and can be earned again after use. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
-};
+}
 
 function attendanceDailyShiftRank(shift){const i=ATTENDANCE_DAILY_SHIFT_ORDER.indexOf(String(shift||''));return i>=0?i:99;}
 function attendanceDailyShiftList(){

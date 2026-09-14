@@ -1,4 +1,10 @@
-# PWADC Security Operations Suite v3.5.0.9
+# PWADC Security Operations Suite v3.5.0.10
+
+## v3.5.0.10 - Attendance Startup Binding Hotfix
+- Fixed a startup failure introduced during the v3.5.0.9 legacy Attendance retirement.
+- Restored explicit browser-global declarations for `renderAttendance` and `autoFillRdosForDate` before the startup required-function gate runs.
+- Added a browser-startup binding regression validator to prevent strict-mode undeclared-global overrides from reaching a Windows build.
+- No attendance policy, point calculation, schedule authority, roster sync, positive-credit, or data-schema behavior changed.
 
 ## v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization
 The live Attendance module now uses only the current point-system workflow: Daily Entry, 90-Day Grid, Point Review, Corrective Action, and Audit. Legacy Pattern, Notice Workflow, and exception-flag logic has been removed from live code and reporting. Older JSON may still contain historical pattern/notice fields; those values are preserved untouched for record compatibility but are not treated as active workflow data.

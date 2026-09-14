@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization**.
+Current build: **v3.5.0.10 - Attendance Startup Binding Hotfix**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -43,7 +43,8 @@ Current build: **v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabiliza
 - ~~v3.5.0.6 - Live Schedule Attendance Authority~~ Completed
 - ~~v3.5.0.7 - Positive Credit Immediate Paydown~~ Completed
 - ~~v3.5.0.8 - Command Center Attendance Workflow Alignment~~ Completed
-- **v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization** Current
+- **v3.5.0.10 - Attendance Startup Binding Hotfix** Current
+- **v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization**
 
 ## Current Governance Model
 ### Command Center
