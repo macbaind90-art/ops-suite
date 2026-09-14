@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.5.0.7 - Positive Credit Immediate Paydown**.
+Current build: **v3.5.0.8 - Command Center Attendance Workflow Alignment**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed

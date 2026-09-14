@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.7 | Attendance Point System */
+/* PWADC Security Operations Suite v3.5.0.8 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;

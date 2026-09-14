@@ -37,6 +37,9 @@ jobs:
       - name: Validate Attendance Live Schedule authority
         run: node tools/validate-attendance-schedule-authority.js
 
+      - name: Validate Home Attendance workflow
+        run: node tools/validate-home-attendance-workflow.js
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -54,5 +57,5 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-5-0-7-Windows
+          name: PWADC-Security-Operations-Suite-v3-5-0-8-Windows
           path: publish/**

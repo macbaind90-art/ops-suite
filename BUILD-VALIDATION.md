@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.7**
-- Release: **Positive Credit Immediate Paydown**
-- Baseline: **v3.5.0.6 - Live Schedule Attendance Authority**
+- Version: **3.5.0.8**
+- Release: **Command Center Attendance Workflow Alignment**
+- Baseline: **v3.5.0.7 - Positive Credit Immediate Paydown**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -32,12 +32,13 @@
 - Employee-name point status retained: green <3 / yellow 3-6.99 / red 7+
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 940 named functions / 229 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 939 named functions / 229 inline action targets / 10 registered modules
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - Roster-to-Attendance population regression: **PASS**
 - Live Schedule Attendance authority regression: **PASS**
 - Positive-credit immediate-paydown regression: **PASS**
+- Home Attendance workflow regression: **PASS**
 - Positive-credit partial/fractional carryover regression: **PASS**
 - 3-point balance cap with re-earning after use: **PASS**
 - Manual adjusted-balance positive-credit paydown: **PASS**
@@ -49,12 +50,12 @@
 ## Windows Build Status
 The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs front-end and targeted regression validation, restore, build, and self-contained `win-x64` publish.
 
-## v3.5.0.7 Targeted Regression
-- A +1 positive award earned while an employee has active negative points pays down those points immediately before banking any remainder.
-- Example contract: 1.5 active negative points + earned 1.0 positive point = **0.5 active points / 0 banked**.
-- Example contract: another earned 1.0 positive point against the remaining 0.5 leaves **0 active / 0.5 banked**.
-- An employee may hold no more than **3 positive credits at one time**.
-- Once a banked credit is consumed, later clean 12-workday cycles can replenish the bank back to 3.
-- There is no cumulative/lifetime positive-credit ceiling.
-- A controlled manual active-point balance is eligible for paydown by positive credits earned after its effective date.
-- Live Schedule authority, Roster RDO fallback, manual attendance protection, stale-write controls, and atomic saves remain unchanged.
+## v3.5.0.8 Targeted Regression
+- Home no longer calls or navigates to legacy Attendance Pattern or Notice queues.
+- Home Daily Attendance completion is schedule-aware and uses the same Live Schedule / Roster RDO authority as Attendance.
+- Corrective-action due count is derived from current active points versus the employee's last recorded corrective action.
+- Home exposes Point Review, Corrective Action, 90-Day Grid, current positive-credit bank, and 7+ point risk without changing underlying point calculations.
+- People Workflow and Employee People Command use active points, positive bank, clean working days, and corrective-action status.
+- Start Here reflects the current Attendance workflow: Daily Entry → 90-Day Grid → Point Review → Corrective Action → Audit.
+- Historical legacy pattern/notice data is preserved for compatibility; it is simply removed from the current Home command workflow.
+- Live Schedule authority, Roster RDO fallback, manual attendance protection, positive-credit rules, stale-write controls, and atomic saves remain unchanged.

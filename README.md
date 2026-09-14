@@ -1,4 +1,11 @@
-# PWADC Security Operations Suite v3.5.0.7
+# PWADC Security Operations Suite v3.5.0.8
+
+## v3.5.0.8 - Command Center Attendance Workflow Alignment
+The Home / Command Center now uses the current Attendance Point System as its people-work authority. Legacy Attendance Pattern and Notice queues are removed from Home, People Workflow navigation, employee command summaries, and the Start Here operating flow. Historical pattern/notice data and compatibility functions remain in the repository for existing records, but they are no longer presented as current command-center work.
+
+Home now prioritizes **missing scheduled attendance entries**, **corrective action due**, **employees at 7+ active points**, overdue tasks, Shift Intelligence intake/action queues, and schedule gaps. The People Workflow provides direct access to **Daily Entry, Point Review, Corrective Action, Roster, Training, and Uniforms**. Positive attendance credit balances and the current 3-point bank cap are also visible from Home.
+
+The daily operating sequence is now: complete Daily Attendance → review points/corrective action → confirm Live Schedule/Roster → process Shift Operations → move owned follow-ups to Task Tracker → close with Reports/Data Health. Live Schedule remains the primary scheduled/off authority with Roster RDO fallback.
 
 ## v3.5.0.7 - Positive Credit Immediate Paydown
 Positive attendance credits now work as an active attendance-credit balance rather than only waiting for the next violation. When an employee earns +1 after 12 clean scheduled working days, the award first reduces any active negative attendance points. Any unused remainder is banked. The positive bank remains capped at **3 at any one time**, not three for the employee's lifetime. After credits are consumed, the employee can earn back up to three again through additional clean 12-workday cycles.
