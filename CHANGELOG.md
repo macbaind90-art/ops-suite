@@ -1,5 +1,15 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.0.6 - Live Schedule Attendance Authority
+- Made the published Live Schedule the primary authority for whether an active employee is scheduled to work or Off on a weekday.
+- Attendance now checks named assignments in `roster.schedule`; Open/Pending establishes that the weekday is populated but is not treated as an employee assignment. Closed/None/blank cells do not establish schedule authority.
+- When a weekday has no usable live schedule, Attendance falls back to the employee's Roster RDO configuration.
+- Mock/draft schedules are explicitly excluded from Attendance calculations and Off determination.
+- Automatic Off records created under this release carry provenance so a current-day auto-Off can be cleared if the live schedule is changed to schedule that employee. Future Off status is derived without being persisted early. Manual Attendance entries always take priority and are not overwritten.
+- Past finalized Attendance records are protected from automatic schedule rewrites.
+- Positive-attendance clean-workday progress now requires a scheduled workday under the live-schedule/RDO authority for current records; historical records without captured workday metadata retain their established interpretation.
+- Added a dedicated Attendance Live Schedule authority regression validator to the Windows build workflow.
+
 ## v3.5.0.5 - Roster to Attendance Population Reliability
 - Corrected the Roster-to-Attendance workflow so missing active Roster employees can be created in Attendance, not only linked when they already exist.
 - New Roster employees are now verified as active Attendance employees before the UI reports a successful sync.
@@ -8,7 +18,7 @@
 - Existing Attendance history is preserved during reconciliation; archived Roster employees remain hidden from active Attendance.
 - Added a targeted Roster-to-Attendance population regression validator to the Windows build workflow.
 
-## v3.5.0.5 - Historical Tardy Point Correction
+## v3.5.0.4 - Historical Tardy Point Correction
 - Corrected historical and migrated T<5 records to use the current 0-point tardy policy.
 - Removed the v3.5.0.3 legacy 0.5-point override for generic tardies previously migrated to T<5.
 - Existing saved T<5 attendance records recalculate automatically at 0 points without deleting or rewriting attendance history.

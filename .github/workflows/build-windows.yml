@@ -31,6 +31,9 @@ jobs:
       - name: Validate Roster to Attendance population
         run: node tools/validate-roster-attendance-sync.js
 
+      - name: Validate Attendance Live Schedule authority
+        run: node tools/validate-attendance-schedule-authority.js
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -48,5 +51,5 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-5-0-5-Windows
+          name: PWADC-Security-Operations-Suite-v3-5-0-6-Windows
           path: publish/**

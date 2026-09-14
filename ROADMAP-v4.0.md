@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.5.0.5 - Historical Tardy Point Correction**.
+Current build: **v3.5.0.6 - Live Schedule Attendance Authority**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed

@@ -17,7 +17,7 @@ The design objective is controlled separation, not a framework rewrite.
 7. `app/js/60-roster-schedule.js` - roster maintenance, schedule workspace, mock schedules and schedule print/share
 8. `app/js/70-training-uniforms.js` - training, uniform accountability, labor/coverage analytics and roster import/export helpers
 9. `app/js/80-attendance.js` - legacy Attendance compatibility, shared Attendance utilities, audit/import/export helpers, and preserved historical functions
-10. `app/js/82-attendance-points.js` - v3.5 Attendance Point System, backup-first migration, rolling 90-day points, rolling 14-day CO classification, positive-credit engine, controlled historical-grid corrections, manual current-point adjustments, Point Review and Corrective Action
+10. `app/js/82-attendance-points.js` - v3.5 Attendance Point System, backup-first migration, rolling 90-day points, rolling 14-day CO classification, Live Schedule work/off authority with Roster RDO fallback, positive-credit engine, controlled historical-grid corrections, manual current-point adjustments, Point Review and Corrective Action
 11. `app/js/90-shift-operations.js` - Shift Reports and Shift Intelligence
 11. `app/js/95-tasks-settings.js` - Task Tracker, Settings and viewport behavior
 12. `app/js/99-startup.js` - validates module registration and then calls `init()`
@@ -80,9 +80,10 @@ Any future bridge change must:
 ## Data Authority Rules Retained
 - Shared data root remains `\\pig-fs\Security\MacBain\Security Operations Suite`.
 - Shared JSON files remain the active persistence layer.
-- The live schedule remains the authority for HPW and labor reporting.
-- Mock schedules remain excluded from live reporting until explicitly applied.
-- Attendance code meanings and discipline definitions are unchanged.
+- The published live schedule is the authority for HPW and labor reporting and is also the primary Attendance source for scheduled/off status.
+- For Attendance, a populated live-schedule weekday uses named assignments as scheduled work; active employees absent from that populated day are Off. When the weekday is not populated, Roster RDO is the fallback.
+- Mock schedules remain excluded from live reporting and Attendance until explicitly applied to live.
+- Attendance point definitions remain canonical in `82-attendance-points.js`; current-day automatic Off records carry provenance while past finalized records are protected from automatic schedule rewrites.
 - Existing backup-first high-impact actions remain in force.
 
 ## Validation Requirements for Future Builds

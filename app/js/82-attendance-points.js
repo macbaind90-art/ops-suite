@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.5 | Attendance Point System */
+/* PWADC Security Operations Suite v3.5.0.6 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -46,6 +46,8 @@ function ensureAttendancePointSystem(){
   attendance.recordEdits=Array.isArray(attendance.recordEdits)?attendance.recordEdits:[];
   attendance.pointAdjustments=Array.isArray(attendance.pointAdjustments)?attendance.pointAdjustments:[];
   attendance.tardyReclassifications=attendance.tardyReclassifications&&typeof attendance.tardyReclassifications==='object'?attendance.tardyReclassifications:{};
+  attendance.autoOff=attendance.autoOff&&typeof attendance.autoOff==='object'?attendance.autoOff:{};
+  attendance.workdayBasis=attendance.workdayBasis&&typeof attendance.workdayBasis==='object'?attendance.workdayBasis:{};
   attendance.pointSystem=attendance.pointSystem&&typeof attendance.pointSystem==='object'?attendance.pointSystem:{};
   if(Number(attendance.pointSystem.version||0)!==ATT_POINT_SYSTEM_VERSION){
     attendance.pointSystem={
@@ -63,6 +65,79 @@ function ensureAttendancePointSystem(){
 }
 
 function attendanceMigrationPending(){return !!(attendance.pointSystem&&attendance.pointSystem.migrationPending);}
+function attendanceLocalToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function attendanceRosterEmployee(emp){
+  if(!emp)return null;
+  const rid=String(emp.rosterId||'');
+  if(rid){const direct=(roster.employees||[]).find(r=>String(r.id)===rid&&!isArchivedEmployee(r));if(direct)return direct;}
+  try{if(typeof findRosterEmployeeForAttendanceLoose==='function')return findRosterEmployeeForAttendanceLoose(emp);}catch(_e){}
+  return null;
+}
+function liveScheduleDayAuthority(date){
+  const dow=parseISO(date).getDay();
+  const rows=Array.isArray(roster.schedule)?roster.schedule:[];
+  const populated=rows.some(row=>{const cell=(row.days||[])[dow];return !scheduleCellIsBlank(cell);});
+  return {dow,populated,rows};
+}
+function attendanceScheduleStatus(emp,date){
+  const {dow,populated,rows}=liveScheduleDayAuthority(date);
+  const re=attendanceRosterEmployee(emp);
+  if(populated&&re){
+    const scheduled=rows.some(row=>{const cell=(row.days||[])[dow];return !scheduleCellIsBlank(cell)&&!scheduleCellIsOpen(cell)&&scheduleNameMatchesEmployee(cell,re);});
+    return {scheduled,off:!scheduled,source:'live-schedule',authoritative:true,dow};
+  }
+  const rdos=(emp&&Array.isArray(emp.rdos))?emp.rdos:(re?rosterRdoToAttendanceRdos(re.rdo):[]);
+  const off=rdos.includes(dow);
+  return {scheduled:!off,off,source:'roster-rdo-fallback',authoritative:false,dow};
+}
+function attendanceAutoOffKey(empId,date){return String(empId)+'|'+String(date);}
+function attendanceEffectiveCode(emp,date){
+  const stored=getCode(emp.id,date);
+  if(stored)return stored;
+  if(date<attendanceLocalToday())return '';
+  if(emp.startDate&&isIsoDateKey(emp.startDate)&&date<emp.startDate)return 'NE';
+  return attendanceScheduleStatus(emp,date).off?'O':'';
+}
+function attendanceCaptureWorkdayBasis(empId,date,code,mode='entry'){
+  attendance.workdayBasis=attendance.workdayBasis&&typeof attendance.workdayBasis==='object'?attendance.workdayBasis:{};
+  const key=attendanceAutoOffKey(empId,date);
+  if(!ATT_CLEAN_WORK_CODES.has(code)){delete attendance.workdayBasis[key];return;}
+  const emp=(attendance.employees||[]).find(e=>String(e.id)===String(empId));if(!emp)return;
+  if(date<attendanceLocalToday()&&mode==='historical-correction'){
+    attendance.workdayBasis[key]={scheduled:true,source:'historical-manual-correction',capturedAt:new Date().toISOString(),by:currentUserName()||env.user||''};
+    return;
+  }
+  const status=attendanceScheduleStatus(emp,date);
+  attendance.workdayBasis[key]={scheduled:!!status.scheduled,source:status.source,capturedAt:new Date().toISOString(),by:currentUserName()||env.user||''};
+}
+function attendanceCleanWorkdayEligible(empId,date,code){
+  if(!ATT_CLEAN_WORK_CODES.has(code))return false;
+  const emp=(attendance.employees||[]).find(e=>String(e.id)===String(empId));if(!emp)return false;
+  const key=attendanceAutoOffKey(empId,date),basis=attendance.workdayBasis&&attendance.workdayBasis[key];
+  if(date<attendanceLocalToday())return basis&&typeof basis.scheduled==='boolean'?basis.scheduled:true;
+  return attendanceScheduleStatus(emp,date).scheduled;
+}
+function syncAttendanceOffFromAuthority(date){
+  const today=attendanceLocalToday();
+  if(!isIsoDateKey(date)||date<today)return {changed:0,source:'past-protected'};
+  if(date>today)return {changed:0,source:'future-derived-only'};
+  attendance.autoOff=attendance.autoOff&&typeof attendance.autoOff==='object'?attendance.autoOff:{};
+  let changed=0,added=0,cleared=0;
+  for(const emp of activeAttendanceEmployees()){
+    if(emp.startDate&&isIsoDateKey(emp.startDate)&&date<emp.startDate)continue;
+    const key=attendanceAutoOffKey(emp.id,date),stored=getCode(emp.id,date),marker=attendance.autoOff[key],status=attendanceScheduleStatus(emp,date);
+    attendance.attendance[String(emp.id)]=attendance.attendance[String(emp.id)]||{};
+    if(status.off){
+      if(!stored){attendance.attendance[String(emp.id)][date]='O';attendance.autoOff[key]={source:status.source,at:new Date().toISOString()};changed++;added++;}
+      else if(stored==='O'&&marker&&marker.source!==status.source){attendance.autoOff[key]={source:status.source,at:new Date().toISOString()};}
+    }else if(stored==='O'&&marker){
+      delete attendance.attendance[String(emp.id)][date];delete attendance.autoOff[key];changed++;cleared++;
+    }
+  }
+  if(changed){audit('Attendance Off synchronized',`${date} · ${added} auto-Off added · ${cleared} stale auto-Off cleared · Live Schedule primary / Roster RDO fallback`);saveAttendance('schedule-off-authority');}
+  return {changed,added,cleared};
+}
+autoFillRdosForDate=function(date){return syncAttendanceOffFromAuthority(date);};
 function pointSystemAsOf(){return isIsoDateKey(gridEnd)?gridEnd:(latestAttendanceDataDate(attendance)||new Date().toISOString().slice(0,10));}
 function dayDiff(a,b){return Math.round((parseISO(b)-parseISO(a))/86400000);}
 function pointCodeLabel(code){
@@ -164,6 +239,7 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
       continue;
     }
     if(ATT_CLEAN_WORK_CODES.has(code)){
+      if(!attendanceCleanWorkdayEligible(empId,e.date,code))continue;
       cleanWorkingDays++;
       if(cleanWorkingDays>=12){
         const awarded=bank<maxCredits?1:0;
@@ -260,7 +336,7 @@ function setAttendancePointCode(empId,date,rawCode){
   let code=String(rawCode||'').trim().toUpperCase();
   const noteKey=key+'|'+date;
   if(code==='CO')code=classifyCalloffAtDate(key,date);
-  if(!code){delete attendance.attendance[key][date];delete attendance.notes[noteKey];delete attendance.tardyReclassifications[noteKey];reclassifyCalloffsForEmployee(key);audit('Attendance code cleared',key+' · '+date);saveAttendance();return true;}
+  if(!code){delete attendance.attendance[key][date];delete attendance.notes[noteKey];delete attendance.tardyReclassifications[noteKey];if(attendance.workdayBasis)delete attendance.workdayBasis[noteKey];if(attendance.autoOff)delete attendance.autoOff[noteKey];reclassifyCalloffsForEmployee(key);audit('Attendance code cleared',key+' · '+date);saveAttendance();return true;}
   if(ATT_ISSUE_CODES.has(code)){
     const existing=attendance.notes[noteKey]||'';
     const note=prompt(`${pointCodeLabel(code)} requires a reason/note:`,existing);
@@ -269,6 +345,8 @@ function setAttendancePointCode(empId,date,rawCode){
     attendance.notes[noteKey]=String(note).trim();
   }
   attendance.attendance[key][date]=code;
+  attendanceCaptureWorkdayBasis(key,date,code,'entry');
+  if(attendance.autoOff)delete attendance.autoOff[noteKey];
   if(code==='T<5'&&oldCode!=='T<5')attendance.tardyReclassifications[noteKey]={at:new Date().toISOString(),by:currentUserName()||env.user||'',reason:'Explicit T<5 classification entered under current tardy policy'};
   else if(code!=='T<5')delete attendance.tardyReclassifications[noteKey];
   reclassifyCalloffsForEmployee(key);
@@ -285,7 +363,7 @@ renderAttendance=function(){
   if(!views.includes(activeAttView))activeAttView='review';
   const labels={daily:'Daily Entry',grid:'90-Day Grid',review:'Point Review',actions:'Corrective Action',audit:'Audit Log'};
   const migration=attendanceMigrationPending()?`<div class="notice warn"><strong>Attendance Point Migration Required</strong><br>The current Attendance JSON is being preserved in memory. Daily entry is locked until a backup is created and legacy codes are converted to the v3.5 point model. <button class="primary" onclick="commitAttendancePointMigration()">Commit Migration + Backup</button></div>`:'';
-  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> T&lt;5 = 0 · T5-14 = .5 · T15+ = 1 · CO1 = 1.5 · CO2 = 3 · NCNS = 9 · LE = 1 · EIA = 2. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit, maximum 3. Credits automatically offset and are consumed by chargeable points.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
+  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> T&lt;5 = 0 · T5-14 = .5 · T15+ = 1 · CO1 = 1.5 · CO2 = 3 · NCNS = 9 · LE = 1 · EIA = 2. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit, maximum 3. Credits automatically offset and are consumed by chargeable points. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
 };
 
 function attendanceDailyShiftRank(shift){const i=ATTENDANCE_DAILY_SHIFT_ORDER.indexOf(String(shift||''));return i>=0?i:99;}
@@ -296,7 +374,7 @@ function attendanceDailyShiftList(){
 function pointDailyRows(){
   let rows=activeAttendanceEmployees().slice().sort((a,b)=>attendanceDailyShiftRank(a.shift)-attendanceDailyShiftRank(b.shift)||(a.shift||'').localeCompare(b.shift||'')||(a.name||'').localeCompare(b.name||''));
   if(entryShift!=='All')rows=rows.filter(e=>e.shift===entryShift);
-  if(showBlanks)rows=rows.filter(e=>!getCode(e.id,entryDate));
+  if(showBlanks)rows=rows.filter(e=>!attendanceEffectiveCode(e,entryDate));
   return rows;
 }
 function pointDailyGroups(rows){
@@ -310,18 +388,20 @@ function renderPointDaily(){
   const rows=pointDailyRows();
   const groups=pointDailyGroups(rows);
   const locked=attendanceMigrationPending();
-  return `<div class="card"><div class="card-title">Daily Attendance Entry</div><div class="toolbar"><div><label>Date</label><input type="date" value="${entryDate}" onchange="entryDate=this.value;safeRenderPages()"></div><div><label>Shift</label><select onchange="entryShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${entryShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><button onclick="showBlanks=!showBlanks;safeRenderPages()">${showBlanks?'Show All':'Missing Entries Only'}</button></div><div class="mini-note">Daily Entry order: 3rd Shift → 1st Shift → 2nd Shift → Gate → Reception.</div>${locked?'<div class="notice warn">Entry is locked until the legacy Attendance migration is committed.</div>':''}</div><div class="people-list">${groups.map(g=>renderPointDailyGroup(g,locked)).join('')}</div>`;
+  return `<div class="card"><div class="card-title">Daily Attendance Entry</div><div class="toolbar"><div><label>Date</label><input type="date" value="${entryDate}" onchange="entryDate=this.value;safeRenderPages()"></div><div><label>Shift</label><select onchange="entryShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${entryShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><button onclick="showBlanks=!showBlanks;safeRenderPages()">${showBlanks?'Show All':'Missing Entries Only'}</button></div><div class="mini-note">Daily Entry order: 3rd Shift → 1st Shift → 2nd Shift → Gate → Reception. Off status comes from the Live Schedule when populated for that weekday, with Roster RDO as fallback.</div>${locked?'<div class="notice warn">Entry is locked until the legacy Attendance migration is committed.</div>':''}</div><div class="people-list">${groups.map(g=>renderPointDailyGroup(g,locked)).join('')}</div>`;
 }
+function pointDailyCounts(rows){let entered=0,blank=0,off=0;for(const e of rows||[]){const c=attendanceEffectiveCode(e,entryDate);if(c){entered++;if(c==='O')off++;}else blank++;}return{entered,blank,off,total:(rows||[]).length};}
 function renderPointDailyGroup(g,locked=false){
-  const counts=dailyCounts(g.rows||[]);
-  return `<div class="shift-card"><div class="shift-head"><div>${esc(g.shift)} (${(g.rows||[]).length})</div><div>${counts.entered} / ${counts.total} entered · ${counts.blank} missing</div></div>${(g.rows||[]).map(e=>renderPointDailyRow(e,locked)).join('')}</div>`;
+  const counts=pointDailyCounts(g.rows||[]);
+  return `<div class="shift-card"><div class="shift-head"><div>${esc(g.shift)} (${(g.rows||[]).length})</div><div>${counts.entered} / ${counts.total} entered · ${counts.blank} missing · ${counts.off} Off</div></div>${(g.rows||[]).map(e=>renderPointDailyRow(e,locked)).join('')}</div>`;
 }
 function applyAttendancePointCode(empId,date,code){if(setAttendancePointCode(empId,date,code))safeRenderPages({preserveScroll:true});}
 function renderPointDailyRow(e,locked=false){
-  const current=getCode(e.id,entryDate);
+  const current=attendanceEffectiveCode(e,entryDate);
+  const sched=attendanceScheduleStatus(e,entryDate);
   const snap=attendancePointSnapshot(e.id,entryDate);
   const risk=attendanceEmployeePointClass(e.id,entryDate);
-  return `<div class="person-row"><div class="person-name att-employee-name-wrap ${risk}"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span><span class="mini-note">Active Points: ${snap.activePoints} · Positive Credit: ${snap.bank}/${snap.maxCredits} · Clean Workdays: ${snap.cleanWorkingDays}/12</span></div><div class="row-code-pad">${ATT_POINT_CODES.map(x=>`<button class="row-code-btn ${current===x.code||(['CO1','CO2'].includes(current)&&x.code==='CO')?'active':''}" title="${esc(x.label+(x.points===null?'':` · ${x.points} pt`))}" ${locked?'disabled':''} onclick="event.stopPropagation();applyAttendancePointCode('${esc(e.id)}','${entryDate}','${x.code}')">${esc(x.code)}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(current)}">${esc(current||'Blank')}</span></div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button></div></div>`;
+  return `<div class="person-row"><div class="person-name att-employee-name-wrap ${risk}"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span><span class="mini-note">Active Points: ${snap.activePoints} · Positive Credit: ${snap.bank}/${snap.maxCredits} · Clean Workdays: ${snap.cleanWorkingDays}/12 · ${sched.source==='live-schedule'?'Live Schedule':'Roster RDO fallback'}</span></div><div class="row-code-pad">${ATT_POINT_CODES.map(x=>`<button class="row-code-btn ${current===x.code||(['CO1','CO2'].includes(current)&&x.code==='CO')?'active':''}" title="${esc(x.label+(x.points===null?'':` · ${x.points} pt`))}" ${locked?'disabled':''} onclick="event.stopPropagation();applyAttendancePointCode('${esc(e.id)}','${entryDate}','${x.code}')">${esc(x.code)}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(current)}">${esc(current||'Blank')}</span></div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button></div></div>`;
 }
 
 function pointGridEmployees(){
@@ -331,7 +411,7 @@ function pointGridEmployees(){
 }
 function pointGridEditOptionValue(code){return ['CO1','CO2'].includes(code)?'CO':(code==='T>5'?'T15+':code);}
 function pointGridCell(emp,d,earnedDates=new Set()){
-  const c=getCode(emp.id,d),pts=attendanceEventPointValue(emp.id,d,c);
+  const c=attendanceEffectiveCode(emp,d),pts=attendanceEventPointValue(emp.id,d,c);
   const earned=earnedDates.has(d);
   const statusClass=pointGridStatusClass(c,pts);
   const classes=['att-point-cell','att-point-editable',statusClass,earned?'att-positive-earned':''].filter(Boolean).join(' ');
@@ -341,7 +421,8 @@ function pointGridCell(emp,d,earnedDates=new Set()){
 function openPointGridEditModal(empId,date){
   if(attendanceMigrationPending()){toast('Commit the Attendance Point System migration before editing historical records.');return;}
   const emp=(attendance.employees||[]).find(e=>String(e.id)===String(empId));if(!emp)return;
-  const oldCode=getCode(empId,date)||'';
+  const storedCode=getCode(empId,date)||'';
+  const oldCode=storedCode||attendanceEffectiveCode(emp,date)||'';
   const selectValue=pointGridEditOptionValue(oldCode);
   const options=[{code:'',label:'Clear / Blank'},...ATT_POINT_CODES];
   const existingNote=(attendance.notes&&attendance.notes[tardyRecordKey(empId,date)])||'';
@@ -351,14 +432,16 @@ function savePointGridEdit(empId,date){
   const emp=(attendance.employees||[]).find(e=>String(e.id)===String(empId));if(!emp)return;
   const reason=String(val('gridEditReason')||'').trim();
   if(!reason){toast('A reason is required to edit a 90-Day Grid record.');return;}
-  const key=String(empId),noteKey=tardyRecordKey(empId,date),oldCode=getCode(empId,date)||'',oldNote=(attendance.notes&&attendance.notes[noteKey])||'';
+  const key=String(empId),noteKey=tardyRecordKey(empId,date),storedOldCode=getCode(empId,date)||'',oldCode=storedOldCode||attendanceEffectiveCode(emp,date)||'',oldNote=(attendance.notes&&attendance.notes[noteKey])||'';
   let requested=String(val('gridEditCode')||'').trim().toUpperCase();
   const newNote=String(val('gridEditNote')||'').trim();
   attendance.attendance=attendance.attendance||{};attendance.attendance[key]=attendance.attendance[key]||{};attendance.notes=attendance.notes||{};
-  if(!requested){delete attendance.attendance[key][date];delete attendance.notes[noteKey];}
+  if(!requested){delete attendance.attendance[key][date];delete attendance.notes[noteKey];if(attendance.workdayBasis)delete attendance.workdayBasis[noteKey];if(attendance.autoOff)delete attendance.autoOff[noteKey];}
   else{
     attendance.attendance[key][date]=requested;
     if(newNote)attendance.notes[noteKey]=newNote;else delete attendance.notes[noteKey];
+    attendanceCaptureWorkdayBasis(key,date,requested,'historical-correction');
+    if(attendance.autoOff)delete attendance.autoOff[noteKey];
     attendance.tardyReclassifications=attendance.tardyReclassifications||{};
     if(requested==='T<5')attendance.tardyReclassifications[noteKey]={at:new Date().toISOString(),by:currentUserName()||env.user||'',reason};
     else delete attendance.tardyReclassifications[noteKey];

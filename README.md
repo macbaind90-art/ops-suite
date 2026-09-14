@@ -1,10 +1,15 @@
-# PWADC Security Operations Suite v3.5.0.5
+# PWADC Security Operations Suite v3.5.0.6
+
+## v3.5.0.6 - Live Schedule Attendance Authority
+Attendance now uses the **published Live Schedule** as the primary source for scheduled/off status. If the weekday is populated, an employee named anywhere on the live schedule is treated as scheduled; an active employee not named on that populated day is treated as Off. Open/Pending cells count as evidence that the day is populated but do not count as an employee assignment. Closed, None, and blank cells do not establish schedule authority.
+
+If the live schedule is not usable for that weekday, Attendance falls back to the employee's **Roster RDO** settings. Mock schedules are never used. Current-day automatic Off entries carry provenance so they can be reversed when the live schedule changes. Future Off status is display-derived and is not persisted early. Manual Attendance entries and past finalized records remain protected. Positive-attendance clean-workday progress follows the same schedule authority for current records.
 
 ## v3.5.0.5 Roster → Attendance Population Reliability
 Active employees saved in Roster are now verified into Attendance so they appear in Daily Entry and the 90-Day Grid. The **Sync Roster to Attendance** action can also repair older missing links/additions without deleting Attendance history. A failed Attendance save is reported as a failure instead of incorrectly claiming the employee was synced.
 
 
-## v3.5.0.5 - Historical Tardy Point Correction
+## v3.5.0.4 - Historical Tardy Point Correction
 - Corrected the Attendance point engine so **all T<5 records calculate at 0 points**, including historical generic tardies that were migrated to T<5 under v3.5.0.0.
 - Removed the legacy 0.5-point override that was still being applied to previously migrated T<5 records.
 - Existing Attendance history is not deleted or rewritten. The active-point engine recalculates those stored T<5 records at 0 the next time Attendance loads.
