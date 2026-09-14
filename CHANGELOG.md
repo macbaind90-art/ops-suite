@@ -1,5 +1,15 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization
+- Retired the legacy Attendance Pattern, Notice Workflow, exception-flag, and threshold UI/logic from the live application.
+- Preserved historical `patternActions`, `flagActions`, and `notices` fields only when they already exist in older Attendance JSON; no current workflow reads, creates, or acts on them.
+- Rebuilt Attendance reporting around the current 90-day point system, positive credit bank, point adjustments, and 3 / 6 / 9 corrective-action workflow.
+- Updated Executive and Compliance reporting to use current Attendance point exposure and corrective-action due status instead of legacy patterns/notices.
+- Updated Data Health to validate corrective actions, point adjustments, and point-system migration status instead of legacy notice records.
+- Removed legacy Attendance state variables and required-function checks from the front-end contract.
+- Moved PIN keyboard handling out of the Attendance module and into the application shell/bootstrap where it belongs.
+- Added a dedicated legacy-retirement regression validator and retained all existing Attendance point/schedule/sync/home validators.
+
 ## v3.5.0.8 - Command Center Attendance Workflow Alignment
 - Reworked Home / Command Center to use the current Attendance Point System instead of legacy Attendance Pattern and Notice queues.
 - Added schedule-aware **Attendance Entries Missing** priority using the same Live Schedule / Roster RDO authority as Attendance Daily Entry.

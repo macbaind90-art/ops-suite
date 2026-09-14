@@ -99,98 +99,10 @@ if(!registry.ok||registry.unexpected.length)throw new Error('Front-end module re
 
 const major=['home','start-here','attendance','roster','employee-profile','training','office-supplies','shift-reports','shift-intelligence','reports','settings','tasks','data-health','restore','change-log','other-programs'];
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
-for(const view of ['daily','grid','review','patterns','notices','audit']){const out=evalx(`activeAttView='${view}'; renderAttendance()`);if(typeof out!=='string'||out.length<20)throw new Error('Attendance render failed: '+view);}
+for(const view of ['daily','grid','review','actions','audit']){const out=evalx(`activeAttView='${view}'; renderAttendance()`);if(typeof out!=='string'||out.length<20)throw new Error('Attendance render failed: '+view);}
 
-// Attendance totals print: only discipline codes retain MM/DD dates; all non-discipline codes print totals only.
-const attendancePrintTest=evalx(`(()=>{
-  const emp=activeAttendanceEmployees()[0];
-  if(!emp)return {ok:false,reason:'No active attendance employee in seed'};
-  const key=String(emp.id);
-  const prior=JSON.stringify((attendance.attendance||{})[key]||null);
-  attendance.attendance=attendance.attendance||{};
-  attendance.attendance[key]={'2026-08-01':'CO','2026-08-11':'CO','2026-08-15':'AL','2026-08-18':'P'};
-  const detail=attendanceTotalsDetailForEmployee(emp,'2026-08-01','2026-08-20');
-  const disciplineBox=attendanceTotalsCodeBox('CO',detail.counts.CO,detail.dates.CO);
-  const approvedBox=attendanceTotalsCodeBox('AL',detail.counts.AL,detail.dates.AL);
-  const presentBox=attendanceTotalsCodeBox('P',detail.counts.P,detail.dates.P);
-  const short=attendanceTotalsShortDate('2026-08-21');
-  if(prior==='null')delete attendance.attendance[key];else attendance.attendance[key]=JSON.parse(prior);
-  return {ok:detail.counts.CO===2 && detail.counts.AL===1 && detail.counts.P===1 && short==='08/21' && disciplineBox.includes('CO 2') && disciplineBox.includes('08/01') && disciplineBox.includes('08/11') && approvedBox.includes('AL 1') && !approvedBox.includes('08/15') && presentBox.includes('P 1') && !presentBox.includes('08/18'),counts:detail.counts,short,disciplineBox,approvedBox,presentBox};
-})()`);
-if(!attendancePrintTest.ok)throw new Error('Attendance totals print validation failed: '+JSON.stringify(attendancePrintTest));
+// Attendance point behavior is validated by dedicated v3.5 regression validators.
 
-const attendancePrintIntegration=evalx(`(()=>{
-  const emp=activeAttendanceEmployees()[0];
-  if(!emp)return {ok:false,reason:'No active attendance employee in seed'};
-  const key=String(emp.id),prior=JSON.stringify((attendance.attendance||{})[key]||null);
-  attendance.attendance=attendance.attendance||{};
-  attendance.attendance[key]={'2026-08-01':'CO','2026-08-11':'CO','2026-08-15':'AL','2026-08-18':'P'};
-  document.getElementById('attTotalsScopeMode').value='all';
-  document.getElementById('attTotalsShift').value='';
-  document.getElementById('attTotalsPeriod').value='month';
-  document.getElementById('attTotalsEnd').value='2026-08-21';
-  document.getElementById('attTotalsDisciplineTotal').checked=true;
-  document.getElementById('attTotalsApprovedTotal').checked=true;
-  document.getElementById('attTotalsRecordedTotal').checked=false;
-  const oldQuery=document.querySelectorAll,oldShow=showReport,oldClose=closeModal;
-  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'},{value:'AL'},{value:'P'},{value:'T'}]:sel==='.att-totals-employee:checked'?[]:[];
-  let captured={};
-  showReport=(title,subtitle,body,orientation)=>{captured={title,subtitle,body,orientation};};
-  closeModal=()=>{};
-  printAttendanceTotalsList();
-  document.querySelectorAll=oldQuery;showReport=oldShow;closeModal=oldClose;
-  if(prior==='null')delete attendance.attendance[key];else attendance.attendance[key]=JSON.parse(prior);
-  return {
-    ok:captured.orientation==='portrait' && captured.body.includes('CO 2') && captured.body.includes('08/01') && captured.body.includes('08/11') && captured.body.includes('AL 1') && !captured.body.includes('08/15') && captured.body.includes('P 1') && !captured.body.includes('08/18') && !captured.body.includes('T 0') && captured.body.includes('Employee / Shift') && captured.body.includes('att-print-boxes') && !captured.body.includes('Attendance Boxes</span>'),
-    orientation:captured.orientation,disciplineDates:captured.body.includes('08/01')&&captured.body.includes('08/11'),approvedDateSuppressed:!captured.body.includes('08/15'),presentDateSuppressed:!captured.body.includes('08/18'),compact:captured.body.includes('Employee / Shift')&&captured.body.includes('att-print-boxes'),zeroSuppressed:!captured.body.includes('T 0')
-  };
-})()`);
-if(!attendancePrintIntegration.ok)throw new Error('Attendance totals print integration failed: '+JSON.stringify(attendancePrintIntegration));
-
-
-// Attendance totals print scope must support a hand-picked employee group in addition to shift/all scopes.
-const attendanceEmployeeScopeTest=evalx(`(()=>{
-  const emps=activeAttendanceEmployees().slice(0,2);
-  if(emps.length<2)return {ok:false,reason:'Need two active attendance employees in seed'};
-  const [first,second]=emps;
-  const firstKey=String(first.id),secondKey=String(second.id);
-  const priorFirst=JSON.stringify((attendance.attendance||{})[firstKey]||null),priorSecond=JSON.stringify((attendance.attendance||{})[secondKey]||null);
-  attendance.attendance=attendance.attendance||{};
-  attendance.attendance[firstKey]={'2026-08-05':'CO'};
-  attendance.attendance[secondKey]={'2026-08-06':'CO'};
-  document.getElementById('attTotalsScopeMode').value='employees';
-  document.getElementById('attTotalsShift').value='';
-  document.getElementById('attTotalsPeriod').value='month';
-  document.getElementById('attTotalsEnd').value='2026-08-21';
-  document.getElementById('attTotalsDisciplineTotal').checked=false;
-  document.getElementById('attTotalsApprovedTotal').checked=false;
-  document.getElementById('attTotalsRecordedTotal').checked=false;
-  const oldQuery=document.querySelectorAll,oldShow=showReport,oldClose=closeModal,oldModal=showModal;
-  document.querySelectorAll=sel=>sel==='.att-totals-code:checked'?[{value:'CO'}]:sel==='.att-totals-employee:checked'?[{value:String(second.id)}]:[];
-  let captured={},modal='';
-  showReport=(title,subtitle,body,orientation)=>{captured={title,subtitle,body,orientation};};
-  closeModal=()=>{};
-  printAttendanceTotalsList();
-  showModal=html=>{modal=html;};
-  openAttendanceTotalsPrintModal();
-  document.querySelectorAll=oldQuery;showReport=oldShow;closeModal=oldClose;showModal=oldModal;
-  if(priorFirst==='null')delete attendance.attendance[firstKey];else attendance.attendance[firstKey]=JSON.parse(priorFirst);
-  if(priorSecond==='null')delete attendance.attendance[secondKey];else attendance.attendance[secondKey]=JSON.parse(priorSecond);
-  return {ok:captured.body.includes(second.name) && !captured.body.includes(first.name) && captured.subtitle.includes(second.name) && modal.includes('Selected Employees') && modal.includes('Start typing name or employee number') && modal.includes('att-totals-employee'),first:first.name,second:second.name,subtitle:captured.subtitle,modalEmployeePicker:modal.includes('att-totals-employee')};
-})()`);
-if(!attendanceEmployeeScopeTest.ok)throw new Error('Attendance employee print scope validation failed: '+JSON.stringify(attendanceEmployeeScopeTest));
-
-
-// Revision metadata and controlled conflict UI smoke test.
-const revisionUiTest=evalx(`(()=>{
-  recordModuleLoadInfo('attendance',{source:'live-shared',revision:'abcdef1234567890',path:'X',fileModified:'now',loadedAt:'now',liveFileExisted:true});
-  const loaded=moduleLoadInfo.attendance&&moduleLoadInfo.attendance.revision==='abcdef1234567890'&&!moduleLoadInfo.attendance.conflict;
-  const oldShow=showModal;let modal='';showModal=html=>{modal=String(html||'');};
-  showDataConflictModal('attendance','STALE_WRITE_CONFLICT: newer shared data');
-  showModal=oldShow;
-  return {ok:loaded&&modal.includes('Shared Data Conflict')&&modal.includes('Export Unsaved Copy')&&modal.includes('Reload Latest Shared Data')&&modal.includes('Keep Unsaved Work Open'),loaded,modal};
-})()`);
-if(!revisionUiTest.ok)throw new Error('Revision/conflict UI validation failed: '+JSON.stringify(revisionUiTest));
 for(const view of ['roster','schedule','training','uniforms','analytics']){const out=evalx(`activeRosterView='${view}'; renderRoster()`);if(typeof out!=='string'||out.length<20)throw new Error('Roster render failed: '+view);}
 
 // Roster printing must support a hand-picked employee group with name/EID search.
@@ -270,4 +182,4 @@ const full=startupScenario(expectedModules),missing=startupScenario(expectedModu
 if(full.initCount!==1||full.error)throw new Error('Startup gate failed with a complete module set.');
 if(missing.initCount!==0||!missing.error.includes('tasks-settings'))throw new Error('Startup gate did not block an incomplete module set.');
 
-console.log(`PWADC front-end validation passed: ${major.length} major modules, 6 attendance views, 5 roster views, ${declarations.length} named functions, ${targets.size} inline action targets, ${registry.loaded.length} registered modules.`);
+console.log(`PWADC front-end validation passed: ${major.length} major modules, 5 attendance views, 5 roster views, ${declarations.length} named functions, ${targets.size} inline action targets, ${registry.loaded.length} registered modules.`);

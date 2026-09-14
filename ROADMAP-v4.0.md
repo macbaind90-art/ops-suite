@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.5.0.8 - Command Center Attendance Workflow Alignment**.
+Current build: **v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -38,6 +38,12 @@ Current build: **v3.5.0.8 - Command Center Attendance Workflow Alignment**.
 - ~~v3.5.0.1 - Attendance Daily/Grid Usability~~ Completed
 - ~~v3.5.0.2 - Attendance Grid Visual Status~~ Completed
 - ~~v3.5.0.3 - Attendance Point Controls~~ Completed
+- ~~v3.5.0.4 - Historical Tardy Point Correction~~ Completed
+- ~~v3.5.0.5 - Roster to Attendance Population Fix~~ Completed
+- ~~v3.5.0.6 - Live Schedule Attendance Authority~~ Completed
+- ~~v3.5.0.7 - Positive Credit Immediate Paydown~~ Completed
+- ~~v3.5.0.8 - Command Center Attendance Workflow Alignment~~ Completed
+- **v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization** Current
 
 ## Current Governance Model
 ### Command Center
@@ -45,8 +51,9 @@ Current build: **v3.5.0.8 - Command Center Attendance Workflow Alignment**.
 - Live data source and freshness remain visible so stale, preview, or recovery data is not mistaken for current live data.
 
 ### People Lane
-- Attendance, Notice Workflow, Roster, Employee Profile, Training, and Uniform Accountability remain connected as the People Workflow.
-- v3.2.6.1 aligns Attendance Review with the canonical discipline codes: T, U, UE, CO, and NCNS.
+- Attendance Point System, Roster, Employee Profile, Training, and Uniform Accountability remain connected as the People Workflow.
+- Attendance operational flow is Daily Entry → 90-Day Grid → Point Review → Corrective Action → Audit.
+- Legacy Pattern / Notice / exception-flag workflows are retired from live code as of v3.5.0.9; older raw fields remain preserved only for historical JSON compatibility.
 
 ### Operations Lane
 - Shift Reports is the source intake and extraction workspace.

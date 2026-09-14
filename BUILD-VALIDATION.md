@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.8**
-- Release: **Command Center Attendance Workflow Alignment**
-- Baseline: **v3.5.0.7 - Positive Credit Immediate Paydown**
+- Version: **3.5.0.9**
+- Release: **Attendance Legacy Workflow Retirement / QA Stabilization**
+- Baseline: **v3.5.0.8 - Command Center Attendance Workflow Alignment**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -32,13 +32,15 @@
 - Employee-name point status retained: green <3 / yellow 3-6.99 / red 7+
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 939 named functions / 229 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 5 Attendance views / 5 Roster views / 817 named functions / 203 inline action targets / 10 registered modules
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - Roster-to-Attendance population regression: **PASS**
 - Live Schedule Attendance authority regression: **PASS**
 - Positive-credit immediate-paydown regression: **PASS**
 - Home Attendance workflow regression: **PASS**
+- Attendance legacy retirement regression: **PASS**
+- September 9 production Attendance backup render smoke: **PASS** - 16 major modules / 5 Attendance views loaded against the real 42-employee backup without render failure
 - Positive-credit partial/fractional carryover regression: **PASS**
 - 3-point balance cap with re-earning after use: **PASS**
 - Manual adjusted-balance positive-credit paydown: **PASS**
@@ -50,12 +52,15 @@
 ## Windows Build Status
 The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs front-end and targeted regression validation, restore, build, and self-contained `win-x64` publish.
 
-## v3.5.0.8 Targeted Regression
+## v3.5.0.9 Targeted Regression
+- Attendance legacy retirement validator: **PASS**.
+- Report Center / Data Health current point-system contract: **PASS**.
+- Historical raw legacy Attendance fields: **preserved read-only if present; not live workflow data**.
 - Home no longer calls or navigates to legacy Attendance Pattern or Notice queues.
 - Home Daily Attendance completion is schedule-aware and uses the same Live Schedule / Roster RDO authority as Attendance.
 - Corrective-action due count is derived from current active points versus the employee's last recorded corrective action.
 - Home exposes Point Review, Corrective Action, 90-Day Grid, current positive-credit bank, and 7+ point risk without changing underlying point calculations.
 - People Workflow and Employee People Command use active points, positive bank, clean working days, and corrective-action status.
 - Start Here reflects the current Attendance workflow: Daily Entry → 90-Day Grid → Point Review → Corrective Action → Audit.
-- Historical legacy pattern/notice data is preserved for compatibility; it is simply removed from the current Home command workflow.
+- Historical raw legacy pattern/notice fields are preserved only if already present in older JSON; no live workflow, report, or Data Health action consumes them.
 - Live Schedule authority, Roster RDO fallback, manual attendance protection, positive-credit rules, stale-write controls, and atomic saves remain unchanged.

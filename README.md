@@ -1,7 +1,20 @@
-# PWADC Security Operations Suite v3.5.0.8
+# PWADC Security Operations Suite v3.5.0.9
+
+## v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization
+The live Attendance module now uses only the current point-system workflow: Daily Entry, 90-Day Grid, Point Review, Corrective Action, and Audit. Legacy Pattern, Notice Workflow, and exception-flag logic has been removed from live code and reporting. Older JSON may still contain historical pattern/notice fields; those values are preserved untouched for record compatibility but are not treated as active workflow data.
+
+### Current Attendance authority
+- Rolling 90-day negative points.
+- Rolling 14-day CO1 / CO2 classification.
+- +1 positive attendance credit for each 12 clean scheduled working days, bank maximum 3 at any one time.
+- Newly earned positive credits immediately reduce active negative points first, then bank any remainder.
+- Corrective-action thresholds: Verbal at 3, Written at 6, Final Written at 9.
+- Live Schedule is the primary scheduled/off authority; Roster RDO is fallback only when no usable live schedule exists for that weekday.
+- Historical 90-Day Grid edits require a reason and are audited.
+- Manual current-point adjustments require a reason, backup, effective date, and audit record.
 
 ## v3.5.0.8 - Command Center Attendance Workflow Alignment
-The Home / Command Center now uses the current Attendance Point System as its people-work authority. Legacy Attendance Pattern and Notice queues are removed from Home, People Workflow navigation, employee command summaries, and the Start Here operating flow. Historical pattern/notice data and compatibility functions remain in the repository for existing records, but they are no longer presented as current command-center work.
+The Home / Command Center uses the current Attendance Point System as its people-work authority. The former Pattern and Notice workflows are retired from live code. Historical raw pattern/notice fields are preserved only when they already exist in older Attendance JSON and are not consumed by the current application.
 
 Home now prioritizes **missing scheduled attendance entries**, **corrective action due**, **employees at 7+ active points**, overdue tasks, Shift Intelligence intake/action queues, and schedule gaps. The People Workflow provides direct access to **Daily Entry, Point Review, Corrective Action, Roster, Training, and Uniforms**. Positive attendance credit balances and the current 3-point bank cap are also visible from Home.
 
@@ -559,7 +572,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 
 ## Current Project Map
 1. **Command Center:** Home summarizes priority queues and live-data confidence.
-2. **People Lane:** Attendance, Notice Workflow, Roster, Employee Profile, Training, and Uniform Accountability operate as a connected workflow.
+2. **People Lane:** Attendance Point System, Roster, Employee Profile, Training, and Uniform Accountability operate as a connected workflow.
 3. **Operations Lane:** Shift Reports controls source intake and extraction. Shift Intelligence controls disposition, watchlist management, task handoff, and closure.
 4. **Governance Lane:** Report Center, Data Health, Backup & Restore, Change Log, and Admin Settings follow Report → Verify → Recover → Govern.
 5. **Specialist Tools:** Other Programs launches independent tools without mixing their scripts into the primary suite.
