@@ -1,4 +1,9 @@
-# PWADC Security Operations Suite v3.5.0.6
+# PWADC Security Operations Suite v3.5.0.7
+
+## v3.5.0.7 - Positive Credit Immediate Paydown
+Positive attendance credits now work as an active attendance-credit balance rather than only waiting for the next violation. When an employee earns +1 after 12 clean scheduled working days, the award first reduces any active negative attendance points. Any unused remainder is banked. The positive bank remains capped at **3 at any one time**, not three for the employee's lifetime. After credits are consumed, the employee can earn back up to three again through additional clean 12-workday cycles.
+
+The same rule applies to a controlled **Edit Current Points** balance: positive credits earned after the adjustment reduce that current balance before anything is banked. Existing banked credits still offset future chargeable events. Credit use remains dollar-for-dollar, including half-point carryover where applicable.
 
 ## v3.5.0.6 - Live Schedule Attendance Authority
 Attendance now uses the **published Live Schedule** as the primary source for scheduled/off status. If the weekday is populated, an employee named anywhere on the live schedule is treated as scheduled; an active employee not named on that populated day is treated as Off. Open/Pending cells count as evidence that the day is populated but do not count as an employee assignment. Closed, None, and blank cells do not establish schedule authority.

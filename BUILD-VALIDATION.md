@@ -1,68 +1,60 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.6**
-- Release: **Live Schedule Attendance Authority**
-- Baseline: **v3.5.0.5 - Roster to Attendance Population Reliability**
+- Version: **3.5.0.7**
+- Release: **Positive Credit Immediate Paydown**
+- Baseline: **v3.5.0.6 - Live Schedule Attendance Authority**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
 - Rolling call-off classification window: **14 days**
 - Tardy points: **T<5 = 0 / T5-14 = 0.5 / T15+ = 1**
-- Historical generic tardies migrated to T<5 under v3.5.0.0 now calculate at **0 points** under the current tardy policy
-- Positive attendance award: **+1 after 12 clean working days**
-- Maximum positive credit bank: **3**
-- Positive credits offset and are consumed by negative points
+- Historical generic tardies migrated to T<5 calculate at **0 points**
+- Positive attendance award: **+1 after 12 clean scheduled working days**
+- Newly earned positive credit first reduces active negative points immediately
+- Any unused remainder is banked after active negative points are paid down
+- Maximum positive credit balance: **3 at any one time**; there is **no lifetime earning cap**
+- After credits are consumed, employees can earn back toward the 3-point maximum through later 12-workday clean cycles
+- Banked positive credits continue to offset future chargeable attendance points dollar-for-dollar
+- Positive credit can carry fractional remainder when only part of an award is required
+- Positive awards earned after a manual current-point adjustment reduce the controlled adjusted balance before banking
 - Corrective thresholds: **3 / 6 / 9**
 - NE remains zero-point Not Employed
 - Daily Entry grouped in operational shift order: **3rd / 1st / 2nd / Gate / Reception**
 - Attendance work/off authority: **Live Schedule primary / Roster RDO fallback**
-- **Mock schedules are excluded** from Attendance work/off and positive-credit calculations
-- **Past finalized attendance is not automatically rewritten** by current schedule changes
-- 90-Day Grid supports **All Employees** and **Single Employee** views with operational shift sections
-- 90-Day Grid date order: **ending/current date left; older dates right**
+- Mock schedules are excluded from Attendance work/off and positive-credit calculations
+- Past finalized attendance is not automatically rewritten by current schedule changes
+- 90-Day Grid supports All Employees and Single Employee views with operational shift sections
+- 90-Day Grid date order: ending/current date left; older dates right
 - Historical grid edits require a reason and create correction-history/audit records
-- Manual current-point adjustments require a reason and pre-save backup; incidents through the effective date are excluded from future active-point calculations
-- Grid visual status retained: **Present green / approved blue / Off unhighlighted / NE blacked out / low point actions yellow / high point actions red / positive award green**
-- Employee-name point status retained: **green <3 / yellow 3-6.99 / red 7+**
+- Manual current-point adjustments require a reason and pre-save backup
+- Grid visual status retained: Present green / approved blue / Off unhighlighted / NE blacked out / low point actions yellow / high point actions red / positive award green
+- Employee-name point status retained: green <3 / yellow 3-6.99 / red 7+
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS**
-- Major modules: **16/16 PASS**
-- Attendance view smoke tests: **6/6 PASS**
-- Roster/Schedule view smoke tests: **5/5 PASS**
-- Named JavaScript functions: **936 / no duplicate declaration failure**
-- Inline action targets: **229 resolved**
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 940 named functions / 229 inline action targets / 10 registered modules
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
-- New tardy-tier regression: **PASS**
-- Historical/migrated T<5 zero-point regression: **PASS**
-- 3-point positive bank regression: **PASS**
-- 90-Day Grid newest-to-oldest regression: **PASS**
-- 90-Day Grid reason-required historical-edit regression: **PASS**
-- Manual point-adjustment / future-exclusion regression: **PASS**
-- Point-adjustment backup/audit controls: **PASS**
+- Roster-to-Attendance population regression: **PASS**
+- Live Schedule Attendance authority regression: **PASS**
+- Positive-credit immediate-paydown regression: **PASS**
+- Positive-credit partial/fractional carryover regression: **PASS**
+- 3-point balance cap with re-earning after use: **PASS**
+- Manual adjusted-balance positive-credit paydown: **PASS**
+- Pre-adjustment credit chronology: **PASS**
 - JavaScript syntax sweep: **PASS**
-- Actual 2026-09-09 Attendance backup parsed successfully: **7,911 entries / 42 employee records**
-- Actual-data migration simulation: **552 legacy records converted; 2 legacy U records preserved for manual review**
-- Actual backup historical tardy check: **233 legacy T records identified; all migrate/recalculate as T<5 = 0 points in v3.5.0.6**
 - `.git` in source package: **NOT PRESENT**
 - Root Markdown control: **6 standing documents**
 
 ## Windows Build Status
-The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs restore, build, self-contained `win-x64` publish, front-end validation, Task Tracker print validation, and Attendance Point System validation, Roster-to-Attendance population validation, and Live Schedule Attendance authority validation.
+The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs front-end and targeted regression validation, restore, build, and self-contained `win-x64` publish.
 
-## v3.5.0.6 Targeted Regression
-- Attendance Live Schedule authority regression: **PASS**.
-- Published `roster.schedule` is the primary Attendance work/off authority.
-- Named live-schedule assignments are scheduled workdays.
-- Open/Pending marks a weekday as populated but does not assign an employee.
-- Closed/None/blank days fall back to Roster RDO.
-- Mock/draft schedules are excluded from Attendance.
-- Current-day automatic Off entries carry provenance and can be reversed when the live schedule changes.
-- Manual Attendance entries take priority over automatic Off determination.
-- Past finalized records are protected from automatic rewrites.
-- Positive-attendance clean-workday eligibility follows the schedule authority for current records.
-- Roster-to-Attendance population regression remains **PASS**.
-- Future Off status is derived from schedule authority without being persisted before the date arrives.
-- Manual Sync Roster to Attendance can add missing active Roster employees while preserving history.
+## v3.5.0.7 Targeted Regression
+- A +1 positive award earned while an employee has active negative points pays down those points immediately before banking any remainder.
+- Example contract: 1.5 active negative points + earned 1.0 positive point = **0.5 active points / 0 banked**.
+- Example contract: another earned 1.0 positive point against the remaining 0.5 leaves **0 active / 0.5 banked**.
+- An employee may hold no more than **3 positive credits at one time**.
+- Once a banked credit is consumed, later clean 12-workday cycles can replenish the bank back to 3.
+- There is no cumulative/lifetime positive-credit ceiling.
+- A controlled manual active-point balance is eligible for paydown by positive credits earned after its effective date.
+- Live Schedule authority, Roster RDO fallback, manual attendance protection, stale-write controls, and atomic saves remain unchanged.

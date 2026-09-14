@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.6 | Attendance Point System */
+/* PWADC Security Operations Suite v3.5.0.7 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -212,10 +212,62 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
   const events=attendanceEventsForEmployee(empId).filter(e=>e.date<=asOf);
   const legacyMode=attendanceMigrationPending();
   const maxCredits=Number(attendance.pointSystem&&attendance.pointSystem.policy&&attendance.pointSystem.policy.maxPositiveCredits||3);
-  let bank=0,cleanWorkingDays=0;
+  const adjustment=latestPointAdjustment(empId,asOf);
+  const adjustmentExpires=adjustment?addDays(adjustment.effectiveDate,89):'';
+  let bank=0,cleanWorkingDays=0,adjustmentOutstanding=0,adjustmentActivated=false;
   const earned=[],issues=[];
+
+  function expireIssueBalances(onDate){
+    const cutoff=addDays(onDate,-89);
+    for(const issue of issues){
+      if(issue.date<cutoff)issue.expiredBefore=onDate;
+    }
+  }
+  function activateAdjustmentIfNeeded(nextDate='9999-12-31'){
+    if(!adjustment||adjustmentActivated||nextDate<=adjustment.effectiveDate)return;
+    adjustmentActivated=true;
+    if(asOf<=adjustmentExpires)adjustmentOutstanding=Math.max(0,Number(adjustment.newActivePoints)||0);
+  }
+  function activeIssueBalance(issue,onDate){
+    if(!issue||issue.date<addDays(onDate,-89))return 0;
+    if(adjustmentActivated&&adjustment&&issue.date<=adjustment.effectiveDate)return 0;
+    return Math.max(0,Number(issue.net)||0);
+  }
+  function applyPositiveAward(onDate,amount=1){
+    let remaining=Number(amount)||0;
+    let appliedToNegative=0;
+    activateAdjustmentIfNeeded(onDate);
+    expireIssueBalances(onDate);
+
+    if(adjustmentActivated&&adjustmentOutstanding>0&&onDate>adjustment.effectiveDate){
+      const used=Math.min(remaining,adjustmentOutstanding);
+      adjustmentOutstanding=Number((adjustmentOutstanding-used).toFixed(2));
+      remaining=Number((remaining-used).toFixed(2));
+      appliedToNegative=Number((appliedToNegative+used).toFixed(2));
+    }
+
+    if(remaining>0){
+      for(const issue of issues){
+        if(remaining<=0)break;
+        const balance=activeIssueBalance(issue,onDate);
+        if(balance<=0)continue;
+        const used=Math.min(remaining,balance);
+        issue.positivePaydown=Number(((Number(issue.positivePaydown)||0)+used).toFixed(2));
+        issue.net=Number((Number(issue.net)-used).toFixed(2));
+        remaining=Number((remaining-used).toFixed(2));
+        appliedToNegative=Number((appliedToNegative+used).toFixed(2));
+      }
+    }
+
+    const room=Math.max(0,maxCredits-bank);
+    const banked=Math.min(remaining,room);
+    if(banked>0)bank=Number((bank+banked).toFixed(2));
+    return {appliedToNegative,banked:Number(banked.toFixed(2)),unused:Number((remaining-banked).toFixed(2)),balanceAfter:Number(bank.toFixed(2))};
+  }
+
   for(let i=0;i<events.length;i++){
     const e=events[i];
+    activateAdjustmentIfNeeded(e.date);
     const rawCode=e.code;
     let code=rawCode;
     if(code==='T')code='T<5';
@@ -225,7 +277,7 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
     if(code==='E'||code==='AL'||code==='FL')code='AA';
     if(code==='AE')code='ALE';
     if(code==='U'){
-      issues.push({date:e.date,code:'U',gross:0,offset:0,net:0,legacyReview:true});
+      issues.push({date:e.date,code:'U',gross:0,offset:0,positivePaydown:0,net:0,legacyReview:true});
       cleanWorkingDays=0;
       continue;
     }
@@ -234,7 +286,7 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
       const offset=Math.min(bank,gross);
       bank=Number((bank-offset).toFixed(2));
       const net=Number((gross-offset).toFixed(2));
-      issues.push({date:e.date,code,gross,offset,net,legacyTardy:false});
+      issues.push({date:e.date,code,gross,offset,positivePaydown:0,net,legacyTardy:false});
       cleanWorkingDays=0;
       continue;
     }
@@ -242,25 +294,25 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
       if(!attendanceCleanWorkdayEligible(empId,e.date,code))continue;
       cleanWorkingDays++;
       if(cleanWorkingDays>=12){
-        const awarded=bank<maxCredits?1:0;
-        if(awarded){bank=Math.min(maxCredits,bank+1);earned.push({date:e.date,amount:1,balanceAfter:bank});}
+        const award=applyPositiveAward(e.date,1);
+        if(award.appliedToNegative>0||award.banked>0)earned.push({date:e.date,amount:1,...award});
         cleanWorkingDays=0;
       }
       continue;
     }
     if(ATT_NEUTRAL_CODES.has(code))continue;
   }
+
+  activateAdjustmentIfNeeded('9999-12-31');
   const start90=addDays(asOf,-89);
   const rawActiveIssues=issues.filter(x=>x.date>=start90&&x.date<=asOf);
   const gross90=Number(rawActiveIssues.reduce((sum,x)=>sum+(Number(x.gross)||0),0).toFixed(2));
-  const offsets90=Number(rawActiveIssues.reduce((sum,x)=>sum+(Number(x.offset)||0),0).toFixed(2));
+  const offsets90=Number(rawActiveIssues.reduce((sum,x)=>sum+(Number(x.offset)||0)+(Number(x.positivePaydown)||0),0).toFixed(2));
   const calculatedActivePoints=Number(rawActiveIssues.reduce((sum,x)=>sum+(Number(x.net)||0),0).toFixed(2));
-  const adjustment=latestPointAdjustment(empId,asOf);
-  let activeIssues=rawActiveIssues,adjustmentBase=0,adjustmentExpires='';
+  let activeIssues=rawActiveIssues,adjustmentBase=0;
   if(adjustment){
     activeIssues=rawActiveIssues.filter(x=>x.date>adjustment.effectiveDate);
-    adjustmentExpires=addDays(adjustment.effectiveDate,89);
-    if(asOf<=adjustmentExpires)adjustmentBase=Math.max(0,Number(adjustment.newActivePoints)||0);
+    if(asOf<=adjustmentExpires)adjustmentBase=Number(adjustmentOutstanding.toFixed(2));
   }
   const postAdjustmentPoints=Number(activeIssues.reduce((sum,x)=>sum+(Number(x.net)||0),0).toFixed(2));
   const activePoints=Number((adjustmentBase+postAdjustmentPoints).toFixed(2));
@@ -363,7 +415,7 @@ renderAttendance=function(){
   if(!views.includes(activeAttView))activeAttView='review';
   const labels={daily:'Daily Entry',grid:'90-Day Grid',review:'Point Review',actions:'Corrective Action',audit:'Audit Log'};
   const migration=attendanceMigrationPending()?`<div class="notice warn"><strong>Attendance Point Migration Required</strong><br>The current Attendance JSON is being preserved in memory. Daily entry is locked until a backup is created and legacy codes are converted to the v3.5 point model. <button class="primary" onclick="commitAttendancePointMigration()">Commit Migration + Backup</button></div>`:'';
-  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> T&lt;5 = 0 · T5-14 = .5 · T15+ = 1 · CO1 = 1.5 · CO2 = 3 · NCNS = 9 · LE = 1 · EIA = 2. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit, maximum 3. Credits automatically offset and are consumed by chargeable points. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
+  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> T&lt;5 = 0 · T5-14 = .5 · T15+ = 1 · CO1 = 1.5 · CO2 = 3 · NCNS = 9 · LE = 1 · EIA = 2. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit. Newly earned credits immediately pay down active negative points first; any unused remainder is banked, with a maximum positive balance of 3 at any one time. Banked credits are consumed by future chargeable points and can be earned again after use. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
 };
 
 function attendanceDailyShiftRank(shift){const i=ATTENDANCE_DAILY_SHIFT_ORDER.indexOf(String(shift||''));return i>=0?i:99;}

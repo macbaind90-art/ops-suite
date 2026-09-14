@@ -28,6 +28,9 @@ jobs:
       - name: Validate Attendance Point System
         run: node tools/validate-attendance-points.js
 
+      - name: Validate Positive Credit Paydown
+        run: node tools/validate-positive-credit-paydown.js
+
       - name: Validate Roster to Attendance population
         run: node tools/validate-roster-attendance-sync.js
 
@@ -51,5 +54,5 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-5-0-6-Windows
+          name: PWADC-Security-Operations-Suite-v3-5-0-7-Windows
           path: publish/**

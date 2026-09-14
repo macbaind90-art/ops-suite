@@ -1,5 +1,15 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.0.7 - Positive Credit Immediate Paydown
+- Positive attendance awards now immediately reduce active negative attendance points when earned.
+- Any unused portion of an earned positive point is banked after the current negative balance is paid down.
+- The positive bank remains capped at **3 at any one time**; it is not a lifetime earning limit. Employees can earn back to three after credits are consumed.
+- Existing banked credits continue to offset future chargeable attendance incidents dollar-for-dollar.
+- Positive credits earned after a controlled manual current-point adjustment reduce that adjusted active balance before being banked.
+- Fractional carryover is preserved when a +1 award only partially pays down a 0.5-point balance or only part of the award is needed.
+- Added a dedicated positive-credit chronology/paydown regression validator to the Windows build workflow.
+- No changes to the 12-clean-working-day earning interval, 90-day negative window, 14-day call-off classification, 3/6/9 corrective thresholds, Live Schedule authority, or Roster-to-Attendance sync behavior.
+
 ## v3.5.0.6 - Live Schedule Attendance Authority
 - Made the published Live Schedule the primary authority for whether an active employee is scheduled to work or Off on a weekday.
 - Attendance now checks named assignments in `roster.schedule`; Open/Pending establishes that the weekday is populated but is not treated as an employee assignment. Closed/None/blank cells do not establish schedule authority.

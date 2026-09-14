@@ -20,7 +20,8 @@ const required=[
   "for(let d=end;d>=addDays(end,-89);d=addDays(d,-1))dates.push(d)",
   'function openPointGridEditModal','function savePointGridEdit','Reason for Record Change *','Historical attendance record corrected','attendance.recordEdits',
   'function openPointAdjustmentModal','async function savePointAdjustment','Reason for Point Adjustment *','attendance.pointAdjustments',"SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'})",
-  'rawActiveIssues.filter(x=>x.date>adjustment.effectiveDate)','adjustmentExpires=addDays(adjustment.effectiveDate,89)','calculatedActivePoints',
+  'rawActiveIssues.filter(x=>x.date>adjustment.effectiveDate)',"const adjustmentExpires=adjustment?addDays(adjustment.effectiveDate,89):''",'calculatedActivePoints',
+  'function applyPositiveAward','appliedToNegative','adjustmentOutstanding','const room=Math.max(0,maxCredits-bank)','if(award.appliedToNegative>0||award.banked>0)',
   "if(code==='T')return 0;",'function isLegacyMigratedTardy','function attendanceEventPointValue(empId,date,code){return pointValue(code);}','const gross=attendanceEventPointValue(empId,e.date,code)'
 ];
 for(const token of required)if(!src.includes(token))throw new Error('Attendance point contract missing: '+token);
@@ -28,7 +29,7 @@ if(!src.includes("prior&&dayDiff(prior.date,date)<=13?'CO2':'CO1'"))throw new Er
 if(!src.includes('if(cleanWorkingDays>=12)'))throw new Error('12-working-day positive credit award missing.');
 if(!src.includes('const offset=Math.min(bank,gross)'))throw new Error('Positive credit consumption/offset missing.');
 if(!src.includes('const start90=addDays(asOf,-89)'))throw new Error('Rolling 90-day window missing.');
-if(!src.includes('bank<maxCredits')||!src.includes('Math.min(maxCredits,bank+1)'))throw new Error('3-credit bank must use the canonical max-credit policy.');
+if(!src.includes('const room=Math.max(0,maxCredits-bank)')||!src.includes('const banked=Math.min(remaining,room)'))throw new Error('3-credit bank must use the canonical at-any-one-time balance cap.');
 if(!src.includes("if(!reason){toast('A reason is required to edit a 90-Day Grid record.')"))throw new Error('90-Day Grid edit reason gate missing.');
 if(!src.includes("if(!reason){toast('A reason is required to edit current attendance points.')"))throw new Error('Manual point-adjustment reason gate missing.');
 
@@ -45,7 +46,7 @@ console.log('90-day rolling window: PASS');
 console.log('14-day call-off classification: PASS');
 console.log('12 working-day positive credit: PASS');
 console.log('3-point positive bank cap: PASS');
-console.log('Credit offset and consumption: PASS');
+console.log('Credit offset, immediate paydown, and consumption: PASS');
 console.log('3/6/9 corrective thresholds: PASS');
 console.log('NE retained as zero-point neutral code: PASS');
 console.log('Daily Entry shift grouping/order: PASS');
