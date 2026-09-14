@@ -1,7 +1,7 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.4**
+- Version: **3.5.0.5**
 - Release: **Historical Tardy Point Correction**
 - Baseline: **v3.5.0.3 - Attendance Point Controls**
 
@@ -42,9 +42,15 @@
 - JavaScript syntax sweep: **PASS**
 - Actual 2026-09-09 Attendance backup parsed successfully: **7,911 entries / 42 employee records**
 - Actual-data migration simulation: **552 legacy records converted; 2 legacy U records preserved for manual review**
-- Actual backup historical tardy check: **233 legacy T records identified; all migrate/recalculate as T<5 = 0 points in v3.5.0.4**
+- Actual backup historical tardy check: **233 legacy T records identified; all migrate/recalculate as T<5 = 0 points in v3.5.0.5**
 - `.git` in source package: **NOT PRESENT**
 - Root Markdown control: **6 standing documents**
 
 ## Windows Build Status
 The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs restore, build, self-contained `win-x64` publish, front-end validation, Task Tracker print validation, and Attendance Point System validation.
+
+## v3.5.0.5 Targeted Regression
+- Roster-to-Attendance population regression: **PASS**.
+- New Roster employee path requires create-capable Attendance sync.
+- Success is gated on Attendance persistence and active-record verification.
+- Manual Sync Roster to Attendance can add missing active Roster employees while preserving history.

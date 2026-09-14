@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.4 | module: data-core */
+/* PWADC Security Operations Suite v3.5.0.5 | module: data-core */
 async function loadAttendance(){try{const res=await SuiteBridge.send('suite:loadModuleData',{}, {module:'attendance'});recordModuleLoadInfo('attendance',res);let raw=res.data;if(typeof raw==='string')attendance=JSON.parse(raw||'{}');else attendance=raw||{};normalizeAttendance();}catch(e){toast('Attendance load failed: '+e.message);normalizeAttendance()}}
 function normalizeAttendance(){attendance.employees=Array.isArray(attendance.employees)?attendance.employees:[];attendance.attendance=attendance.attendance&&typeof attendance.attendance==='object'?attendance.attendance:{};attendance.notes=attendance.notes&&typeof attendance.notes==='object'?attendance.notes:{};attendance.audit=Array.isArray(attendance.audit)?attendance.audit:[];attendance.flagActions=attendance.flagActions&&typeof attendance.flagActions==='object'?attendance.flagActions:{};attendance.patternActions=attendance.patternActions&&typeof attendance.patternActions==='object'?attendance.patternActions:{};attendance.notices=Array.isArray(attendance.notices)?attendance.notices:[];attendance.nextNoticeId=Number(attendance.nextNoticeId||0)||((attendance.notices.reduce((m,n)=>Math.max(m,Number(n.id)||0),0))+1);attendance.settings={weekThreshold:3,monthThreshold:5,rollingThreshold:6,patternThreshold:3,...(attendance.settings||{})}}
 function isIsoDateKey(d){return /^\d{4}-\d{2}-\d{2}$/.test(String(d||'')) && !Number.isNaN(Date.parse(String(d)+'T00:00:00'))}
@@ -289,27 +289,36 @@ async function syncOneRosterEmployeeToAttendance(re,allowCreate=false){
 }
 async function syncAttendanceFromRoster(showToast=true){
   normalizeRoster();normalizeAttendance();
-  if(showToast&&!confirm('Safe Sync Attendance from Roster? This will ONLY link/update people that already exist in Attendance. It will NOT bulk-add missing roster employees. New employees are added to Attendance only when you save them from Roster. A backup is created first.'))return {cancelled:true};
-  try{await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});}catch(e){console.warn('Pre-sync attendance backup failed',e)}
-  let updated=0,linked=0,missing=0,archived=0,skipped=0;
+  if(showToast&&!confirm('Sync active Roster employees to Attendance? Missing active Roster employees will be added to Daily Entry and the 90-Day Grid. Existing Attendance history is preserved, archived Roster employees remain hidden from active Attendance, and a backup is created first.'))return {cancelled:true};
+  try{await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});}catch(e){
+    console.warn('Pre-sync attendance backup failed',e);
+    if(showToast)toast('Roster-to-Attendance sync stopped because the Attendance backup failed.');
+    return {saved:false,error:String(e&&e.message||e)};
+  }
+  let added=0,updated=0,linked=0,archived=0,skipped=0;
   const archivedRoster=new Set();
   const quarantined=quarantineEmptySyncDuplicates();
   for(const re of roster.employees||[]){
     if(isArchivedEmployee(re)){archivedRoster.add(String(re.id));continue;}
     const name=rosterEmployeeAttendanceName(re);if(!name){skipped++;continue;}
-    let before=findAttendanceEmployeeForRoster(re);
-    if(!before){missing++;continue;}
-    let hadLink=!!before.rosterId;
-    let result=await syncOneRosterEmployeeToAttendance(re,false);
-    if(result.updated){updated++; if(!hadLink)linked++;}
+    const before=findAttendanceEmployeeForRoster(re);
+    const hadLink=!!(before&&before.rosterId);
+    const result=await syncOneRosterEmployeeToAttendance(re,true);
+    if(result.added)added++;
+    else if(result.updated){updated++;if(!hadLink)linked++;}
+    else if(result.skipped)skipped++;
   }
   for(const ae of attendance.employees||[]){if(ae.rosterId&&archivedRoster.has(String(ae.rosterId))){if(ae.active!==false||ae.archived!==true)archived++;ae.active=false;ae.archived=true;ae.status='Archived';ae.archivedAt=ae.archivedAt||new Date().toISOString();}}
   attendance.audit=Array.isArray(attendance.audit)?attendance.audit:[];
-  attendance.audit.unshift({at:new Date().toISOString(),user:currentUserName()||env.user||'',machine:env.machine||'',action:'Safe roster sync',detail:`Updated ${updated}, newly linked ${linked}, missing/not added ${missing}, archived ${archived}, hidden duplicates ${quarantined}, skipped ${skipped}. No attendance rows were bulk-added and no history was deleted.`});
-  await saveAttendanceNow('safe-roster-sync');
-  if(showToast)toast(`Safe sync: ${updated} updated, ${linked} linked, ${missing} missing not added, ${quarantined} duplicates hidden.`);
+  attendance.audit.unshift({at:new Date().toISOString(),user:currentUserName()||env.user||'',machine:env.machine||'',action:'Roster to Attendance sync',detail:`Added ${added}, updated ${updated}, newly linked ${linked}, archived ${archived}, hidden duplicates ${quarantined}, skipped ${skipped}. Existing attendance history was preserved.`});
+  const saved=await saveAttendanceNow('roster-attendance-sync');
+  if(!saved){
+    if(showToast)toast('Roster-to-Attendance changes are open in this window but were not saved. Resolve the Attendance data conflict/error and run Sync Roster to Attendance again.');
+    return {saved:false,added,updated,linked,archived,quarantined,skipped};
+  }
+  if(showToast)toast(`Roster → Attendance: ${added} added, ${updated} updated, ${linked} newly linked, ${quarantined} duplicates hidden.`);
   safeRenderPages({preserveScroll:true});
-  return {updated,linked,missing,archived,quarantined,skipped};
+  return {saved:true,added,updated,linked,archived,quarantined,skipped};
 }
 async function hideAttendanceSyncDuplicates(){try{await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});}catch(e){console.warn('Pre-cleanup attendance backup failed',e)}const n=quarantineEmptySyncDuplicates();await saveAttendanceNow('hide-sync-duplicates');safeRenderPages({preserveScroll:true});toast(n+' sync duplicate row(s) hidden. No history deleted.')}
 async function repairAttendanceHistoryFromRoster(){

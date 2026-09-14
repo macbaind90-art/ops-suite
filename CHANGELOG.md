@@ -1,6 +1,14 @@
 # PWADC Security Operations Suite - Changelog
 
-## v3.5.0.4 - Historical Tardy Point Correction
+## v3.5.0.5 - Roster to Attendance Population Reliability
+- Corrected the Roster-to-Attendance workflow so missing active Roster employees can be created in Attendance, not only linked when they already exist.
+- New Roster employees are now verified as active Attendance employees before the UI reports a successful sync.
+- Attendance save failures or stale-write conflicts no longer produce a false "synced" success message after a Roster save.
+- Renamed the Roster utility action to **Sync Roster to Attendance** and made it a repair path for active Roster employees missing from Daily Entry or the 90-Day Grid.
+- Existing Attendance history is preserved during reconciliation; archived Roster employees remain hidden from active Attendance.
+- Added a targeted Roster-to-Attendance population regression validator to the Windows build workflow.
+
+## v3.5.0.5 - Historical Tardy Point Correction
 - Corrected historical and migrated T<5 records to use the current 0-point tardy policy.
 - Removed the v3.5.0.3 legacy 0.5-point override for generic tardies previously migrated to T<5.
 - Existing saved T<5 attendance records recalculate automatically at 0 points without deleting or rewriting attendance history.
