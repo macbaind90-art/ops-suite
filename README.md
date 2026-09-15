@@ -1,4 +1,12 @@
-# PWADC Security Operations Suite v3.5.0.10
+# PWADC Security Operations Suite v3.5.0.11
+
+## v3.5.0.11 - Editable Attendance Point Values
+- Added an Admin-only **Edit Point Values** control in Attendance and Point Review.
+- Chargeable values for T<5, T5-14, T15+, CO1, CO2, NCNS, LE, and EIA can now be changed without editing code.
+- A policy-change reason is required and a full Attendance backup is created before the change is saved.
+- Saving new values immediately recalculates existing Attendance history under the current policy, including rolling 90-day totals, positive-credit paydowns, corrective thresholds, employee/grid highlighting, and Attendance reports.
+- Manual **Edit Current Points** adjustments remain controlled baselines. Point-policy changes recalculate attendance after the adjustment effective date without undoing the manager-set balance.
+- Point-value changes are retained in Attendance JSON with before/after values, user, workstation, reason, affected-employee count, and recalculation timestamp.
 
 ## v3.5.0.10 - Attendance Startup Binding Hotfix
 - Fixed a startup failure introduced during the v3.5.0.9 legacy Attendance retirement.

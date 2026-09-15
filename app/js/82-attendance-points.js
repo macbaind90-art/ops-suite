@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.10 | Attendance Point System */
+/* PWADC Security Operations Suite v3.5.0.11 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -18,8 +18,10 @@ const ATT_POINT_CODES=[
   {code:'AA',label:'Approved Absence',points:0,kind:'neutral'},
   {code:'NE',label:'Not Employed',points:0,kind:'neutral'}
 ];
-const ATT_NEGATIVE_POINTS={'T<5':0,'T5-14':0.5,'T15+':1,'CO1':1.5,'CO2':3,'NCNS':9,'LE':1,'EIA':2};
-const ATT_ISSUE_CODES=new Set(Object.keys(ATT_NEGATIVE_POINTS));
+const ATT_DEFAULT_POINT_VALUES={'T<5':0,'T5-14':0.5,'T15+':1,'CO1':1.5,'CO2':3,'NCNS':9,'LE':1,'EIA':2};
+// Compatibility constant retained for validators/callers that need the canonical chargeable-code list.
+const ATT_NEGATIVE_POINTS=ATT_DEFAULT_POINT_VALUES;
+const ATT_ISSUE_CODES=new Set(Object.keys(ATT_DEFAULT_POINT_VALUES));
 const ATT_CLEAN_WORK_CODES=new Set(['P','AT','ALE']);
 const ATT_NEUTRAL_CODES=new Set(['V','O','AA','NE']);
 const ATT_OLD_ISSUE_CODES=new Set(['T','T>5','CO','UE','U']);
@@ -41,6 +43,19 @@ normalizeAttendance=function(){
   ensureAttendancePointSystem();
 };
 
+function normalizeAttendancePointValues(values){
+  const source=values&&typeof values==='object'?values:{};
+  const clean={};
+  for(const [code,defaultValue] of Object.entries(ATT_DEFAULT_POINT_VALUES)){
+    const raw=Number(source[code]);
+    clean[code]=Number.isFinite(raw)&&raw>=0?Number(raw.toFixed(2)):defaultValue;
+  }
+  return clean;
+}
+function attendanceConfiguredPointValues(){
+  const configured=attendance&&attendance.pointSystem&&attendance.pointSystem.pointValues;
+  return normalizeAttendancePointValues(configured);
+}
 function ensureAttendancePointSystem(){
   attendance.correctiveActions=Array.isArray(attendance.correctiveActions)?attendance.correctiveActions:[];
   attendance.recordEdits=Array.isArray(attendance.recordEdits)?attendance.recordEdits:[];
@@ -49,18 +64,23 @@ function ensureAttendancePointSystem(){
   attendance.autoOff=attendance.autoOff&&typeof attendance.autoOff==='object'?attendance.autoOff:{};
   attendance.workdayBasis=attendance.workdayBasis&&typeof attendance.workdayBasis==='object'?attendance.workdayBasis:{};
   attendance.pointSystem=attendance.pointSystem&&typeof attendance.pointSystem==='object'?attendance.pointSystem:{};
+  attendance.pointSystem.pointValueHistory=Array.isArray(attendance.pointSystem.pointValueHistory)?attendance.pointSystem.pointValueHistory:[];
+  attendance.pointSystem.pointValues=normalizeAttendancePointValues(attendance.pointSystem.pointValues);
   if(Number(attendance.pointSystem.version||0)!==ATT_POINT_SYSTEM_VERSION){
     attendance.pointSystem={
       ...attendance.pointSystem,
       version:Number(attendance.pointSystem.version||0),
       migrationPending:true,
       targetVersion:ATT_POINT_SYSTEM_VERSION,
+      pointValues:normalizeAttendancePointValues(attendance.pointSystem.pointValues),
+      pointValueHistory:Array.isArray(attendance.pointSystem.pointValueHistory)?attendance.pointSystem.pointValueHistory:[],
       policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3}
     };
   }else{
     attendance.pointSystem.migrationPending=false;
     attendance.pointSystem.policy={negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,...(attendance.pointSystem.policy||{})};
     attendance.pointSystem.policy.maxPositiveCredits=3;
+    attendance.pointSystem.pointValues=normalizeAttendancePointValues(attendance.pointSystem.pointValues);
   }
 }
 
@@ -146,12 +166,23 @@ function pointCodeLabel(code){
   return fixed[code]||(hit&&hit.label)||code||'';
 }
 function pointValue(code){
-  if(Object.prototype.hasOwnProperty.call(ATT_NEGATIVE_POINTS,code))return ATT_NEGATIVE_POINTS[code];
-  if(code==='T')return 0;
-  if(code==='T>5')return 1;
-  if(code==='CO')return 1.5;
-  if(code==='UE')return 1;
+  const values=attendanceConfiguredPointValues();
+  if(Object.prototype.hasOwnProperty.call(values,code))return values[code];
+  // Legacy aliases use the current configured policy so a policy edit recalculates historical records too.
+  if(code==='T')return values['T<5'];
+  if(code==='T>5')return values['T15+'];
+  if(code==='CO')return values.CO1;
+  if(code==='UE')return values.LE;
   return 0;
+}
+function attendancePointDisplayValue(code){
+  if(code==='CO')return 'Auto';
+  if(ATT_ISSUE_CODES.has(code))return pointValue(code);
+  return 0;
+}
+function attendancePointPolicySummary(){
+  const v=attendanceConfiguredPointValues();
+  return `T&lt;5 = ${v['T<5']} · T5-14 = ${v['T5-14']} · T15+ = ${v['T15+']} · CO1 = ${v.CO1} · CO2 = ${v.CO2} · NCNS = ${v.NCNS} · LE = ${v.LE} · EIA = ${v.EIA}`;
 }
 function tardyRecordKey(empId,date){return String(empId)+'|'+String(date);}
 function isLegacyMigratedTardy(empId,date,code){
@@ -353,12 +384,16 @@ async function commitAttendancePointMigration(){
     await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});
   }catch(e){toast('Migration stopped: pre-migration backup failed. '+(e.message||e));return;}
   const result=migrateLegacyAttendanceCodes();
+  const configuredValues=attendanceConfiguredPointValues();
+  const pointValueHistory=Array.isArray(attendance.pointSystem.pointValueHistory)?attendance.pointSystem.pointValueHistory:[];
   attendance.pointSystem={
     version:ATT_POINT_SYSTEM_VERSION,
     migrationPending:false,
     migratedAt:new Date().toISOString(),
     migratedBy:currentUserName()||env.user||'',
     policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3},
+    pointValues:configuredValues,
+    pointValueHistory,
     migrationSummary:result
   };
   audit('Attendance point migration committed',`${result.changed} legacy code(s) converted; ${result.unresolved} legacy U record(s) preserved for manual review.`);
@@ -415,7 +450,7 @@ function renderAttendance(){
   if(!views.includes(activeAttView))activeAttView='review';
   const labels={daily:'Daily Entry',grid:'90-Day Grid',review:'Point Review',actions:'Corrective Action',audit:'Audit Log'};
   const migration=attendanceMigrationPending()?`<div class="notice warn"><strong>Attendance Point Migration Required</strong><br>The current Attendance JSON is being preserved in memory. Daily entry is locked until a backup is created and legacy codes are converted to the v3.5 point model. <button class="primary" onclick="commitAttendancePointMigration()">Commit Migration + Backup</button></div>`:'';
-  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> T&lt;5 = 0 · T5-14 = .5 · T15+ = 1 · CO1 = 1.5 · CO2 = 3 · NCNS = 9 · LE = 1 · EIA = 2. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit. Newly earned credits immediately pay down active negative points first; any unused remainder is banked, with a maximum positive balance of 3 at any one time. Banked credits are consumed by future chargeable points and can be earned again after use. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
+  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="admin-only" onclick="openPointValueSettingsModal()">Edit Point Values</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> ${attendancePointPolicySummary()}. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit. Newly earned credits immediately pay down active negative points first; any unused remainder is banked, with a maximum positive balance of 3 at any one time. Banked credits are consumed by future chargeable points and can be earned again after use. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
 }
 
 function attendanceDailyShiftRank(shift){const i=ATTENDANCE_DAILY_SHIFT_ORDER.indexOf(String(shift||''));return i>=0?i:99;}
@@ -453,7 +488,7 @@ function renderPointDailyRow(e,locked=false){
   const sched=attendanceScheduleStatus(e,entryDate);
   const snap=attendancePointSnapshot(e.id,entryDate);
   const risk=attendanceEmployeePointClass(e.id,entryDate);
-  return `<div class="person-row"><div class="person-name att-employee-name-wrap ${risk}"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span><span class="mini-note">Active Points: ${snap.activePoints} · Positive Credit: ${snap.bank}/${snap.maxCredits} · Clean Workdays: ${snap.cleanWorkingDays}/12 · ${sched.source==='live-schedule'?'Live Schedule':'Roster RDO fallback'}</span></div><div class="row-code-pad">${ATT_POINT_CODES.map(x=>`<button class="row-code-btn ${current===x.code||(['CO1','CO2'].includes(current)&&x.code==='CO')?'active':''}" title="${esc(x.label+(x.points===null?'':` · ${x.points} pt`))}" ${locked?'disabled':''} onclick="event.stopPropagation();applyAttendancePointCode('${esc(e.id)}','${entryDate}','${x.code}')">${esc(x.code)}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(current)}">${esc(current||'Blank')}</span></div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button></div></div>`;
+  return `<div class="person-row"><div class="person-name att-employee-name-wrap ${risk}"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span><span class="mini-note">Active Points: ${snap.activePoints} · Positive Credit: ${snap.bank}/${snap.maxCredits} · Clean Workdays: ${snap.cleanWorkingDays}/12 · ${sched.source==='live-schedule'?'Live Schedule':'Roster RDO fallback'}</span></div><div class="row-code-pad">${ATT_POINT_CODES.map(x=>`<button class="row-code-btn ${current===x.code||(['CO1','CO2'].includes(current)&&x.code==='CO')?'active':''}" title="${esc(x.label+(x.code==='CO'?' · auto-classified':` · ${attendancePointDisplayValue(x.code)} pt`))}" ${locked?'disabled':''} onclick="event.stopPropagation();applyAttendancePointCode('${esc(e.id)}','${entryDate}','${x.code}')">${esc(x.code)}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(current)}">${esc(current||'Blank')}</span></div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button></div></div>`;
 }
 
 function pointGridEmployees(){
@@ -543,6 +578,64 @@ function pointReviewRows(){
   const q=pointReviewSearch.trim().toLowerCase();if(q)emps=emps.filter(e=>(e.name+' '+e.title+' '+e.shift).toLowerCase().includes(q));
   return emps.map(emp=>({emp,snap:attendancePointSnapshot(emp.id)})).sort((a,b)=>b.snap.activePoints-a.snap.activePoints||a.emp.name.localeCompare(b.emp.name));
 }
+function openPointValueSettingsModal(){
+  if(roleOf()!=='Admin'){toast('Administrator access is required to edit attendance point values.');return;}
+  if(attendanceMigrationPending()){toast('Commit the Attendance Point System migration before editing point values.');return;}
+  const values=attendanceConfiguredPointValues();
+  const fields=[
+    ['T<5','Tardy Less Than 5 Minutes'],['T5-14','Tardy 5-14 Minutes'],['T15+','Tardy 15 Minutes or More'],
+    ['CO1','Call Off - First in Rolling 14 Days'],['CO2','Call Off - Additional in Rolling 14 Days'],
+    ['NCNS','No Call No Show'],['LE','Left Early'],['EIA','Clocked In Early Without Approval']
+  ];
+  const rows=fields.map(([code,label])=>`<tr><td><strong>${esc(code)}</strong></td><td>${esc(label)}</td><td><input id="pointValue_${code.replace(/[^A-Za-z0-9]/g,'_')}" type="number" min="0" step="0.5" value="${esc(values[code])}" style="max-width:120px"></td></tr>`).join('');
+  const last=(attendance.pointSystem.pointValueHistory||[])[0];
+  showModal(`<div class="modal-head"><div><div class="modal-title">Edit Attendance Point Values</div><div class="mini-note">Administrator policy control · changes recalculate Attendance immediately after save</div></div><button onclick="closeModal()">Close</button></div><div class="notice warn"><strong>Policy-level change.</strong> Saving new values recalculates historical attendance under the current point policy, including 90-day totals, positive-credit paydowns, thresholds, highlighting, and reports. Manual Edit Current Points adjustments remain authoritative baselines; only attendance after their effective date is recalculated into that controlled balance.</div><div class="table-wrap"><table><thead><tr><th>Code</th><th>Attendance Event</th><th>Points</th></tr></thead><tbody>${rows}</tbody></table></div><div style="margin-top:12px"><label>Reason for Point-Policy Change *</label><textarea id="pointValueReason" placeholder="Required: document the policy or management reason for changing point values"></textarea></div>${last?`<div class="mini-note" style="margin-top:8px">Last change: ${esc(String(last.at||'').replace('T',' ').slice(0,19))} by ${esc(last.by||'')} · ${esc(last.reason||'')}</div>`:''}<div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="savePointValueSettings()">Save Values & Recalculate</button></div>`);
+}
+async function savePointValueSettings(){
+  if(roleOf()!=='Admin'){toast('Administrator access is required to edit attendance point values.');return;}
+  const reason=String(val('pointValueReason')||'').trim();
+  if(!reason){toast('A reason is required to change attendance point values.');return;}
+  const ids={'T<5':'pointValue_T_5','T5-14':'pointValue_T5_14','T15+':'pointValue_T15_','CO1':'pointValue_CO1','CO2':'pointValue_CO2','NCNS':'pointValue_NCNS','LE':'pointValue_LE','EIA':'pointValue_EIA'};
+  const before=attendanceConfiguredPointValues();
+  const next={};
+  for(const code of Object.keys(ATT_DEFAULT_POINT_VALUES)){
+    const raw=Number(val(ids[code]));
+    if(!Number.isFinite(raw)||raw<0){toast(code+' must have a point value of zero or greater.');return;}
+    next[code]=Number(raw.toFixed(2));
+  }
+  const changed=Object.keys(next).filter(code=>Number(before[code])!==Number(next[code]));
+  if(!changed.length){toast('No point values were changed.');return;}
+  const asOf=attendanceLocalToday();
+  const employees=activeAttendanceEmployees();
+  const beforeSnapshots=new Map(employees.map(emp=>[String(emp.id),attendancePointSnapshot(emp.id,asOf)]));
+  try{await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});}catch(e){toast('Point-value change stopped: backup failed. '+(e.message||e));return;}
+  attendance.pointSystem.pointValues=normalizeAttendancePointValues(next);
+  let affected=0;
+  try{
+    for(const emp of employees){
+      const prior=beforeSnapshots.get(String(emp.id));
+      const after=attendancePointSnapshot(emp.id,asOf);
+      if(!prior||prior.activePoints!==after.activePoints||prior.calculatedActivePoints!==after.calculatedActivePoints||prior.bank!==after.bank)affected++;
+    }
+  }catch(e){
+    attendance.pointSystem.pointValues=before;
+    toast('Point-value recalculation failed and the policy change was not applied. '+(e.message||e));
+    return;
+  }
+  const detail=changed.map(code=>`${code}: ${before[code]} → ${next[code]}`).join(' · ');
+  const record={id:'pv-'+Date.now(),at:new Date().toISOString(),by:currentUserName()||env.user||'',machine:env.machine||'',reason,before:{...before},after:{...next},changedCodes:changed,affectedEmployees:affected,asOf};
+  attendance.pointSystem.pointValueHistory=Array.isArray(attendance.pointSystem.pointValueHistory)?attendance.pointSystem.pointValueHistory:[];
+  attendance.pointSystem.pointValueHistory.unshift(record);
+  attendance.pointSystem.pointValueHistory=attendance.pointSystem.pointValueHistory.slice(0,200);
+  attendance.pointSystem.lastRecalculatedAt=record.at;
+  attendance.pointSystem.lastRecalculatedBy=record.by;
+  attendance.pointSystem.lastRecalculationAffectedEmployees=affected;
+  audit('Attendance point values updated',`${detail} · ${affected} active employee(s) recalculated as of ${asOf} · Reason: ${reason}`);
+  closeModal();
+  const ok=await saveAttendanceNow('point-value-policy-update');
+  if(ok){safeRenderPages();toast(`Point values updated. Attendance recalculated for ${affected} affected employee(s).`);}
+}
+
 function openPointAdjustmentModal(empId){
   if(attendanceMigrationPending()){toast('Commit the Attendance Point System migration before adjusting current points.');return;}
   const emp=(attendance.employees||[]).find(e=>String(e.id)===String(empId));if(!emp)return;
@@ -575,7 +668,7 @@ function renderPointReview(){
   const shifts=['All',...Array.from(new Set(activeAttendanceEmployees().map(e=>e.shift).filter(Boolean)))];
   const rows=pointReviewRows();
   const asOf=pointSystemAsOf();
-  return `<div class="card"><div class="card-title">Attendance Point Review</div><div class="toolbar"><div><label>Shift</label><select onchange="pointReviewShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${pointReviewShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><div><label>Search</label><input value="${esc(pointReviewSearch)}" oninput="pointReviewSearch=this.value;safeRenderPages({preserveScroll:true})" placeholder="Employee..."></div><div class="chip">As of ${esc(fmt(asOf))}</div></div><div class="mini-note">Edit Current Points creates a controlled point-balance adjustment with a required reason, pre-save backup, and audit record. Attendance incidents through the effective date are excluded from future active-point calculations.</div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Calculated 90-Day</th><th>Active Points</th><th>Positive Bank</th><th>Clean Workdays</th><th>Current Threshold</th><th>Adjustment</th><th>Next Step</th></tr></thead><tbody>${rows.map(({emp,snap})=>{const last=latestCorrectiveAction(emp.id);const due=attendanceActionRank(snap.level)>attendanceActionRank(last&&last.level||'None');const adj=snap.adjustment?`<span class="chip">Set ${esc(snap.adjustment.newActivePoints)} · ${esc(fmt(snap.adjustment.effectiveDate))}</span>`:'None';return `<tr><td class="name">${attendanceEmployeeNameHtml(emp,asOf)}</td><td>${snap.calculatedActivePoints}</td><td><strong>${snap.activePoints}</strong></td><td>${snap.bank} / ${snap.maxCredits}</td><td>${snap.cleanWorkingDays} / 12</td><td>${esc(snap.level)}</td><td>${adj}<br><button class="sm" onclick="openPointAdjustmentModal('${esc(emp.id)}')">Edit Current Points</button></td><td>${due?`<span class="chip critical">Action Due</span> <button class="sm" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Record</button>`:'<span class="chip ok">Current</span>'}</td></tr>`}).join('')}</tbody></table></div>`;
+  return `<div class="card"><div class="card-title">Attendance Point Review</div><div class="toolbar"><div><label>Shift</label><select onchange="pointReviewShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${pointReviewShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><div><label>Search</label><input value="${esc(pointReviewSearch)}" oninput="pointReviewSearch=this.value;safeRenderPages({preserveScroll:true})" placeholder="Employee..."></div><div class="chip">As of ${esc(fmt(asOf))}</div><button class="sm admin-only" onclick="openPointValueSettingsModal()">Edit Point Values</button></div><div class="mini-note">Edit Current Points creates a controlled point-balance adjustment with a required reason, pre-save backup, and audit record. Attendance incidents through the effective date are excluded from future active-point calculations.</div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Calculated 90-Day</th><th>Active Points</th><th>Positive Bank</th><th>Clean Workdays</th><th>Current Threshold</th><th>Adjustment</th><th>Next Step</th></tr></thead><tbody>${rows.map(({emp,snap})=>{const last=latestCorrectiveAction(emp.id);const due=attendanceActionRank(snap.level)>attendanceActionRank(last&&last.level||'None');const adj=snap.adjustment?`<span class="chip">Set ${esc(snap.adjustment.newActivePoints)} · ${esc(fmt(snap.adjustment.effectiveDate))}</span>`:'None';return `<tr><td class="name">${attendanceEmployeeNameHtml(emp,asOf)}</td><td>${snap.calculatedActivePoints}</td><td><strong>${snap.activePoints}</strong></td><td>${snap.bank} / ${snap.maxCredits}</td><td>${snap.cleanWorkingDays} / 12</td><td>${esc(snap.level)}</td><td>${adj}<br><button class="sm" onclick="openPointAdjustmentModal('${esc(emp.id)}')">Edit Current Points</button></td><td>${due?`<span class="chip critical">Action Due</span> <button class="sm" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Record</button>`:'<span class="chip ok">Current</span>'}</td></tr>`}).join('')}</tbody></table></div>`;
 }
 
 function renderPointCorrectiveActions(){

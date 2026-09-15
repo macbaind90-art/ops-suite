@@ -1,14 +1,16 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.10**
-- Release: **Attendance Startup Binding Hotfix**
-- Baseline: **v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization**
+- Version: **3.5.0.11**
+- Release: **Editable Attendance Point Values**
+- Baseline: **v3.5.0.10 - Attendance Startup Binding Hotfix**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
 - Rolling call-off classification window: **14 days**
 - Tardy points: **T<5 = 0 / T5-14 = 0.5 / T15+ = 1**
+- Point values are Admin-editable for **T<5 / T5-14 / T15+ / CO1 / CO2 / NCNS / LE / EIA** and recalculate existing attendance after save
+- Point-value policy changes require a reason, pre-save backup, audit record, and before/after policy history
 - Historical generic tardies migrated to T<5 calculate at **0 points**
 - Positive attendance award: **+1 after 12 clean scheduled working days**
 - Newly earned positive credit first reduces active negative points immediately
@@ -32,7 +34,7 @@
 - Employee-name point status retained: green <3 / yellow 3-6.99 / red 7+
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 5 Attendance views / 5 Roster views / 819 named functions / 203 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 5 Attendance views / 5 Roster views / 825 named functions / 205 inline action targets / 10 registered modules
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - Roster-to-Attendance population regression: **PASS**
@@ -41,6 +43,7 @@
 - Home Attendance workflow regression: **PASS**
 - Attendance legacy retirement regression: **PASS**
 - Browser startup binding regression: **PASS**
+- Attendance point-value editor regression: **PASS**
 - September 9 production Attendance backup render smoke: **PASS** - 16 major modules / 5 Attendance views loaded against the real 42-employee backup without render failure
 - Positive-credit partial/fractional carryover regression: **PASS**
 - 3-point balance cap with re-earning after use: **PASS**
@@ -52,6 +55,17 @@
 
 ## Windows Build Status
 The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs front-end and targeted regression validation, restore, build, and self-contained `win-x64` publish.
+
+## v3.5.0.11 Targeted Regression
+- Admin-only point-value editor: **PASS**.
+- Required policy-change reason: **PASS**.
+- Backup-before-policy-save control: **PASS**.
+- Configured point values drive historical and current point calculations: **PASS**.
+- Existing Attendance history recalculates after a point-value change: **PASS**.
+- Positive-credit paydown/bank replay under revised values: **PASS**.
+- Manual current-point adjustment baseline preservation: **PASS**.
+- Attendance report point-value display uses configured values: **PASS**.
+- Point-policy before/after history and affected-employee metadata: **PASS**.
 
 ## v3.5.0.10 Targeted Regression
 - Reproduced the Windows startup symptom: startup required-function gate reported `renderAttendance is not defined`.

@@ -1,5 +1,14 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.0.11 - Editable Attendance Point Values
+- Added Admin-only point-policy editing for T<5, T5-14, T15+, CO1, CO2, NCNS, LE, and EIA.
+- Point values are now stored in the Attendance point-system configuration instead of being calculation-only constants.
+- Saving a point-policy change requires a reason and a pre-save Attendance backup.
+- Existing attendance is immediately recalculated using the new values, including positive-credit offsets/paydowns, 90-day totals, corrective-action status, name/grid risk highlighting, Home metrics, and Attendance reports.
+- Manual current-point adjustments remain authoritative baselines and are not silently undone by a later policy-value change.
+- Added point-policy change history and recalculation metadata to Attendance JSON.
+- Added a dedicated point-value editor regression validator and GitHub Actions validation step.
+
 ## v3.5.0.10 - Attendance Startup Binding Hotfix
 - Fixed the Windows startup failure reporting `renderAttendance is not defined`.
 - Root cause: the v3.5.0.9 legacy-retirement cleanup removed the original Attendance function declarations while the point-system extension still reassigned two globals under strict-mode script loading.

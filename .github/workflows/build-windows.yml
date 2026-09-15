@@ -46,6 +46,9 @@ jobs:
       - name: Validate browser startup bindings
         run: node tools/validate-browser-startup-bindings.js
 
+      - name: Validate Attendance point-value editor
+        run: node tools/validate-point-value-editor.js
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -63,5 +66,5 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-5-0-10-Windows
+          name: PWADC-Security-Operations-Suite-v3-5-0-11-Windows
           path: publish/**

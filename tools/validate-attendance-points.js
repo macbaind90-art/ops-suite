@@ -22,7 +22,7 @@ const required=[
   'function openPointAdjustmentModal','async function savePointAdjustment','Reason for Point Adjustment *','attendance.pointAdjustments',"SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'})",
   'rawActiveIssues.filter(x=>x.date>adjustment.effectiveDate)',"const adjustmentExpires=adjustment?addDays(adjustment.effectiveDate,89):''",'calculatedActivePoints',
   'function applyPositiveAward','appliedToNegative','adjustmentOutstanding','const room=Math.max(0,maxCredits-bank)','if(award.appliedToNegative>0||award.banked>0)',
-  "if(code==='T')return 0;",'function isLegacyMigratedTardy','function attendanceEventPointValue(empId,date,code){return pointValue(code);}','const gross=attendanceEventPointValue(empId,e.date,code)'
+  "if(code==='T')return values['T<5'];",'function isLegacyMigratedTardy','function attendanceEventPointValue(empId,date,code){return pointValue(code);}','const gross=attendanceEventPointValue(empId,e.date,code)'
 ];
 for(const token of required)if(!src.includes(token))throw new Error('Attendance point contract missing: '+token);
 if(!src.includes("prior&&dayDiff(prior.date,date)<=13?'CO2':'CO1'"))throw new Error('Rolling 14-day call-off classification missing.');
@@ -41,6 +41,7 @@ for(const token of ['Attendance point grid visual status','.att-status-present',
 console.log('Attendance Point System validation: PASS');
 console.log('Tardy tiers 0 / .5 / 1: PASS');
 if(src.includes("return isLegacyMigratedTardy(empId,date,code)?0.5:pointValue(code)")||src.includes("rawCode==='T'?0.5")||src.includes("if(code==='T')return 0.5"))throw new Error('Historical T<5 still has a legacy 0.5-point override.');
+if(!src.includes("attendanceConfiguredPointValues()")||!src.includes("attendance.pointSystem.pointValues"))throw new Error('Editable point-value configuration is not wired into the point engine.');
 console.log('Historical and migrated T<5 zero-point calculation: PASS');
 console.log('90-day rolling window: PASS');
 console.log('14-day call-off classification: PASS');

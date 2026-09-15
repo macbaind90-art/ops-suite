@@ -121,3 +121,6 @@ Rules:
 ## v3.4 Data Reliability Boundary
 Operational shared JSON modules load through the Windows host and receive a revision fingerprint. Normal saves return that expected revision through the existing bridge payload and are rejected when the live shared file no longer matches. v3.4.0 provides validated atomic replacement; v3.4.1 adds stale-write blocking. No feature module should bypass `saveModuleDataStrict` for operational shared JSON. Save coordination/short-duration locks are intentionally deferred to v3.4.2.
 
+
+## v3.5.0.11 Attendance Point Policy Configuration
+Chargeable Attendance point values are persisted in `attendance.pointSystem.pointValues` and are resolved through one canonical calculation helper. Admin policy changes are backup-first, reason-required, audited, and immediately replay the existing Attendance event history. `pointValueHistory` preserves before/after policy values and recalculation metadata. Manual current-point adjustments remain explicit management baselines rather than being rewritten by a policy-value edit.
