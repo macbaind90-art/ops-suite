@@ -17,7 +17,7 @@ const csproj=read('SecurityOperationsSuite.csproj');
 const manifest=read('app.manifest');
 const globalJson=read('global.json');
 
-need(main,'private const string AppVersion = "4.0.0";','AppVersion must use the new three-part 4.0.0 scheme.');
+need(main,'private const string AppVersion = "4.0.1";','AppVersion must be 4.0.1 for this maintenance release.');
 need(main,'EnsureLiveSchemaMetadata();','Startup schema metadata initialization is missing.');
 need(schema,'["attendance"] = 1','Attendance schema registration missing.');
 need(schema,'["roster"] = 1','Roster schema registration missing.');
@@ -34,7 +34,9 @@ need(schema,'result.Status = "older"','Older-schema migration-required detection
 need(schema,'controlled migration to','Older-schema migration gate missing.');
 need(schema,'root["schemaVersion"] = CurrentSchemaVersion(module);','Schema metadata stamping missing.');
 need(schema,'root["lastWrittenByAppVersion"] = AppVersion;','Writer-version metadata stamping missing.');
-need(schema,'Unregistered live JSON file requires a schema registration before use','Unknown live JSON files are not surfaced for schema registration.');
+if(schema.includes('Unregistered live JSON file requires a schema registration before use'))throw new Error('Schema startup scan still treats external/specialist JSON as suite-owned live modules.');
+if(schema.includes('Directory.GetFiles(dataDir'))throw new Error('Schema startup initialization must not recursively scan unrelated/external JSON under Data.');
+need(schema,'Schema compatibility guarding owns only JSON files registered to the core suite modules above.','Schema ownership boundary comment missing.');
 need(reliability,'json = PrepareJsonForWrite(module, json);','Atomic write path does not enforce schema metadata.');
 need(reliability,'EnsureExistingTargetSchemaCompatibleForWrite(module, fullTarget, operation);','Atomic write path does not protect an existing incompatible live schema.');
 need(schema,'SCHEMA_TARGET_BLOCK','Existing incompatible live schema target guard missing.');
@@ -47,10 +49,10 @@ need(dataCore,'if(info.writeAllowed===false)','Browser save path does not honor 
 need(shell,'<th>Schema</th>','Data Health live-file table does not display schema state.');
 need(workflow,'node tools/validate-schema-compatibility.js','Windows workflow does not run schema compatibility validation.');
 need(csproj,'<TargetFramework>net10.0-windows</TargetFramework>','Project must target net10.0-windows.');
-need(csproj,'<Version>4.0.0</Version>','Visible application package version must be 4.0.0.');
-need(csproj,'<FileVersion>4.0.0.0</FileVersion>','Windows file metadata should retain required four-part numeric format.');
-need(csproj,'<AssemblyVersion>4.0.0.0</AssemblyVersion>','Windows assembly metadata should retain required four-part numeric format.');
-need(manifest,'version="4.0.0.0"','Windows manifest identity must be four-part 4.0.0.0.');
+need(csproj,'<Version>4.0.1</Version>','Visible application package version must be 4.0.1.');
+need(csproj,'<FileVersion>4.0.1.0</FileVersion>','Windows file metadata must be 4.0.1.0.');
+need(csproj,'<AssemblyVersion>4.0.1.0</AssemblyVersion>','Windows assembly metadata must be 4.0.1.0.');
+need(manifest,'version="4.0.1.0"','Windows manifest identity must be four-part 4.0.1.0.');
 const sdk=JSON.parse(globalJson).sdk||{};
 if(sdk.version!=='10.0.400'||sdk.rollForward!=='latestPatch')throw new Error('global.json must pin the suite to .NET SDK 10.0.400 with latestPatch roll-forward.');
 need(csproj,'RemoveUnusedWebView2WpfReference','WinForms build must remove the unused WebView2 WPF reference before assembly resolution.');
@@ -69,10 +71,10 @@ const seeds={
 for(const [file,expected] of Object.entries(seeds)){
   const obj=JSON.parse(read(path.join('app','seed',file)));
   if(obj.schemaVersion!==expected)throw new Error(`${file} schemaVersion expected ${expected}, got ${obj.schemaVersion}`);
-  if(obj.lastWrittenByAppVersion!=='4.0.0')throw new Error(`${file} lastWrittenByAppVersion is not 4.0.0`);
+  if(obj.lastWrittenByAppVersion!=='4.0.1')throw new Error(`${file} lastWrittenByAppVersion is not 4.0.1`);
 }
 console.log('Schema Version & Compatibility Guarding validation PASS');
 console.log('- All current live JSON modules registered at schema revision 1');
 console.log('- Legacy missing markers can be stamped safely; older/newer formal schemas block writes');
-console.log('- Three-part app version 4.0.0 with four-part Windows metadata retained');
+console.log('- Three-part app version 4.0.1 with four-part Windows metadata retained');
 console.log('- .NET 10 SDK 10.0.400 pinned, net10.0-windows targeted, and unused WebView2 WPF reference removed for clean WinForms assembly resolution');

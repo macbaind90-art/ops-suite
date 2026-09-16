@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.0.0
+# PWADC Security Operations Suite v4.0.1
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,15 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the current major baseline; `4.0.1` = a minor correction or smaller upgrade within that feature line; `4.1.0` = the next feature-level release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.0.1` = the current minor correction within that feature line; `4.1.0` = the next feature-level release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+
+## v4.0.1 - Schema Scope / External Data Compatibility Fix
+- Schema compatibility guarding is now limited to JSON files the core suite actually owns and writes.
+- JSON used by specialist/standalone PWADC utilities can remain under the shared `Data` tree without being altered, schema-stamped, or treated as an incompatible suite module.
+- Nested `Backup` / `Backups` folders under `Data` are treated as backup artifacts and are ignored by schema startup discovery.
+- Daily Last-Known-Good still captures external **live** data stored under `Data`, while excluding nested backup copies.
+- This specifically prevents legacy Symmetry Access and Camera User Tracker backup/history JSON from producing the schema compatibility warning seen on first v4.0.0 production startup.
 
 ## v4.0.0 - Schema Version & Compatibility Guarding
 - Adds `schemaVersion` and `lastWrittenByAppVersion` metadata to every current suite-managed live JSON data file.
@@ -19,7 +27,7 @@ Examples: `4.0.0` = the current major baseline; `4.0.1` = a minor correction or 
 - Host-side target guarding also checks the **existing live file** before any protected replacement, so reset/recovery or direct bridge calls cannot silently overwrite a formally older/newer/incompatible schema. Explicit restore/reset may replace malformed JSON, but not a valid incompatible schema.
 - Suite Settings with an unsupported/newer schema block startup because settings control the data root, users, and security-sensitive configuration.
 - Schema state is returned through the desktop bridge and displayed in live-file/Data Health verification.
-- Unknown JSON files found in the live Data folder are never modified automatically; the suite flags them as unregistered until a schema is defined.
+- Schema guarding is intentionally limited to registered core-suite JSON. External/specialist tool JSON in the shared Data tree is left untouched and does not block startup.
 - The Daily Last-Known-Good snapshot runs before one-time schema stamping, preserving the morning recovery point before metadata initialization on the upgrade day.
 - **Downgrade boundary:** once shared live data has been stamped/used by v4.0.0 or later, pre-v4.0.0 executables should be retired from use against that shared data root. Those older builds predate schema enforcement and cannot provide the downgrade protection introduced here.
 
@@ -629,7 +637,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.4.0 - Data Layer / Reliability Upgrade~~ Completed
 - ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed
 - ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed
-- **v4.0.0 - Schema Version & Compatibility Guarding** Current
+- **v4.0.1 - Schema Scope / External Data Compatibility Fix** Current
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

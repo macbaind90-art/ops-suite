@@ -187,7 +187,7 @@ namespace PWADC.SecurityOperationsSuite
                     machine = Environment.MachineName,
                     appVersion = AppVersion,
                     sourceDataRoot = settings.DataRoot,
-                    scope = "All live files in the suite Data folder",
+                    scope = "All live files in the suite Data folder; nested Backup/Backups folders excluded",
                     status = "verified",
                     fileCount = manifestFiles.Count,
                     totalBytes,
@@ -224,6 +224,7 @@ namespace PWADC.SecurityOperationsSuite
                 string name = Path.GetFileName(path);
                 if (name.Equals(".write-test.tmp", StringComparison.OrdinalIgnoreCase)) continue;
                 if (name.Contains(".txn-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase)) continue;
+                if (IsBackupArtifactUnderData(dataDir, path)) continue;
                 files.Add(Path.GetFullPath(path));
             }
             files.Sort(StringComparer.OrdinalIgnoreCase);

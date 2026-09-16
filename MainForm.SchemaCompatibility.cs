@@ -197,12 +197,10 @@ namespace PWADC.SecurityOperationsSuite
             var result = new SchemaInitializationResult();
             string dataDir = Path.GetFullPath(Path.Combine(settings.DataRoot, "Data"));
 
-            var registeredPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (string module in ModuleNames())
             {
                 if (!IsKnownJsonModule(module)) continue;
                 string path = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
-                registeredPaths.Add(path);
                 if (!File.Exists(path)) continue;
 
                 try
@@ -225,14 +223,10 @@ namespace PWADC.SecurityOperationsSuite
                 }
             }
 
-            // Every suite-managed live JSON file must be registered before it can participate in
-            // schema guarding. Unknown JSON is never modified automatically; it is surfaced for review.
-            foreach (string jsonPath in Directory.GetFiles(dataDir, "*.json", SearchOption.AllDirectories))
-            {
-                string full = Path.GetFullPath(jsonPath);
-                if (!registeredPaths.Contains(full))
-                    result.Issues.Add("Unregistered live JSON file requires a schema registration before use: " + Path.GetRelativePath(dataDir, full));
-            }
+            // Schema compatibility guarding owns only JSON files registered to the core suite modules above.
+            // The shared Data tree can also contain live JSON used by specialist/standalone PWADC tools.
+            // Those external files are intentionally left untouched and do not block suite startup. Their own
+            // nested Backup/Backups folders are historical artifacts, not live schema-managed data.
             return result;
         }
     }

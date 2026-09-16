@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.0.0
+# PWADC Security Operations Suite Architecture - Current Production v4.0.1
 
 - **Windows runtime baseline:** .NET 10 (`net10.0-windows`) built with SDK `10.0.400`; self-contained x64 publish remains the production delivery model.
 ## Purpose
@@ -148,6 +148,13 @@ Doctor-note coverage is stored in `attendance.medicalNotes` as an audited admini
 - Restoration UI is intentionally not duplicated in this release. LKG visibility/preview/controlled restore will be surfaced through the planned Data Health & Recovery Dashboard.
 
 
+
+## v4.0.1 Schema Ownership Boundary
+- Core schema compatibility guarding applies only to registered JSON files owned and written by the PWADC Security Operations Suite.
+- The shared `Data` tree may also contain live JSON owned by specialist/standalone PWADC tools. Those files are treated as external operational data and are never automatically schema-stamped by the core suite.
+- Any directory segment named `Backup` or `Backups` beneath `Data` is treated as a historical backup artifact rather than live data.
+- Daily Last-Known-Good snapshots continue to include external live files beneath `Data`, but exclude nested backup-artifact folders to avoid backing up backups.
+
 ## v4.0.0 Schema Version & Compatibility Guarding
 - Every current suite-managed live JSON module has a registered module-specific schema identifier: `attendance-1`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-1`.
 - The host stamps `schemaVersion` and `lastWrittenByAppVersion` on every protected JSON write.
@@ -156,6 +163,6 @@ Doctor-note coverage is stored in `attendance.medicalNotes` as an audited admini
 - Suite Settings is compatibility-checked before deserialization; an unsupported/newer settings schema blocks startup instead of silently reverting to defaults.
 - Schema state is part of the module load envelope and live-file health status so the browser can block incompatible saves before reaching the host. Host-side enforcement remains authoritative.
 - The host validates **both** the incoming JSON schema and the existing live target schema before protected writes. Current/legacy-missing targets may proceed; valid older/newer/wrong-module/unsupported targets are protected from overwrite. Explicit restore/reset can replace malformed JSON because no trustworthy schema can be read from damaged content.
-- Unregistered JSON in the shared Data folder is flagged for review and is never assigned a schema or modified automatically. Future live-data modules must register a schema before use.
+- Core suite modules must register a schema before the suite can write them. JSON owned by separate specialist tools is outside the core schema-governance boundary and remains untouched.
 - Versioning from this release forward is `Major.Feature.Minor`. Windows metadata may retain a fourth numeric component when the platform requires it.
 - Pre-v4.0.0 executables are outside the schema-aware compatibility boundary and must not be treated as safe downgrade clients after live data has transitioned to v4.0.0 metadata.

@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.0.0**
-- Release: **Schema Version & Compatibility Guarding**
-- Baseline: **v3.5.1.0 - Daily Last-Known-Good Suite Snapshot**
+- Version: **4.0.1**
+- Release: **Schema Scope / External Data Compatibility Fix**
+- Baseline: **v4.0.0 - Schema Version & Compatibility Guarding**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -73,6 +73,13 @@
 
 
 
+## v4.0.1 Targeted Regression
+- Core schema startup discovery is limited to registered suite-owned module JSON: **PASS**.
+- External/specialist JSON under the shared `Data` tree is not modified, schema-stamped, or treated as a startup compatibility failure: **PASS**.
+- Nested `Backup` / `Backups` folders under `Data` are excluded from live LKG source enumeration: **PASS**.
+- External live files outside backup folders remain included in Daily LKG capture: **PASS**.
+- Application version is `4.0.1`; Windows file/assembly/manifest metadata is `4.0.1.0`: **PASS**.
+
 ## v4.0.0 Targeted Regression
 - .NET platform baseline is SDK `10.0.400` targeting `net10.0-windows`; GitHub Actions verifies the selected SDK before restore/build: **SOURCE VALIDATION PASS** (authoritative compile remains GitHub Actions).
 - Three-part application version is `4.0.0`; Windows file/assembly/manifest metadata retains four-part `4.0.0.0` where required: **PASS**.
@@ -89,7 +96,7 @@
 - Load envelopes expose schema, expected schema, last writer version, status, message, and write permission: **PASS**.
 - Browser save path honors schema read-only state before attempting a write: **PASS**.
 - Data Health live-file verification exposes schema status: **PASS**.
-- Unknown live JSON files are surfaced as unregistered rather than modified automatically: **PASS**.
+- Core suite modules remain schema-registered and guarded; external specialist JSON is outside this ownership boundary and remains untouched: **PASS**.
 
 ## v3.5.1.0 Targeted Regression
 - First valid startup of a calendar day is wired to attempt LKG capture before the WebView UI is exposed: **PASS**.

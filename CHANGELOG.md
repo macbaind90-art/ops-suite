@@ -1,5 +1,13 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.0.1 - Schema Scope / External Data Compatibility Fix
+- Corrected startup schema discovery so compatibility guarding applies only to **registered PWADC Security Operations Suite core JSON modules**.
+- Specialist/standalone tool JSON stored under the shared `Data` tree, including files such as `symmetry_access.json` and Camera User Tracker records, is no longer misclassified as an unregistered suite module and no longer triggers the startup compatibility warning.
+- External/specialist JSON is **not modified or schema-stamped** by the core suite, preventing the suite from altering data formats owned by separate tools.
+- Nested `Backup` / `Backups` folders inside the shared `Data` tree are explicitly treated as historical artifacts rather than live data.
+- Daily Last-Known-Good capture still includes external live data files under `Data`, but now excludes nested backup copies so the morning snapshot reflects live operational state without recursively backing up backups.
+- No attendance policy, point calculation, schema revision, or business-record structure changed.
+
 ## v4.0.0 - Schema Version & Compatibility Guarding
 - Established **v4.0.0** as the new major-version baseline before deployment; future feature releases advance the middle number (for example `4.1.0`) and fixes/smaller upgrades advance the final number (for example `4.0.1`).
 - Adopted the new three-part PWADC application version standard: **Major.Feature.Minor**.

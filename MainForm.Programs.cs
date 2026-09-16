@@ -263,6 +263,25 @@ namespace PWADC.SecurityOperationsSuite
             string fullRoot = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
             return fullPath.StartsWith(fullRoot, StringComparison.OrdinalIgnoreCase);
         }
+
+        private static bool IsBackupArtifactUnderData(string dataDir, string path)
+        {
+            string fullData = Path.GetFullPath(dataDir);
+            string fullPath = Path.GetFullPath(path);
+            if (!IsPathUnder(fullPath, fullData)) return false;
+
+            string relative = Path.GetRelativePath(fullData, fullPath);
+            string? directory = Path.GetDirectoryName(relative);
+            if (string.IsNullOrWhiteSpace(directory)) return false;
+
+            foreach (string segment in directory.Split(new[] { Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries))
+            {
+                if (segment.Equals("backup", StringComparison.OrdinalIgnoreCase) ||
+                    segment.Equals("backups", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
         private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "shift-reports", "shift-intelligence", "suite-settings", "programs" };
         private static string ModuleFileName(string module) => module switch
         {
