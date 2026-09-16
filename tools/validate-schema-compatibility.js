@@ -15,6 +15,7 @@ const shell=read('app/js/30-shell-audits.js');
 const workflow=read('.github/workflows/build-windows.yml');
 const csproj=read('SecurityOperationsSuite.csproj');
 const manifest=read('app.manifest');
+const globalJson=read('global.json');
 
 need(main,'private const string AppVersion = "4.0.0";','AppVersion must use the new three-part 4.0.0 scheme.');
 need(main,'EnsureLiveSchemaMetadata();','Startup schema metadata initialization is missing.');
@@ -24,6 +25,9 @@ need(schema,'["tasks"] = 1','Tasks schema registration missing.');
 need(schema,'["shift-reports"] = 1','Shift Reports schema registration missing.');
 need(schema,'["shift-intelligence"] = 1','Shift Intelligence schema registration missing.');
 need(schema,'["suite-settings"] = 1','Suite Settings schema registration missing.');
+need(schema,'private sealed class SchemaCompatibilityException : IOException','SchemaCompatibilityException must derive from IOException; InvalidDataException is sealed on the target framework.');
+if(schema.includes('SchemaCompatibilityException : InvalidDataException'))throw new Error('SchemaCompatibilityException still derives from sealed InvalidDataException.');
+
 need(schema,'result.Status = "newer"','Newer-schema detection missing.');
 need(schema,'Writes are blocked to protect newer data.','Newer-schema write protection message missing.');
 need(schema,'result.Status = "older"','Older-schema migration-required detection missing.');
@@ -46,6 +50,12 @@ need(csproj,'<Version>4.0.0</Version>','Visible application package version must
 need(csproj,'<FileVersion>4.0.0.0</FileVersion>','Windows file metadata should retain required four-part numeric format.');
 need(csproj,'<AssemblyVersion>4.0.0.0</AssemblyVersion>','Windows assembly metadata should retain required four-part numeric format.');
 need(manifest,'version="4.0.0.0"','Windows manifest identity must be four-part 4.0.0.0.');
+const sdk=JSON.parse(globalJson).sdk||{};
+if(sdk.version!=='8.0.100'||sdk.rollForward!=='latestFeature')throw new Error('global.json must pin the suite to the .NET 8 SDK feature band.');
+need(csproj,'RemoveUnusedWebView2WpfReference','WinForms build must remove the unused WebView2 WPF reference before assembly resolution.');
+need(csproj,"%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf'",'WebView2 WPF reference removal target is incomplete.');
+need(workflow,'Verify .NET 8 SDK selection','Windows workflow must verify the selected .NET SDK before restore/build.');
+
 
 const seeds={
   'attendance-data.json':'attendance-1',
@@ -64,3 +74,4 @@ console.log('Schema Version & Compatibility Guarding validation PASS');
 console.log('- All current live JSON modules registered at schema revision 1');
 console.log('- Legacy missing markers can be stamped safely; older/newer formal schemas block writes');
 console.log('- Three-part app version 4.0.0 with four-part Windows metadata retained');
+console.log('- .NET 8 SDK pinned and unused WebView2 WPF reference removed for clean WinForms assembly resolution');

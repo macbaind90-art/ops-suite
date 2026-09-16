@@ -66,6 +66,9 @@ jobs:
         with:
           dotnet-version: '8.0.x'
 
+      - name: Verify .NET 8 SDK selection
+        run: dotnet --version
+
       - name: Restore
         run: dotnet restore SecurityOperationsSuite.csproj
 

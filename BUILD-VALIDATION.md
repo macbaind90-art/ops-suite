@@ -65,7 +65,10 @@
 - Root Markdown control: **6 standing documents**
 
 ## Windows Build Status
-The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs front-end and targeted regression validation, restore, build, and self-contained `win-x64` publish.
+- The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
+- `global.json` now pins SDK selection to .NET 8 (`8.0.100` with `latestFeature` roll-forward), preventing a newer preinstalled runner SDK from becoming the build SDK.
+- The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
+- The authoritative compile/publish remains the GitHub Actions Windows run after this corrected source package is uploaded to `main`.
 
 
 

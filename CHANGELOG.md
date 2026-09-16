@@ -15,6 +15,9 @@
 - Unknown JSON files under the live Data folder are flagged as unregistered and are never modified automatically.
 - Added `tools/validate-schema-compatibility.js` to local/GitHub validation.
 - Documented the downgrade boundary: pre-v4.0.0 binaries predate schema enforcement and should not be used against shared data after the v4.0.0 schema transition.
+- Corrected the unreleased v4.0.0 Windows build candidate so `SchemaCompatibilityException` derives from `IOException` rather than the sealed `InvalidDataException` type.
+- Added `global.json` to keep GitHub Actions on the intended .NET 8 SDK even when newer SDKs are preinstalled on the runner.
+- Removed the unused WebView2 WPF assembly reference from this WinForms-only project before assembly resolution, eliminating the `WindowsBase` version-conflict warning source.
 
 ## v3.5.1.0 - Daily Last-Known-Good Suite Snapshot
 - Added a suite-wide morning Last-Known-Good snapshot created once per calendar day on the first successful startup.

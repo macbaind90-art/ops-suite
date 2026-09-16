@@ -9,7 +9,7 @@ namespace PWADC.SecurityOperationsSuite
 {
     public partial class MainForm : Form
     {
-        private sealed class SchemaCompatibilityException : InvalidDataException
+        private sealed class SchemaCompatibilityException : IOException
         {
             public SchemaCompatibilityException(string message) : base(message) { }
         }
