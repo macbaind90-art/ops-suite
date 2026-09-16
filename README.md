@@ -1,5 +1,15 @@
-# PWADC Security Operations Suite v3.5.0.13
+# PWADC Security Operations Suite v3.5.1.0
 
+
+## v3.5.1.0 - Daily Last-Known-Good Suite Snapshot
+- Creates one verified **Last-Known-Good (LKG)** suite snapshot on the first successful application startup of each calendar day.
+- The snapshot captures **all live files in the shared `Data` folder**, so current and future module data/configuration are covered without maintaining a hard-coded module list.
+- Every JSON source is parsed before capture; copied files are SHA-256 verified; sources are rechecked after capture so a file that changes during the snapshot cannot replace the prior LKG.
+- Uses short-duration cross-workstation coordination only for the daily snapshot, preventing two workstations from creating competing LKG copies without adding live-data save locking.
+- Builds the snapshot in staging and promotes it only after full verification. If validation, copying, hashing, or promotion fails, the previous LKG remains in place.
+- Stores a verified manifest with date/time, user, workstation, application version, source data root, file list, sizes, hashes, and total bytes.
+- Records successful LKG creation in Data Integrity / Write Audit and writes a failure record under the LKG backup folder when capture cannot complete.
+- Normal pre-save, manual, and automatic backups remain separate from the morning LKG recovery point.
 
 ## v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status
 - Doctor Note Coverage now treats the covered date range as **one attendance occurrence at 50% of the first matching event's normal point value**.

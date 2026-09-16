@@ -44,6 +44,11 @@ namespace PWADC.SecurityOperationsSuite
             {
                 settings = LoadSettingsFromDisk();
                 EnsureFolders();
+                DailyLkgResult lkg = EnsureDailyLastKnownGoodSnapshot();
+                if (!lkg.Success)
+                {
+                    MessageBox.Show(lkg.Message, "PWADC Daily Last-Known-Good", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
                 CreateSuiteLockFile();
                 await webView.EnsureCoreWebView2Async();
                 webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;

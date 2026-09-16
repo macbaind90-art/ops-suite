@@ -650,7 +650,7 @@ label:has(>input[type=checkbox]),label:has(>input[type=radio]){display:flex;alig
 .att-legend.ne{background:#050505;color:#777;border-color:#333}
 .att-legend.off{background:transparent;color:var(--muted)}
 
-/* v3.5.0.13 Doctor note single-occurrence coverage + suspended status */
+/* v3.5.1.0 Doctor note single-occurrence coverage + suspended status */
 .att-medical-code-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:7px}
 .att-medical-code-option{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--surface2);min-width:0}
 .att-medical-code-option input{width:16px!important;height:16px!important;flex:0 0 auto}

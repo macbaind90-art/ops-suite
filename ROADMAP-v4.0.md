@@ -1,141 +1,404 @@
-# PWADC Security Operations Suite Roadmap to v4.0
+# PWADC Security Operations Suite Development Roadmap
 
-Current build: **v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status**.
+Current production build: **v3.5.1.0 - Daily Last-Known-Good Suite Snapshot**.
 
-## Completed
-- ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
-- ~~v3.2.2 - Professional Design System Pass~~ Completed
-- ~~v3.2.2.1 - High-Intelligence Professional Design System Rerun~~ Completed
-- ~~v3.2.2.2 - Navigation Dropdown Hover Fix~~ Completed
-- ~~v3.2.3 - Home / Command Center Redesign~~ Completed
-- ~~v3.2.3.1 - UI Render Fix / Undefined Helper Sweep~~ Completed
-- ~~v3.2.3.2 - GitHub Version Format Fix~~ Completed
-- ~~v3.2.4 - People Workflow Redesign~~ Completed
-- ~~v3.2.5 - Operations Workflow Redesign~~ Completed
-- ~~v3.2.5.1 - Manifest XML Startup Fix~~ Completed
-- ~~v3.2.5.2 - Shift Report Intelligence Rebuild~~ Completed
-- ~~v3.2.5.3 - Shift Report Interface Cleanup / Fresh Start Control~~ Completed
-- ~~v3.2.5.4 - Shift Operations Flow Redesign~~ Completed
-- ~~v3.2.5.5 - Shift Operations Experience Redesign~~ Completed
-- ~~v3.2.6 - Reports / Data / Admin Redesign~~ Completed
-- ~~v3.2.6.1 - Attendance Review Discipline Code Fix~~ Completed
-- ~~v3.2.6.2 - Schedule Workspace Enhancements~~ Completed
-- ~~v3.2.6.3 - Attendance Totals Print Enhancement~~ Completed
-- ~~v3.3.0 - Code Organization / Modularization~~ Completed
-- ~~v3.3.0.1 - Schedule Assignment Picker~~ Completed
-- ~~v3.3.0.2 - Attendance Print Customization~~ Completed
-- ~~v3.3.0.3 - Attendance Print Zero Suppression~~ Completed
-- ~~v3.3.0.4 - Schedule Color Adjacency Fix~~ Completed
-- ~~v3.3.0.5 - Attendance Print Density Optimization~~ Completed
-- ~~v3.3.0.6 - Attendance Print Date Detail Correction~~ Completed
-- ~~v3.3.0.7 - Attendance Print Employee Scope~~ Completed
-- ~~v3.3.0.8 - Roster Print Employee Scope~~ Completed
-- ~~v3.3.1.0 - Suite-wide Responsive UI Stabilization~~ Completed
-- ~~v3.4.0.0 - Atomic Save + Integrity Foundation~~ Completed
-- ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed
-- ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed
-- ~~v3.5.0.0 - Attendance Point System~~ Completed
-- ~~v3.5.0.1 - Attendance Daily/Grid Usability~~ Completed
-- ~~v3.5.0.2 - Attendance Grid Visual Status~~ Completed
-- ~~v3.5.0.3 - Attendance Point Controls~~ Completed
-- ~~v3.5.0.4 - Historical Tardy Point Correction~~ Completed
-- ~~v3.5.0.5 - Roster to Attendance Population Fix~~ Completed
-- ~~v3.5.0.6 - Live Schedule Attendance Authority~~ Completed
-- ~~v3.5.0.7 - Positive Credit Immediate Paydown~~ Completed
-- ~~v3.5.0.8 - Command Center Attendance Workflow Alignment~~ Completed
-- ~~v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization~~ Completed
-- ~~v3.5.0.10 - Attendance Startup Binding Hotfix~~ Completed
-- ~~v3.5.0.11 - Editable Attendance Point Values~~ Completed
-- ~~v3.5.0.12 - Doctor Note Attendance Coverage~~ Completed
-- **v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status** Current
+This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
-## Current Governance Model
-### Command Center
-- Home remains the daily command summary.
-- Live data source and freshness remain visible so stale, preview, or recovery data is not mistaken for current live data.
+## Development Rules
 
-### People Lane
-- Attendance Point System, Roster, Employee Profile, Training, and Uniform Accountability remain connected as the People Workflow.
-- Attendance operational flow is Daily Entry → 90-Day Grid → Point Review → Doctor Notes → Corrective Action → Audit.
-- Legacy Pattern / Notice / exception-flag workflows are retired from live code as of v3.5.0.9; older raw fields remain preserved only for historical JSON compatibility.
+1. **Operational value first.** New work must solve a real PWADC Security management, supervisor, reporting, reliability, or emergency-response need.
+2. **Extend before adding.** New functionality should extend an existing operational workflow when one already exists rather than automatically creating another module.
+3. **Do not duplicate working screens.** Reports and dashboards should answer a management question or support a recurring decision, not reproduce an existing workspace.
+4. **Protect production data.** Backups, validation, auditability, stale-write protection, recovery controls, and migration safety remain mandatory for material data changes.
+5. **Keep permissions unobtrusive.** Users should primarily see the functions they are authorized to use instead of seeing a suite full of locked controls.
+6. **Human decisions stay human.** Automation may identify objective conditions requiring attention, but discipline, incident significance, policy decisions, and management judgment remain with authorized PWADC personnel.
+7. **No architecture rewrite without a demonstrated need.** The current C# / WebView2 / HTML / CSS / JavaScript architecture remains the production platform unless PWADC's operating environment materially changes.
 
-### Operations Lane
-- Shift Reports is the source intake and extraction workspace.
-- Shift Intelligence is the decision center and active watchlist.
-- The operating path remains Import → Extract → Decide → Follow Up → Close.
-- Task Tracker receives owned follow-up actions.
-- v3.4.1.1 adds read-only Task Tracker printing with current-filter/all-record scope and user-selectable operational columns.
-- The backup-first Clear Shift Report Memory control remains Admin-only and affects only Shift Reports and Shift Intelligence.
-- Operational calibration against additional real reports remains a deferred stabilization item, not a blocker for v3.3.0.
-- v3.2.6.2 adds a controlled schedule workspace: cell copy/paste, backup-first live schedule clearing, and persistent mock schedules that remain excluded from live HPW and labor reporting until explicitly applied.
-- v3.2.6.3 adds a print-ready Attendance Totals list from Attendance Review with employee/shift scope, selectable week/month/90-day periods, canonical CO/NCNS discipline totals, approved-code totals, and optional all-code detail.
-- v3.3.0.1 removes mock-schedule assignment restrictions so any active roster employee can fill any mock slot and adds cell-level name/EID typeahead assignment while preserving the live schedule authority and existing schedule-label format.
-- v3.3.0.2 converts Attendance Totals printing to portrait, adds user-selectable attendance and summary boxes, and prints each selected code total with MM/DD occurrence dates while leaving attendance records and thresholds unchanged.
-- v3.3.0.3 suppresses selected attendance and summary boxes when the employee total is 0, leaving only meaningful attendance activity visible on the portrait management printout.
-- v3.3.0.4 assigns employee colors across the full schedule and prevents different employees sharing horizontal or vertical borders from receiving the same color when an alternative is available, including across section boundaries.
-- v3.3.0.5 makes Attendance Totals printing denser: approved categories AL/V/E/LE show totals only, discipline and other selected codes retain MM/DD dates, and the portrait report uses compact flex-packed activity chips with reduced vertical overhead.
-- v3.3.0.6 tightens Attendance Totals date detail so only discipline codes T/U/UE/CO/NCNS carry MM/DD dates; P and all other non-discipline categories print totals only.
-- v3.3.0.7 adds employee-level Attendance Totals scope so management can print all active employees, one shift, one employee, or a hand-picked employee group while preserving compact portrait formatting and existing date-detail rules.
-- v3.3.0.8 adds employee-level Roster print scope so management can print the current filtered roster, all roster employees, one employee, or a hand-picked employee group while preserving the existing selectable roster columns.
-- v3.3.1.0 stabilizes the suite-wide UI foundation: resize behavior is CSS-driven, shared controls are normalized, dense workspaces collapse or scroll locally, and the Windows minimum supported size is reduced to 900×600 without changing operational logic.
+---
 
-### Repository Documentation
-- Root documentation is controlled to README, ROADMAP, ARCHITECTURE, DESIGN-SYSTEM, CHANGELOG, and current BUILD-VALIDATION.
-- Historical version-specific build/release notes are consolidated under `docs/archive/HISTORICAL-RELEASE-NOTES.md`.
-- Future release notes are appended to `CHANGELOG.md` instead of creating new root-level version-specific Markdown files.
+# Active Build Plan
 
-### Governance Lane
-- Report Center answers the management decision and identifies the supporting source data.
-- Data Health verifies whether the source data is usable and elevates critical findings first.
-- Backup & Restore requires scope selection, backup selection, preview, reason, and confirmation before replacement.
-- Change Log elevates high-impact actions above routine activity.
-- Admin Settings separates users, labor assumptions, coverage authority, data controls, and recovery controls into governed sections.
-- The governing sequence is Report → Verify → Recover → Govern.
+## Phase 1 - Data Reliability Foundation
 
-### Specialist Tools
-- Other Programs remains a controlled launcher for independent specialist tools.
-- Independent tools remain isolated from the main application script to limit collision and regression risk.
+### 1. Daily Last-Known-Good Suite Snapshot
+**Status: Completed in v3.5.1.0**
 
-### Future Emergency Operations Module
-- Uploaded emergency procedure and contact documents remain intentionally excluded from v3.2.6.
-- A future phase may consolidate them into an Emergency Operations Manual / Procedure module after core workflow, modularization, and data-reliability priorities are addressed.
+Create one verified suite-state recovery point on the first successful application startup of each calendar day.
 
-## v3.3.0 Architecture Baseline
-- `app/index.html` is now a lightweight document shell instead of the application monolith.
-- CSS is externalized to `app/assets/styles.css`.
-- Front-end code is separated into 10 ordered functional modules plus a module registry and startup gate.
-- The module registry validates dependency presence before initialization.
-- Existing render-function guardrails remain active.
-- `MainForm` is separated into partial classes for the WebView shell, bridge routing, storage, backups, programs/environment, and shared models.
-- Existing UI workflows, shared JSON contracts, `suite:*` bridge message types, schedule authority, attendance codes, reporting behavior, and role controls are intentionally preserved.
-- `ARCHITECTURE.md` is the standing maintenance map for future development.
+Implemented scope:
+- every live file under the shared `Data` folder
+- all current module data and governed configuration stored there
+- future Data-folder modules are automatically included without extending a hard-coded snapshot list
 
-## Next
-### v3.4.x - Data Layer / Reliability Upgrade
-Primary objectives:
-- ~~Atomic-save, validation, and live-file integrity foundation.~~ Completed in v3.4.0.0.
-- ~~Explicit stale-write/read-revision conflict detection for shared operational JSON.~~ Completed in v3.4.1.0.
-- Short-duration save coordination/locking is deferred unless production collision evidence shows a material operational need or it is specifically requested.
-- Add recovery/last-known-good hardening.
-- Add schema/version awareness and safer migration boundaries.
-- Integrate reliability conditions into Data Health.
-- Evaluate SQLite only after persistence requirements and migration controls are documented.
+Controls:
+- validate every live JSON source before promotion
+- copy to staging and verify SHA-256 hashes
+- recheck live source hashes after capture to detect concurrent source changes
+- use short-duration cross-workstation coordination for the daily snapshot only
+- preserve the previous LKG if validation, capture, verification, or promotion fails
+- store a manifest with date/time, user, workstation, application version, file list, sizes, and hashes
+- keep normal pre-save/manual/automatic backups separate
+- never silently restore or replace live production data
 
-## Future Phases
-- v3.5.0 - Reporting / Compliance Maturity
-- v3.6.0 - Role / Security Maturity
-- v3.7.0 - Workflow Intelligence / Smart Assist
-- v3.8.0 - Performance / Scale Pass
-- v3.9.0 - v4.0 Migration Planning
-- v4.0 - Platform Architecture Release
+Admin preview/restore surfacing remains part of the approved **Data Health & Recovery Dashboard** work rather than being duplicated here.
 
-## Architecture Direction
-The project remains on C# / WebView2 / HTML / CSS / JavaScript in the near term. v3.3.0 resolves the immediate code-concentration risk by establishing controlled front-end and Windows-host modules. The primary remaining platform risk is shared-file concurrency and data reliability. v3.4.0 established atomic persistence and v3.4.1 adds stale-write detection; v3.4.2 should add short-duration save coordination to close the remaining compare-to-replace race window. A structured data layer such as SQLite should be evaluated only after those requirements and migration controls are documented.
+### 2. Schema Version & Compatibility Guarding
+**Status: Approved**
 
+Add explicit schema/version awareness to critical shared JSON data.
 
-## Current / Next Phase
-- ~~v3.4.0.0 - Atomic Save + Integrity Foundation~~ Completed.
-- ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed.
-- **Next: Legacy production stabilization / operational enhancements.** v3.4.2.0 save coordination remains deferred unless production need justifies it or it is specifically requested.
-- Planned follow-ons: v3.4.3.0 recovery hardening, v3.4.4.0 schema migration framework, v3.4.5.0 Data Health reliability maturity.
+The suite must distinguish:
+- current compatible schema
+- older supported schema
+- newer unsupported schema
+- legacy files with no schema marker
 
+A newer unsupported schema must be protected from destructive writes by an older application build.
+
+### 3. Controlled Schema Migration Framework
+**Status: Approved**
+
+Create a lightweight common migration pattern for future structural data changes.
+
+Required pattern:
+- detect source schema
+- create pre-migration backup
+- describe material migration changes when appropriate
+- migrate in memory first
+- validate converted data
+- require Admin confirmation for significant migrations
+- save through the existing protected persistence path
+- stamp the new schema version
+- audit the migration
+- prevent the same migration from running twice
+
+This is a common safety framework, not a large standalone migration engine.
+
+### 4. Data Health & Recovery Dashboard
+**Status: Approved**
+
+Upgrade Data Health into the central view for determining whether shared suite data is healthy, current, compatible, and recoverable.
+
+Target indicators:
+- valid / invalid live data
+- schema version and compatibility
+- last successful verified save
+- Last-Known-Good availability
+- stale-write / conflict summary
+- pending migration status
+- most recent migration
+- fallback / recovery data currently in use
+- live-file failure with verified recovery available
+
+Presentation should remain operationally simple with clear status and drill-down details.
+
+### Deferred: Shared-File Locking / Save Coordination
+**Status: Deferred pending evidence**
+
+Atomic persistence and stale-write detection remain the production concurrency controls. Additional file locking will be reconsidered only if Data Health or a real production event shows recurring collisions that the current protections do not adequately address.
+
+---
+
+## Phase 2 - Role-Aware Interface & Centralized Permissions
+
+### 5. Role-Aware Interface & Permission Enforcement
+**Status: Approved**
+
+Create a centralized permission model that controls both visibility and action authorization.
+
+Design goals:
+- users see only modules and actions relevant to their role
+- unauthorized modules disappear from navigation rather than appearing as locked areas
+- unauthorized buttons and sensitive fields are hidden where appropriate
+- sensitive operations remain blocked underneath the UI even if invoked directly
+- denied high-impact actions may be audited where appropriate
+
+### 6. Admin Permission Configuration
+**Status: Approved**
+
+Add an Admin-only configuration workspace for managing role capabilities.
+
+The configuration should support capability-based controls such as:
+- view / edit Attendance
+- manage Attendance policy
+- adjust points
+- generate or issue corrective action
+- manage Shift Reports
+- manage Task Tracker
+- manage Training
+- execute Emergency Protocols
+- manage Emergency Protocols
+- view reports
+- restore data
+- manage schema / migration controls
+- manage users / roles
+
+Avoid unnecessary per-user permission complexity unless a real PWADC need appears.
+
+### 7. Preview as Role
+**Status: Approved**
+
+Allow Admin to preview the application as another role before saving or deploying permission changes.
+
+---
+
+## Phase 3 - Attendance Completion
+
+### 8. Attendance Corrective Action Notice Generator
+**Status: Approved**
+
+Build corrective-action notice generation directly into Attendance rather than as a separate report module.
+
+Current thresholds:
+- 3 points - Verbal Counseling
+- 6 points - Written Warning
+- 9 points - Final Written Warning
+
+Target workflow:
+**Attendance Event -> Points -> Threshold -> Generate Notice -> Issue Notice -> Acknowledge / Record -> Audit**
+
+The notice should draw from the authoritative Attendance record, including applicable point events and controlled point adjustments.
+
+Notice lifecycle should distinguish at minimum:
+- Due
+- Generated
+- Issued
+- Acknowledged / recorded
+
+Generating a notice must not automatically mark the corrective action as completed.
+
+### 9. Attendance Action Report
+**Status: Approved**
+
+Manager-facing report answering:
+**Who currently requires attention, and why?**
+
+Target content:
+- employee
+- shift
+- current active points
+- positive attendance credit balance
+- current corrective-action level
+- corrective-action status
+- most recent point-bearing event
+- points gained or reduced during the selected period
+- manual current-point adjustment indicator when applicable
+- doctor-note indicator when relevant, without medical detail
+
+Do not duplicate the full 90-Day Grid.
+
+### 10. Attendance Trend & Risk Report
+**Status: Approved**
+
+Aggregate management report for detecting developing attendance pressure by period, shift, and event type.
+
+Potential measures include:
+- point-bearing events
+- call-offs
+- tardies by severity
+- NCNS
+- left early
+- suspended days
+- doctor-note-covered occurrences
+- corrective actions triggered
+- positive attendance credits earned
+
+Employee names should not be the default view; detailed employee review remains in Attendance.
+
+### 11. Standardized Report Controls
+**Status: Approved**
+
+Standardize common report behavior where applicable:
+- date range
+- shift filter
+- employee / status filters when relevant
+- screen preview
+- print
+- export
+- consistent PWADC formatting
+- report title / reporting period / generated-by information
+
+Reports may retain specialized controls when their operational purpose requires them.
+
+---
+
+## Phase 4 - Training Module Replacement
+
+### 12. Remove and Replace the Existing Training Function
+**Status: Approved**
+
+The current Training function is not the foundation for future Training development. The replacement will be designed as a new function from the ground up around PWADC Security requirements.
+
+Before removal or conversion of existing Training data, preserve an export / backup sufficient to prevent accidental historical-data loss.
+
+### 13. New Training Module - Ground-Up Design and Build
+**Status: Approved**
+
+Design the new module before implementation.
+
+Target lifecycle:
+**Employee -> Requirement -> Assignment -> Completion -> Sign-Off -> Renewal / Expiration -> Retraining -> History**
+
+Design areas to resolve with PWADC Security before build:
+- new-hire training
+- recurring training
+- certifications / expirations
+- post-specific qualifications
+- training requirements by rank / role / assignment
+- instructor or supervisor sign-off
+- policy / procedure acknowledgments
+- retraining after an incident or performance issue
+- due-soon / overdue management
+- employee training history
+- attachments / references where appropriate
+- printable / exportable records
+- role-aware permissions
+- audit requirements
+
+The old Training structure should not constrain the new data model or workflow.
+
+---
+
+## Phase 5 - PWADC Emergency Response Protocol System
+
+### 14. Dispatcher-Style Guided Emergency Protocols
+**Status: Approved**
+
+Build an emergency-response decision-support system modeled on the guided protocol concept used by emergency dispatch environments rather than a static procedure library.
+
+Target workflow:
+**Select Incident -> Guided Question -> Required Action -> Next Decision -> Notifications / Escalation -> Stabilization or Handoff**
+
+Initial protocol candidates are based on existing PWADC emergency materials and may include:
+- ammonia release
+- fire
+- bomb threat
+- fuel spill
+- power outage
+- employee / automation injury
+- evacuation
+- severe weather
+- security threat / suspicious person
+- other approved PWADC emergency procedures
+
+Protocol content may include:
+- key questions
+- immediate actions
+- prohibited / do-not-do actions
+- required notifications
+- evacuation / shelter instructions
+- outside-agency notifications
+- escalation criteria
+- completion / handoff point
+- underlying approved procedure
+- protocol revision / version
+
+Operational interface goals:
+- large, clear controls
+- one decision step at a time
+- minimal clutter during emergency use
+- operators execute approved protocols but do not edit them
+- protocol editing / publishing remains governed and Admin-controlled
+
+### 15. Emergency Protocol Session Log
+**Status: Approved as part of Item 14**
+
+Capture a defensible operational timeline including:
+- protocol selected
+- start time
+- operator
+- answers given
+- actions displayed / acknowledged where appropriate
+- notifications recorded
+- completion or handoff time
+- protocol version used
+
+The first release should remain focused on guided response and documentation, not become a full incident-management platform unless a later PWADC requirement justifies that expansion.
+
+---
+
+## Phase 6 - Operational Exception & Follow-Up Engine
+
+### 16. Objective Exception Detection
+**Status: Approved**
+
+Create a focused engine that surfaces objective conditions requiring human attention without making management decisions.
+
+Potential conditions:
+- Attendance corrective action due but not issued
+- new Attendance threshold crossed
+- Shift Intelligence item unresolved beyond an approved interval
+- Task Tracker item overdue
+- repeated objective issue across Shift Reports
+- future Training qualification overdue
+- emergency protocol session started but not formally closed
+- repeated Data Health conflict / recovery events
+
+Command Center presentation may group conditions such as:
+- Needs Attention
+- Overdue
+- New Since Last Review
+- Repeated Issue
+
+The engine identifies and links to source records. Authorized PWADC personnel decide the response.
+
+---
+
+## Phase 7 - Performance & Maintenance Hardening
+
+### 17. Performance & Maintenance Hardening
+**Status: Approved - Later Phase**
+
+Maintain responsiveness and stability as operational data grows.
+
+Focus areas:
+- identify modules that become slow with larger histories
+- reduce unnecessary full-module rerenders
+- paginate or archive large history / audit views when necessary
+- keep startup time reasonable
+- prevent long tables from freezing the UI
+- verify backup / restore practicality as data size grows
+- remove obsolete compatibility code after migrations are safely complete
+- continue automated regression validation before every release
+
+Optimization should respond to measured production needs rather than trigger speculative rewrites.
+
+---
+
+# Removed From the Active Plan
+
+The following items were reviewed and intentionally removed:
+
+- **SQLite / database migration** - not an available option in the current PWADC environment.
+- **Staffing & Coverage Report** - the Schedule module represents baseline assignment structure, not a live day-to-day staffing schedule.
+- **Legacy Training Compliance Report** - superseded by the complete Training replacement.
+- **Standalone Corrective Action Report** - corrective-action document generation belongs inside Attendance.
+- **Executive Security Summary** - not required as a standing suite-generated report.
+- **Planned v4 platform rewrite** - no committed rewrite is justified. The current platform remains supported unless PWADC's environment materially changes.
+
+# Build Discipline Going Forward
+
+For each approved roadmap item, use the following sequence:
+
+1. **Define the operational problem.** Confirm who uses it, what decision or task it supports, and what existing workflow it touches.
+2. **Check for redundancy.** Extend an existing module when possible instead of creating a new destination in navigation.
+3. **Design before coding.** Agree on workflow, data ownership, permissions, audit behavior, and failure / recovery behavior.
+4. **Build the smallest complete version.** Avoid combining unrelated roadmap items into one high-risk release.
+5. **Validate locally.** Run suite-wide regression checks plus targeted feature tests and exact-ZIP revalidation.
+6. **Package a full clean repository ZIP.** The user handles GitHub upload/build; ChatGPT does not make GitHub changes.
+7. **Production verify.** Confirm the Windows build and real PWADC workflow before starting the next major item.
+
+# Immediate Next Work
+
+The next planned build is **Verified Last-Known-Good Recovery**.
+
+Before code changes begin, define:
+- exact modules included in the first release
+- when a Last-Known-Good copy is promoted
+- retention behavior
+- how Data Health displays recovery status
+- preview / restore safeguards
+- audit events
+- handling of stale-write or failed-save scenarios
+
+After that design is approved, implement and validate it as a focused reliability release before moving to Schema Version & Compatibility Guarding.

@@ -133,3 +133,14 @@ Doctor-note records remain stored in `attendance.medicalNotes`, but their calcul
 
 ## v3.5.0.12 Doctor Note Coverage Model
 Doctor-note coverage is stored in `attendance.medicalNotes` as an audited administrative exception record. Each active record identifies one employee, a coverage start/end date, the received date, selected attendance event types, and an administrative reference. The original attendance code remains unchanged. The point engine checks active medical coverage while replaying attendance history, excludes covered events from negative-point totals, removes covered call-offs from the rolling CO1/CO2 chain, and preserves clean-workday progress for covered worked-day events. Voiding coverage is backup-first, reason-required, audited, and causes the point history to replay under the remaining active coverage records. Medical diagnosis/treatment data is intentionally outside this schema.
+
+## v3.5.1.0 Daily Last-Known-Good Suite Snapshot
+- The daily LKG is a **suite-state snapshot**, not a per-module save backup. Its source is the complete shared `Data` folder.
+- Startup checks the current LKG manifest. If a verified snapshot already exists for the local calendar date, no new snapshot is created.
+- Cross-workstation creation is coordinated with a short-duration `FileShare.None` handle under `Locks`. This coordination is limited to LKG capture and does not change the deferred live-data locking decision.
+- All JSON sources must parse before capture. Files are copied to an isolated staging directory and verified with SHA-256.
+- Source hashes are checked again after capture. If source data changed while the snapshot was being copied, promotion is blocked and the prior LKG is preserved.
+- Promotion uses `Backups\Last Known Good\Current`. The prior `Current` directory is held as a temporary rollback copy until the staged snapshot has been promoted and its verified manifest reread successfully.
+- `manifest.json` records snapshot date, timestamps, user, machine, application version, source root, scope, file count, total size, and per-file hash/size/modified metadata.
+- Successful creation is logged under `Data Integrity\Write Audit`; failed capture attempts write a failure record in the LKG backup folder.
+- Restoration UI is intentionally not duplicated in this release. LKG visibility/preview/controlled restore will be surfaced through the planned Data Health & Recovery Dashboard.

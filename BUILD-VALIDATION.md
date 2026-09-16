@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.13**
-- Release: **Doctor Note Half-Point Occurrence + Suspended Status**
-- Baseline: **v3.5.0.11 - Editable Attendance Point Values**
+- Version: **3.5.1.0**
+- Release: **Daily Last-Known-Good Suite Snapshot**
+- Baseline: **v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -50,6 +50,7 @@
 - Browser startup binding regression: **PASS**
 - Attendance point-value editor regression: **PASS**
 - Doctor-note attendance coverage regression: **PASS**
+- Daily Last-Known-Good source regression: **PASS**
 - September 9 production Attendance backup render smoke: **PASS** - 16 major modules / 6 Attendance views loaded against the real 42-employee backup; legacy data with no doctor-note field normalizes cleanly
 - Positive-credit partial/fractional carryover regression: **PASS**
 - 3-point balance cap with re-earning after use: **PASS**
@@ -62,6 +63,19 @@
 ## Windows Build Status
 The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs front-end and targeted regression validation, restore, build, and self-contained `win-x64` publish.
 
+
+
+## v3.5.1.0 Targeted Regression
+- First valid startup of a calendar day is wired to attempt LKG capture before the WebView UI is exposed: **PASS**.
+- Existing verified `Current` manifest for the same date prevents duplicate daily capture: **PASS**.
+- Snapshot scope is all live files under the shared `Data` folder rather than a hard-coded module subset: **PASS**.
+- Every source JSON is validated before promotion: **PASS**.
+- Staged copies are SHA-256 verified against their captured source hashes: **PASS**.
+- Live source hashes are rechecked after copying; changed source data blocks promotion: **PASS**.
+- Short-duration cross-workstation LKG coordinator uses `FileShare.None` and does not alter live-data save locking: **PASS**.
+- Prior LKG is preserved until staged promotion verifies successfully: **PASS**.
+- Verified manifest includes date, user, workstation, application version, source root, file count, total bytes, and per-file hash metadata: **PASS**.
+- Success audit and failure-record paths are present: **PASS**.
 
 ## v3.5.0.13 Targeted Regression
 - Doctor-note 50% single-occurrence calculation: **PASS**.

@@ -1,5 +1,14 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.1.0 - Daily Last-Known-Good Suite Snapshot
+- Added a suite-wide morning Last-Known-Good snapshot created once per calendar day on the first successful startup.
+- LKG scope is every live file under the shared `Data` folder, including current and future module data/configuration.
+- JSON source validation, SHA-256 copy verification, and post-copy source revalidation prevent invalid or changing data from replacing the prior verified LKG.
+- Added short-duration cross-workstation coordination for LKG creation only; live module save locking remains deferred.
+- Added staging/promotion logic that preserves the prior LKG if capture or promotion fails.
+- Added verified LKG manifest and Data Integrity audit records with user/workstation/version/file/hash metadata.
+- Added dedicated daily-LKG source validator to the Windows build workflow.
+
 ## v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status
 - Changed doctor-note coverage from zero-point treatment to one 50% attendance occurrence per active doctor-note range.
 - Additional matching covered days remain visible but add no additional points.
