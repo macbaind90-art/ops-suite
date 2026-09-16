@@ -66,7 +66,7 @@
 
 ## Windows Build Status
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
-- `global.json` now pins SDK selection to .NET 8 (`8.0.100` with `latestFeature` roll-forward), preventing a newer preinstalled runner SDK from becoming the build SDK.
+- `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
 - The authoritative compile/publish remains the GitHub Actions Windows run after this corrected source package is uploaded to `main`.
 
@@ -74,6 +74,7 @@
 
 
 ## v4.0.0 Targeted Regression
+- .NET platform baseline is SDK `10.0.400` targeting `net10.0-windows`; GitHub Actions verifies the selected SDK before restore/build: **SOURCE VALIDATION PASS** (authoritative compile remains GitHub Actions).
 - Three-part application version is `4.0.0`; Windows file/assembly/manifest metadata retains four-part `4.0.0.0` where required: **PASS**.
 - All six current suite-managed live JSON files have registered module-specific schema revision 1: **PASS**.
 - Packaged recovery seeds contain the correct `schemaVersion` and `lastWrittenByAppVersion`: **PASS**.

@@ -1,5 +1,6 @@
 # PWADC Security Operations Suite Architecture - Current Production v4.0.0
 
+- **Windows runtime baseline:** .NET 10 (`net10.0-windows`) built with SDK `10.0.400`; self-contained x64 publish remains the production delivery model.
 ## Purpose
 v3.3.0 establishes a maintainable module boundary without changing PWADC operational workflows, shared JSON contracts, or the C# / WebView2 platform.
 

@@ -1,5 +1,6 @@
 # PWADC Security Operations Suite v4.0.0
 
+- Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
 PWADC Security Operations Suite now uses a three-part application version: **Major.Feature.Minor**.
 - **Major** - major revision of the overall suite.

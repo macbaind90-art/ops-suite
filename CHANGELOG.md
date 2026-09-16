@@ -16,7 +16,7 @@
 - Added `tools/validate-schema-compatibility.js` to local/GitHub validation.
 - Documented the downgrade boundary: pre-v4.0.0 binaries predate schema enforcement and should not be used against shared data after the v4.0.0 schema transition.
 - Corrected the unreleased v4.0.0 Windows build candidate so `SchemaCompatibilityException` derives from `IOException` rather than the sealed `InvalidDataException` type.
-- Added `global.json` to keep GitHub Actions on the intended .NET 8 SDK even when newer SDKs are preinstalled on the runner.
+- Moved the unreleased v4.0.0 Windows application baseline to .NET 10: project target `net10.0-windows`, SDK `10.0.400`, and GitHub Actions setup/verification aligned to the same SDK.
 - Removed the unused WebView2 WPF assembly reference from this WinForms-only project before assembly resolution, eliminating the `WindowsBase` version-conflict warning source.
 
 ## v3.5.1.0 - Daily Last-Known-Good Suite Snapshot

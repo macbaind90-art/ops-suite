@@ -46,15 +46,16 @@ need(programs,'expectedSchemaVersion = schema?.ExpectedSchemaVersion','Health st
 need(dataCore,'if(info.writeAllowed===false)','Browser save path does not honor schema read-only state.');
 need(shell,'<th>Schema</th>','Data Health live-file table does not display schema state.');
 need(workflow,'node tools/validate-schema-compatibility.js','Windows workflow does not run schema compatibility validation.');
+need(csproj,'<TargetFramework>net10.0-windows</TargetFramework>','Project must target net10.0-windows.');
 need(csproj,'<Version>4.0.0</Version>','Visible application package version must be 4.0.0.');
 need(csproj,'<FileVersion>4.0.0.0</FileVersion>','Windows file metadata should retain required four-part numeric format.');
 need(csproj,'<AssemblyVersion>4.0.0.0</AssemblyVersion>','Windows assembly metadata should retain required four-part numeric format.');
 need(manifest,'version="4.0.0.0"','Windows manifest identity must be four-part 4.0.0.0.');
 const sdk=JSON.parse(globalJson).sdk||{};
-if(sdk.version!=='8.0.100'||sdk.rollForward!=='latestFeature')throw new Error('global.json must pin the suite to the .NET 8 SDK feature band.');
+if(sdk.version!=='10.0.400'||sdk.rollForward!=='latestPatch')throw new Error('global.json must pin the suite to .NET SDK 10.0.400 with latestPatch roll-forward.');
 need(csproj,'RemoveUnusedWebView2WpfReference','WinForms build must remove the unused WebView2 WPF reference before assembly resolution.');
 need(csproj,"%(Reference.Filename)' == 'Microsoft.Web.WebView2.Wpf'",'WebView2 WPF reference removal target is incomplete.');
-need(workflow,'Verify .NET 8 SDK selection','Windows workflow must verify the selected .NET SDK before restore/build.');
+need(workflow,'Verify .NET 10 SDK selection','Windows workflow must verify the selected .NET SDK before restore/build.');
 
 
 const seeds={
@@ -74,4 +75,4 @@ console.log('Schema Version & Compatibility Guarding validation PASS');
 console.log('- All current live JSON modules registered at schema revision 1');
 console.log('- Legacy missing markers can be stamped safely; older/newer formal schemas block writes');
 console.log('- Three-part app version 4.0.0 with four-part Windows metadata retained');
-console.log('- .NET 8 SDK pinned and unused WebView2 WPF reference removed for clean WinForms assembly resolution');
+console.log('- .NET 10 SDK 10.0.400 pinned, net10.0-windows targeted, and unused WebView2 WPF reference removed for clean WinForms assembly resolution');
