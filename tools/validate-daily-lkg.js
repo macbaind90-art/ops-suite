@@ -23,12 +23,12 @@ need(lkg,'The live Data file set changed while the daily LKG snapshot was being 
 need(lkg,'".staging-" + Guid.NewGuid()','Staged LKG capture missing.');
 need(lkg,'".previous-" + Guid.NewGuid()','Prior-LKG rollback preservation missing.');
 need(lkg,'snapshotDate = today','Manifest snapshot date missing.');
-need(lkg,'appVersion = SuiteVersion','Manifest version missing.');
+need(lkg,'appVersion = AppVersion','Manifest version missing.');
 need(lkg,'sourceDataRoot = settings.DataRoot','Manifest source root missing.');
 need(lkg,'status = "verified"','Verified manifest state missing.');
 need(lkg,'files = manifestFiles','Per-file manifest metadata missing.');
 need(lkg,'daily-last-known-good-snapshot','LKG success audit missing.');
 need(lkg,'previousSnapshotPreserved = true','LKG failure preservation record missing.');
 need(workflow,'node tools/validate-daily-lkg.js','Windows workflow does not execute daily LKG validator.');
-need(lkg,'private const string SuiteVersion = "3.5.1.0";','LKG release version is not 3.5.1.0.');
+need(main,'private const string AppVersion = "4.0.0";','Application version is not 4.0.0.');
 console.log('Daily Last-Known-Good validation PASS');

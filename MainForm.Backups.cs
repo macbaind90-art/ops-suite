@@ -297,7 +297,7 @@ namespace PWADC.SecurityOperationsSuite
             string livePath = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
             if (!IsPathUnder(livePath, dataDir)) throw new InvalidOperationException("Resolved restore target is outside the suite Data folder.");
             WriteJsonAtomically(module, livePath, json, "restore-backup", "pre-restore");
-            return json;
+            return File.ReadAllText(livePath);
         }
     }
 }

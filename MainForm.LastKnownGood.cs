@@ -9,8 +9,6 @@ namespace PWADC.SecurityOperationsSuite
 {
     public partial class MainForm : Form
     {
-        private const string SuiteVersion = "3.5.1.0";
-
         private sealed class DailyLkgResult
         {
             public bool Success { get; set; }
@@ -187,7 +185,7 @@ namespace PWADC.SecurityOperationsSuite
                     createdAtUtc = DateTime.UtcNow.ToString("O"),
                     createdBy = Environment.UserName,
                     machine = Environment.MachineName,
-                    appVersion = SuiteVersion,
+                    appVersion = AppVersion,
                     sourceDataRoot = settings.DataRoot,
                     scope = "All live files in the suite Data folder",
                     status = "verified",
@@ -276,7 +274,7 @@ namespace PWADC.SecurityOperationsSuite
                 var record = new
                 {
                     at = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                    version = SuiteVersion,
+                    version = AppVersion,
                     user = Environment.UserName,
                     machine = Environment.MachineName,
                     operation = "daily-last-known-good-snapshot",
@@ -299,7 +297,7 @@ namespace PWADC.SecurityOperationsSuite
                 var record = new
                 {
                     at = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                    version = SuiteVersion,
+                    version = AppVersion,
                     user = Environment.UserName,
                     machine = Environment.MachineName,
                     result = "not-created",

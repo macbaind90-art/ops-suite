@@ -1,4 +1,6 @@
 {
+  "schemaVersion": "shift-reports-1",
+  "lastWrittenByAppVersion": "4.0.0",
   "reports": [],
   "issues": [],
   "audit": [],

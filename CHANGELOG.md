@@ -1,5 +1,21 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.0.0 - Schema Version & Compatibility Guarding
+- Established **v4.0.0** as the new major-version baseline before deployment; future feature releases advance the middle number (for example `4.1.0`) and fixes/smaller upgrades advance the final number (for example `4.0.1`).
+- Adopted the new three-part PWADC application version standard: **Major.Feature.Minor**.
+- Registered module-specific schema identifiers for every current suite-managed live JSON data file.
+- Added `schemaVersion` and `lastWrittenByAppVersion` metadata to packaged recovery JSON.
+- Added startup initialization that safely stamps legacy live JSON files with missing schema metadata through the existing atomic, backup-first, revision-checked write path.
+- Added compatibility detection for current, legacy-missing, older, newer, wrong-module, malformed, and invalid JSON schema states.
+- Formally older/newer/incompatible schemas are write-blocked until an approved migration or newer app is used.
+- Added authoritative host-side **existing-target schema guarding** so a protected write cannot replace a valid older/newer/wrong-module/unsupported live schema even if the incoming payload itself is current.
+- Suite Settings compatibility is enforced before settings deserialization; incompatible settings cannot silently fall back and later overwrite the shared configuration.
+- Added schema status to module load envelopes, save responses, Health Check file status, and the browser-side save gate.
+- Data Health live-file verification now displays schema and writer-version state.
+- Unknown JSON files under the live Data folder are flagged as unregistered and are never modified automatically.
+- Added `tools/validate-schema-compatibility.js` to local/GitHub validation.
+- Documented the downgrade boundary: pre-v4.0.0 binaries predate schema enforcement and should not be used against shared data after the v4.0.0 schema transition.
+
 ## v3.5.1.0 - Daily Last-Known-Good Suite Snapshot
 - Added a suite-wide morning Last-Known-Good snapshot created once per calendar day on the first successful startup.
 - LKG scope is every live file under the shared `Data` folder, including current and future module data/configuration.

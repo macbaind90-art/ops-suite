@@ -19,7 +19,11 @@ namespace PWADC.SecurityOperationsSuite
             {
                 if (File.Exists(path))
                 {
-                    SuiteSettings? loaded = JsonSerializer.Deserialize<SuiteSettings>(File.ReadAllText(path), JsonOptions);
+                    string raw = File.ReadAllText(path);
+                    SchemaCompatibilityInfo compatibility = EvaluateSchemaCompatibility("suite-settings", raw);
+                    if (!compatibility.ReadAllowed || (!compatibility.WriteAllowed && compatibility.Status != "legacy-missing"))
+                        throw new SchemaCompatibilityException("SCHEMA_COMPATIBILITY_BLOCK: Suite Settings cannot be safely opened by this app. " + compatibility.Message);
+                    SuiteSettings? loaded = JsonSerializer.Deserialize<SuiteSettings>(raw, JsonOptions);
                     if (loaded != null)
                     {
                         if (string.IsNullOrWhiteSpace(loaded.DataRoot)) loaded.DataRoot = DefaultRoot;
@@ -27,6 +31,7 @@ namespace PWADC.SecurityOperationsSuite
                     }
                 }
             }
+            catch (SchemaCompatibilityException) { throw; }
             catch { }
             return new SuiteSettings();
         }
@@ -98,6 +103,20 @@ namespace PWADC.SecurityOperationsSuite
                 }
                 return true;
             }));
+            checks.Add(Check("Schema compatibility", () =>
+            {
+                string dataDir = Path.Combine(settings.DataRoot, "Data");
+                foreach (string module in ModuleNames())
+                {
+                    if (!IsKnownJsonModule(module)) continue;
+                    string p = Path.Combine(dataDir, ModuleFileName(module));
+                    if (!File.Exists(p)) continue;
+                    SchemaCompatibilityInfo schema = EvaluateSchemaCompatibility(module, File.ReadAllText(p));
+                    if (!schema.ReadAllowed || !schema.WriteAllowed || schema.Status != "current")
+                        throw new InvalidDataException(ModuleFolder(module) + " schema compatibility: " + schema.Message);
+                }
+                return true;
+            }));
             checks.Add(Check("Open path guard active", () => IsSafeOpenPath(settings.DataRoot)));
             return new { dataRoot = settings.DataRoot, checks, moduleFiles = ModuleFileStatuses() };
         }
@@ -111,6 +130,7 @@ namespace PWADC.SecurityOperationsSuite
         private object LoadModuleDataEnvelope(string module)
         {
             ModuleLoadResult info = LoadModuleDataWithSource(module);
+            SchemaCompatibilityInfo schema = EvaluateSchemaCompatibility(module, info.Data);
             return new
             {
                 module = info.Module,
@@ -121,6 +141,12 @@ namespace PWADC.SecurityOperationsSuite
                 fileModified = info.FileModified,
                 liveFileExisted = info.LiveFileExisted,
                 revision = info.Revision,
+                schemaVersion = schema.SchemaVersion,
+                expectedSchemaVersion = schema.ExpectedSchemaVersion,
+                lastWrittenByAppVersion = schema.LastWrittenByAppVersion,
+                schemaStatus = schema.Status,
+                schemaMessage = schema.Message,
+                writeAllowed = schema.WriteAllowed,
                 dataRoot = settings.DataRoot,
                 loadedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
             };
@@ -266,7 +292,7 @@ namespace PWADC.SecurityOperationsSuite
             string path = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
             if (!IsPathUnder(path, dataDir)) throw new InvalidOperationException("Resolved recovery path is outside the suite Data folder.");
             WriteJsonAtomically(module, path, seedJson, "reset-from-packaged-seed", "pre-recovery");
-            return seedJson;
+            return File.ReadAllText(path);
         }
 
         private object SaveModuleData(string module, string json, string expectedRevision)
@@ -295,7 +321,13 @@ namespace PWADC.SecurityOperationsSuite
                     sha256 = result.Sha256,
                     writeMethod = result.Method,
                     verified = result.Verified,
-                    revision = result.Sha256
+                    revision = result.Sha256,
+                    schemaVersion = CurrentSchemaVersion(module),
+                    expectedSchemaVersion = CurrentSchemaVersion(module),
+                    lastWrittenByAppVersion = AppVersion,
+                    schemaStatus = "current",
+                    schemaMessage = "Schema is current.",
+                    writeAllowed = true
                 };
             }
             catch (Exception ex)

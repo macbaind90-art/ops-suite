@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v3.5.1.0 - Daily Last-Known-Good Suite Snapshot**.
+Current production build: **v4.0.0 - Schema Version & Compatibility Guarding**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
@@ -13,6 +13,16 @@ This roadmap is the active development plan for the PWADC Security Operations Su
 5. **Keep permissions unobtrusive.** Users should primarily see the functions they are authorized to use instead of seeing a suite full of locked controls.
 6. **Human decisions stay human.** Automation may identify objective conditions requiring attention, but discipline, incident significance, policy decisions, and management judgment remain with authorized PWADC personnel.
 7. **No architecture rewrite without a demonstrated need.** The current C# / WebView2 / HTML / CSS / JavaScript architecture remains the production platform unless PWADC's operating environment materially changes.
+
+---
+## Versioning Standard
+
+Effective with v4.0.0, application releases use **Major.Feature.Minor**:
+- **Major** - major revision of the overall suite.
+- **Feature** - significant feature upgrade, module rebuild, or new operational capability.
+- **Minor** - fixes and smaller upgrades within the current feature line.
+
+Windows assembly/manifest metadata may carry a required fourth `.0`, but the PWADC application/release number remains three-part.
 
 ---
 
@@ -43,17 +53,20 @@ Controls:
 Admin preview/restore surfacing remains part of the approved **Data Health & Recovery Dashboard** work rather than being duplicated here.
 
 ### 2. Schema Version & Compatibility Guarding
-**Status: Approved**
+**Status: Completed in v4.0.0**
 
-Add explicit schema/version awareness to critical shared JSON data.
+Every current suite-managed live JSON file now carries module-specific `schemaVersion` and `lastWrittenByAppVersion` metadata.
 
-The suite must distinguish:
-- current compatible schema
-- older supported schema
-- newer unsupported schema
-- legacy files with no schema marker
+Implemented behavior:
+- current compatible schema loads/saves normally
+- legacy files with no marker receive a backup-first metadata stamp through the atomic write path
+- formally older schemas are write-blocked pending controlled migration
+- newer schemas are write-blocked to prevent downgrade damage
+- incompatible Suite Settings block startup because settings are security/data-root authority
+- schema state is exposed through load envelopes and Data Health file verification
+- unregistered JSON found in the live Data folder is flagged rather than modified silently
 
-A newer unsupported schema must be protected from destructive writes by an older application build.
+Current initial schemas: `attendance-1`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-1`.
 
 ### 3. Controlled Schema Migration Framework
 **Status: Approved**
@@ -390,15 +403,15 @@ For each approved roadmap item, use the following sequence:
 
 # Immediate Next Work
 
-The next planned build is **Verified Last-Known-Good Recovery**.
+The next planned build is **Controlled Schema Migration Framework**.
 
 Before code changes begin, define:
-- exact modules included in the first release
-- when a Last-Known-Good copy is promoted
-- retention behavior
-- how Data Health displays recovery status
-- preview / restore safeguards
-- audit events
-- handling of stale-write or failed-save scenarios
+- how a migration declares its source and target schema
+- which migrations may run automatically after backup and which require Admin confirmation
+- in-memory validation rules before any live write
+- migration audit/history format
+- rollback behavior when validation or save fails
+- how Data Health identifies a pending or completed migration
+- how one-time migrations are prevented from running twice
 
-After that design is approved, implement and validate it as a focused reliability release before moving to Schema Version & Compatibility Guarding.
+After that framework is approved and built, proceed to the **Data Health & Recovery Dashboard**.

@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite Architecture - v3.4.0.0
+# PWADC Security Operations Suite Architecture - Current Production v4.0.0
 
 ## Purpose
 v3.3.0 establishes a maintainable module boundary without changing PWADC operational workflows, shared JSON contracts, or the C# / WebView2 platform.
@@ -66,6 +66,7 @@ Feature-specific print styles embedded inside JavaScript-generated report window
 - `MainForm.DataReliability.cs` - validated JSON transactions, durable staging, SHA-256 verification, pre-write recovery copies and write-audit records
 - `MainForm.Backups.cs` - backup creation, retention, cleanup, inventory and restore
 - `MainForm.Programs.cs` - approved path handling, packaged programs, suite lock files, environment information and module file status
+- `MainForm.SchemaCompatibility.cs` - live JSON schema registration, compatibility classification, metadata stamping, and write guarding
 - `Models.cs` - backup models, data-integrity/write outcomes, Suite Settings, coverage requirements and suite users
 
 ## Desktop Bridge Contract
@@ -96,12 +97,12 @@ At minimum, future changes should continue to run:
 - Major module render smoke tests.
 - XML project/manifest parsing.
 - Exact manifest XML declaration validation.
-- Five-part .NET version sweep.
+- Three-part PWADC application-version sweep with four-part Windows metadata validation where required.
 - GitHub workflow presence/publish validation.
 - Clean repository and ZIP integrity checks.
 
-## Next Architecture Risk
-After code concentration, the primary platform risk is shared-file concurrency and data reliability. v3.4.0 should address stale writes, conflict detection, atomic persistence, schema/version awareness, validation, and recovery before a database migration is considered.
+## Current Architecture Risk
+The primary platform risks are controlled evolution of shared JSON schemas, recovery clarity, and long-term maintainability. Atomic persistence and stale-write detection remain the production concurrency controls. Shared-file locking is deferred unless production evidence justifies it. Database migration is not an active option in the current PWADC environment.
 
 
 ## v3.4 Persistence Contract
@@ -119,7 +120,7 @@ Rules:
 
 
 ## v3.4 Data Reliability Boundary
-Operational shared JSON modules load through the Windows host and receive a revision fingerprint. Normal saves return that expected revision through the existing bridge payload and are rejected when the live shared file no longer matches. v3.4.0 provides validated atomic replacement; v3.4.1 adds stale-write blocking. No feature module should bypass `saveModuleDataStrict` for operational shared JSON. Save coordination/short-duration locks are intentionally deferred to v3.4.2.
+Operational shared JSON modules load through the Windows host and receive a revision fingerprint. Normal saves return that expected revision through the existing bridge payload and are rejected when the live shared file no longer matches. v3.4.0 provides validated atomic replacement; v3.4.1 adds stale-write blocking. No feature module should bypass `saveModuleDataStrict` for operational shared JSON. Save coordination/short-duration live-data locks remain deferred unless production conflict evidence shows the current controls are insufficient.
 
 
 ## v3.5.0.11 Attendance Point Policy Configuration
@@ -144,3 +145,16 @@ Doctor-note coverage is stored in `attendance.medicalNotes` as an audited admini
 - `manifest.json` records snapshot date, timestamps, user, machine, application version, source root, scope, file count, total size, and per-file hash/size/modified metadata.
 - Successful creation is logged under `Data Integrity\Write Audit`; failed capture attempts write a failure record in the LKG backup folder.
 - Restoration UI is intentionally not duplicated in this release. LKG visibility/preview/controlled restore will be surfaced through the planned Data Health & Recovery Dashboard.
+
+
+## v4.0.0 Schema Version & Compatibility Guarding
+- Every current suite-managed live JSON module has a registered module-specific schema identifier: `attendance-1`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-1`.
+- The host stamps `schemaVersion` and `lastWrittenByAppVersion` on every protected JSON write.
+- On startup, legacy live files with no schema marker are upgraded only by adding metadata through the existing atomic, backup-first, revision-checked write path.
+- Current schema data remains writable. A formally older schema is read-only until the Controlled Schema Migration Framework supplies an approved migration. A newer schema is read-only to protect data created by a later application build.
+- Suite Settings is compatibility-checked before deserialization; an unsupported/newer settings schema blocks startup instead of silently reverting to defaults.
+- Schema state is part of the module load envelope and live-file health status so the browser can block incompatible saves before reaching the host. Host-side enforcement remains authoritative.
+- The host validates **both** the incoming JSON schema and the existing live target schema before protected writes. Current/legacy-missing targets may proceed; valid older/newer/wrong-module/unsupported targets are protected from overwrite. Explicit restore/reset can replace malformed JSON because no trustworthy schema can be read from damaged content.
+- Unregistered JSON in the shared Data folder is flagged for review and is never assigned a schema or modified automatically. Future live-data modules must register a schema before use.
+- Versioning from this release forward is `Major.Feature.Minor`. Windows metadata may retain a fourth numeric component when the platform requires it.
+- Pre-v4.0.0 executables are outside the schema-aware compatibility boundary and must not be treated as safe downgrade clients after live data has transitioned to v4.0.0 metadata.

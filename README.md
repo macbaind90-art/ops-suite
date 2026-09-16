@@ -1,5 +1,26 @@
-# PWADC Security Operations Suite v3.5.1.0
+# PWADC Security Operations Suite v4.0.0
 
+## Versioning Standard - Effective v4.0.0
+PWADC Security Operations Suite now uses a three-part application version: **Major.Feature.Minor**.
+- **Major** - major revision of the overall suite.
+- **Feature** - significant feature upgrade, module rebuild, or new operational capability.
+- **Minor** - fixes and smaller upgrades within the current feature line.
+
+Examples: `4.0.0` = the current major baseline; `4.0.1` = a minor correction or smaller upgrade within that feature line; `4.1.0` = the next feature-level release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.0.0 - Schema Version & Compatibility Guarding
+- Adds `schemaVersion` and `lastWrittenByAppVersion` metadata to every current suite-managed live JSON data file.
+- Current schema identifiers are module-specific: `attendance-1`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-1`.
+- On startup, legacy live files with no schema marker are backed up and stamped through the existing atomic write path without changing business data.
+- Current compatible files load and save normally.
+- A formally older schema is readable but write-blocked until the approved Controlled Schema Migration Framework can migrate it.
+- A newer schema than the running application supports is readable for review but write-blocked to prevent destructive downgrade writes.
+- Host-side target guarding also checks the **existing live file** before any protected replacement, so reset/recovery or direct bridge calls cannot silently overwrite a formally older/newer/incompatible schema. Explicit restore/reset may replace malformed JSON, but not a valid incompatible schema.
+- Suite Settings with an unsupported/newer schema block startup because settings control the data root, users, and security-sensitive configuration.
+- Schema state is returned through the desktop bridge and displayed in live-file/Data Health verification.
+- Unknown JSON files found in the live Data folder are never modified automatically; the suite flags them as unregistered until a schema is defined.
+- The Daily Last-Known-Good snapshot runs before one-time schema stamping, preserving the morning recovery point before metadata initialization on the upgrade day.
+- **Downgrade boundary:** once shared live data has been stamped/used by v4.0.0 or later, pre-v4.0.0 executables should be retired from use against that shared data root. Those older builds predate schema enforcement and cannot provide the downgrade protection introduced here.
 
 ## v3.5.1.0 - Daily Last-Known-Good Suite Snapshot
 - Creates one verified **Last-Known-Good (LKG)** suite snapshot on the first successful application startup of each calendar day.
@@ -607,13 +628,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.4.0 - Data Layer / Reliability Upgrade~~ Completed
 - ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed
 - ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed
-- **Legacy production stabilization / operational enhancements** Current
-- v3.5.0 - Reporting / Compliance Maturity
-- v3.6.0 - Role / Security Maturity
-- v3.7.0 - Workflow Intelligence / Smart Assist
-- v3.8.0 - Performance / Scale Pass
-- v3.9.0 - v4.0 Migration Planning
-- v4.0 - Platform Architecture Release
+- **v4.0.0 - Schema Version & Compatibility Guarding** Current
+- Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map
 1. **Command Center:** Home summarizes priority queues and live-data confidence.
@@ -621,8 +637,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 3. **Operations Lane:** Shift Reports controls source intake and extraction. Shift Intelligence controls disposition, watchlist management, task handoff, and closure.
 4. **Governance Lane:** Report Center, Data Health, Backup & Restore, Change Log, and Admin Settings follow Report → Verify → Recover → Govern.
 5. **Specialist Tools:** Other Programs launches independent tools without mixing their scripts into the primary suite.
-6. **Future Emergency Operations:** Uploaded emergency procedure documents remain candidates for a later controlled Emergency Operations Manual / procedure module.
-7. **Road to v4.0:** v3.3.0 has reduced monolithic-code risk; the next priority is hardening shared-file persistence, conflict handling, validation, and recovery in v3.4.0.
+6. **Emergency Response:** The approved PWADC Emergency Response Protocol System remains a planned dispatcher-style guided protocol capability.
+7. **Architecture Continuity:** v4.0.0 is the new major-version baseline; the current C# / WebView2 / HTML / CSS / JavaScript platform remains the supported production architecture.
 
 ## Architecture Direction
-Continue with the current C# / WebView2 / HTML / CSS / JavaScript stack. v3.3.0 establishes the modular baseline. v3.4.0 should build on that structure by strengthening persistence, conflict handling, validation, recovery, and shared-file reliability before considering any database migration.
+Continue with the current C# / WebView2 / HTML / CSS / JavaScript stack. Major-version numbering does not imply a platform rewrite. Future feature releases will build on the existing modular architecture and approved reliability controls unless a demonstrated PWADC operational need requires an architectural change.

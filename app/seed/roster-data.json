@@ -1,4 +1,6 @@
 {
+  "schemaVersion": "roster-1",
+  "lastWrittenByAppVersion": "4.0.0",
   "employees": [
     {
       "id": 1,

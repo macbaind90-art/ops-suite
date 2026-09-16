@@ -55,8 +55,10 @@ namespace PWADC.SecurityOperationsSuite
         private DataWriteOutcome WriteJsonAtomically(string module, string targetPath, string json, string operation, string backupKind, string expectedRevision = "")
         {
             if (!IsKnownJsonModule(module)) throw new InvalidOperationException("Atomic JSON write module is not approved: " + module);
-            ValidateJsonPayload(json, ModuleFolder(module));
             string fullTarget = Path.GetFullPath(targetPath);
+            EnsureExistingTargetSchemaCompatibleForWrite(module, fullTarget, operation);
+            json = PrepareJsonForWrite(module, json);
+            ValidateJsonPayload(json, ModuleFolder(module));
             string? parent = Path.GetDirectoryName(fullTarget);
             if (string.IsNullOrWhiteSpace(parent)) throw new InvalidOperationException("JSON target folder could not be resolved.");
             Directory.CreateDirectory(parent);
@@ -85,7 +87,7 @@ namespace PWADC.SecurityOperationsSuite
 
                 // v3.4.1.0 stale-write gate. This runs after staging/validation but before
                 // the safety backup or live replacement so a conflict does not touch live data.
-                if (operation == "module-save")
+                if (operation == "module-save" || operation == "schema-metadata-initialize")
                     VerifyExpectedRevision(module, fullTarget, expectedRevision, operation);
 
                 existed = File.Exists(fullTarget);
@@ -172,7 +174,7 @@ namespace PWADC.SecurityOperationsSuite
                 var record = new
                 {
                     at = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"),
-                    version = "3.5.1.0",
+                    version = AppVersion,
                     user = Environment.UserName,
                     machine = Environment.MachineName,
                     module = outcome.Module,

@@ -73,7 +73,7 @@ namespace PWADC.SecurityOperationsSuite
             try
             {
                 EnsureFolders();
-                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = "3.5.1.0" };
+                var lockInfo = new { user = Environment.UserName, machine = Environment.MachineName, openedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), version = AppVersion };
                 File.WriteAllText(Path.Combine(settings.DataRoot, "Locks", "suite.lock"), JsonSerializer.Serialize(lockInfo, JsonOptions));
             }
             catch { }
@@ -89,7 +89,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = "3.5.1.0", baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = AppVersion, baseDirectory = AppContext.BaseDirectory };
 
         private string LatestAttendanceDateFromFile(string path)
         {
@@ -196,8 +196,37 @@ namespace PWADC.SecurityOperationsSuite
                 else if (module == "roster") newestDataDate = NewestDatePropertyFromFile(info.FullName, "employees", "schedule", "audit");
             }
             JsonIntegrityInfo integrity = JsonIntegrityStatus(path);
+            SchemaCompatibilityInfo? schema = null;
+            if (info != null && string.Equals(integrity.Status, "valid", StringComparison.OrdinalIgnoreCase))
+            {
+                try { schema = EvaluateSchemaCompatibility(module, File.ReadAllText(path)); } catch { }
+            }
             string sourceStatus = info == null ? "missing" : integrity.Status == "valid" ? "live-shared" : "live-invalid";
-            return new { module, label = ModuleFolder(module), fileName, path, exists = info != null, sizeBytes = info?.Length ?? 0, modified = info?.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "", lastSaved, newestBackup, newestBackupModified, newestBackupSize, newestDataDate, sourceStatus, integrityStatus = integrity.Status, integrityError = integrity.Error, sha256 = integrity.Sha256 };
+            return new
+            {
+                module,
+                label = ModuleFolder(module),
+                fileName,
+                path,
+                exists = info != null,
+                sizeBytes = info?.Length ?? 0,
+                modified = info?.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss") ?? "",
+                lastSaved,
+                newestBackup,
+                newestBackupModified,
+                newestBackupSize,
+                newestDataDate,
+                sourceStatus,
+                integrityStatus = integrity.Status,
+                integrityError = integrity.Error,
+                sha256 = integrity.Sha256,
+                schemaVersion = schema?.SchemaVersion ?? "",
+                expectedSchemaVersion = schema?.ExpectedSchemaVersion ?? CurrentSchemaVersion(module),
+                lastWrittenByAppVersion = schema?.LastWrittenByAppVersion ?? "",
+                schemaStatus = schema?.Status ?? (info == null ? "missing" : "unknown"),
+                schemaMessage = schema?.Message ?? "",
+                writeAllowed = schema?.WriteAllowed ?? false
+            };
         }
 
         private string ModuleBackupDir(string module)

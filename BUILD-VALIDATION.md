@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.1.0**
-- Release: **Daily Last-Known-Good Suite Snapshot**
-- Baseline: **v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status**
+- Version: **4.0.0**
+- Release: **Schema Version & Compatibility Guarding**
+- Baseline: **v3.5.1.0 - Daily Last-Known-Good Suite Snapshot**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -33,13 +33,15 @@
 - Grid visual status retained: Present green / approved blue / Off unhighlighted / NE blacked out / low point actions yellow / high point actions red / positive award green
 - Employee-name point status retained: green <3 / yellow 3-6.99 / red 7+
 - Doctor-note coverage can be applied across a selected date range and selected chargeable event types without rewriting the original attendance code
-- Covered call-offs are excluded from the rolling 14-day CO1/CO2 chain
-- Covered tardy/early-work events preserve clean-workday progress; medically covered absences are neutral
+- One active doctor-note range is one attendance occurrence at **50% of the first matching event's configured normal point value**; additional matching days in that same note range add no additional points
+- A doctor-note call-off range contributes one occurrence to the rolling 14-day CO1/CO2 chain
+- Doctor-note-covered attendance issues reset clean-attendance progress
 - Doctor-note add/void actions are Admin-only, backup-first, audited, and recalculate attendance immediately
+- SUS / Suspended adds 0 points, resets clean-attendance progress, and does not count as a clean worked day
 - Doctor-note records store administrative references only; the UI warns against storing diagnosis/treatment details
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 838 named functions / 208 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 842 named functions / 208 inline action targets / 10 registered modules
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - Roster-to-Attendance population regression: **PASS**
@@ -50,7 +52,9 @@
 - Browser startup binding regression: **PASS**
 - Attendance point-value editor regression: **PASS**
 - Doctor-note attendance coverage regression: **PASS**
+- Suspended attendance status regression: **PASS**
 - Daily Last-Known-Good source regression: **PASS**
+- Schema Version & Compatibility Guarding regression: **PASS**
 - September 9 production Attendance backup render smoke: **PASS** - 16 major modules / 6 Attendance views loaded against the real 42-employee backup; legacy data with no doctor-note field normalizes cleanly
 - Positive-credit partial/fractional carryover regression: **PASS**
 - 3-point balance cap with re-earning after use: **PASS**
@@ -64,6 +68,24 @@
 The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs front-end and targeted regression validation, restore, build, and self-contained `win-x64` publish.
 
 
+
+
+## v4.0.0 Targeted Regression
+- Three-part application version is `4.0.0`; Windows file/assembly/manifest metadata retains four-part `4.0.0.0` where required: **PASS**.
+- All six current suite-managed live JSON files have registered module-specific schema revision 1: **PASS**.
+- Packaged recovery seeds contain the correct `schemaVersion` and `lastWrittenByAppVersion`: **PASS**.
+- Legacy JSON with no schema marker is eligible for backup-first metadata initialization: **PASS**.
+- Startup schema initialization uses the atomic write service and a loaded revision check: **PASS**.
+- Newer formal schemas are detected and write-blocked: **PASS**.
+- Older formal schemas are detected and write-blocked pending controlled migration: **PASS**.
+- Wrong-module or malformed schema identifiers are write-blocked: **PASS**.
+- Existing live targets with formally older/newer/wrong-module/unsupported schemas are host-side write-blocked even when the incoming payload is current: **PASS**.
+- Explicit restore/reset may replace malformed JSON, but the recovery exception does not bypass valid incompatible-schema protection: **PASS**.
+- Suite Settings compatibility is checked before deserialization; unsupported settings cannot silently fall back and overwrite configuration: **PASS**.
+- Load envelopes expose schema, expected schema, last writer version, status, message, and write permission: **PASS**.
+- Browser save path honors schema read-only state before attempting a write: **PASS**.
+- Data Health live-file verification exposes schema status: **PASS**.
+- Unknown live JSON files are surfaced as unregistered rather than modified automatically: **PASS**.
 
 ## v3.5.1.0 Targeted Regression
 - First valid startup of a calendar day is wired to attempt LKG capture before the WebView UI is exposed: **PASS**.

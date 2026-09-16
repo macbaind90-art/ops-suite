@@ -48,7 +48,7 @@ namespace PWADC.SecurityOperationsSuite
                         string resetModule = root.TryGetProperty("module", out JsonElement rm) ? rm.GetString() ?? "" : "";
                         string resetJson = ResetModuleFromSeed(resetModule);
                         string resetPath = Path.Combine(settings.DataRoot, "Data", ModuleFileName(resetModule));
-                        await Respond(requestId, true, new { module = resetModule, data = resetJson, revision = GetDataRevision(resetPath).Token });
+                        await Respond(requestId, true, new { module = resetModule, data = resetJson, revision = GetDataRevision(resetPath).Token, schemaVersion = CurrentSchemaVersion(resetModule), expectedSchemaVersion = CurrentSchemaVersion(resetModule), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true });
                         break;
                     case "suite:saveModuleData":
                         string saveModule = root.TryGetProperty("module", out JsonElement sm) ? sm.GetString() ?? "" : "";
@@ -124,7 +124,7 @@ namespace PWADC.SecurityOperationsSuite
                         string restorePath = restorePayload.TryGetProperty("path", out JsonElement rsp) ? rsp.GetString() ?? "" : "";
                         string restoredJson = RestoreBackup(restoreModule, restorePath);
                         string restoredLivePath = Path.Combine(settings.DataRoot, "Data", ModuleFileName(restoreModule));
-                        await Respond(requestId, true, new { module = restoreModule, data = restoredJson, restoredFrom = restorePath, revision = GetDataRevision(restoredLivePath).Token });
+                        await Respond(requestId, true, new { module = restoreModule, data = restoredJson, restoredFrom = restorePath, revision = GetDataRevision(restoredLivePath).Token, schemaVersion = CurrentSchemaVersion(restoreModule), expectedSchemaVersion = CurrentSchemaVersion(restoreModule), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true });
                         break;
                     default:
                         await Respond(requestId, false, new { error = "Unknown message type: " + type });
