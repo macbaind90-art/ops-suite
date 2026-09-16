@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **3.5.0.11**
-- Release: **Editable Attendance Point Values**
-- Baseline: **v3.5.0.10 - Attendance Startup Binding Hotfix**
+- Version: **3.5.0.13**
+- Release: **Doctor Note Half-Point Occurrence + Suspended Status**
+- Baseline: **v3.5.0.11 - Editable Attendance Point Values**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -32,9 +32,14 @@
 - Manual current-point adjustments require a reason and pre-save backup
 - Grid visual status retained: Present green / approved blue / Off unhighlighted / NE blacked out / low point actions yellow / high point actions red / positive award green
 - Employee-name point status retained: green <3 / yellow 3-6.99 / red 7+
+- Doctor-note coverage can be applied across a selected date range and selected chargeable event types without rewriting the original attendance code
+- Covered call-offs are excluded from the rolling 14-day CO1/CO2 chain
+- Covered tardy/early-work events preserve clean-workday progress; medically covered absences are neutral
+- Doctor-note add/void actions are Admin-only, backup-first, audited, and recalculate attendance immediately
+- Doctor-note records store administrative references only; the UI warns against storing diagnosis/treatment details
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 5 Attendance views / 5 Roster views / 825 named functions / 205 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 838 named functions / 208 inline action targets / 10 registered modules
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - Roster-to-Attendance population regression: **PASS**
@@ -44,7 +49,8 @@
 - Attendance legacy retirement regression: **PASS**
 - Browser startup binding regression: **PASS**
 - Attendance point-value editor regression: **PASS**
-- September 9 production Attendance backup render smoke: **PASS** - 16 major modules / 5 Attendance views loaded against the real 42-employee backup without render failure
+- Doctor-note attendance coverage regression: **PASS**
+- September 9 production Attendance backup render smoke: **PASS** - 16 major modules / 6 Attendance views loaded against the real 42-employee backup; legacy data with no doctor-note field normalizes cleanly
 - Positive-credit partial/fractional carryover regression: **PASS**
 - 3-point balance cap with re-earning after use: **PASS**
 - Manual adjusted-balance positive-credit paydown: **PASS**
@@ -55,6 +61,28 @@
 
 ## Windows Build Status
 The .NET Windows compile/publish is intentionally left for the GitHub Actions run after this source package is uploaded to `main`. The included workflow performs front-end and targeted regression validation, restore, build, and self-contained `win-x64` publish.
+
+
+## v3.5.0.13 Targeted Regression
+- Doctor-note 50% single-occurrence calculation: **PASS**.
+- Multi-day doctor-note events do not stack points: **PASS**.
+- Covered call-off range counts as one rolling-14-day occurrence: **PASS**.
+- Doctor-note-covered attendance issue resets clean-attendance progress: **PASS**.
+- Later-entered matching event inside an active note range recalculates automatically: **PASS**.
+- SUS / Suspended adds 0 points and resets clean-attendance progress: **PASS**.
+- Positive attendance can restart and earn normally after a suspension: **PASS**.
+
+## v3.5.0.12 Targeted Regression
+- Doctor-note date-range coverage: **PASS**.
+- Selectable covered event types: **PASS**.
+- Original attendance record preservation: **PASS**.
+- Covered event zero-point recalculation: **PASS**.
+- Covered call-off exclusion from CO1/CO2 chain: **PASS**.
+- Covered tardy clean-workday treatment: **PASS**.
+- Future/later-entered matching event inside an authorized range: **PASS**.
+- Void with required reason and recalculation: **PASS**.
+- Backup-first add/void controls: **PASS**.
+- Doctor Notes view and inline-action binding sweep: **PASS**.
 
 ## v3.5.0.11 Targeted Regression
 - Admin-only point-value editor: **PASS**.

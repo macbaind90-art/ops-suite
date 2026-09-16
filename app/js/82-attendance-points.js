@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v3.5.0.11 | Attendance Point System */
+/* PWADC Security Operations Suite v3.5.0.13 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -11,6 +11,7 @@ const ATT_POINT_CODES=[
   {code:'NCNS',label:'No Call No Show',points:9,kind:'issue'},
   {code:'LE',label:'Left Early',points:1,kind:'issue'},
   {code:'EIA',label:'Clocked In Early w/o Approval',points:2,kind:'issue'},
+  {code:'SUS',label:'Suspended',points:0,kind:'reset'},
   {code:'ALE',label:'Approved Left Early',points:0,kind:'work'},
   {code:'AT',label:'Approved Tardy',points:0,kind:'work'},
   {code:'V',label:'Vacation',points:0,kind:'neutral'},
@@ -23,6 +24,7 @@ const ATT_DEFAULT_POINT_VALUES={'T<5':0,'T5-14':0.5,'T15+':1,'CO1':1.5,'CO2':3,'
 const ATT_NEGATIVE_POINTS=ATT_DEFAULT_POINT_VALUES;
 const ATT_ISSUE_CODES=new Set(Object.keys(ATT_DEFAULT_POINT_VALUES));
 const ATT_CLEAN_WORK_CODES=new Set(['P','AT','ALE']);
+const ATT_RESET_CODES=new Set(['SUS']);
 const ATT_NEUTRAL_CODES=new Set(['V','O','AA','NE']);
 const ATT_OLD_ISSUE_CODES=new Set(['T','T>5','CO','UE','U']);
 const ATT_ACTION_LEVELS=[
@@ -36,6 +38,17 @@ let pointReviewSearch='';
 let pointGridMode='all';
 let pointGridShift='All';
 const ATTENDANCE_DAILY_SHIFT_ORDER=['3rd Shift','1st Shift','2nd Shift','Gate','Reception'];
+const ATT_MEDICAL_CODE_OPTIONS=[
+  {code:'CO',label:'Call Off (CO / CO1 / CO2)'},
+  {code:'T<5',label:'Tardy Less Than 5 Minutes'},
+  {code:'T5-14',label:'Tardy 5-14 Minutes'},
+  {code:'T15+',label:'Tardy 15 Minutes or More'},
+  {code:'LE',label:'Left Early'},
+  {code:'EIA',label:'Clocked In Early w/o Approval'},
+  {code:'NCNS',label:'No Call No Show'},
+  {code:'U',label:'Legacy Unexcused'}
+];
+let medicalNoteFilter='active';
 
 const _normalizeAttendanceV3411=normalizeAttendance;
 normalizeAttendance=function(){
@@ -60,6 +73,8 @@ function ensureAttendancePointSystem(){
   attendance.correctiveActions=Array.isArray(attendance.correctiveActions)?attendance.correctiveActions:[];
   attendance.recordEdits=Array.isArray(attendance.recordEdits)?attendance.recordEdits:[];
   attendance.pointAdjustments=Array.isArray(attendance.pointAdjustments)?attendance.pointAdjustments:[];
+  attendance.medicalNotes=Array.isArray(attendance.medicalNotes)?attendance.medicalNotes:[];
+  attendance.medicalNotes=attendance.medicalNotes.map(n=>({...n,empId:String(n.empId||''),coveredCodes:Array.isArray(n.coveredCodes)?n.coveredCodes:[],pointMultiplier:Number.isFinite(Number(n.pointMultiplier))&&Number(n.pointMultiplier)>=0?Number(n.pointMultiplier):0.5,voided:!!n.voided}));
   attendance.tardyReclassifications=attendance.tardyReclassifications&&typeof attendance.tardyReclassifications==='object'?attendance.tardyReclassifications:{};
   attendance.autoOff=attendance.autoOff&&typeof attendance.autoOff==='object'?attendance.autoOff:{};
   attendance.workdayBasis=attendance.workdayBasis&&typeof attendance.workdayBasis==='object'?attendance.workdayBasis:{};
@@ -212,6 +227,7 @@ function pointGridStatusClass(code,pointsOverride=null){
   if(c==='NE')return 'att-status-ne';
   if(c==='O')return '';
   if(c==='P')return 'att-status-present';
+  if(c==='SUS')return 'att-status-suspended';
   if(['AT','ALE','AA','V','AL','E','AE','FL'].includes(c))return 'att-status-approved';
   const pts=pointsOverride===null?pointValue(c):Number(pointsOverride)||0;
   if(pts>0)return pts>=2?'att-status-issue-high':'att-status-issue-low';
@@ -233,9 +249,68 @@ function attendanceEventsForEmployee(empId){
   return Object.entries(row).filter(([d,c])=>isIsoDateKey(d)&&c).map(([date,code])=>({date,code:String(code)})).sort((a,b)=>a.date.localeCompare(b.date));
 }
 
+function attendanceMedicalCodeKey(code){
+  const c=String(code||'').toUpperCase();
+  if(['CO','CO1','CO2'].includes(c))return 'CO';
+  if(c==='T')return 'T<5';
+  if(c==='T>5')return 'T15+';
+  if(c==='UE')return 'LE';
+  return c;
+}
+function activeAttendanceMedicalNotes(){return (attendance.medicalNotes||[]).filter(n=>n&&!n.voided&&n.empId&&isIsoDateKey(n.startDate)&&isIsoDateKey(n.endDate));}
+function attendanceMedicalCoverageFor(empId,date,code){
+  const key=attendanceMedicalCodeKey(code);
+  if(!key||!isIsoDateKey(date))return null;
+  return activeAttendanceMedicalNotes().filter(n=>String(n.empId)===String(empId)&&n.startDate<=date&&n.endDate>=date&&(n.coveredCodes||[]).includes(key)).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')))[0]||null;
+}
+function attendanceMedicalNoteEmployee(note){return (attendance.employees||[]).find(e=>String(e.id)===String(note&&note.empId))||null;}
+function attendanceMedicalMatchingEvents(note){
+  if(!note)return [];
+  return attendanceEventsForEmployee(note.empId).filter(e=>e.date>=note.startDate&&e.date<=note.endDate&&(note.coveredCodes||[]).includes(attendanceMedicalCodeKey(e.code))).map(e=>({date:e.date,code:e.code,key:attendanceMedicalCodeKey(e.code)}));
+}
+function attendanceMedicalNoteStatus(note){return note&&note.voided?'Voided':'Active';}
+function attendanceMedicalPointMultiplier(note){
+  const n=Number(note&&note.pointMultiplier);
+  return Number.isFinite(n)&&n>=0?n:0.5;
+}
+function attendanceMedicalFirstMatchingEvent(note){
+  const rows=attendanceMedicalMatchingEvents(note);
+  return rows.length?rows[0]:null;
+}
+function attendanceMedicalIsPrimaryEvent(note,date,code){
+  const first=attendanceMedicalFirstMatchingEvent(note);
+  return !!(first&&first.date===date&&attendanceMedicalCodeKey(first.code)===attendanceMedicalCodeKey(code));
+}
+function attendanceMedicalNormalizedPointCode(empId,date,rawCode){
+  let code=String(rawCode||'');
+  if(code==='T')code='T<5';
+  if(code==='T>5')code='T15+';
+  if(['CO','CO1','CO2'].includes(code))code=classifyCalloffAtDate(empId,date);
+  if(code==='UE')code='LE';
+  return code;
+}
+function attendanceMedicalDisplayPoints(empId,date,rawCode){
+  const note=attendanceMedicalCoverageFor(empId,date,rawCode);
+  if(!note)return null;
+  if(!attendanceMedicalIsPrimaryEvent(note,date,rawCode))return 0;
+  const pointCode=attendanceMedicalNormalizedPointCode(empId,date,rawCode);
+  const original=attendanceEventPointValue(empId,date,pointCode);
+  return Number((original*attendanceMedicalPointMultiplier(note)).toFixed(2));
+}
+
 function classifyCalloffAtDate(empId,date,eventsOverride=null){
-  const events=(eventsOverride||attendanceEventsForEmployee(empId)).filter(e=>e.date<date&&['CO','CO1','CO2'].includes(e.code));
-  const prior=events.length?events[events.length-1]:null;
+  const source=(eventsOverride||attendanceEventsForEmployee(empId)).filter(e=>e.date<date&&['CO','CO1','CO2'].includes(e.code)).sort((a,b)=>a.date.localeCompare(b.date));
+  const seenMedicalNotes=new Set(),occurrences=[];
+  for(const e of source){
+    const medical=attendanceMedicalCoverageFor(empId,e.date,e.code);
+    if(medical){
+      const id=String(medical.id||'');
+      if(seenMedicalNotes.has(id))continue;
+      seenMedicalNotes.add(id);
+    }
+    occurrences.push(e);
+  }
+  const prior=occurrences.length?occurrences[occurrences.length-1]:null;
   return prior&&dayDiff(prior.date,date)<=13?'CO2':'CO1';
 }
 
@@ -246,7 +321,7 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
   const adjustment=latestPointAdjustment(empId,asOf);
   const adjustmentExpires=adjustment?addDays(adjustment.effectiveDate,89):'';
   let bank=0,cleanWorkingDays=0,adjustmentOutstanding=0,adjustmentActivated=false;
-  const earned=[],issues=[];
+  const earned=[],issues=[],chargedMedicalNotes=new Set();
 
   function expireIssueBalances(onDate){
     const cutoff=addDays(onDate,-89);
@@ -307,6 +382,23 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
     if(code==='UE')code='LE';
     if(code==='E'||code==='AL'||code==='FL')code='AA';
     if(code==='AE')code='ALE';
+    const medicalCoverage=attendanceMedicalCoverageFor(empId,e.date,rawCode);
+    if(medicalCoverage){
+      const originalGross=(ATT_ISSUE_CODES.has(code)||rawCode==='T>5')?attendanceEventPointValue(empId,e.date,code):0;
+      const medicalId=String(medicalCoverage.id||'');
+      const primary=!chargedMedicalNotes.has(medicalId);
+      let gross=0,offset=0,net=0;
+      if(primary){
+        chargedMedicalNotes.add(medicalId);
+        gross=Number((originalGross*attendanceMedicalPointMultiplier(medicalCoverage)).toFixed(2));
+        offset=Math.min(bank,gross);
+        bank=Number((bank-offset).toFixed(2));
+        net=Number((gross-offset).toFixed(2));
+      }
+      issues.push({date:e.date,code,gross,originalGross,offset,positivePaydown:0,net,medicalCovered:true,medicalPrimary:primary,medicalMultiplier:attendanceMedicalPointMultiplier(medicalCoverage),medicalNoteId:medicalCoverage.id});
+      cleanWorkingDays=0;
+      continue;
+    }
     if(code==='U'){
       issues.push({date:e.date,code:'U',gross:0,offset:0,positivePaydown:0,net:0,legacyReview:true});
       cleanWorkingDays=0;
@@ -318,6 +410,10 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
       bank=Number((bank-offset).toFixed(2));
       const net=Number((gross-offset).toFixed(2));
       issues.push({date:e.date,code,gross,offset,positivePaydown:0,net,legacyTardy:false});
+      cleanWorkingDays=0;
+      continue;
+    }
+    if(ATT_RESET_CODES.has(code)){
       cleanWorkingDays=0;
       continue;
     }
@@ -404,9 +500,17 @@ async function commitAttendancePointMigration(){
 function reclassifyCalloffsForEmployee(empId){
   const row=(attendance.attendance||{})[String(empId)]||{};
   let prior='';
+  const seenMedicalNotes=new Set();
   for(const d of Object.keys(row).filter(isIsoDateKey).sort()){
     if(['CO','CO1','CO2'].includes(String(row[d]||''))){
+      const existing=String(row[d]||'');
+      const medical=attendanceMedicalCoverageFor(empId,d,existing);
       row[d]=prior&&dayDiff(prior,d)<=13?'CO2':'CO1';
+      if(medical){
+        const id=String(medical.id||'');
+        if(seenMedicalNotes.has(id))continue;
+        seenMedicalNotes.add(id);
+      }
       prior=d;
     }
   }
@@ -446,11 +550,11 @@ setCode=function(id,date,code,opts={}){return setAttendancePointCode(id,date,cod
 
 function renderAttendance(){
   ensureAttendancePointSystem();
-  const views=['daily','grid','review','actions','audit'];
+  const views=['daily','grid','review','medical','actions','audit'];
   if(!views.includes(activeAttView))activeAttView='review';
-  const labels={daily:'Daily Entry',grid:'90-Day Grid',review:'Point Review',actions:'Corrective Action',audit:'Audit Log'};
+  const labels={daily:'Daily Entry',grid:'90-Day Grid',review:'Point Review',medical:'Doctor Notes',actions:'Corrective Action',audit:'Audit Log'};
   const migration=attendanceMigrationPending()?`<div class="notice warn"><strong>Attendance Point Migration Required</strong><br>The current Attendance JSON is being preserved in memory. Daily entry is locked until a backup is created and legacy codes are converted to the v3.5 point model. <button class="primary" onclick="commitAttendancePointMigration()">Commit Migration + Backup</button></div>`:'';
-  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="admin-only" onclick="openPointValueSettingsModal()">Edit Point Values</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> ${attendancePointPolicySummary()}. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit. Newly earned credits immediately pay down active negative points first; any unused remainder is banked, with a maximum positive balance of 3 at any one time. Banked credits are consumed by future chargeable points and can be earned again after use. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
+  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="admin-only" onclick="openDoctorNoteModal()">Add Doctor Note</button> <button class="admin-only" onclick="openPointValueSettingsModal()">Edit Point Values</button> <button class="danger admin-only" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> ${attendancePointPolicySummary()}. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit. Newly earned credits immediately pay down active negative points first; any unused remainder is banked, with a maximum positive balance of 3 at any one time. Banked credits are consumed by future chargeable points and can be earned again after use. Suspended (SUS) carries 0 points but resets clean-attendance progress. Doctor-note coverage counts as one occurrence at 50% of the first matching event's normal points; additional matching days on the same note add no extra points. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='medical'?renderDoctorNotes():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
 }
 
 function attendanceDailyShiftRank(shift){const i=ATTENDANCE_DAILY_SHIFT_ORDER.indexOf(String(shift||''));return i>=0?i:99;}
@@ -488,7 +592,8 @@ function renderPointDailyRow(e,locked=false){
   const sched=attendanceScheduleStatus(e,entryDate);
   const snap=attendancePointSnapshot(e.id,entryDate);
   const risk=attendanceEmployeePointClass(e.id,entryDate);
-  return `<div class="person-row"><div class="person-name att-employee-name-wrap ${risk}"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span><span class="mini-note">Active Points: ${snap.activePoints} · Positive Credit: ${snap.bank}/${snap.maxCredits} · Clean Workdays: ${snap.cleanWorkingDays}/12 · ${sched.source==='live-schedule'?'Live Schedule':'Roster RDO fallback'}</span></div><div class="row-code-pad">${ATT_POINT_CODES.map(x=>`<button class="row-code-btn ${current===x.code||(['CO1','CO2'].includes(current)&&x.code==='CO')?'active':''}" title="${esc(x.label+(x.code==='CO'?' · auto-classified':` · ${attendancePointDisplayValue(x.code)} pt`))}" ${locked?'disabled':''} onclick="event.stopPropagation();applyAttendancePointCode('${esc(e.id)}','${entryDate}','${x.code}')">${esc(x.code)}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(current)}">${esc(current||'Blank')}</span></div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button></div></div>`;
+  const medical=attendanceMedicalCoverageFor(e.id,entryDate,current);
+  return `<div class="person-row"><div class="person-name att-employee-name-wrap ${risk}"><strong>${esc(e.name)}</strong><span>${esc(e.title)} · ${esc(e.shift)}</span><span class="mini-note">Active Points: ${snap.activePoints} · Positive Credit: ${snap.bank}/${snap.maxCredits} · Clean Workdays: ${snap.cleanWorkingDays}/12 · ${sched.source==='live-schedule'?'Live Schedule':'Roster RDO fallback'}${medical?' · Doctor Note 50% Coverage':''}</span></div><div class="row-code-pad">${ATT_POINT_CODES.map(x=>`<button class="row-code-btn ${current===x.code||(['CO1','CO2'].includes(current)&&x.code==='CO')?'active':''}" title="${esc(x.label+(x.code==='CO'?' · auto-classified':` · ${attendancePointDisplayValue(x.code)} pt`))}" ${locked?'disabled':''} onclick="event.stopPropagation();applyAttendancePointCode('${esc(e.id)}','${entryDate}','${x.code}')">${esc(x.code)}</button>`).join('')}</div><div class="row-status"><span class="badge ${esc(current)}">${esc(current||'Blank')}</span></div><div><button class="sm" onclick="event.stopPropagation();editNote('${esc(e.id)}','${entryDate}')">Note</button> <button class="sm admin-only" onclick="event.stopPropagation();openDoctorNoteModal('${esc(e.id)}','${entryDate}','${entryDate}')">Doctor Note</button></div></div>`;
 }
 
 function pointGridEmployees(){
@@ -498,12 +603,15 @@ function pointGridEmployees(){
 }
 function pointGridEditOptionValue(code){return ['CO1','CO2'].includes(code)?'CO':(code==='T>5'?'T15+':code);}
 function pointGridCell(emp,d,earnedDates=new Set()){
-  const c=attendanceEffectiveCode(emp,d),pts=attendanceEventPointValue(emp.id,d,c);
+  const c=attendanceEffectiveCode(emp,d),medical=attendanceMedicalCoverageFor(emp.id,d,c);
+  const medicalPoints=medical?attendanceMedicalDisplayPoints(emp.id,d,c):null;
+  const pts=medical?Number(medicalPoints||0):attendanceEventPointValue(emp.id,d,c);
   const earned=earnedDates.has(d);
-  const statusClass=pointGridStatusClass(c,pts);
-  const classes=['att-point-cell','att-point-editable',statusClass,earned?'att-positive-earned':''].filter(Boolean).join(' ');
+  const statusClass=medical?'att-status-approved':pointGridStatusClass(c,pts);
+  const classes=['att-point-cell','att-point-editable',statusClass,medical?'att-medical-covered':'',earned?'att-positive-earned':''].filter(Boolean).join(' ');
   const pointText=pts>0?String(pts):'';
-  return `<td class="${classes}" onclick="openPointGridEditModal('${esc(emp.id)}','${esc(d)}')" title="${esc(d+' · '+pointCodeLabel(c)+(pts?' · '+pts+' pt':'')+(earned?' · +1 positive attendance point earned':'')+' · Click to edit with required reason')}"><div class="att-point-code">${esc(c||'')}</div>${pointText?`<div class="mini-note">${esc(pointText)}</div>`:''}${earned?'<span class="point-positive-award">+1</span>':''}</td>`;
+  const medicalDetail=medical?(attendanceMedicalIsPrimaryEvent(medical,d,c)?` · Doctor note 50% occurrence · ${pts} pt`:' · Doctor note same occurrence · 0 additional points'):'';
+  return `<td class="${classes}" onclick="openPointGridEditModal('${esc(emp.id)}','${esc(d)}')" title="${esc(d+' · '+pointCodeLabel(c)+medicalDetail+(!medical&&pts?' · '+pts+' pt':'')+(earned?' · +1 positive attendance point earned':'')+' · Click to edit with required reason')}"><div class="att-point-code">${esc(c||'')}</div>${pointText?`<div class="mini-note">${esc(pointText)}</div>`:''}${medical?'<span class="point-medical-note">DN</span>':''}${earned?'<span class="point-positive-award">+1</span>':''}</td>`;
 }
 function openPointGridEditModal(empId,date){
   if(attendanceMigrationPending()){toast('Commit the Attendance Point System migration before editing historical records.');return;}
@@ -561,8 +669,8 @@ function renderPointGrid(){
   const snap=attendancePointSnapshot(emp.id,end);
   const controls=`<div class="toolbar"><div><label>View</label><select onchange="pointGridMode=this.value;safeRenderPages()"><option value="all" ${!single?'selected':''}>All Employees</option><option value="single" ${single?'selected':''}>Single Employee</option></select></div>${single?`<div><label>Employee</label><select onchange="selectedGridEmpId=this.value;safeRenderPages()">${allEmps.map(e=>`<option value="${esc(e.id)}" ${String(e.id)===String(emp.id)?'selected':''}>${esc(e.name)} · ${esc(e.shift)}</option>`).join('')}</select></div>`:`<div><label>Shift</label><select onchange="pointGridShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${pointGridShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div>`}<div><label>Ending Date</label><input type="date" value="${end}" onchange="gridEnd=this.value;safeRenderPages()"></div></div>`;
   const adjustmentNote=snap.adjustment?`<div class="health-row"><span>Manual Point Adjustment</span><strong>Set to ${snap.adjustment.newActivePoints} on ${esc(fmt(snap.adjustment.effectiveDate))}</strong></div>`:'';
-  const summary=single?`<div class="health-row"><span>Calculated 90-Day Points</span><strong>${snap.calculatedActivePoints}</strong></div>${adjustmentNote}<div class="health-row"><span>Active Disciplinary Points</span><strong>${snap.activePoints}</strong></div><div class="health-row"><span>Positive Credit Bank</span><strong>${snap.bank} / ${snap.maxCredits}</strong></div><div class="toolbar"><button class="sm" onclick="openPointAdjustmentModal('${esc(emp.id)}')">Edit Current Points</button></div>`:`<div class="mini-note">Showing ${emps.length} active employee(s)${pointGridShift==='All'?'':' · '+esc(pointGridShift)}. Employees are separated by shift in operational order.</div>`;
-  const legend=`<div class="att-point-grid-legend"><span class="att-legend present">Present</span><span class="att-legend approved">Approved</span><span class="att-legend low">Low Point Action</span><span class="att-legend high">High Point Action</span><span class="att-legend positive">+ Positive Point Earned</span><span class="att-legend ne">Not Employed</span><span class="att-legend off">Off = no highlight</span></div>`;
+  const summary=single?`<div class="health-row"><span>Calculated 90-Day Points</span><strong>${snap.calculatedActivePoints}</strong></div>${adjustmentNote}<div class="health-row"><span>Active Disciplinary Points</span><strong>${snap.activePoints}</strong></div><div class="health-row"><span>Positive Credit Bank</span><strong>${snap.bank} / ${snap.maxCredits}</strong></div><div class="toolbar"><button class="sm" onclick="openPointAdjustmentModal('${esc(emp.id)}')">Edit Current Points</button> <button class="sm admin-only" onclick="openDoctorNoteModal('${esc(emp.id)}')">Doctor Note</button></div>`:`<div class="mini-note">Showing ${emps.length} active employee(s)${pointGridShift==='All'?'':' · '+esc(pointGridShift)}. Employees are separated by shift in operational order.</div>`;
+  const legend=`<div class="att-point-grid-legend"><span class="att-legend present">Present</span><span class="att-legend approved">Approved / Doctor Note</span><span class="att-legend medical">DN = Doctor Note 50% / Single Occurrence</span><span class="att-legend suspended">Suspended · 0 pts / resets clean streak</span><span class="att-legend low">Low Point Action</span><span class="att-legend high">High Point Action</span><span class="att-legend positive">+ Positive Point Earned</span><span class="att-legend ne">Not Employed</span><span class="att-legend off">Off = no highlight</span></div>`;
   let body='';
   if(single){body=renderPointGridEmployeeRow(emp,dates,end);}
   else{
@@ -570,6 +678,62 @@ function renderPointGrid(){
     body=groups.map(g=>`<tr class="att-point-grid-shift-row"><td colspan="${dates.length+1}">${esc(g.shift)} · ${g.rows.length} employee(s)</td></tr>${g.rows.map(e=>renderPointGridEmployeeRow(e,dates,end)).join('')}`).join('');
   }
   return `<div class="card"><div class="card-title">90-Day Grid</div>${controls}<div class="mini-note">The ending/current date is the first column on the left; older dates continue to the right. Click any attendance cell to make a controlled correction with a required reason.</div>${summary}${legend}</div><div class="table-wrap" id="attendancePointGridWrap"><table><thead><tr><th class="name">Employee</th>${dates.map(d=>`<th style="min-width:38px">${d.slice(5)}</th>`).join('')}</tr></thead><tbody>${body||`<tr><td colspan="${dates.length+1}">No employees match the selected shift.</td></tr>`}</tbody></table></div>`;
+}
+
+function doctorNoteDefaultCodes(){return ['CO','T<5','T5-14','T15+'];}
+function openDoctorNoteModal(empId='',startDate='',endDate=''){
+  if(attendanceMigrationPending()){toast('Commit the Attendance Point System migration before adding doctor-note coverage.');return;}
+  if(roleOf()!=='Admin'){toast('Administrator access is required to add doctor-note coverage.');return;}
+  const emps=activeAttendanceEmployees().slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  if(!emps.length){toast('No active Attendance employees are available.');return;}
+  const selected=emps.some(e=>String(e.id)===String(empId))?String(empId):String(emps[0].id);
+  const today=attendanceLocalToday();
+  const coverageStart=isIsoDateKey(startDate)?startDate:today,coverageEnd=isIsoDateKey(endDate)?endDate:coverageStart;
+  const defaults=new Set(doctorNoteDefaultCodes());
+  showModal(`<div class="modal-head"><div><div class="modal-title">Add Doctor Note Coverage</div><div class="mini-note">Controlled attendance exception with date-range coverage and audit history</div></div><button onclick="closeModal()">Close</button></div><div class="notice"><strong>Coverage preserves the original attendance record.</strong> The first matching event in the covered date range is treated as one doctor-note occurrence at 50% of its normal point value. Additional matching days covered by the same note add no extra points. A doctor-note occurrence still resets clean-attendance progress. For call-offs, the covered range counts as one call-off occurrence for the rolling 14-day CO1/CO2 rule. Do not enter diagnosis or medical details; use only an administrative reference.</div><div class="form-grid"><div class="full"><label>Employee</label><select id="medicalEmpId">${emps.map(e=>`<option value="${esc(e.id)}" ${String(e.id)===selected?'selected':''}>${esc(e.name)} · ${esc(e.shift||'')}</option>`).join('')}</select></div><div><label>Coverage Start Date</label><input id="medicalStartDate" type="date" value="${coverageStart}"></div><div><label>Coverage End Date</label><input id="medicalEndDate" type="date" value="${coverageEnd}"></div><div><label>Doctor Note Received</label><input id="medicalReceivedDate" type="date" value="${today}"></div><div><label>Administrative Reference</label><input id="medicalReference" placeholder="Example: Note received / HR file reference"></div><div class="full"><label>Attendance Events Covered</label><div class="att-medical-code-grid">${ATT_MEDICAL_CODE_OPTIONS.map(x=>`<label class="att-medical-code-option"><input type="checkbox" id="medicalCode_${x.code.replace(/[^A-Za-z0-9]/g,'_')}" ${defaults.has(x.code)?'checked':''}> <span>${esc(x.code)} · ${esc(x.label)}</span></label>`).join('')}</div></div><div class="full"><label>Administrative Note</label><textarea id="medicalAdminNote" placeholder="Optional. Do not enter diagnosis, treatment, or other medical details."></textarea></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="saveDoctorNoteCoverage()">Save Coverage & Recalculate</button></div>`);
+}
+function selectedDoctorNoteCodes(){return ATT_MEDICAL_CODE_OPTIONS.filter(x=>{const el=document.getElementById('medicalCode_'+x.code.replace(/[^A-Za-z0-9]/g,'_'));return !!(el&&el.checked);}).map(x=>x.code);}
+async function saveDoctorNoteCoverage(){
+  if(roleOf()!=='Admin'){toast('Administrator access is required to add doctor-note coverage.');return;}
+  const empId=String(val('medicalEmpId')||'').trim();
+  const emp=(attendance.employees||[]).find(e=>String(e.id)===empId);if(!emp){toast('Select a valid employee.');return;}
+  const startDate=String(val('medicalStartDate')||'').trim(),endDate=String(val('medicalEndDate')||'').trim(),receivedDate=String(val('medicalReceivedDate')||'').trim();
+  const reference=String(val('medicalReference')||'').trim(),adminNote=String(val('medicalAdminNote')||'').trim();
+  const coveredCodes=selectedDoctorNoteCodes();
+  if(!isIsoDateKey(startDate)||!isIsoDateKey(endDate)||!isIsoDateKey(receivedDate)){toast('Coverage start, end, and received dates are required.');return;}
+  if(endDate<startDate){toast('Doctor-note coverage end date cannot be before the start date.');return;}
+  if(!coveredCodes.length){toast('Select at least one attendance event type for the doctor note to cover.');return;}
+  if(!reference){toast('An administrative reference is required. Do not enter medical details.');return;}
+  const preview={empId,startDate,endDate,coveredCodes};
+  const matching=attendanceMedicalMatchingEvents(preview);
+  try{await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});}catch(e){toast('Doctor-note coverage stopped: backup failed. '+(e.message||e));return;}
+  const note={id:'mn-'+Date.now(),empId,employee:emp.name,startDate,endDate,receivedDate,coveredCodes:[...coveredCodes],pointMultiplier:0.5,reference,adminNote,matchingAtEntry:matching.map(x=>({date:x.date,code:x.code})),at:new Date().toISOString(),by:currentUserName()||env.user||'',machine:env.machine||'',voided:false};
+  attendance.medicalNotes=Array.isArray(attendance.medicalNotes)?attendance.medicalNotes:[];
+  attendance.medicalNotes.unshift(note);
+  attendance.medicalNotes=attendance.medicalNotes.slice(0,2000);
+  reclassifyCalloffsForEmployee(empId);
+  audit('Doctor note coverage added',`${emp.name} · ${startDate} through ${endDate} · 50% single-occurrence treatment · ${coveredCodes.join(', ')} · ${matching.length} current matching event(s) · Reference: ${reference}`);
+  closeModal();
+  const ok=await saveAttendanceNow('doctor-note-coverage');
+  if(ok){safeRenderPages();toast(`Doctor note saved. The covered range will count as one 50% attendance occurrence; additional matching days add no extra points, and later-entered matches inside the range recalculate automatically.`);}
+}
+async function voidDoctorNoteCoverage(id){
+  if(roleOf()!=='Admin'){toast('Administrator access is required to void doctor-note coverage.');return;}
+  const note=(attendance.medicalNotes||[]).find(n=>String(n.id)===String(id));if(!note||note.voided)return;
+  const reason=prompt('Reason for voiding this doctor-note coverage:','');
+  if(reason===null)return;
+  if(!String(reason).trim()){toast('A reason is required to void doctor-note coverage.');return;}
+  if(!confirm('Void this doctor-note coverage? Attendance points and call-off classifications will recalculate immediately.'))return;
+  try{await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});}catch(e){toast('Doctor-note void stopped: backup failed. '+(e.message||e));return;}
+  note.voided=true;note.voidedAt=new Date().toISOString();note.voidedBy=currentUserName()||env.user||'';note.voidReason=String(reason).trim();
+  reclassifyCalloffsForEmployee(note.empId);
+  audit('Doctor note coverage voided',`${note.employee||note.empId} · ${note.startDate} through ${note.endDate} · Reason: ${note.voidReason}`);
+  const ok=await saveAttendanceNow('doctor-note-coverage-void');
+  if(ok){safeRenderPages();toast('Doctor-note coverage voided and attendance recalculated.');}
+}
+function renderDoctorNotes(){
+  const notes=(attendance.medicalNotes||[]).slice().sort((a,b)=>String(b.at||'').localeCompare(String(a.at||''))).filter(n=>medicalNoteFilter==='all'||(medicalNoteFilter==='active'&&!n.voided)||(medicalNoteFilter==='voided'&&n.voided));
+  return `<div class="card"><div class="card-title">Doctor Note Coverage</div><div class="toolbar"><button class="primary admin-only" onclick="openDoctorNoteModal()">Add Doctor Note</button><div><label>Status</label><select onchange="medicalNoteFilter=this.value;safeRenderPages()"><option value="active" ${medicalNoteFilter==='active'?'selected':''}>Active</option><option value="voided" ${medicalNoteFilter==='voided'?'selected':''}>Voided</option><option value="all" ${medicalNoteFilter==='all'?'selected':''}>All</option></select></div></div><div class="notice">Doctor-note coverage is an attendance calculation control, not a medical record repository. The covered range counts as one occurrence at 50% of the first matching event's normal point value; additional matching days add no extra points. Original attendance codes remain visible. Store only administrative references here and keep medical details in the appropriate HR process.</div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Coverage Range</th><th>Events Covered</th><th>Point Treatment</th><th>Received</th><th>Current Matches</th><th>Reference</th><th>Status</th><th>Action</th></tr></thead><tbody>${notes.map(n=>{const emp=attendanceMedicalNoteEmployee(n);const matches=attendanceMedicalMatchingEvents(n);return `<tr><td>${esc(n.employee||(emp&&emp.name)||n.empId)}</td><td>${esc(fmt(n.startDate))} → ${esc(fmt(n.endDate))}</td><td>${esc((n.coveredCodes||[]).join(', '))}</td><td>${esc(Math.round(attendanceMedicalPointMultiplier(n)*100))}% once</td><td>${esc(fmt(n.receivedDate||''))}</td><td>${matches.length}${matches.length?`<div class="mini-note">${esc(matches.map(x=>x.date+' '+x.code).join(' · '))}</div>`:''}</td><td>${esc(n.reference||'')}${n.adminNote?`<div class="mini-note">${esc(n.adminNote)}</div>`:''}</td><td>${n.voided?`<span class="chip critical">Voided</span><div class="mini-note">${esc(n.voidReason||'')}</div>`:'<span class="chip ok">Active</span>'}</td><td>${!n.voided?`<button class="sm danger admin-only" onclick="voidDoctorNoteCoverage('${esc(n.id)}')">Void</button>`:''}</td></tr>`}).join('')||'<tr><td colspan="9">No doctor-note coverage records match this view.</td></tr>'}</tbody></table></div>`;
 }
 
 function pointReviewRows(){

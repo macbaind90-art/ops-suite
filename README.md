@@ -1,4 +1,25 @@
-# PWADC Security Operations Suite v3.5.0.11
+# PWADC Security Operations Suite v3.5.0.13
+
+
+## v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status
+- Doctor Note Coverage now treats the covered date range as **one attendance occurrence at 50% of the first matching event's normal point value**.
+- Additional matching attendance events inside the same active doctor-note range remain visible but add **0 additional points**, preventing a multi-day note from stacking daily attendance points.
+- A doctor-note-covered call-off range counts as **one call-off occurrence** for the rolling 14-day CO1/CO2 rule. Additional call-off days under that same note do not create additional call-off occurrences.
+- Doctor-note-covered attendance issues still reset the 12-clean-working-day positive-attendance streak; the note reduces the point consequence but does not convert the attendance issue into a clean day.
+- Doctor-note point treatment remains dynamic: if an Admin changes the underlying attendance point values, active doctor-note calculations replay automatically at 50% of the current configured value while respecting manual current-point baselines.
+- Added **SUS - Suspended** as a Daily Entry / 90-Day Grid attendance status. SUS carries **0 negative points**, does **not** count as a clean working day, and **resets clean-attendance progress** toward the next positive point.
+- Existing doctor-note records created in v3.5.0.12 are treated as 50% single-occurrence records when loaded under v3.5.0.13; no destructive rewrite of the underlying attendance codes is required.
+
+
+## v3.5.0.12 - Doctor Note Attendance Coverage
+- Added Admin-only **Doctor Note Coverage** to Attendance with a dedicated Doctor Notes view plus quick access from Daily Entry and Point Review.
+- A doctor note can cover a manager-selected date range and one or more selected attendance event types, including call-offs, tardies, left early, early-in, NCNS, and legacy unexcused records.
+- Coverage preserves the original attendance code for audit/history but excludes the covered event from negative-point calculation.
+- Covered call-offs are excluded from the rolling 14-day CO1/CO2 chain so a medically covered call-off does not make the next uncovered call-off a CO2.
+- Covered tardy/early-work events are treated as approved worked days for the 12-clean-workday positive-credit calculation; covered absence events are neutral and do not reset the streak.
+- Coverage is date-range based, so a matching attendance event entered later inside an already-authorized range recalculates automatically.
+- Saving or voiding doctor-note coverage creates an Attendance backup first, writes an audit record, and immediately recalculates points, positive credits, thresholds, highlighting, Home metrics, and reports.
+- The Doctor Notes control stores only administrative references. The UI explicitly warns not to enter diagnosis, treatment, or other medical details.
 
 ## v3.5.0.11 - Editable Attendance Point Values
 - Added an Admin-only **Edit Point Values** control in Attendance and Point Review.

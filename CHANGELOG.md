@@ -1,5 +1,23 @@
 # PWADC Security Operations Suite - Changelog
 
+## v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status
+- Changed doctor-note coverage from zero-point treatment to one 50% attendance occurrence per active doctor-note range.
+- Additional matching covered days remain visible but add no additional points.
+- Covered call-off ranges now count as one occurrence in the rolling 14-day CO1/CO2 chain instead of being removed from the chain.
+- Doctor-note-covered attendance issues reset clean-attendance progress.
+- Added SUS (Suspended): 0 points, resets clean-attendance progress, and remains visible in Daily Entry, the 90-Day Grid, reports, and audit history.
+- Added targeted regression validation for doctor-note multi-day grouping, 50% calculation, call-off occurrence behavior, and Suspended status.
+
+## v3.5.0.12 - Doctor Note Attendance Coverage
+- Added Admin-only doctor-note coverage with employee, coverage start/end dates, note-received date, administrative reference, and selectable covered attendance event types.
+- Original attendance records remain intact and visible while covered events calculate at zero points.
+- Covered call-offs are excluded from rolling CO1/CO2 classification.
+- Covered tardy/left-early/early-in events preserve clean-workday progress; covered absences are neutral.
+- Date-range coverage automatically applies to matching records entered later within the authorized range.
+- Added backup-first void controls with required reason and immediate recalculation.
+- Added Doctor Notes view plus quick-entry controls from Daily Entry and Point Review.
+- Added dedicated doctor-note coverage regression validation to the Windows build workflow.
+
 ## v3.5.0.11 - Editable Attendance Point Values
 - Added Admin-only point-policy editing for T<5, T5-14, T15+, CO1, CO2, NCNS, LE, and EIA.
 - Point values are now stored in the Attendance point-system configuration instead of being calculation-only constants.

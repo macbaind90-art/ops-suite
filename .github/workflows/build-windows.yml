@@ -49,6 +49,12 @@ jobs:
       - name: Validate Attendance point-value editor
         run: node tools/validate-point-value-editor.js
 
+      - name: Validate doctor-note attendance coverage
+        run: node tools/validate-doctor-note-coverage.js
+
+      - name: Validate suspended attendance status
+        run: node tools/validate-suspended-attendance.js
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -66,5 +72,5 @@ jobs:
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v3-5-0-11-Windows
+          name: PWADC-Security-Operations-Suite-v3-5-0-13-Windows
           path: publish/**

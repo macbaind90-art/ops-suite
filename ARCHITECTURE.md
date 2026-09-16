@@ -17,7 +17,7 @@ The design objective is controlled separation, not a framework rewrite.
 7. `app/js/60-roster-schedule.js` - roster maintenance, schedule workspace, mock schedules and schedule print/share
 8. `app/js/70-training-uniforms.js` - training, uniform accountability, labor/coverage analytics and roster import/export helpers
 9. `app/js/80-attendance.js` - legacy Attendance compatibility, shared Attendance utilities, audit/import/export helpers, and preserved historical functions
-10. `app/js/82-attendance-points.js` - v3.5 Attendance Point System, backup-first migration, rolling 90-day points, rolling 14-day CO classification, Live Schedule work/off authority with Roster RDO fallback, positive-credit engine, controlled historical-grid corrections, manual current-point adjustments, Point Review and Corrective Action
+10. `app/js/82-attendance-points.js` - v3.5 Attendance Point System, backup-first migration, rolling 90-day points, rolling 14-day CO classification, Live Schedule work/off authority with Roster RDO fallback, positive-credit engine, controlled historical-grid corrections, doctor-note date-range coverage, manual current-point adjustments, Point Review and Corrective Action
 11. `app/js/90-shift-operations.js` - Shift Reports and Shift Intelligence
 11. `app/js/95-tasks-settings.js` - Task Tracker, Settings and viewport behavior
 12. `app/js/99-startup.js` - validates module registration and then calls `init()`
@@ -124,3 +124,12 @@ Operational shared JSON modules load through the Windows host and receive a revi
 
 ## v3.5.0.11 Attendance Point Policy Configuration
 Chargeable Attendance point values are persisted in `attendance.pointSystem.pointValues` and are resolved through one canonical calculation helper. Admin policy changes are backup-first, reason-required, audited, and immediately replay the existing Attendance event history. `pointValueHistory` preserves before/after policy values and recalculation metadata. Manual current-point adjustments remain explicit management baselines rather than being rewritten by a policy-value edit.
+
+
+## v3.5.0.13 Doctor Note Point Treatment + Suspended Status
+Doctor-note records remain stored in `attendance.medicalNotes`, but their calculation semantics are now single-occurrence rather than zero-point exclusion. For each active doctor-note record, the earliest matching covered attendance event is the point-bearing occurrence and is charged at `pointMultiplier` (default/current policy: 0.5) times the event's configured normal point value. Additional matching events under the same note remain visible but contribute no additional negative points. Doctor-note attendance issues reset clean-attendance progress. A doctor-note call-off range contributes exactly one occurrence to the rolling 14-day CO1/CO2 chain. Existing v3.5.0.12 records without an explicit multiplier are interpreted as 0.5 for forward compatibility.
+
+`SUS` is a fixed zero-point attendance status. It is intentionally outside editable chargeable point values. It resets clean-attendance progress and does not count as a clean worked day.
+
+## v3.5.0.12 Doctor Note Coverage Model
+Doctor-note coverage is stored in `attendance.medicalNotes` as an audited administrative exception record. Each active record identifies one employee, a coverage start/end date, the received date, selected attendance event types, and an administrative reference. The original attendance code remains unchanged. The point engine checks active medical coverage while replaying attendance history, excludes covered events from negative-point totals, removes covered call-offs from the rolling CO1/CO2 chain, and preserves clean-workday progress for covered worked-day events. Voiding coverage is backup-first, reason-required, audited, and causes the point history to replay under the remaining active coverage records. Medical diagnosis/treatment data is intentionally outside this schema.

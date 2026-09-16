@@ -1,4 +1,4 @@
-/* v3.5.0.11 browser startup binding regression guard */
+/* v3.5.0.13 browser startup binding regression guard */
 'use strict';
 const fs=require('fs');
 const path=require('path');

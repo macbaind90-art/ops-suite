@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Roadmap to v4.0
 
-Current build: **v3.5.0.11 - Editable Attendance Point Values**.
+Current build: **v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status**.
 
 ## Completed
 - ~~v3.2.1 - Full UI / UX Audit + Roadmap Anchor~~ Completed
@@ -45,7 +45,9 @@ Current build: **v3.5.0.11 - Editable Attendance Point Values**.
 - ~~v3.5.0.8 - Command Center Attendance Workflow Alignment~~ Completed
 - ~~v3.5.0.9 - Attendance Legacy Workflow Retirement / QA Stabilization~~ Completed
 - ~~v3.5.0.10 - Attendance Startup Binding Hotfix~~ Completed
-- **v3.5.0.11 - Editable Attendance Point Values** Current
+- ~~v3.5.0.11 - Editable Attendance Point Values~~ Completed
+- ~~v3.5.0.12 - Doctor Note Attendance Coverage~~ Completed
+- **v3.5.0.13 - Doctor Note Half-Point Occurrence + Suspended Status** Current
 
 ## Current Governance Model
 ### Command Center
@@ -54,7 +56,7 @@ Current build: **v3.5.0.11 - Editable Attendance Point Values**.
 
 ### People Lane
 - Attendance Point System, Roster, Employee Profile, Training, and Uniform Accountability remain connected as the People Workflow.
-- Attendance operational flow is Daily Entry → 90-Day Grid → Point Review → Corrective Action → Audit.
+- Attendance operational flow is Daily Entry → 90-Day Grid → Point Review → Doctor Notes → Corrective Action → Audit.
 - Legacy Pattern / Notice / exception-flag workflows are retired from live code as of v3.5.0.9; older raw fields remain preserved only for historical JSON compatibility.
 
 ### Operations Lane

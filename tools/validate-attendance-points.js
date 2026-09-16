@@ -15,7 +15,8 @@ const required=[
   "const ATTENDANCE_DAILY_SHIFT_ORDER=['3rd Shift','1st Shift','2nd Shift','Gate','Reception']",
   "let pointGridMode='all'","All Employees","Single Employee","pointDailyGroups(rows)",
   "function attendanceEmployeePointClass","if(points<3)return 'att-emp-risk-green'","if(points<7)return 'att-emp-risk-yellow'","return 'att-emp-risk-red'",
-  "function pointGridStatusClass","if(c==='NE')return 'att-status-ne'","if(c==='O')return ''","if(c==='P')return 'att-status-present'",
+  "function pointGridStatusClass","if(c==='NE')return 'att-status-ne'","if(c==='O')return ''","if(c==='P')return 'att-status-present'","if(c==='SUS')return 'att-status-suspended'",
+  "{code:'SUS',label:'Suspended',points:0,kind:'reset'}","const ATT_RESET_CODES=new Set(['SUS'])","if(ATT_RESET_CODES.has(code))",
   'att-status-approved',"pts>=2?'att-status-issue-high':'att-status-issue-low'",'att-positive-earned','point-positive-award','att-point-grid-shift-row',
   "for(let d=end;d>=addDays(end,-89);d=addDays(d,-1))dates.push(d)",
   'function openPointGridEditModal','function savePointGridEdit','Reason for Record Change *','Historical attendance record corrected','attendance.recordEdits',
@@ -34,7 +35,7 @@ if(!src.includes("if(!reason){toast('A reason is required to edit a 90-Day Grid 
 if(!src.includes("if(!reason){toast('A reason is required to edit current attendance points.')"))throw new Error('Manual point-adjustment reason gate missing.');
 
 const styles=fs.readFileSync(path.join(root,'app','assets','styles.css'),'utf8');
-for(const token of ['Attendance point grid visual status','.att-status-present','.att-status-approved','.att-status-issue-low','.att-status-issue-high','.att-status-ne','.att-positive-earned','.att-emp-risk-green','.att-emp-risk-yellow','.att-emp-risk-red','.att-point-grid-shift-row','.att-point-editable']){
+for(const token of ['Attendance point grid visual status','.att-status-present','.att-status-approved','.att-status-issue-low','.att-status-issue-high','.att-status-ne','.att-positive-earned','.att-emp-risk-green','.att-emp-risk-yellow','.att-emp-risk-red','.att-point-grid-shift-row','.att-point-editable','.att-status-suspended','.att-legend.suspended']){
   if(!styles.includes(token))throw new Error('Attendance visual-status CSS missing: '+token);
 }
 
@@ -57,3 +58,5 @@ console.log('90-Day Grid shift sections/status colors: PASS');
 console.log('Employee-name point-status colors: PASS');
 console.log('Manual current-point adjustment + future exclusion: PASS');
 console.log('Point-adjustment backup/audit controls: PASS');
+
+console.log('Suspended 0-point clean-streak reset contract: PASS');

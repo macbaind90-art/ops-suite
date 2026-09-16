@@ -649,3 +649,15 @@ label:has(>input[type=checkbox]),label:has(>input[type=radio]){display:flex;alig
 .att-legend.high{background:rgba(255,107,107,.24);border-color:rgba(255,107,107,.55);color:#ffc0c0}
 .att-legend.ne{background:#050505;color:#777;border-color:#333}
 .att-legend.off{background:transparent;color:var(--muted)}
+
+/* v3.5.0.13 Doctor note single-occurrence coverage + suspended status */
+.att-medical-code-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px;margin-top:7px}
+.att-medical-code-option{display:flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--surface2);min-width:0}
+.att-medical-code-option input{width:16px!important;height:16px!important;flex:0 0 auto}
+.att-medical-code-option span{min-width:0}
+.att-point-cell.att-medical-covered{box-shadow:inset 0 0 0 2px rgba(83,146,214,.78)}
+.point-medical-note{position:absolute;left:2px;top:2px;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;padding:0 4px;border-radius:999px;background:rgba(83,146,214,.92);color:#07111c;font-size:9px;font-weight:950;line-height:1}
+.att-legend.medical{background:rgba(83,146,214,.20);border-color:rgba(83,146,214,.62);color:#b7d8ff}
+.att-point-cell.att-status-suspended{background:rgba(255,196,87,.12);box-shadow:inset 0 0 0 1px rgba(255,196,87,.38)}
+.att-legend.suspended{background:rgba(255,196,87,.12);border-color:rgba(255,196,87,.42);color:#ffe0a0}
+

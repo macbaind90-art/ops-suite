@@ -99,7 +99,7 @@ if(!registry.ok||registry.unexpected.length)throw new Error('Front-end module re
 
 const major=['home','start-here','attendance','roster','employee-profile','training','office-supplies','shift-reports','shift-intelligence','reports','settings','tasks','data-health','restore','change-log','other-programs'];
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
-for(const view of ['daily','grid','review','actions','audit']){const out=evalx(`activeAttView='${view}'; renderAttendance()`);if(typeof out!=='string'||out.length<20)throw new Error('Attendance render failed: '+view);}
+for(const view of ['daily','grid','review','medical','actions','audit']){const out=evalx(`activeAttView='${view}'; renderAttendance()`);if(typeof out!=='string'||out.length<20)throw new Error('Attendance render failed: '+view);}
 
 // Attendance point behavior is validated by dedicated v3.5 regression validators.
 
@@ -182,4 +182,4 @@ const full=startupScenario(expectedModules),missing=startupScenario(expectedModu
 if(full.initCount!==1||full.error)throw new Error('Startup gate failed with a complete module set.');
 if(missing.initCount!==0||!missing.error.includes('tasks-settings'))throw new Error('Startup gate did not block an incomplete module set.');
 
-console.log(`PWADC front-end validation passed: ${major.length} major modules, 5 attendance views, 5 roster views, ${declarations.length} named functions, ${targets.size} inline action targets, ${registry.loaded.length} registered modules.`);
+console.log(`PWADC front-end validation passed: ${major.length} major modules, 6 attendance views, 5 roster views, ${declarations.length} named functions, ${targets.size} inline action targets, ${registry.loaded.length} registered modules.`);
