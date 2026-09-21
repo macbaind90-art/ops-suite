@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.0.1
+# PWADC Security Operations Suite v4.1.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,8 +7,21 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.0.1` = the current minor correction within that feature line; `4.1.0` = the next feature-level release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.0.1` = a minor correction within that feature line; `4.1.0` = the current feature-level release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
 
+
+## v4.1.0 - Controlled Schema Migration Framework
+- Adds a common startup migration framework for future core-suite JSON schema changes without changing the current revision-1 business schemas merely to exercise the framework.
+- Startup order is now **Daily LKG -> schema metadata/compatibility scan -> schema migration processing -> normal UI startup**.
+- Immediately previous schemas can be routed through a registered current-to-next migration. Older-than-previous and newer schemas remain protected from writes.
+- Low-risk structural migrations can run automatically after a verified pre-migration backup; major or business-rule migrations require an active Administrator account and PIN approval.
+- Major migrations present module, source/target schemas, change summary, business-meaning indicator, record counts, backup information, and warnings before approval.
+- Each module migrates independently and one at a time under a short-duration migration coordinator lock. A failure in one module does not roll back unrelated successful module migrations.
+- Migrations are staged in memory first, JSON/schema validated, record counts and key identities verified when required, then written through the protected atomic persistence path.
+- After the write, the live file is reopened from disk and revalidated before the module is considered current. Post-write verification failure triggers restoration from the verified pre-migration backup.
+- Non-Admin users may continue using unaffected modules when a major migration is pending; the affected module remains unavailable/read-only until an Admin approves the migration.
+- Migration outcomes are recorded in an append-only JSONL history under `Data Integrity\Schema Migrations`, including module, source/target schema, app version, workstation, actor, approval mode, backup path, counts, and success/failure.
+- No production schema revisions are advanced in v4.1.0; the framework is infrastructure for the next real structural data change.
 
 ## v4.0.1 - Schema Scope / External Data Compatibility Fix
 - Schema compatibility guarding is now limited to JSON files the core suite actually owns and writes.
@@ -637,7 +650,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.4.0 - Data Layer / Reliability Upgrade~~ Completed
 - ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed
 - ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed
-- **v4.0.1 - Schema Scope / External Data Compatibility Fix** Current
+- ~~v4.0.1 - Schema Scope / External Data Compatibility Fix~~ Completed
+- **v4.1.0 - Controlled Schema Migration Framework** Current
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map
@@ -647,7 +661,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 4. **Governance Lane:** Report Center, Data Health, Backup & Restore, Change Log, and Admin Settings follow Report → Verify → Recover → Govern.
 5. **Specialist Tools:** Other Programs launches independent tools without mixing their scripts into the primary suite.
 6. **Emergency Response:** The approved PWADC Emergency Response Protocol System remains a planned dispatcher-style guided protocol capability.
-7. **Architecture Continuity:** v4.0.0 is the new major-version baseline; the current C# / WebView2 / HTML / CSS / JavaScript platform remains the supported production architecture.
+7. **Architecture Continuity:** v4.0.0 established the current major-version baseline; the current C# / WebView2 / HTML / CSS / JavaScript platform remains the supported production architecture.
 
 ## Architecture Direction
 Continue with the current C# / WebView2 / HTML / CSS / JavaScript stack. Major-version numbering does not imply a platform rewrite. Future feature releases will build on the existing modular architecture and approved reliability controls unless a demonstrated PWADC operational need requires an architectural change.

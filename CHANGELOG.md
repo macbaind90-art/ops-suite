@@ -1,5 +1,19 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.1.0 - Controlled Schema Migration Framework
+- Added the common startup migration framework approved for future core-suite JSON schema changes.
+- Preserved all current production schema revisions at revision 1; v4.1.0 does not invent a schema change simply to exercise migration code.
+- Startup now processes schema migration state after the Daily Last-Known-Good snapshot and schema metadata initialization, before normal module use.
+- Added two migration classes: low-risk structural migrations may run automatically; major/business-rule migrations require verified Administrator approval.
+- Added Admin migration preview metadata including source/target schema, summary, material changes, business-meaning flag, record counts, pre-migration backup path/time, source revision, and SHA-256.
+- Added strict per-module all-or-nothing behavior with a verified pre-migration backup, in-memory staging, schema validation, optional count/key-identity preservation checks, protected atomic write, disk reopen verification, and direct rollback if post-write verification fails.
+- Added a suite-wide short-duration schema-migration coordinator so migration writes are processed one module at a time across workstations.
+- Added current + immediately previous schema support policy. Older-than-previous schemas remain protected and require manual review rather than chained legacy migrations.
+- Added non-Admin gating so modules awaiting major migration approval stay unavailable/read-only while unaffected modules remain usable.
+- Added permanent append-only migration history in `Data Integrity\Schema Migrations\migration-history.jsonl`.
+- Added bridge endpoints and Admin UI flow for migration status, history, review, and approval.
+- Added `tools/validate-schema-migrations.js` and a Windows build-workflow validation gate.
+
 ## v4.0.1 - Schema Scope / External Data Compatibility Fix
 - Corrected startup schema discovery so compatibility guarding applies only to **registered PWADC Security Operations Suite core JSON modules**.
 - Specialist/standalone tool JSON stored under the shared `Data` tree, including files such as `symmetry_access.json` and Camera User Tracker records, is no longer misclassified as an unregistered suite module and no longer triggers the startup compatibility warning.

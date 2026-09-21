@@ -21,7 +21,8 @@ namespace PWADC.SecurityOperationsSuite
                 {
                     string raw = File.ReadAllText(path);
                     SchemaCompatibilityInfo compatibility = EvaluateSchemaCompatibility("suite-settings", raw);
-                    if (!compatibility.ReadAllowed || (!compatibility.WriteAllowed && compatibility.Status != "legacy-missing"))
+                    bool runtimeReadable = compatibility.ReadAllowed && (compatibility.Status == "current" || compatibility.Status == "legacy-missing" || compatibility.Status == "previous");
+                    if (!runtimeReadable)
                         throw new SchemaCompatibilityException("SCHEMA_COMPATIBILITY_BLOCK: Suite Settings cannot be safely opened by this app. " + compatibility.Message);
                     SuiteSettings? loaded = JsonSerializer.Deserialize<SuiteSettings>(raw, JsonOptions);
                     if (loaded != null)
@@ -56,6 +57,7 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Conflict Audit"));
+            Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Schema Migrations"));
             foreach (string module in ModuleNames())
             {
                 Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module)));
@@ -89,6 +91,7 @@ namespace PWADC.SecurityOperationsSuite
             checks.Add(Check("Can create data integrity folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Conflict Audit")); return true; }));
             checks.Add(Check("Atomic write service active", () => typeof(MainForm).GetMethod("WriteJsonAtomically", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null));
+            checks.Add(Check("Schema migration framework active", () => typeof(MainForm).GetMethod("ProcessStartupSchemaMigrations", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null));
             checks.Add(Check("Live JSON integrity", () =>
             {
                 string dataDir = Path.Combine(settings.DataRoot, "Data");

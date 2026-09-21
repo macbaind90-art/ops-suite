@@ -16,7 +16,7 @@ namespace PWADC.SecurityOperationsSuite
         private readonly string appFolder;
         private readonly string indexPath;
 
-        private const string AppVersion = "4.0.1";
+        private const string AppVersion = "4.1.0";
         private const string DefaultRoot = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         private const string SettingsFileName = "suite-settings.json";
         private SuiteSettings settings = new SuiteSettings();
@@ -51,11 +51,19 @@ namespace PWADC.SecurityOperationsSuite
                     MessageBox.Show(lkg.Message, "PWADC Daily Last-Known-Good", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
                 SchemaInitializationResult schemaInit = EnsureLiveSchemaMetadata();
-                if (schemaInit.Issues.Count > 0)
+                StartupMigrationSummary migrationSummary = ProcessStartupSchemaMigrations();
+                var startupSchemaIssues = new List<string>();
+                startupSchemaIssues.AddRange(schemaInit.Issues);
+                startupSchemaIssues.AddRange(migrationSummary.Warnings);
+                foreach (SchemaMigrationPreview blocked in migrationSummary.Blocked)
+                    startupSchemaIssues.Add(blocked.ModuleLabel + ": " + blocked.Message);
+                if (migrationSummary.Pending.Count > 0)
+                    startupSchemaIssues.Add(migrationSummary.Pending.Count + " module(s) require Administrator migration approval. Affected modules remain read-only until approved.");
+                if (startupSchemaIssues.Count > 0)
                 {
                     MessageBox.Show(
-                        "Schema compatibility protection found data that requires review. The affected files were not changed and writes will remain blocked for incompatible modules.\r\n\r\n" + string.Join("\r\n", schemaInit.Issues),
-                        "PWADC Schema Compatibility",
+                        "Schema compatibility / migration protection found data that requires review. Unaffected modules can continue normally; protected modules will not accept incompatible writes.\r\n\r\n" + string.Join("\r\n", startupSchemaIssues),
+                        "PWADC Schema Migration",
                         MessageBoxButtons.OK,
                         MessageBoxIcon.Warning);
                 }

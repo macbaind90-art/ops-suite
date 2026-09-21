@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.0.1 - Schema Scope / External Data Compatibility Fix**.
+Current production build: **v4.1.0 - Controlled Schema Migration Framework**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
@@ -64,31 +64,32 @@ Implemented behavior:
 - newer schemas are write-blocked to prevent downgrade damage
 - incompatible Suite Settings block startup because settings are security/data-root authority
 - schema state is exposed through load envelopes and Data Health file verification
-- unregistered JSON found in the live Data folder is flagged rather than modified silently
+- schema governance applies only to registered core-suite JSON; specialist/standalone tool JSON under the shared Data tree remains untouched and does not block suite startup
 
 Current initial schemas: `attendance-1`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-1`.
 
 ### 3. Controlled Schema Migration Framework
-**Status: Approved**
+**Status: Completed in v4.1.0**
 
-Create a lightweight common migration pattern for future structural data changes.
+Implemented behavior:
+- startup order: Daily LKG -> schema compatibility -> migration queue -> normal module use
+- current + immediately previous schema support; older schemas require manual review
+- low-risk structural migrations may run automatically after backup and validation
+- major/business-rule migrations require verified Admin approval and an impact preview
+- deterministic hash-verified pre-migration backup before any transform/write
+- migration occurs in memory/staging first and is schema-validated before promotion
+- optional record-count and key-identity preservation checks protect business records
+- protected atomic write plus stale-source SHA/revision recheck prevents approval against changed data
+- disk reopen/schema/fingerprint verification is required before a migration is considered complete
+- post-write verification failure restores and verifies the pre-migration backup
+- a suite-wide short-duration migration coordinator processes migration writes one module at a time
+- non-Admins can continue using unaffected modules while a major migration waits for Admin review
+- migration history is permanent append-only JSONL and records actor/workstation/version/schema/backup/outcome metadata
 
-Required pattern:
-- detect source schema
-- create pre-migration backup
-- describe material migration changes when appropriate
-- migrate in memory first
-- validate converted data
-- require Admin confirmation for significant migrations
-- save through the existing protected persistence path
-- stamp the new schema version
-- audit the migration
-- prevent the same migration from running twice
-
-This is a common safety framework, not a large standalone migration engine.
+No production schema revision was advanced solely to test the framework. Migration definitions are registered only when a future release has a real structural data change to perform.
 
 ### 4. Data Health & Recovery Dashboard
-**Status: Approved**
+**Status: Approved - Next Active Build Item**
 
 Upgrade Data Health into the central view for determining whether shared suite data is healthy, current, compatible, and recoverable.
 

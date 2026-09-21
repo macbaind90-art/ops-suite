@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.0.1**
-- Release: **Schema Scope / External Data Compatibility Fix**
-- Baseline: **v4.0.0 - Schema Version & Compatibility Guarding**
+- Version: **4.1.0**
+- Release: **Controlled Schema Migration Framework**
+- Baseline: **v4.0.1 - Schema Scope / External Data Compatibility Fix**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -41,7 +41,7 @@
 - Doctor-note records store administrative references only; the UI warns against storing diagnosis/treatment details
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 842 named functions / 208 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 852 named functions / 210 inline action targets / 10 registered modules
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - Roster-to-Attendance population regression: **PASS**
@@ -55,6 +55,7 @@
 - Suspended attendance status regression: **PASS**
 - Daily Last-Known-Good source regression: **PASS**
 - Schema Version & Compatibility Guarding regression: **PASS**
+- Controlled Schema Migration Framework regression: **PASS**
 - September 9 production Attendance backup render smoke: **PASS** - 16 major modules / 6 Attendance views loaded against the real 42-employee backup; legacy data with no doctor-note field normalizes cleanly
 - Positive-credit partial/fractional carryover regression: **PASS**
 - 3-point balance cap with re-earning after use: **PASS**
@@ -64,14 +65,41 @@
 - `.git` in source package: **NOT PRESENT**
 - Root Markdown control: **6 standing documents**
 
+## Release Package Verification
+- Exact packaged ZIP extraction and full validator rerun: **PASS**.
+- Exact packaged ZIP XML/project/manifest parse and manifest declaration check: **PASS**.
+- Exact packaged ZIP root-document control (six standing Markdown files) and no `.git` repository metadata: **PASS**.
+- Exact packaged ZIP September 9 production Attendance backup smoke: **PASS**.
+- ZIP archive integrity test: **PASS**.
+- Authoritative Windows .NET 10 compile/publish remains the GitHub Actions build because the local validation environment does not include the .NET SDK.
+
 ## Windows Build Status
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- The authoritative compile/publish remains the GitHub Actions Windows run after this corrected source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.1.0 source package is uploaded to `main`.
 
 
 
+
+## v4.1.0 Targeted Regression - Controlled Schema Migration Framework
+- Daily LKG runs before schema migration processing at startup: **PASS**.
+- Schema metadata/compatibility scan runs before migration queue processing: **PASS**.
+- Current + immediately previous schema policy is enforced; older/newer incompatible schemas remain protected: **PASS**.
+- Low-risk migration path is automatic; major/business-rule path requires Admin approval: **PASS**.
+- Major migration preview carries module, source/target schema, change summary, business-meaning state, counts, backup path/time, source revision, and source SHA-256: **PASS**.
+- Verified pre-migration backup and source/backup hash match are required: **PASS**.
+- Migration is staged in memory and target schema is validated before live write: **PASS**.
+- Optional record-count/key-identity preservation fingerprint is enforced: **PASS**.
+- Migration writes use the protected atomic write path and loaded-revision stale-write gate: **PASS**.
+- Live data is reopened from disk and schema/fingerprint verified after promotion: **PASS**.
+- Post-write verification failure restores the pre-migration backup and verifies its hash: **PASS**.
+- Suite-wide schema migration lock enforces one-at-a-time migration writes across workstations: **PASS**.
+- Active Administrator ID/PIN is required for major migration approval: **PASS**.
+- Non-Admin module access is blocked only for data modules awaiting major migration/review; unaffected modules remain available: **PASS**.
+- Append-only JSONL migration history is present and exposed read-only through the bridge: **PASS**.
+- Dedicated `tools/validate-schema-migrations.js` is included in the Windows workflow: **PASS**.
+- v4.1.0 deliberately registers no synthetic business-schema revision change; framework remains dormant until a real migration definition is shipped: **PASS**.
 
 ## v4.0.1 Targeted Regression
 - Core schema startup discovery is limited to registered suite-owned module JSON: **PASS**.

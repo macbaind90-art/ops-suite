@@ -34,5 +34,5 @@ need(lkg,'files = manifestFiles','Per-file manifest metadata missing.');
 need(lkg,'daily-last-known-good-snapshot','LKG success audit missing.');
 need(lkg,'previousSnapshotPreserved = true','LKG failure preservation record missing.');
 need(workflow,'node tools/validate-daily-lkg.js','Windows workflow does not execute daily LKG validator.');
-need(main,'private const string AppVersion = "4.0.1";','Application version is not 4.0.1.');
+need(main,'private const string AppVersion = "4.1.0";','Application version is not 4.1.0.');
 console.log('Daily Last-Known-Good validation PASS');

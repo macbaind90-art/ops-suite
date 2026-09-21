@@ -37,6 +37,19 @@ namespace PWADC.SecurityOperationsSuite
                         }
                         else await Respond(requestId, false, new { error = "Missing settings payload." });
                         break;
+                    case "suite:getMigrationStatus":
+                        await Respond(requestId, true, GetSchemaMigrationStatus());
+                        break;
+                    case "suite:getMigrationHistory":
+                        await Respond(requestId, true, GetSchemaMigrationHistory());
+                        break;
+                    case "suite:approveSchemaMigration":
+                        if (!root.TryGetProperty("payload", out JsonElement migrationPayload)) throw new InvalidOperationException("Missing schema migration approval payload.");
+                        string migrationModule = migrationPayload.TryGetProperty("module", out JsonElement mm) ? mm.GetString() ?? "" : "";
+                        string migrationAdminId = migrationPayload.TryGetProperty("adminUserId", out JsonElement mai) ? mai.GetString() ?? "" : "";
+                        string migrationAdminPin = migrationPayload.TryGetProperty("adminPin", out JsonElement map) ? map.GetString() ?? "" : "";
+                        await Respond(requestId, true, ApproveSchemaMigration(migrationModule, migrationAdminId, migrationAdminPin));
+                        break;
                     case "suite:healthCheck":
                         await Respond(requestId, true, RunHealthCheck());
                         break;

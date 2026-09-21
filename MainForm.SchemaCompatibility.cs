@@ -135,8 +135,15 @@ namespace PWADC.SecurityOperationsSuite
                     return result;
                 }
 
-                result.Status = "older";
-                result.Message = "This file uses older schema " + actual + "; controlled migration to " + expected + " is required before writes are allowed.";
+                if (actualRevision == expectedRevision - 1)
+                {
+                    result.Status = "previous";
+                    result.Message = "This file uses the immediately previous supported schema " + actual + "; controlled migration to " + expected + " is required before writes are allowed.";
+                    return result;
+                }
+
+                result.Status = "legacy-too-old";
+                result.Message = "This file uses legacy schema " + actual + ". Only the current and immediately previous schema are supported for controlled migration; manual review is required.";
                 return result;
             }
             catch (JsonException ex)
@@ -154,6 +161,11 @@ namespace PWADC.SecurityOperationsSuite
                 || string.Equals(operation, "reset-from-packaged-seed", StringComparison.OrdinalIgnoreCase);
         }
 
+        private static bool IsSchemaMigrationOperation(string operation)
+        {
+            return operation.StartsWith("schema-migration:", StringComparison.OrdinalIgnoreCase);
+        }
+
         private void EnsureExistingTargetSchemaCompatibleForWrite(string module, string targetPath, string operation)
         {
             if (!File.Exists(targetPath)) return;
@@ -161,6 +173,7 @@ namespace PWADC.SecurityOperationsSuite
             string liveJson = File.ReadAllText(targetPath);
             SchemaCompatibilityInfo compatibility = EvaluateSchemaCompatibility(module, liveJson);
             if (compatibility.Status == "current" || compatibility.Status == "legacy-missing") return;
+            if (compatibility.Status == "previous" && IsSchemaMigrationOperation(operation)) return;
 
             // Explicit recovery is allowed to replace malformed JSON because schema metadata cannot
             // be trusted or inspected until the damaged file has been replaced. A formally older,
@@ -215,6 +228,7 @@ namespace PWADC.SecurityOperationsSuite
                         result.Updated++;
                         continue;
                     }
+                    if (compatibility.Status == "previous") continue; // Controlled migration framework owns this state.
                     result.Issues.Add(ModuleFolder(module) + ": " + compatibility.Message);
                 }
                 catch (Exception ex)

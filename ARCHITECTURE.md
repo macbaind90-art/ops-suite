@@ -1,6 +1,20 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.0.1
+# PWADC Security Operations Suite Architecture - Current Production v4.1.0
 
 - **Windows runtime baseline:** .NET 10 (`net10.0-windows`) built with SDK `10.0.400`; self-contained x64 publish remains the production delivery model.
+## v4.1.0 Controlled Schema Migration Architecture
+
+The suite now has a common migration control plane for registered core JSON modules. It does not change a module schema by itself; future releases register an explicit migration definition only when a real structural or business-rule change requires one.
+
+Startup sequence is **Daily LKG -> schema metadata/compatibility -> migration queue -> normal application startup**. Only the current schema and immediately previous schema participate in automatic/controlled migration. Older schemas are legacy/manual-review states; newer schemas remain downgrade-protected.
+
+Each migration definition identifies the module, source and target revisions, risk level, business-meaning impact, change summary, identity-preservation requirement, and transformation function. Low-risk definitions may execute automatically. Major/business-rule definitions remain pending until an active Admin supplies valid approval credentials.
+
+Execution is per-module and one-at-a-time across workstations using `Locks\schema-migration.lock`. Before transformation, the source schema, loaded revision, and SHA-256 are rechecked against the preview to prevent stale approval. A deterministic pre-migration backup is created and hash-verified. Transformation occurs against an in-memory clone, then the target schema and writer version are stamped and validated. Where required, record counts and stable key identities are compared before promotion.
+
+Promotion uses the existing atomic JSON write path and stale-revision gate. The resulting live file is then reopened from disk, schema-validated, and fingerprint-verified. A post-write verification failure triggers restoration from the verified pre-migration backup before the operation is reported failed.
+
+Migration history is append-only JSONL under `Data Integrity\Schema Migrations`. The normal UI exposes status/review through bridge endpoints while the host remains authoritative for Admin credential validation and migration execution. Non-Admins cannot enter modules waiting for Admin approval, but unrelated modules remain operational.
+
 ## Purpose
 v3.3.0 establishes a maintainable module boundary without changing PWADC operational workflows, shared JSON contracts, or the C# / WebView2 platform.
 
@@ -68,6 +82,7 @@ Feature-specific print styles embedded inside JavaScript-generated report window
 - `MainForm.Backups.cs` - backup creation, retention, cleanup, inventory and restore
 - `MainForm.Programs.cs` - approved path handling, packaged programs, suite lock files, environment information and module file status
 - `MainForm.SchemaCompatibility.cs` - live JSON schema registration, compatibility classification, metadata stamping, and write guarding
+- `MainForm.SchemaMigrations.cs` - startup migration queue, migration definitions, Admin approval, backup/staging/verification/rollback, and append-only migration history
 - `Models.cs` - backup models, data-integrity/write outcomes, Suite Settings, coverage requirements and suite users
 
 ## Desktop Bridge Contract
