@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.1.0
+# PWADC Security Operations Suite v4.1.1
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,18 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.0.1` = a minor correction within that feature line; `4.1.0` = the current feature-level release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.1` = the current minor upgrade within the 4.1 feature line. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+
+## v4.1.1 - Doctor Note Editing + Configurable Point Reduction
+- Active doctor-note coverage can now be edited from the Doctor Notes view when the authorized coverage period changes or is extended.
+- Doctor-note edits support coverage start/end date, note-received date, covered attendance event types, administrative reference, and administrative note while keeping the employee identity fixed.
+- Every doctor-note edit requires an Admin, a documented reason, a pre-save Attendance backup, immediate attendance/call-off recalculation, and an append-only edit history on the coverage record.
+- **Edit Point Values** now includes **Doctor Note Point Reduction %**, configurable from 0% to 100%. The default remains 50%.
+- The reduction is a global Attendance point-policy setting. Existing and future active doctor-note coverage recalculates under the current configured percentage while retaining the single-occurrence rule.
+- Attendance policy history now records before/after doctor-note reduction values alongside point-value changes.
+- Attendance schema advances from `attendance-1` to `attendance-2`. The v4.1.0 migration framework performs the 1->2 upgrade automatically as a low-risk migration after backup/validation, preserving the existing 50% treatment and adding doctor-note edit-history containers.
+- Unstamped legacy Attendance JSON is first anchored to `attendance-1` and then routed through the controlled migration instead of being falsely stamped as current.
 
 
 ## v4.1.0 - Controlled Schema Migration Framework
@@ -651,7 +662,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.4.1.0 - Stale Write / Conflict Detection~~ Completed
 - ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed
 - ~~v4.0.1 - Schema Scope / External Data Compatibility Fix~~ Completed
-- **v4.1.0 - Controlled Schema Migration Framework** Current
+- ~~v4.1.0 - Controlled Schema Migration Framework~~ Completed
+- **v4.1.1 - Doctor Note Editing + Configurable Point Reduction** Current
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

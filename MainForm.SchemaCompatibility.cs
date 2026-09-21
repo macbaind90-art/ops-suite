@@ -34,7 +34,7 @@ namespace PWADC.SecurityOperationsSuite
 
         private static readonly Dictionary<string, int> CurrentSchemaRevisions = new(StringComparer.OrdinalIgnoreCase)
         {
-            ["attendance"] = 1,
+            ["attendance"] = 2,
             ["roster"] = 1,
             ["tasks"] = 1,
             ["shift-reports"] = 1,
@@ -47,6 +47,17 @@ namespace PWADC.SecurityOperationsSuite
             if (!CurrentSchemaRevisions.TryGetValue(module, out int revision))
                 throw new InvalidOperationException("No schema version is registered for module: " + module);
             return module + "-" + revision;
+        }
+
+        private static string InitialSchemaVersionForLegacy(string module)
+        {
+            if (!CurrentSchemaRevisions.TryGetValue(module, out int revision))
+                throw new InvalidOperationException("No schema version is registered for module: " + module);
+            // Once a module has real schema history, an unstamped legacy file is first anchored to
+            // the immediately previous revision so the controlled migration framework can apply the
+            // actual structural upgrade instead of falsely stamping legacy data as current.
+            int initialRevision = revision > 1 ? revision - 1 : revision;
+            return module + "-" + initialRevision;
         }
 
         private static bool TryReadStringProperty(JsonElement root, string camelName, string pascalName, out string value)
@@ -199,7 +210,9 @@ namespace PWADC.SecurityOperationsSuite
 
             root.Remove("SchemaVersion");
             root.Remove("LastWrittenByAppVersion");
-            root["schemaVersion"] = CurrentSchemaVersion(module);
+            root["schemaVersion"] = compatibility.Status == "legacy-missing"
+                ? InitialSchemaVersionForLegacy(module)
+                : CurrentSchemaVersion(module);
             root["lastWrittenByAppVersion"] = AppVersion;
             return root.ToJsonString(JsonOptions);
         }

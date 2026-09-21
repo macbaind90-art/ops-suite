@@ -61,11 +61,51 @@ namespace PWADC.SecurityOperationsSuite
 
         private StartupMigrationSummary startupMigrationSummary = new StartupMigrationSummary();
 
-        // v4.1.0 introduces the common migration framework without incrementing any business-data
-        // schema solely to exercise it. Future releases register exact current->next migrations here.
+        // Exact current->next migrations are registered here. v4.1.1 uses the framework for the
+        // first real low-risk Attendance schema upgrade: configurable doctor-note point reduction
+        // and controlled doctor-note edit history. Existing 50% business treatment is preserved.
         private static List<SchemaMigrationDefinition> BuildSchemaMigrationDefinitions()
         {
-            return new List<SchemaMigrationDefinition>();
+            return new List<SchemaMigrationDefinition>
+            {
+                new SchemaMigrationDefinition
+                {
+                    Module = "attendance",
+                    FromRevision = 1,
+                    ToRevision = 2,
+                    Risk = "minor",
+                    Summary = "Adds configurable doctor-note point-reduction policy and edit-history containers without changing existing 50% treatment.",
+                    BusinessMeaningChanged = false,
+                    PreserveRecordIdentity = true,
+                    Changes = new List<string>
+                    {
+                        "Adds pointSystem.policy.doctorNoteReductionPercent with the existing 50% default.",
+                        "Adds an editHistory array to existing doctor-note coverage records.",
+                        "Preserves all employees, attendance records, doctor-note records, points, and identifiers."
+                    },
+                    Transform = root =>
+                    {
+                        JsonObject pointSystem;
+                        if (root["pointSystem"] is JsonObject existingPointSystem) pointSystem = existingPointSystem;
+                        else { pointSystem = new JsonObject(); root["pointSystem"] = pointSystem; }
+
+                        JsonObject policy;
+                        if (pointSystem["policy"] is JsonObject existingPolicy) policy = existingPolicy;
+                        else { policy = new JsonObject(); pointSystem["policy"] = policy; }
+                        if (policy["doctorNoteReductionPercent"] == null) policy["doctorNoteReductionPercent"] = 50;
+
+                        if (root["medicalNotes"] is JsonArray medicalNotes)
+                        {
+                            foreach (JsonNode? item in medicalNotes)
+                            {
+                                if (item is JsonObject note && note["editHistory"] is not JsonArray)
+                                    note["editHistory"] = new JsonArray();
+                            }
+                        }
+                        return root;
+                    }
+                }
+            };
         }
 
         private static SchemaMigrationDefinition? FindMigrationDefinition(string module, int fromRevision, int toRevision)

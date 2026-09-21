@@ -1,5 +1,16 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.1.1 - Doctor Note Editing + Configurable Point Reduction
+- Added Admin-only editing for active doctor-note coverage so approved date ranges can be extended or otherwise corrected without voiding/recreating the record.
+- Doctor-note edits require a reason and pre-save Attendance backup, preserve the employee link, recalculate points/call-off classification immediately, and retain before/after edit history.
+- Added **Doctor Note Point Reduction %** to the Attendance **Edit Point Values** policy screen. Valid range is 0-100%; default remains 50%.
+- Doctor-note point calculations now use the current global policy reduction rather than a fixed per-note 50% multiplier, so existing covered events recalculate when policy changes.
+- Point-policy history/audit now records doctor-note reduction changes with affected-employee recalculation counts.
+- Advanced Attendance schema to `attendance-2` and registered the first real low-risk controlled migration (`attendance-1` -> `attendance-2`).
+- The migration preserves all Attendance record identities, initializes `doctorNoteReductionPercent` to 50%, and adds `editHistory` arrays to existing doctor-note coverage records.
+- Hardened unstamped legacy schema initialization so modules with real schema history are anchored to the immediately previous revision and then migrated through the controlled migration framework.
+- Added/expanded regression coverage for doctor-note editing, configurable reduction recalculation, Attendance schema 2, and the registered 1->2 migration.
+
 ## v4.1.0 - Controlled Schema Migration Framework
 - Added the common startup migration framework approved for future core-suite JSON schema changes.
 - Preserved all current production schema revisions at revision 1; v4.1.0 does not invent a schema change simply to exercise migration code.

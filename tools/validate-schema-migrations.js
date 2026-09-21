@@ -16,8 +16,8 @@ const dataCore=read('app/js/20-data-core.js');
 const workflow=read('.github/workflows/build-windows.yml');
 const csproj=read('SecurityOperationsSuite.csproj');
 
-need(main,'private const string AppVersion = "4.1.0";','AppVersion must be 4.1.0.');
-need(csproj,'<Version>4.1.0</Version>','Project package version must be 4.1.0.');
+need(main,'private const string AppVersion = "4.1.1";','AppVersion must be 4.1.1.');
+need(csproj,'<Version>4.1.1</Version>','Project package version must be 4.1.1.');
 need(main,'EnsureDailyLastKnownGoodSnapshot();','Daily LKG must remain part of startup.');
 need(main,'EnsureLiveSchemaMetadata();','Schema metadata initialization must remain part of startup.');
 need(main,'ProcessStartupSchemaMigrations();','Controlled schema migration processing must run at startup.');
@@ -36,7 +36,13 @@ need(migration,'private sealed class SchemaMigrationDefinition','Migration defin
 need(migration,'public string Risk { get; init; } = "minor"','Minor/major migration risk classification missing.');
 need(migration,'public bool BusinessMeaningChanged','Business-rule change flag missing.');
 need(migration,'BuildSchemaMigrationDefinitions()','Migration registry missing.');
-need(migration,'Future releases register exact current->next migrations here.','Framework release should not invent a business-data migration merely to exercise the engine.');
+need(schema,'["attendance"] = 2','Attendance current schema must be revision 2.');
+need(migration,'Module = "attendance"','Attendance 1->2 migration is not registered.');
+need(migration,'FromRevision = 1','Attendance migration source revision missing.');
+need(migration,'ToRevision = 2','Attendance migration target revision missing.');
+need(migration,'Risk = "minor"','Attendance 1->2 migration must remain low-risk/automatic.');
+need(migration,'doctorNoteReductionPercent','Attendance migration does not initialize configurable doctor-note reduction.');
+need(migration,'note["editHistory"] = new JsonArray()','Attendance migration does not initialize doctor-note edit history.');
 need(migration,'IsMajorMigration(definition)','Major migration branch missing.');
 need(migration,'summary.Pending.Add(preview)','Major migrations must wait for Admin approval.');
 need(migration,'ExecuteSchemaMigration(definition, preview, "SYSTEM", "automatic-minor")','Minor migrations must be able to run automatically.');
@@ -88,3 +94,6 @@ console.log('- Minor migrations automatic; major/business-rule migrations requir
 console.log('- Pre-migration backup, staging validation, atomic write, disk reopen verification, and rollback are present');
 console.log('- Current + previous schema support policy and append-only migration history are enforced');
 console.log('- Non-Admin users cannot enter modules awaiting Admin migration approval');
+
+const attendanceSeed=JSON.parse(read('app/seed/attendance-data.json'));
+if(attendanceSeed.schemaVersion!=='attendance-2')throw new Error('Attendance seed must ship at attendance-2.');

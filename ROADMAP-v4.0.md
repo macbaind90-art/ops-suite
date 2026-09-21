@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.1.0 - Controlled Schema Migration Framework**.
+Current production build: **v4.1.1 - Doctor Note Editing + Configurable Point Reduction**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
@@ -66,7 +66,7 @@ Implemented behavior:
 - schema state is exposed through load envelopes and Data Health file verification
 - schema governance applies only to registered core-suite JSON; specialist/standalone tool JSON under the shared Data tree remains untouched and does not block suite startup
 
-Current initial schemas: `attendance-1`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-1`.
+Current schemas: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-1`.
 
 ### 3. Controlled Schema Migration Framework
 **Status: Completed in v4.1.0**
@@ -86,7 +86,7 @@ Implemented behavior:
 - non-Admins can continue using unaffected modules while a major migration waits for Admin review
 - migration history is permanent append-only JSONL and records actor/workstation/version/schema/backup/outcome metadata
 
-No production schema revision was advanced solely to test the framework. Migration definitions are registered only when a future release has a real structural data change to perform.
+No production schema revision was advanced solely to test the framework. v4.1.1 delivered the first real registered migration, `attendance-1` -> `attendance-2`, for configurable doctor-note reduction policy and doctor-note edit-history containers.
 
 ### 4. Data Health & Recovery Dashboard
 **Status: Approved - Next Active Build Item**
@@ -404,15 +404,15 @@ For each approved roadmap item, use the following sequence:
 
 # Immediate Next Work
 
-The next planned build is **Controlled Schema Migration Framework**.
+The next planned build is **Data Health & Recovery Dashboard**.
 
-Before code changes begin, define:
-- how a migration declares its source and target schema
-- which migrations may run automatically after backup and which require Admin confirmation
-- in-memory validation rules before any live write
-- migration audit/history format
-- rollback behavior when validation or save fails
-- how Data Health identifies a pending or completed migration
-- how one-time migrations are prevented from running twice
+The migration framework is complete and has now been exercised by the real `attendance-1` -> `attendance-2` upgrade in v4.1.1. Before Item 4 coding begins, define the dashboard one decision at a time, including:
+- which conditions are Green / Yellow / Red
+- Last-Known-Good status and Admin preview/restore workflow
+- live-file validity and schema compatibility presentation
+- most recent verified save and migration history surfacing
+- stale-write/conflict summary thresholds
+- how fallback/recovery-loaded data is identified
+- what remediation actions are available directly from Data Health versus routed to Backup & Restore
 
-After that framework is approved and built, proceed to the **Data Health & Recovery Dashboard**.
+Shared-file locking remains deferred unless this dashboard or a real production event provides evidence that the current atomic-save and stale-write controls are insufficient.

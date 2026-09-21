@@ -1,9 +1,9 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.1.0**
-- Release: **Controlled Schema Migration Framework**
-- Baseline: **v4.0.1 - Schema Scope / External Data Compatibility Fix**
+- Version: **4.1.1**
+- Release: **Doctor Note Editing + Configurable Point Reduction**
+- Baseline: **v4.1.0 - Controlled Schema Migration Framework**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -11,6 +11,8 @@
 - Tardy points: **T<5 = 0 / T5-14 = 0.5 / T15+ = 1**
 - Point values are Admin-editable for **T<5 / T5-14 / T15+ / CO1 / CO2 / NCNS / LE / EIA** and recalculate existing attendance after save
 - Point-value policy changes require a reason, pre-save backup, audit record, and before/after policy history
+- Doctor-note point reduction is Admin-editable in the same point-policy screen, defaults to **50%**, accepts **0-100%**, and recalculates existing covered attendance after save
+- Active doctor-note coverage is Admin-editable with required reason, pre-save backup, before/after edit history, and immediate recalculation
 - Historical generic tardies migrated to T<5 calculate at **0 points**
 - Positive attendance award: **+1 after 12 clean scheduled working days**
 - Newly earned positive credit first reduces active negative points immediately
@@ -33,7 +35,7 @@
 - Grid visual status retained: Present green / approved blue / Off unhighlighted / NE blacked out / low point actions yellow / high point actions red / positive award green
 - Employee-name point status retained: green <3 / yellow 3-6.99 / red 7+
 - Doctor-note coverage can be applied across a selected date range and selected chargeable event types without rewriting the original attendance code
-- One active doctor-note range is one attendance occurrence at **50% of the first matching event's configured normal point value**; additional matching days in that same note range add no additional points
+- One active doctor-note range is one attendance occurrence at the **configured Doctor Note Point Reduction** (default 50%) applied to the first matching event's configured normal point value; additional matching days in that same note range add no additional points
 - A doctor-note call-off range contributes one occurrence to the rolling 14-day CO1/CO2 chain
 - Doctor-note-covered attendance issues reset clean-attendance progress
 - Doctor-note add/void actions are Admin-only, backup-first, audited, and recalculate attendance immediately
@@ -41,7 +43,7 @@
 - Doctor-note records store administrative references only; the UI warns against storing diagnosis/treatment details
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 852 named functions / 210 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 860 named functions / 212 inline action targets / 10 registered modules
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - Roster-to-Attendance population regression: **PASS**
@@ -77,10 +79,23 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.1.0 source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.1.1 source package is uploaded to `main`.
 
 
 
+
+## v4.1.1 Targeted Regression - Doctor Note Editing + Configurable Reduction
+- Active doctor-note records expose Admin-only Edit and Void actions: **PASS**.
+- Doctor-note edit preserves employee identity and allows coverage dates, received date, covered event types, administrative reference, and administrative note to change: **PASS**.
+- Doctor-note edit requires a reason and pre-save Attendance backup and writes edit-history/audit metadata: **PASS**.
+- Configurable Doctor Note Point Reduction % is present in Edit Point Values and constrained to 0-100%: **PASS**.
+- Default 50% reduction preserves prior production behavior: **PASS**.
+- Non-default reduction (80%) recalculates an existing covered CO1 occurrence to 20% of normal points: **PASS**.
+- Doctor-note covered range remains a single occurrence and additional matching days remain zero-additional-point events: **PASS**.
+- Attendance current schema is `attendance-2`; packaged Attendance seed is `attendance-2`: **PASS**.
+- Registered automatic low-risk `attendance-1` -> `attendance-2` migration initializes the 50% reduction policy and edit-history containers while preserving record identities: **PASS**.
+- Unstamped legacy modules with schema history anchor to the immediately previous schema before controlled migration: **PASS**.
+- Full front-end/module/action validation remains required after these changes.
 
 ## v4.1.0 Targeted Regression - Controlled Schema Migration Framework
 - Daily LKG runs before schema migration processing at startup: **PASS**.
