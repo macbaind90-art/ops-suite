@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links**.
+Current production build: **v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 

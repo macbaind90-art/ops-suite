@@ -1,7 +1,7 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.1.2**
+- Version: **4.1.3**
 - Release: **Doctor Note Editing + Configurable Point Reduction**
 - Baseline: **v4.1.0 - Controlled Schema Migration Framework**
 
@@ -43,7 +43,8 @@
 - Doctor-note records store administrative references only; the UI warns against storing diagnosis/treatment details
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 860 named functions / 212 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 867 named functions / 212 inline action targets / 10 registered modules
+- Real 42-employee Attendance backup smoke, including linked Employee Profile render: **PASS**
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
 - Roster-to-Attendance population regression: **PASS**
@@ -79,11 +80,16 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.1.2 source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.1.3 source package is uploaded to `main`.
 
 
 
 
+
+## v4.1.3 Targeted Regression - Profile Render + Sticky 90-Day Header
+- Employee Profile recent Attendance must call `pointCodeLabel()` and may not reference the retired undefined `codeLabel()` helper.
+- The 90-Day Grid must expose a dedicated viewport-height scroll surface and sticky `thead`, row, date cells, and Employee corner cell.
+- Employee-profile navigation regression remains part of the Windows build workflow.
 
 ## v4.1.2 Targeted Regression - Sticky 90-Day Dates + Employee Profile Links
 - 90-Day Grid uses `attendance-point-grid-wrap` with a sticky `thead` date row and sticky Employee corner cell.

@@ -99,6 +99,19 @@ if(!registry.ok||registry.unexpected.length)throw new Error('Front-end module re
 
 const major=['home','start-here','attendance','roster','employee-profile','training','office-supplies','shift-reports','shift-intelligence','reports','settings','tasks','data-health','restore','change-log','other-programs'];
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
+
+// v4.1.3: render a real linked Employee Profile, not just the empty profile shell.
+const linkedProfileTest=evalx(`(()=>{
+  const r=(roster.employees||[]).find(x=>attendanceEmployeeForRoster(x));
+  if(!r)return {ok:false,reason:'No roster employee linked to Attendance seed'};
+  const ae=attendanceEmployeeForRoster(r);
+  attendance.attendance=attendance.attendance||{};attendance.attendance[String(ae.id)]=attendance.attendance[String(ae.id)]||{};
+  if(!Object.keys(attendance.attendance[String(ae.id)]).length)attendance.attendance[String(ae.id)]['2026-09-01']='P';
+  activeEmployeeProfileId=String(r.id);
+  const out=renderEmployeeProfile();
+  return {ok:typeof out==='string'&&out.includes('Employee Profile')&&out.includes(fullName(r)),name:fullName(r),length:out.length};
+})()`);
+if(!linkedProfileTest.ok)throw new Error('Linked Employee Profile render validation failed: '+JSON.stringify(linkedProfileTest));
 for(const view of ['daily','grid','review','medical','actions','audit']){const out=evalx(`activeAttView='${view}'; renderAttendance()`);if(typeof out!=='string'||out.length<20)throw new Error('Attendance render failed: '+view);}
 
 // Attendance point behavior is validated by dedicated v3.5 regression validators.

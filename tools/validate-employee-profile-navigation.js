@@ -11,6 +11,8 @@ need(core,'function employeeProfileLink(','Shared employee profile link helper i
 need(core,'function attendanceEmployeeProfileLink(','Attendance-to-profile helper is missing.');
 need(core,'function employeeProfileLinkByName(','Schedule name-to-profile helper is missing.');
 need(core,'event.stopPropagation();openEmployeeProfile','Profile links must stop propagation before navigating.');
+need(core,'label:pointCodeLabel(code)','Employee Profile recent Attendance must use the active Attendance code-label helper.');
+if(/\bcodeLabel\s*\(/.test(core))throw new Error('Legacy undefined codeLabel() reference remains in employee profile code.');
 need(roster,'${rosterEmployeeProfileLink(e)}</td>','Roster names are not linked to profiles.');
 need(roster,'${rosterEmployeeProfileLink(e)} <span class="archive-badge">Archived</span>','Archived roster names are not linked.');
 need(roster,'employeeProfileLinkByName(p.display)','Schedule employee names are not linked.');
@@ -22,7 +24,9 @@ need(att,'${attendanceEmployeeProfileLink(emp)}','Attendance grid/review/action 
 need(att,'attendance-point-grid-wrap','90-Day Grid dedicated sticky wrapper is missing.');
 need(att,'attendanceEmployeeProfileLink(emp,n.employee||emp.name)','Doctor Note employee names are not linked.');
 need(tasks,"employeeProfileLinkByName(t.assignedTo||t.owner||'')",'Task assignee names do not resolve to employee profiles when they match a roster employee.');
-need(css,'.attendance-point-grid-wrap thead th{position:sticky;top:0','90-Day Grid date header is not sticky.');
+need(css,'.attendance-point-grid-wrap{height:calc(100vh - 150px);min-height:420px;max-height:none;overflow:auto','90-Day Grid does not have a dedicated viewport-height scroll surface.');
+need(css,'.attendance-point-grid-wrap thead{position:sticky;top:0','90-Day Grid THEAD is not sticky.');
+need(css,'.attendance-point-grid-wrap thead th{position:sticky;top:0','90-Day Grid date header cells are not sticky.');
 need(css,'.attendance-point-grid-wrap thead th.name{left:0','90-Day Grid Employee corner header is not sticky in both axes.');
 need(css,'.employee-profile-link{','Employee profile link styling is missing.');
 console.log('PASS employee profile navigation + sticky Attendance header regression');

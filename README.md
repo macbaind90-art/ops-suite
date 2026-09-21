@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.1.2
+# PWADC Security Operations Suite v4.1.3
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,9 +7,16 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.2` = the current minor upgrade within the 4.1 feature line. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = the current minor upgrade within the 4.1 feature line. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
 
 
+
+
+## v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix
+- Corrected Employee Profile rendering after v4.1.2 profile-link expansion. Recent Attendance now resolves labels through the active Attendance point-code label helper instead of the retired `codeLabel()` reference.
+- Hardened the 90-Day Attendance Grid into a dedicated viewport-height scroll surface so vertical review occurs inside the grid and the date row remains pinned at the top.
+- Sticky behavior is applied at the `thead`, row, and header-cell levels for Chromium/WebView2 reliability while preserving horizontal 90-day scrolling and the frozen Employee corner cell.
+- Expanded regression validation to reject the undefined legacy profile label helper and to verify the dedicated sticky grid structure.
 
 ## v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links
 - The 90-Day Attendance Grid now uses a dedicated vertically scrollable grid container with a persistent sticky date header, so the date row remains visible while reviewing long employee lists.
@@ -672,7 +679,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v4.0.1 - Schema Scope / External Data Compatibility Fix~~ Completed
 - ~~v4.1.0 - Controlled Schema Migration Framework~~ Completed
 - **v4.1.1 - Doctor Note Editing + Configurable Point Reduction** Completed
-- **v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links** Current
+- **v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix** Current
+- **v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links**
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

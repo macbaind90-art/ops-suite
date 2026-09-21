@@ -1,6 +1,12 @@
 # PWADC Security Operations Suite - Changelog
 
 
+## v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix
+- Fixed a v4.1.2 Employee Profile runtime failure caused by a stale call to the retired `codeLabel()` helper. Recent Attendance labels now use `pointCodeLabel()`.
+- Hardened the 90-Day Grid date header with a dedicated viewport-height scroll container plus sticky `thead`, header row, and header cells so dates remain visible during long vertical reviews.
+- Preserved horizontal 90-day scrolling and the frozen Employee corner header.
+- Expanded the employee-profile/grid regression validator so the undefined helper and weak sticky-grid structure cannot pass validation again.
+
 ## v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links
 - Made the 90-Day Attendance Grid date row persist at the top of the grid while vertically scrolling employee history.
 - Added a common employee-profile link helper that resolves Roster and Attendance identities safely.

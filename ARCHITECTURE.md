@@ -1,6 +1,11 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.1.2
+# PWADC Security Operations Suite Architecture - Current Production v4.1.3
 
 - **Windows runtime baseline:** .NET 10 (`net10.0-windows`) built with SDK `10.0.400`; self-contained x64 publish remains the production delivery model.
+
+## v4.1.3 Employee Profile / Attendance Grid Reliability
+- Employee Profile recent-Attendance rendering now uses the active `pointCodeLabel()` helper from the Attendance point module. The obsolete `codeLabel()` dependency is prohibited by regression validation.
+- The 90-Day Attendance Grid is an explicit viewport-height scroll surface. Sticky semantics are applied to the table header group, header row, and individual header cells for WebView2/Chromium reliability, while the Employee corner remains sticky on both axes.
+
 ## v4.1.2 People Navigation / Attendance Grid UX
 - Employee profile navigation is centralized through shared helpers in `20-data-core.js`. Roster records use their native IDs; Attendance records resolve to the linked Roster employee when available and fall back to the Attendance employee ID when not.
 - Primary people-facing modules render the employee name itself as the profile action rather than requiring a separate Profile button. Existing surrounding row/cell actions remain intact because profile-link clicks stop propagation.
