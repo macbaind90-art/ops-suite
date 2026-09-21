@@ -1,7 +1,7 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.1.1**
+- Version: **4.1.2**
 - Release: **Doctor Note Editing + Configurable Point Reduction**
 - Baseline: **v4.1.0 - Controlled Schema Migration Framework**
 
@@ -79,10 +79,18 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.1.1 source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.1.2 source package is uploaded to `main`.
 
 
 
+
+
+## v4.1.2 Targeted Regression - Sticky 90-Day Dates + Employee Profile Links
+- 90-Day Grid uses `attendance-point-grid-wrap` with a sticky `thead` date row and sticky Employee corner cell.
+- Shared profile-link helpers exist for Roster, Attendance, and schedule-display-name resolution.
+- Primary people-facing screens render employee names as profile links without removing their existing actions; Task Tracker assignees resolve to profiles when the assignee matches a roster employee.
+- Schedule employee-name links stop propagation so profile navigation does not open the schedule editor.
+- `tools/validate-employee-profile-navigation.js` verifies the expected navigation coverage and sticky-grid CSS/markup.
 
 ## v4.1.1 Targeted Regression - Doctor Note Editing + Configurable Reduction
 - Active doctor-note records expose Admin-only Edit and Void actions: **PASS**.

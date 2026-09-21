@@ -1,6 +1,12 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.1.1
+# PWADC Security Operations Suite Architecture - Current Production v4.1.2
 
 - **Windows runtime baseline:** .NET 10 (`net10.0-windows`) built with SDK `10.0.400`; self-contained x64 publish remains the production delivery model.
+## v4.1.2 People Navigation / Attendance Grid UX
+- Employee profile navigation is centralized through shared helpers in `20-data-core.js`. Roster records use their native IDs; Attendance records resolve to the linked Roster employee when available and fall back to the Attendance employee ID when not.
+- Primary people-facing modules render the employee name itself as the profile action rather than requiring a separate Profile button. Existing surrounding row/cell actions remain intact because profile-link clicks stop propagation.
+- The 90-Day Attendance Grid uses a dedicated `attendance-point-grid-wrap` scroll container. Its date header and Employee corner header are sticky within that container so dates remain visible during long vertical reviews while horizontal scrolling remains available for the full 90-day period.
+
+
 ## v4.1.1 Attendance Schema 2 / Doctor-Note Policy Architecture
 
 Attendance is the first core module to consume the controlled schema-migration framework in production. The current Attendance schema is `attendance-2`; `attendance-1` is the immediately previous supported schema and migrates automatically as a low-risk structural upgrade. The migration adds `pointSystem.policy.doctorNoteReductionPercent` with a 50% default and `editHistory` containers on existing doctor-note coverage records while preserving employee, attendance, doctor-note, adjustment, and corrective-action identities.

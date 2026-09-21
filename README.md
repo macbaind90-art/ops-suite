@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.1.1
+# PWADC Security Operations Suite v4.1.2
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,8 +7,16 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.1` = the current minor upgrade within the 4.1 feature line. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.2` = the current minor upgrade within the 4.1 feature line. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
 
+
+
+## v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links
+- The 90-Day Attendance Grid now uses a dedicated vertically scrollable grid container with a persistent sticky date header, so the date row remains visible while reviewing long employee lists.
+- Employee names are now direct profile links across the primary people-facing screens, including Attendance Daily Entry, 90-Day Grid, Point Review, Corrective Action, Doctor Notes, Roster, archived roster, Schedule assignments, Training employee cards, Uniform Accountability, employee labor-cost detail, and Task Tracker assignees when the assignee matches a roster employee.
+- Attendance names resolve to the matching Roster profile when available and safely fall back to the Attendance profile when no Roster match exists.
+- Schedule names resolve back to the Roster record without changing the existing click-to-edit schedule-cell behavior.
+- Profile links stop event propagation so clicking a name opens the employee profile instead of firing the surrounding row/cell action.
 
 ## v4.1.1 - Doctor Note Editing + Configurable Point Reduction
 - Active doctor-note coverage can now be edited from the Doctor Notes view when the authorized coverage period changes or is extended.
@@ -663,7 +671,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed
 - ~~v4.0.1 - Schema Scope / External Data Compatibility Fix~~ Completed
 - ~~v4.1.0 - Controlled Schema Migration Framework~~ Completed
-- **v4.1.1 - Doctor Note Editing + Configurable Point Reduction** Current
+- **v4.1.1 - Doctor Note Editing + Configurable Point Reduction** Completed
+- **v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links** Current
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

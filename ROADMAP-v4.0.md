@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.1.1 - Doctor Note Editing + Configurable Point Reduction**.
+Current production build: **v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 

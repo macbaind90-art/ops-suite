@@ -1,5 +1,13 @@
 # PWADC Security Operations Suite - Changelog
 
+
+## v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links
+- Made the 90-Day Attendance Grid date row persist at the top of the grid while vertically scrolling employee history.
+- Added a common employee-profile link helper that resolves Roster and Attendance identities safely.
+- Made employee names clickable across Attendance Daily Entry, 90-Day Grid, Point Review, Corrective Action, Doctor Notes, Roster, archived roster, live/mock Schedule assignments, Training employee cards, Uniform Accountability, employee labor-cost detail, and Task Tracker assignees when the assignee matches a roster employee.
+- Preserved existing row/cell actions by stopping click propagation from profile-name links.
+- Added targeted regression validation for sticky Attendance dates and employee-profile navigation coverage.
+
 ## v4.1.1 - Doctor Note Editing + Configurable Point Reduction
 - Added Admin-only editing for active doctor-note coverage so approved date ranges can be extended or otherwise corrected without voiding/recreating the record.
 - Doctor-note edits require a reason and pre-save Attendance backup, preserve the employee link, recalculate points/call-off classification immediately, and retain before/after edit history.
