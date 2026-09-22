@@ -1,5 +1,15 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.3.0 - Role-Aware Interface & Centralized Permissions
+
+- Centralized module visibility and action authorization around persisted role capabilities instead of hard-coded role/module lists.
+- Added the Admin role-capability matrix with immutable Admin superuser access and editable Supervisor, Lead, and Viewer assignments.
+- Added reduction-only **Preview as Role** with a persistent warning banner and unchanged signed-in host identity.
+- Added capability gates to selected Attendance, roster, schedule, training, uniform, supply, shift-operation, Data Health, and restore actions.
+- Added host-side credential/capability checks for governed module writes, settings save, and backup cleanup; existing schema migration and recovery credential checks now resolve capabilities centrally.
+- Advanced Suite Settings to schema revision 3 with an automatic 2->3 migration that initializes the capability matrix while preserving users and operational settings.
+- Added role-capability regression validation and Windows workflow coverage.
+
 ## v4.2.1 - Live Schedule Coverage Authority Cleanup
 - Retired the duplicate Coverage Requirements configuration and its hard-coded legacy staffing rows.
 - Standardized the Home dashboard, management reports, Labor Analytics screen, print output, and CSV export on the Live Schedule authority model.

@@ -9,7 +9,7 @@ new vm.Script(src,{filename:'app/js/82-attendance-points.js'});
 for(const token of [
   'ATT_DEFAULT_POINT_VALUES','attendanceConfiguredPointValues','normalizeAttendancePointValues',
   'openPointValueSettingsModal','savePointValueSettings','Save Values & Recalculate',
-  'Administrator access is required to edit attendance point values.','Reason for Point-Policy Change *',
+  "hasCapability('attendance.managePolicy')",'The attendance.managePolicy capability is required.','Reason for Point-Policy Change *',
   "SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'})",
   'attendance.pointSystem.pointValueHistory','Attendance point policy updated','lastRecalculatedAt',
   'affectedEmployees','attendancePointDisplayValue','attendancePointPolicySummary',
@@ -36,7 +36,7 @@ const sandbox={
   isIsoDateKey:d=>/^\d{4}-\d{2}-\d{2}$/.test(String(d||'')),addDays,parseISO,gridEnd:'2026-09-15',latestAttendanceDataDate:()=> '2026-09-15',attendanceCleanWorkdayEligible:()=>true,
   isArchivedEmployee:()=>false,rosterRdoToAttendanceRdos:()=>[],activeAttendanceEmployees:()=>attendance.employees,getCode:(id,date)=>((attendance.attendance||{})[String(id)]||{})[date]||'',audit(){},saveAttendance(){},esc:s=>String(s??''),fmt:s=>s,sortedEmployees:()=>attendance.employees,currentUserName:()=> 'Admin User',env:{user:'Admin User',machine:'QA'},
   safeRenderPages(){},toast(){},showModal(){},val(){return ''},closeModal(){},SuiteBridge:{send:async()=>({})},confirm:()=>true,prompt:()=>'',scheduleCellIsBlank:()=>true,scheduleCellIsOpen:()=>false,scheduleNameMatchesEmployee:()=>false,
-  findRosterEmployeeForAttendanceLoose:()=>null,entryShift:'All',showBlanks:false,entryDate:'2026-09-15',activeAttView:'review',document:{getElementById:()=>({})},roleOf:()=> 'Admin'
+  findRosterEmployeeForAttendanceLoose:()=>null,entryShift:'All',showBlanks:false,entryDate:'2026-09-15',activeAttView:'review',document:{getElementById:()=>({})},roleOf:()=> 'Admin',hasCapability:()=>true
 };
 vm.createContext(sandbox);
 vm.runInContext(src,sandbox);

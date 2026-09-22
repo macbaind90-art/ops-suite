@@ -1,6 +1,6 @@
 {
-  "schemaVersion": "suite-settings-2",
-  "lastWrittenByAppVersion": "4.2.1",
+  "schemaVersion": "suite-settings-3",
+  "lastWrittenByAppVersion": "4.3.0",
   "Theme": "dark",
   "DefaultModule": "home",
   "Pin": "1234",
@@ -12,6 +12,12 @@
   "MonthlyMultiplier": 4.333,
   "AnnualMultiplier": 52,
   "FteBaselineHours": 40,
+  "RoleCapabilities": {
+    "Admin": ["*"],
+    "Supervisor": ["attendance.view", "attendance.edit", "attendance.adjustPoints", "attendance.correctiveAction", "roster.view", "roster.edit", "schedule.view", "schedule.edit", "training.view", "training.manage", "uniforms.view", "uniforms.manage", "supplies.view", "supplies.manage", "shiftReports.view", "shiftReports.manage", "shiftIntelligence.view", "shiftIntelligence.manage", "tasks.view", "tasks.manage", "reports.view", "programs.launch", "audit.view"],
+    "Lead": ["attendance.view", "attendance.edit", "attendance.adjustPoints", "attendance.correctiveAction", "roster.view", "roster.edit", "schedule.view", "schedule.edit", "training.view", "training.manage", "uniforms.view", "uniforms.manage", "supplies.view", "supplies.manage", "shiftReports.view", "shiftReports.manage", "shiftIntelligence.view", "shiftIntelligence.manage", "tasks.view", "tasks.manage", "programs.launch"],
+    "Viewer": ["roster.view", "schedule.view", "training.view", "uniforms.view", "supplies.view", "programs.launch"]
+  },
   "Users": [
     {
       "Id": "admin",

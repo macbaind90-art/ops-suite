@@ -27,10 +27,13 @@ namespace PWADC.SecurityOperationsSuite
                         await Respond(requestId, true, new { settings, environment = GetEnvironmentInfo() });
                         break;
                     case "suite:saveSettings":
+                        RequireBridgeCapability(root, "users.manage");
                         if (root.TryGetProperty("payload", out JsonElement settingsPayload))
                         {
-                            settings = JsonSerializer.Deserialize<SuiteSettings>(settingsPayload.GetRawText(), JsonOptions) ?? new SuiteSettings();
-                            if (string.IsNullOrWhiteSpace(settings.DataRoot)) settings.DataRoot = DefaultRoot;
+                            SuiteSettings candidateSettings = JsonSerializer.Deserialize<SuiteSettings>(settingsPayload.GetRawText(), JsonOptions) ?? new SuiteSettings();
+                            ValidateAndNormalizeSettingsForSave(candidateSettings);
+                            if (string.IsNullOrWhiteSpace(candidateSettings.DataRoot)) candidateSettings.DataRoot = DefaultRoot;
+                            settings = candidateSettings;
                             EnsureFolders();
                             SaveSettingsToDisk();
                             await Respond(requestId, true, new { settings });
@@ -115,6 +118,7 @@ namespace PWADC.SecurityOperationsSuite
                         break;
                     case "suite:saveModuleData":
                         string saveModule = root.TryGetProperty("module", out JsonElement sm) ? sm.GetString() ?? "" : "";
+                        RequireModuleWriteCapability(root, saveModule);
                         string json = root.TryGetProperty("payload", out JsonElement dataPayload) ? dataPayload.GetRawText() : "{}";
                         string expectedRevision = root.TryGetProperty("expectedRevision", out JsonElement er) ? er.GetString() ?? "" : "";
                         var saveInfo = SaveModuleData(saveModule, json, expectedRevision);
@@ -127,6 +131,7 @@ namespace PWADC.SecurityOperationsSuite
                         string expectedRevision2 = savePayload.TryGetProperty("expectedRevision", out JsonElement er2) ? er2.GetString() ?? "" : "";
                         if (string.IsNullOrWhiteSpace(saveModule2)) throw new InvalidOperationException("Save module was not defined by the interface.");
                         if (string.IsNullOrWhiteSpace(json2) || json2 == "undefined") throw new InvalidOperationException("Save JSON payload was undefined before write.");
+                        RequireModuleWriteCapability(root, saveModule2);
                         var saveInfo2 = SaveModuleData(saveModule2, json2, expectedRevision2);
                         await Respond(requestId, true, saveInfo2);
                         break;
@@ -167,6 +172,7 @@ namespace PWADC.SecurityOperationsSuite
                         await Respond(requestId, true, PreviewBackupCleanup(cleanupPreviewModule));
                         break;
                     case "suite:cleanupBackups":
+                        RequireBridgeCapability(root, "data.restore");
                         if (!root.TryGetProperty("payload", out JsonElement cleanupPayload)) throw new InvalidOperationException("Missing cleanup payload.");
                         string cleanupModule = cleanupPayload.TryGetProperty("module", out JsonElement cm) ? cm.GetString() ?? "all" : "all";
                         await Respond(requestId, true, CleanupBackups(cleanupModule));

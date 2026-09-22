@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.2.1
+# PWADC Security Operations Suite v4.3.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,18 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.2.1` = the current maintenance release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.3.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.3.0 - Role-Aware Interface & Centralized Permissions
+
+- Replaced hard-coded module lists with one persisted capability matrix for Admin, Supervisor, Lead, and Viewer roles.
+- Added an Admin **Permissions** workspace covering Attendance, roster, schedule, training, uniforms, supplies, shift operations, tasks, reports, Data Health, restore, schema, users, audit, programs, and reserved emergency capabilities.
+- Kept Admin as an immutable superuser while preserving the previous Supervisor, Lead, and Viewer behavior as editable defaults.
+- Added **Preview as Role** for Admin with a persistent banner, reduction-only behavior, and one-click exit. Preview never changes the signed-in identity used by host authorization.
+- Hidden unauthorized modules from navigation and capability-gated selected sensitive/action controls, including Attendance policy/point actions, roster/schedule editing, training, uniforms, supplies, and recovery.
+- Added host-side capability and PIN verification for governed module writes, protected settings saves, schema approval, recovery/restore flows, packaged seed reset, and backup cleanup. Settings saves also retain an active Admin and normalize the immutable Admin wildcard.
+- Advanced Suite Settings from `suite-settings-2` to `suite-settings-3` through an automatic backup-first migration that adds role capabilities without changing users, PINs, labor assumptions, or shared-data configuration.
+- Added `tools/validate-role-capabilities.js` and the corresponding Windows build gate.
 
 ## v4.2.1 - Live Schedule Coverage Authority Cleanup
 
@@ -75,7 +86,7 @@ Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.
 
 ## v4.0.0 - Schema Version & Compatibility Guarding
 - Adds `schemaVersion` and `lastWrittenByAppVersion` metadata to every current suite-managed live JSON data file.
-- Current schema identifiers are module-specific: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-2`.
+- Current schema identifiers are module-specific: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-3`.
 - On startup, legacy live files with no schema marker are backed up and stamped through the existing atomic write path without changing business data.
 - Current compatible files load and save normally.
 - A formally older schema is readable but write-blocked until the approved Controlled Schema Migration Framework can migrate it.
@@ -698,7 +709,9 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v4.1.1 - Doctor Note Editing + Configurable Point Reduction~~ Completed
 - ~~v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links~~ Completed
 - ~~v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix~~ Completed
-- **v4.2.0 - Data Health & Recovery Dashboard** Current
+- ~~v4.2.0 - Data Health & Recovery Dashboard~~ Completed
+- ~~v4.2.1 - Live Schedule Coverage Authority Cleanup~~ Completed
+- **v4.3.0 - Role-Aware Interface & Centralized Permissions** Current
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

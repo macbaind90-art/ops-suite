@@ -1,4 +1,14 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.2.0
+# PWADC Security Operations Suite Architecture - Current Production v4.3.0
+
+## v4.3.0 Role-Aware Interface & Centralized Permissions
+
+`SuiteSettings.RoleCapabilities` is the durable role-only authorization matrix. Admin is always treated as a wildcard superuser in both browser and host code; persisted Admin edits cannot remove that safeguard. Supervisor, Lead, and Viewer assignments are initialized from the previous hard-coded access behavior and can be managed from the Admin Permissions workspace.
+
+The browser resolves module visibility through `moduleCapability()` / `hasCapability()`, so unauthorized modules are omitted from navigation and page construction. Selected action controls use `data-capability` and direct function guards. Pay/cost fields retain a separate capability check. **Preview as Role** is available only to a signed-in Admin, can reduce the visible interface to Supervisor/Lead/Viewer, displays a persistent banner, and never replaces the actual signed-in identity.
+
+`MainForm.Authorization.cs` is the shared host authorization boundary. Protected bridge operations revalidate an active user ID, exact PIN, and required capability against the host-loaded settings. Settings save and backup cleanup call the host guard directly; schema migration and recovery/reset/restore flows use the same centralized credential resolver. Browser visibility is therefore not the security boundary for high-impact operations.
+
+Suite Settings schema revision 3 adds the capability matrix. The `suite-settings-2` -> `suite-settings-3` migration is low-risk, backup-first, and preserves users, PINs, data-root configuration, and labor assumptions. Governed module saves include the signed-in authorization envelope, and the Windows host requires a matching module-family write capability before persistence.
 
 - **Windows runtime baseline:** .NET 10 (`net10.0-windows`) built with SDK `10.0.400`; self-contained x64 publish remains the production delivery model.
 
@@ -8,7 +18,7 @@
 
 `MainForm.DataHealthRecovery.cs` evaluates shared-storage access and each governed module independently. Health state combines JSON integrity, schema/access state, last verified write, LKG validation/age, migration result, recovery result, and the 30-day stale-write count. Meaningful transitions are appended to permanent JSONL history; routine healthy refreshes are not logged.
 
-The browser dashboard is implemented in `app/js/42-data-health-recovery.js`. It is Admin-only, exposes a persistent severity/event indicator, and uses progressive disclosure: current status and recovery availability first, technical hashes/paths second. Dashboard actions call host-authoritative bridge endpoints for LKG preview/restore, event review, diagnostics export, and conflict-resolution recording.
+The browser dashboard is implemented in `app/js/42-data-health-recovery.js`. It is capability-gated and Admin-only by default, exposes a persistent severity/event indicator, and uses progressive disclosure: current status and recovery availability first, technical hashes/paths second. Dashboard actions call host-authoritative bridge endpoints for LKG preview/restore, event review, diagnostics export, and conflict-resolution recording.
 
 LKG restore is constrained to one governed module and the current supported schema. It requires verified Admin credentials, a reason, the previewed live revision, a valid LKG hash/manifest, a pre-restore backup, atomic write, disk reopen/schema verification, and permanent recovery audit. Backup Center restore and packaged seed recovery use the same Admin/reason/backup/verification/audit boundary. No Restore All or automatic recovery path exists.
 
@@ -206,7 +216,7 @@ Doctor-note coverage is stored in `attendance.medicalNotes` as an audited admini
 - Daily Last-Known-Good snapshots continue to include external live files beneath `Data`, but exclude nested backup-artifact folders to avoid backing up backups.
 
 ## v4.0.0 Schema Version & Compatibility Guarding
-- Every current suite-managed live JSON module has a registered module-specific schema identifier: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-2`.
+- Every current suite-managed live JSON module has a registered module-specific schema identifier: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-3`.
 - The host stamps `schemaVersion` and `lastWrittenByAppVersion` on every protected JSON write.
 - On startup, legacy live files with no schema marker are upgraded only by adding metadata through the existing atomic, backup-first, revision-checked write path.
 - Current schema data remains writable. A formally older schema is read-only until the Controlled Schema Migration Framework supplies an approved migration. A newer schema is read-only to protect data created by a later application build.

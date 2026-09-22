@@ -17,8 +17,8 @@ const dataCore=read('app/js/20-data-core.js');
 const workflow=read('.github/workflows/build-windows.yml');
 const csproj=read('SecurityOperationsSuite.csproj');
 
-need(main,'private const string AppVersion = "4.2.1";','AppVersion must be 4.2.1.');
-need(csproj,'<Version>4.2.1</Version>','Project package version must be 4.2.1.');
+need(main,'private const string AppVersion = "4.3.0";','AppVersion must be 4.3.0.');
+need(csproj,'<Version>4.3.0</Version>','Project package version must be 4.3.0.');
 need(main,'EnsureDailyLastKnownGoodSnapshot();','Daily LKG must remain part of startup.');
 need(main,'EnsureLiveSchemaMetadata();','Schema metadata initialization must remain part of startup.');
 need(main,'ProcessStartupSchemaMigrations();','Controlled schema migration processing must run at startup.');
@@ -40,7 +40,7 @@ need(migration,'BuildSchemaMigrationDefinitions()','Migration registry missing.'
 const attendanceRegistryLine=registry.split(/\r?\n/).find(x=>x.includes('Id = "attendance"'))||'';
 need(attendanceRegistryLine,'SchemaRevision = 2','Attendance current schema must be revision 2 in the governed-module registry.');
 const settingsRegistryLine=registry.split(/\r?\n/).find(x=>x.includes('Id = "suite-settings"'))||'';
-need(settingsRegistryLine,'SchemaRevision = 2','Suite Settings current schema must be revision 2 in the governed-module registry.');
+need(settingsRegistryLine,'SchemaRevision = 3','Suite Settings current schema must be revision 3 in the governed-module registry.');
 need(schema,'GovernedModule(module)','Schema migration compatibility must use the governed-module registry.');
 need(migration,'Module = "attendance"','Attendance 1->2 migration is not registered.');
 need(migration,'FromRevision = 1','Attendance migration source revision missing.');
@@ -50,6 +50,9 @@ need(migration,'doctorNoteReductionPercent','Attendance migration does not initi
 need(migration,'note["editHistory"] = new JsonArray()','Attendance migration does not initialize doctor-note edit history.');
 need(migration,'Module = "suite-settings"','Suite Settings 1->2 migration is not registered.');
 need(migration,'root.Remove("CoverageRequirements")','Suite Settings migration does not retire legacy coverage requirements.');
+need(migration,'FromRevision = 2','Suite Settings role-capability migration source revision missing.');
+need(migration,'ToRevision = 3','Suite Settings role-capability migration target revision missing.');
+need(migration,'SuiteSettings.DefaultRoleCapabilities()','Suite Settings 2->3 migration does not initialize the role capability matrix.');
 need(migration,'IsMajorMigration(definition)','Major migration branch missing.');
 need(migration,'summary.Pending.Add(preview)','Major migrations must wait for Admin approval.');
 need(migration,'ExecuteSchemaMigration(definition, preview, "SYSTEM", "automatic-minor")','Minor migrations must be able to run automatically.');
@@ -77,7 +80,7 @@ if(migration.includes('schema-migration-" + definition.Module'))throw new Error(
 need(migration,'SourceSha256','Migration preview/source-change protection missing.');
 need(migration,'Migration source changed after preview','Stale preview protection missing.');
 need(migration,'RequireMigrationAdmin','Admin authorization gate missing.');
-need(migration,'Administrator PIN verification failed','Host-side Admin PIN verification missing.');
+need(migration,'RequireCapabilityCredentials(userId, pin, "schema.manage")','Host-side schema capability verification missing.');
 
 need(bridge,'suite:getMigrationStatus','Migration status bridge endpoint missing.');
 need(bridge,'suite:getMigrationHistory','Migration history bridge endpoint missing.');
@@ -88,7 +91,7 @@ need(dataCore,'Cancel / Keep Read-Only','Major migration cancel/read-only behavi
 need(dataCore,'approvePendingSchemaMigration','Admin approval action missing.');
 need(dataCore,'reloadDataModuleAfterMigration','Migrated module is not reloaded after approval.');
 need(bootstrap,'migrationModuleNeedsAdmin','Role-aware migration module gating missing.');
-need(bootstrap,"if(role!=='Admin'&&migrationModuleNeedsAdmin(migrationModule))return false",'Non-Admins can still enter modules pending Admin migration.');
+need(bootstrap,"if(roleOf()!=='Admin'&&migrationModuleNeedsAdmin(migrationModule))return false",'Non-Admins can still enter modules pending Admin migration.');
 need(bootstrap,'handlePendingSchemaMigrationsAfterLogin','Login does not surface pending major migrations.');
 need(bootstrap,"SuiteBridge.send('suite:getMigrationStatus')",'Startup UI does not retrieve migration state.');
 
@@ -105,5 +108,6 @@ console.log('- Non-Admin users cannot enter modules awaiting Admin migration app
 const attendanceSeed=JSON.parse(read('app/seed/attendance-data.json'));
 if(attendanceSeed.schemaVersion!=='attendance-2')throw new Error('Attendance seed must ship at attendance-2.');
 const settingsSeed=JSON.parse(read('app/seed/suite-settings.json'));
-if(settingsSeed.schemaVersion!=='suite-settings-2')throw new Error('Suite Settings seed must ship at suite-settings-2.');
+if(settingsSeed.schemaVersion!=='suite-settings-3')throw new Error('Suite Settings seed must ship at suite-settings-3.');
+if(!settingsSeed.RoleCapabilities||!Array.isArray(settingsSeed.RoleCapabilities.Admin)||settingsSeed.RoleCapabilities.Admin[0]!=='*')throw new Error('Suite Settings seed must include immutable Admin capability defaults.');
 if('CoverageRequirements' in settingsSeed||'coverageRequirements' in settingsSeed)throw new Error('Suite Settings seed still contains legacy coverage requirements.');

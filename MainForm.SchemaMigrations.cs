@@ -126,6 +126,28 @@ namespace PWADC.SecurityOperationsSuite
                         root.Remove("CoverageRequirements");
                         return root;
                     }
+                },
+                new SchemaMigrationDefinition
+                {
+                    Module = "suite-settings",
+                    FromRevision = 2,
+                    ToRevision = 3,
+                    Risk = "minor",
+                    Summary = "Adds centralized role capability assignments while preserving the established Admin, Supervisor, Lead, and Viewer access baseline.",
+                    BusinessMeaningChanged = false,
+                    PreserveRecordIdentity = true,
+                    Changes = new List<string>
+                    {
+                        "Adds the RoleCapabilities matrix used by navigation and governed actions.",
+                        "Preserves all users, PINs, roles, labor assumptions, and shared-data configuration.",
+                        "Keeps Admin as an unrestricted superuser and translates existing role access into editable defaults."
+                    },
+                    Transform = root =>
+                    {
+                        if (root["roleCapabilities"] == null && root["RoleCapabilities"] == null)
+                            root["RoleCapabilities"] = JsonSerializer.SerializeToNode(SuiteSettings.DefaultRoleCapabilities(), JsonOptions);
+                        return root;
+                    }
                 }
             };
         }
@@ -520,15 +542,7 @@ namespace PWADC.SecurityOperationsSuite
 
         private SuiteUser RequireMigrationAdmin(string userId, string pin)
         {
-            foreach (SuiteUser user in settings.Users ?? new List<SuiteUser>())
-            {
-                if (!user.Active) continue;
-                if (!string.Equals(user.Id, userId, StringComparison.OrdinalIgnoreCase)) continue;
-                if (!string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase)) break;
-                if (!string.Equals(user.Pin ?? "", pin ?? "", StringComparison.Ordinal)) throw new UnauthorizedAccessException("Administrator PIN verification failed for schema migration approval.");
-                return user;
-            }
-            throw new UnauthorizedAccessException("An active Administrator account is required to approve this schema migration.");
+            return RequireCapabilityCredentials(userId, pin, "schema.manage");
         }
 
         private static bool TryParseSchemaRevision(string schemaVersion, string module, out int revision)

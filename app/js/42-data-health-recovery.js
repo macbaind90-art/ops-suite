@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.2.1 | Data Health & Recovery */
+/* PWADC Security Operations Suite v4.3.0 | Data Health & Recovery */
 'use strict';
 
 let dataHealthDashboard=null,dataHealthLoading=false,dataHealthError='',dataHealthSelectedModule='',dataHealthLkgPreview=null;
@@ -6,7 +6,7 @@ let healthIndicator={severity:'gray',unreviewedEvents:0,checkedAt:''};
 
 function dataHealthAdminAuth(){return{adminUserId:String(currentUser?.id||''),adminPin:String(currentUser?.pin||'')}}
 function packagedRecoveryApproval(module,label){
-  const activeAdmin=canAdmin()&&currentUser;
+  const activeAdmin=canRestoreData()&&currentUser;
   const adminUserId=activeAdmin?String(currentUser.id||''):String(prompt('Administrator user ID required for governed recovery:','admin')||'').trim();
   if(!adminUserId)return null;
   const adminPin=activeAdmin?String(currentUser.pin||''):String(prompt('Administrator PIN required for governed recovery:','')||'');
@@ -21,13 +21,13 @@ function dataHealthBytes(n){n=Number(n||0);if(!n)return 'Not reported';const uni
 function dataHealthNavLabel(){const s=healthIndicator.severity||'gray',n=Number(healthIndicator.unreviewedEvents||0);return s==='green'?'Data Health ✓':`Data Health • ${n}`}
 
 async function loadHealthIndicator(){
-  if(!canAdmin())return;
+  if(!hasCapability('dataHealth.view'))return;
   try{const r=await SuiteBridge.send('suite:getDataHealthSummary');healthIndicator={severity:r.severity||'gray',unreviewedEvents:Number(r.unreviewedEvents||0),checkedAt:r.checkedAt||''};renderShell();}
   catch(e){healthIndicator={severity:'red',unreviewedEvents:healthIndicator.unreviewedEvents||0,checkedAt:''};console.warn('Health indicator unavailable',e);}
 }
 
 async function openDataHealthDashboard(){
-  if(!canAdmin()){toast('This module is unavailable. Contact an Administrator.');return;}
+  if(!hasCapability('dataHealth.view')){toast('This module requires dataHealth.view.');return;}
   await refreshDataHealth('dashboard-open');
   if(Number(dataHealthDashboard?.unreviewedEvents||0)>0){
     try{await SuiteBridge.send('suite:reviewHealthEvents',dataHealthAdminAuth());healthIndicator.unreviewedEvents=0;healthIndicator.severity=dataHealthDashboard.overallSeverity||'gray';renderShell();}
@@ -36,7 +36,7 @@ async function openDataHealthDashboard(){
 }
 
 async function refreshDataHealth(trigger='manual-refresh'){
-  if(!canAdmin())return;
+  if(!hasCapability('dataHealth.view'))return;
   dataHealthLoading=true;dataHealthError='';safeRenderPages({preserveScroll:true});
   try{
     dataHealthDashboard=await SuiteBridge.send('suite:getDataHealth',{...dataHealthAdminAuth(),trigger});
@@ -60,7 +60,7 @@ function selectDataHealthModule(module){dataHealthSelectedModule=dataHealthSelec
 function dataHealthModuleDetails(){
   const m=(dataHealthDashboard?.modules||[]).find(x=>x.module===dataHealthSelectedModule);if(!m)return '';
   const t=m.technical||{},c=m.conflicts||{},l=m.lkg||{};
-  return `<section class="dh-details"><div class="dh-details-head"><div><div class="dh-eyebrow">Governed Module Detail</div><h2>${esc(m.label||m.module)}</h2><p>${esc(m.summary||'')}</p></div><button onclick="dataHealthSelectedModule='';safeRenderPages({preserveScroll:true})">Close</button></div><div class="dh-detail-grid"><div><span>30-Day Conflicts</span><strong>${Number(c.count30Days||0)}</strong><small>${esc(c.trend||'None')} trend</small></div><div><span>Most Recent Conflict</span><strong>${esc(c.mostRecentAt||'None')}</strong><small>${esc([c.user,c.machine].filter(Boolean).join(' @ '))}</small></div><div><span>Resolution</span><strong>${esc(c.resolution||'Not recorded')}</strong></div><div><span>Last Recovery</span><strong>${esc(m.lastRecoveryStatus||'None')}</strong><small>${esc(m.lastRecoveryAt||'')}</small></div></div><div class="dh-actions"><button class="primary" onclick="previewModuleLkg('${escAttr(m.module)}')" ${l.available?'':'disabled'}>Preview Last Known Good</button><button class="danger" onclick="previewModuleLkg('${escAttr(m.module)}',true)" ${m.recoveryAvailable?'':'disabled'}>Restore Last Known Good</button><button onclick="openModuleBackupManager('${escAttr(m.module)}')">Open Backup Manager</button><button onclick="showModuleMigrationHistory('${escAttr(m.module)}')">View Migration History</button><button onclick="exportDataHealthDiagnostics()">Export Diagnostics</button></div><details class="dh-technical"><summary>Technical details</summary><div class="dh-tech-grid"><span>Live path<strong>${esc(t.livePath||'')}</strong></span><span>Live hash<strong>${esc(t.liveSha256||'')}</strong></span><span>Integrity<strong>${esc(t.integrityStatus||'unknown')} ${esc(t.integrityError||'')}</strong></span><span>Schema state<strong>${esc(t.schemaStatus||'')} ${esc(t.schemaMessage||'')}</strong></span><span>LKG path<strong>${esc(t.lkgPath||'')}</strong></span><span>LKG hash<strong>${esc(t.lkgSha256||'')}</strong></span></div></details></section>`;
+  return `<section class="dh-details"><div class="dh-details-head"><div><div class="dh-eyebrow">Governed Module Detail</div><h2>${esc(m.label||m.module)}</h2><p>${esc(m.summary||'')}</p></div><button onclick="dataHealthSelectedModule='';safeRenderPages({preserveScroll:true})">Close</button></div><div class="dh-detail-grid"><div><span>30-Day Conflicts</span><strong>${Number(c.count30Days||0)}</strong><small>${esc(c.trend||'None')} trend</small></div><div><span>Most Recent Conflict</span><strong>${esc(c.mostRecentAt||'None')}</strong><small>${esc([c.user,c.machine].filter(Boolean).join(' @ '))}</small></div><div><span>Resolution</span><strong>${esc(c.resolution||'Not recorded')}</strong></div><div><span>Last Recovery</span><strong>${esc(m.lastRecoveryStatus||'None')}</strong><small>${esc(m.lastRecoveryAt||'')}</small></div></div><div class="dh-actions"><button class="primary" onclick="previewModuleLkg('${escAttr(m.module)}')" ${l.available?'':'disabled'}>Preview Last Known Good</button><button class="danger" data-capability="data.restore" onclick="previewModuleLkg('${escAttr(m.module)}',true)" ${m.recoveryAvailable?'':'disabled'}>Restore Last Known Good</button><button data-capability="data.restore" onclick="openModuleBackupManager('${escAttr(m.module)}')">Open Backup Manager</button><button onclick="showModuleMigrationHistory('${escAttr(m.module)}')">View Migration History</button><button onclick="exportDataHealthDiagnostics()">Export Diagnostics</button></div><details class="dh-technical"><summary>Technical details</summary><div class="dh-tech-grid"><span>Live path<strong>${esc(t.livePath||'')}</strong></span><span>Live hash<strong>${esc(t.liveSha256||'')}</strong></span><span>Integrity<strong>${esc(t.integrityStatus||'unknown')} ${esc(t.integrityError||'')}</strong></span><span>Schema state<strong>${esc(t.schemaStatus||'')} ${esc(t.schemaMessage||'')}</strong></span><span>LKG path<strong>${esc(t.lkgPath||'')}</strong></span><span>LKG hash<strong>${esc(t.lkgSha256||'')}</strong></span></div></details></section>`;
 }
 
 async function previewModuleLkg(module,restoreIntent=false){
@@ -72,6 +72,7 @@ async function previewModuleLkg(module,restoreIntent=false){
 }
 
 async function restoreModuleLkg(module){
+  if(!canRestoreData()){toast('Last-Known-Good restore requires data.restore');return;}
   const p=dataHealthLkgPreview||{},reason=String(document.getElementById('lkgRestoreReason')?.value||'').trim();
   if(!reason){toast('Recovery reason is required');return;}
   if(!confirm(`Restore ${p.label||module} from the LKG created ${p.lkgTimestamp||'at the displayed time'}? The current live file will be backed up first.`))return;
@@ -116,10 +117,10 @@ function dataHealthHistoryHtml(){
 }
 
 renderDataHealth=function(){
-  if(!canAdmin())return `<div class="page-head"><div><div class="page-title">Data Health & Recovery</div><div class="page-sub">This administrative module is unavailable for the current role.</div></div></div><div class="notice warn">Contact an Administrator if an operational module is read-only or unavailable.</div>`;
+  if(!hasCapability('dataHealth.view'))return `<div class="page-head"><div><div class="page-title">Data Health & Recovery</div><div class="page-sub">This module requires dataHealth.view.</div></div></div><div class="notice warn">Contact an Administrator if an operational module is read-only or unavailable.</div>`;
   if(dataHealthLoading&&!dataHealthDashboard)return `<div class="page-head"><div><div class="page-title">Data Health & Recovery</div><div class="page-sub">Checking governed data and recovery controls.</div></div></div><div class="notice">Running event-driven health check...</div>`;
   if(dataHealthError&&!dataHealthDashboard)return `<div class="page-head"><div><div class="page-title">Data Health & Recovery</div><div class="page-sub">The dashboard could not be loaded.</div></div><button class="primary" onclick="refreshDataHealth('manual-refresh')">Retry</button></div><div class="notice bad">${esc(dataHealthError)}</div>`;
-  if(!dataHealthDashboard)return `<div class="page-head"><div><div class="page-title">Data Health & Recovery</div><div class="page-sub">Admin-only visibility into governed data health and recoverability.</div></div><button class="primary" onclick="refreshDataHealth('manual-refresh')">Run Health Check</button></div><div class="notice">Open or refresh the dashboard to check current health.</div>`;
+  if(!dataHealthDashboard)return `<div class="page-head"><div><div class="page-title">Data Health & Recovery</div><div class="page-sub">Capability-controlled visibility into governed data health and recoverability.</div></div><button class="primary" onclick="refreshDataHealth('manual-refresh')">Run Health Check</button></div><div class="notice">Open or refresh the dashboard to check current health.</div>`;
   const d=dataHealthDashboard;
   return `<div class="page-head"><div><div class="page-title">Data Health & Recovery</div><div class="page-sub">Status first. Technical evidence and recovery controls remain behind each governed module.</div></div><div class="btn-group"><button class="primary" onclick="refreshDataHealth('manual-refresh')">Refresh Health</button><button onclick="exportDataHealthDiagnostics()">Export Diagnostics</button><button onclick="navigate('restore')">Backup & Restore</button></div></div>${governanceNav('data-health')}<div class="dh-suite-banner dh-${esc(d.overallSeverity||'gray')}"><div><div class="dh-eyebrow">Overall Suite Status</div><strong>${esc(d.overallLabel||dataHealthSeverityLabel(d.overallSeverity))}</strong><span>Health checked at: ${esc(d.checkedAt||'')}</span></div><div class="dh-event-count"><strong>${Number(d.unreviewedEvents||0)}</strong><span>new since last review</span></div></div>${dataHealthStorageHtml()}<div class="dh-module-grid">${(d.modules||[]).map(dataHealthModuleCard).join('')}</div>${dataHealthModuleDetails()}${dataHealthSpecialistHtml()}${dataHealthHistoryHtml()}`;
 };

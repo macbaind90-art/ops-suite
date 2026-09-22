@@ -13,7 +13,7 @@ const expectedRefs=[
   'js/70-training-uniforms.js','js/80-attendance.js','js/82-attendance-points.js','js/90-shift-operations.js',
   'js/95-tasks-settings.js','js/99-startup.js'
 ];
-if(JSON.stringify(scriptRefs)!==JSON.stringify(expectedRefs)) throw new Error('Front-end script load order does not match the v4.2.1 architecture contract.');
+if(JSON.stringify(scriptRefs)!==JSON.stringify(expectedRefs)) throw new Error('Front-end script load order does not match the v4.3.0 architecture contract.');
 for(const ref of scriptRefs){if(!fs.existsSync(path.join(appRoot,ref)))throw new Error('Missing front-end script: '+ref);}
 if(!fs.existsSync(path.join(appRoot,'assets','styles.css')))throw new Error('Missing app/assets/styles.css');
 if(/<script>([\s\S]*?)<\/script>/.test(html))throw new Error('Inline application script detected in index.html.');
@@ -70,7 +70,7 @@ const backupIndex=reliabilitySource.indexOf('backupPath = CreateSafetyBackup(mod
 if(revGateIndex<0||backupIndex<0||revGateIndex>backupIndex)throw new Error('Stale-write gate must run before the live-file safety backup/replacement path.');
 if(!bridgeSource.includes('expectedRevision2 = savePayload.TryGetProperty("expectedRevision"'))throw new Error('Desktop bridge does not receive the browser loaded revision.');
 if(!bridgeSource.includes('revision = GetDataRevision(restoredLivePath).Token'))throw new Error('Restore response does not refresh the revision token.');
-if(!dataCoreSource.includes("SuiteBridge.send('suite:saveModuleData2',{module,json,expectedRevision})"))throw new Error('Browser save path does not send expectedRevision.');
+if(!dataCoreSource.includes("SuiteBridge.send('suite:saveModuleData2',{module,json,expectedRevision},{authorization:authorizationEnvelope()})"))throw new Error('Browser save path does not send expectedRevision and signed-in authorization.');
 if(!dataCoreSource.includes('showDataConflictModal')||!dataCoreSource.includes('exportConflictCopy')||!dataCoreSource.includes('reloadModuleAfterConflict'))throw new Error('Controlled stale-conflict recovery UI is incomplete.');
 if(!shiftOpsSource.includes("saveModuleDataStrict('shift-reports',shiftReports)")||!shiftOpsSource.includes("saveModuleDataStrict('shift-intelligence',shiftIntel)"))throw new Error('Shift Operations bypasses revision-aware persistence.');
 
@@ -89,7 +89,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'4.2.1'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'4.3.0'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
@@ -100,7 +100,7 @@ if(!registry.ok||registry.unexpected.length)throw new Error('Front-end module re
 const major=['home','start-here','attendance','roster','employee-profile','training','office-supplies','shift-reports','shift-intelligence','reports','settings','tasks','data-health','restore','change-log','other-programs'];
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
 
-// v4.2.1: render a real linked Employee Profile, not just the empty profile shell.
+// v4.3.0: render a real linked Employee Profile, not just the empty profile shell.
 const linkedProfileTest=evalx(`(()=>{
   const r=(roster.employees||[]).find(x=>attendanceEmployeeForRoster(x));
   if(!r)return {ok:false,reason:'No roster employee linked to Attendance seed'};

@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.2.0 - Data Health & Recovery Dashboard**.
+Current production build: **v4.3.0 - Role-Aware Interface & Centralized Permissions**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
@@ -66,7 +66,7 @@ Implemented behavior:
 - schema state is exposed through load envelopes and Data Health file verification
 - schema governance applies only to registered core-suite JSON; specialist/standalone tool JSON under the shared Data tree remains untouched and does not block suite startup
 
-Current schemas: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-2`.
+Current schemas: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-3`.
 
 ### 3. Controlled Schema Migration Framework
 **Status: Completed in v4.1.0**
@@ -118,7 +118,7 @@ Atomic persistence and stale-write detection remain the production concurrency c
 ## Phase 2 - Role-Aware Interface & Centralized Permissions
 
 ### 5. Role-Aware Interface & Permission Enforcement
-**Status: Approved**
+**Status: Completed in v4.3.0**
 
 Create a centralized permission model that controls both visibility and action authorization.
 
@@ -129,8 +129,14 @@ Design goals:
 - sensitive operations remain blocked underneath the UI even if invoked directly
 - denied high-impact actions may be audited where appropriate
 
+Implemented scope:
+- one capability catalog drives module navigation and selected sensitive action visibility
+- Admin remains an immutable superuser; Supervisor, Lead, and Viewer retain the previous hard-coded behavior as their starting defaults
+- governed module writes, settings, migration, restore/recovery, packaged reset, and backup-cleanup authorization is independently enforced by the Windows host
+- browser requests carry the signed-in identity while Preview as Role can only reduce the interface
+
 ### 6. Admin Permission Configuration
-**Status: Approved**
+**Status: Completed in v4.3.0**
 
 Add an Admin-only configuration workspace for managing role capabilities.
 
@@ -151,10 +157,23 @@ The configuration should support capability-based controls such as:
 
 Avoid unnecessary per-user permission complexity unless a real PWADC need appears.
 
+Implemented scope:
+- Admin Settings includes a grouped capability matrix for Supervisor, Lead, and Viewer
+- Admin capabilities cannot be reduced
+- each role can be reset to the shipped default baseline before saving
+- capability assignments are stored in governed Suite Settings schema `suite-settings-3`
+- no per-user exception layer was added
+
 ### 7. Preview as Role
-**Status: Approved**
+**Status: Completed in v4.3.0**
 
 Allow Admin to preview the application as another role before saving or deploying permission changes.
+
+Implemented scope:
+- Admin can preview Supervisor, Lead, or Viewer from Settings
+- a persistent banner identifies the preview and provides an immediate exit control
+- preview affects navigation, modules, action controls, and sensitive fields
+- preview never changes the signed-in identity or grants capabilities
 
 ---
 
@@ -406,6 +425,6 @@ For each approved roadmap item, use the following sequence:
 
 # Immediate Next Work
 
-The next planned roadmap item is **Role-Aware Interface & Centralized Permissions**. Its implementation should consolidate visibility and action authorization without duplicating the host-side Admin controls already used by migration and recovery workflows.
+The next planned roadmap item is **Attendance Corrective Action Notice Generator**. Its implementation should stay inside the authoritative Attendance workflow and preserve human approval for generation, issuance, acknowledgment, and audit status.
 
 Shared-file locking remains deferred unless this dashboard or a real production event provides evidence that the current atomic-save and stale-write controls are insufficient.

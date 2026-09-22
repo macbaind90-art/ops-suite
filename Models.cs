@@ -93,12 +93,40 @@ namespace PWADC.SecurityOperationsSuite
         public double MonthlyMultiplier { get; set; } = 4.333;
         public double AnnualMultiplier { get; set; } = 52;
         public double FteBaselineHours { get; set; } = 40;
+        public Dictionary<string, List<string>> RoleCapabilities { get; set; } = DefaultRoleCapabilities();
         public List<SuiteUser> Users { get; set; } = new List<SuiteUser>
         {
             new SuiteUser { Id = "admin", Username = "David", DisplayName = "David MacBain", Role = "Admin", Pin = "6268", Active = true },
             new SuiteUser { Id = "supervisor", Username = "Supervisor", DisplayName = "Supervisor", Role = "Supervisor", Pin = "1234", Active = false },
             new SuiteUser { Id = "lead", Username = "Lead", DisplayName = "Lead", Role = "Lead", Pin = "1111", Active = false },
             new SuiteUser { Id = "viewer", Username = "Viewer", DisplayName = "Viewer", Role = "Viewer", Pin = "0000", Active = false }
+        };
+
+        public static Dictionary<string, List<string>> DefaultRoleCapabilities() => new(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Admin"] = new List<string> { "*" },
+            ["Supervisor"] = new List<string>
+            {
+                "attendance.view", "attendance.edit", "attendance.adjustPoints", "attendance.correctiveAction",
+                "roster.view", "roster.edit", "schedule.view", "schedule.edit",
+                "training.view", "training.manage", "uniforms.view", "uniforms.manage",
+                "supplies.view", "supplies.manage", "shiftReports.view", "shiftReports.manage",
+                "shiftIntelligence.view", "shiftIntelligence.manage", "tasks.view", "tasks.manage",
+                "reports.view", "programs.launch", "audit.view"
+            },
+            ["Lead"] = new List<string>
+            {
+                "attendance.view", "attendance.edit", "attendance.adjustPoints", "attendance.correctiveAction",
+                "roster.view", "roster.edit", "schedule.view", "schedule.edit",
+                "training.view", "training.manage", "uniforms.view", "uniforms.manage",
+                "supplies.view", "supplies.manage", "shiftReports.view", "shiftReports.manage",
+                "shiftIntelligence.view", "shiftIntelligence.manage", "tasks.view", "tasks.manage",
+                "programs.launch"
+            },
+            ["Viewer"] = new List<string>
+            {
+                "roster.view", "schedule.view", "training.view", "uniforms.view", "supplies.view", "programs.launch"
+            }
         };
     }
 

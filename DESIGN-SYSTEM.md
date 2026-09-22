@@ -1,5 +1,14 @@
 # PWADC Security Operations Suite Design System
 
+## v4.3.0 Role-Aware Interface Standard
+
+- Navigation includes only modules authorized by the effective role capability set.
+- Action controls and sensitive fields use the same capability names as the centralized permission catalog.
+- Hidden controls are backed by function-level checks; high-impact host operations are authorized again in C#.
+- Admin role preview is reduction-only and always shows a persistent banner with an exit control.
+- Permission configuration uses grouped capability rows for Supervisor, Lead, and Viewer; Admin remains an immutable superuser.
+- Role defaults preserve the prior production behavior so migration does not unexpectedly expand access.
+
 ## v4.2.1 Data Health & Recovery Status Standard
 
 Data Health uses a status-first hierarchy. Overall suite and shared-storage state appear before module cards; module cards show the operational decision fields; hashes, paths, and validation evidence remain inside technical disclosure.

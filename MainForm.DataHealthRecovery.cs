@@ -110,15 +110,7 @@ namespace PWADC.SecurityOperationsSuite
 
         private SuiteUser RequireDataHealthAdmin(string userId, string pin)
         {
-            foreach (SuiteUser user in settings.Users ?? new List<SuiteUser>())
-            {
-                if (!user.Active || !string.Equals(user.Id, userId, StringComparison.OrdinalIgnoreCase)) continue;
-                if (!string.Equals(user.Role, "Admin", StringComparison.OrdinalIgnoreCase)) break;
-                if (!string.Equals(user.Pin ?? "", pin ?? "", StringComparison.Ordinal))
-                    throw new UnauthorizedAccessException("Administrator PIN verification failed.");
-                return user;
-            }
-            throw new UnauthorizedAccessException("This operation requires an active Administrator account.");
+            return RequireCapabilityCredentials(userId, pin, "data.restore");
         }
 
         private SharedStorageHealthInfo CheckSharedStorageHealth()
@@ -630,7 +622,7 @@ namespace PWADC.SecurityOperationsSuite
 
         private object ReviewHealthEvents(string userId, string pin)
         {
-            SuiteUser admin = RequireDataHealthAdmin(userId, pin);
+            SuiteUser admin = RequireCapabilityCredentials(userId, pin, "dataHealth.view");
             string path = Path.Combine(DataHealthDirectory(), "review-state.json");
             var row = new { lastReviewedAt = DateTime.Now.ToString("O"), reviewedBy = admin.DisplayName, machine = Environment.MachineName };
             File.WriteAllText(path, JsonSerializer.Serialize(row, JsonOptions));
@@ -645,7 +637,7 @@ namespace PWADC.SecurityOperationsSuite
 
         private object GetDataHealthDashboard(string userId, string pin, string trigger)
         {
-            RequireDataHealthAdmin(userId, pin);
+            RequireCapabilityCredentials(userId, pin, "dataHealth.view");
             DataHealthSnapshot snapshot = EvaluateDataHealth(trigger, true);
             return new
             {
@@ -687,7 +679,7 @@ namespace PWADC.SecurityOperationsSuite
 
         private object PreviewLastKnownGood(string module, string userId, string pin)
         {
-            RequireDataHealthAdmin(userId, pin);
+            RequireCapabilityCredentials(userId, pin, "dataHealth.view");
             GovernedModuleDefinition definition = GovernedModule(module) ?? throw new InvalidOperationException("Unknown governed module.");
             LkgModuleState lkg = ReadLkgModuleState(definition);
             string livePath = Path.Combine(settings.DataRoot, "Data", definition.FileName);
@@ -767,7 +759,7 @@ namespace PWADC.SecurityOperationsSuite
 
         private object ExportDataHealthDiagnostics(string userId, string pin)
         {
-            SuiteUser admin = RequireDataHealthAdmin(userId, pin);
+            SuiteUser admin = RequireCapabilityCredentials(userId, pin, "dataHealth.view");
             DataHealthSnapshot snapshot = EvaluateDataHealth("diagnostics-export", true);
             string exportDir = Path.GetFullPath(Path.Combine(settings.DataRoot, "Exports", "Data Health"));
             Directory.CreateDirectory(exportDir);

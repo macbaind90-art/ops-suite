@@ -16,7 +16,7 @@ function makeSandbox(attendance,asOf){
     gridEnd:asOf,latestAttendanceDataDate:()=>asOf,attendanceCleanWorkdayEligible:()=>true,
     isArchivedEmployee:()=>false,rosterRdoToAttendanceRdos:()=>[],activeAttendanceEmployees:()=>attendance.employees||[],getCode:(id,date)=>((attendance.attendance||{})[String(id)]||{})[date]||'',
     audit(){},saveAttendance(){},saveAttendanceNow:async()=>true,esc:s=>String(s??''),fmt:s=>s,sortedEmployees:()=>attendance.employees||[],currentUserName:()=>'',env:{},
-    safeRenderPages(){},toast(){},showModal(){},val(){return ''},closeModal(){},SuiteBridge:{send:async()=>({})},roleOf:()=> 'Admin',
+    safeRenderPages(){},toast(){},showModal(){},val(){return ''},closeModal(){},SuiteBridge:{send:async()=>({})},roleOf:()=> 'Admin',hasCapability:()=>true,
     confirm:()=>true,prompt:()=>'',scheduleCellIsBlank:()=>true,scheduleCellIsOpen:()=>false,scheduleNameMatchesEmployee:()=>false,
     findRosterEmployeeForAttendanceLoose:()=>null,entryShift:'All',showBlanks:false,entryDate:asOf,activeAttView:'review',
     document:{getElementById:()=>({checked:true})}

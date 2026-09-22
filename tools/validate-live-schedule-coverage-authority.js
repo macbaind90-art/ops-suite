@@ -28,7 +28,7 @@ for(const [name,source] of [['analytics',analytics],['settings',settings],['boot
 }
 reject(models,'class CoverageRequirement','The retired coverage settings model is still compiled.');
 if('CoverageRequirements' in seed||'coverageRequirements' in seed)throw new Error('Suite Settings seed still contains legacy coverage requirements.');
-if(seed.schemaVersion!=='suite-settings-2')throw new Error('Suite Settings schema must advance to revision 2.');
+if(seed.schemaVersion!=='suite-settings-3')throw new Error('Suite Settings schema must include the v4.3.0 role-capability revision.');
 need(migration,'root.Remove("CoverageRequirements")','Suite Settings migration must remove the legacy rules safely.');
 
 console.log('Suite-wide Live Schedule coverage authority validation PASS');

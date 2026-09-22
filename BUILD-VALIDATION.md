@@ -1,13 +1,27 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.2.1**
-- Release: **Data Health & Recovery Dashboard**
-- Baseline: **v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix**
+- Version: **4.3.0**
+- Release: **Role-Aware Interface & Centralized Permissions**
+- Baseline upgraded: **v4.2.1 - Live Schedule Coverage Authority Cleanup**
+
+## Role Capability Contract
+
+- Central module/action capability catalog: **PASS**
+- Admin immutable superuser baseline: **PASS**
+- Editable Supervisor / Lead / Viewer role matrix: **PASS**
+- Previous hard-coded role behavior preserved as defaults: **PASS**
+- Unauthorized module removal from navigation/page construction: **PASS**
+- Capability-hidden selected action controls and pay fields: **PASS**
+- Preview as Role reduction-only behavior and persistent exit banner: **PASS**
+- Preview preserves signed-in host authorization identity: **PASS**
+- Host enforcement for governed module writes, settings, schema, restore/recovery, packaged reset, and cleanup: **PASS**
+- Suite Settings `suite-settings-2` -> `suite-settings-3` controlled migration: **PASS**
+- Dedicated role-capability regression and Windows workflow gate: **PASS**
 
 ## Data Health & Recovery Contract
 
-- Admin-only dashboard and recovery actions: **PASS**
+- Capability-gated dashboard and recovery actions, Admin-only by default: **PASS**
 - Central governed-module registry for six suite-owned JSON modules: **PASS**
 - Green / Yellow / Red / Gray severity rules: **PASS**
 - Shared-storage reachability, access, capacity, data mode, last check, and last successful connection: **PASS**
@@ -56,7 +70,7 @@
 - Doctor-note records store administrative references only; the UI warns against storing diagnosis/treatment details
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 890 named functions / 220 inline action targets / 11 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 884 named functions / 220 inline action targets / 11 registered modules
 - Data Health & Recovery targeted regression: **PASS**
 - Real 42-employee Attendance backup smoke, including linked Employee Profile render: **PASS**
 - Task Tracker print regression: **PASS**
@@ -73,6 +87,7 @@
 - Daily Last-Known-Good source regression: **PASS**
 - Schema Version & Compatibility Guarding regression: **PASS**
 - Controlled Schema Migration Framework regression: **PASS**
+- Role-Aware Interface & Centralized Permissions regression: **PASS**
 - September 9 production Attendance backup render smoke: **PASS** - 16 major modules / 6 Attendance views loaded against the real 42-employee backup; legacy data with no doctor-note field normalizes cleanly
 - Positive-credit partial/fractional carryover regression: **PASS**
 - 3-point balance cap with re-earning after use: **PASS**
@@ -94,7 +109,7 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.2.1 source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.3.0 source package is uploaded to `main`.
 ## v4.2.1 Targeted Regression - Data Health & Recovery
 
 - Central registry owns module identity, filenames, and schema revisions: **PASS**.
