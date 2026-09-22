@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.1.3 | module: attendance-base */
+/* PWADC Security Operations Suite v4.2.0 | module: attendance-base */
 'use strict';
 
 function shiftRank(shift){let i=SHIFT_ORDER.indexOf(shift||'');return i>=0?i:99}
@@ -52,11 +52,12 @@ async function importAttendanceJSON(input){
   }catch(e){toast('Import failed: '+e.message)}finally{if(input)input.value=''}
 }
 async function reloadPackagedAttendanceData(){
-  if(!confirm('Replace the current shared attendance data with the packaged recovery JSON seed? A backup will be created first.'))return;
+  const approval=packagedRecoveryApproval('attendance','Attendance');if(!approval)return;
   try{
-    await createAttendanceBackup();let r=await SuiteBridge.send('suite:resetModuleFromSeed',{}, {module:'attendance'});let raw=r.data;
+    let r=await SuiteBridge.send('suite:resetModuleFromSeed',approval,{module:'attendance'});let raw=r.data;
     if(typeof raw==='string')attendance=JSON.parse(raw||'{}');else attendance=raw||{};
-    normalizeAttendance();recordModuleLoadInfo('attendance',{source:'packaged-recovery-manual',sourceDetail:'Manually loaded packaged attendance recovery JSON.',path:'app/seed/attendance-data.json',loadedAt:new Date().toLocaleString(),dataRoot:settings.dataRoot,liveFileExisted:true,revision:r.revision||''});
+    normalizeAttendance();recordModuleLoadInfo('attendance',{...r,source:'packaged-recovery-manual',sourceDetail:'Manually loaded packaged attendance recovery JSON through governed recovery.',path:'app/seed/attendance-data.json',loadedAt:new Date().toLocaleString(),dataRoot:settings.dataRoot,liveFileExisted:true,revision:r.revision||''});
+    if(typeof refreshDataHealth==='function')await refreshDataHealth('packaged-recovery');
     const focusDate=focusAttendanceOnLatestDataDate();safeRenderPages();toast('Loaded packaged attendance recovery data · showing '+fmt(focusDate));
   }catch(e){toast('Reload failed: '+e.message)}
 }

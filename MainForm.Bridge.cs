@@ -48,7 +48,53 @@ namespace PWADC.SecurityOperationsSuite
                         string migrationModule = migrationPayload.TryGetProperty("module", out JsonElement mm) ? mm.GetString() ?? "" : "";
                         string migrationAdminId = migrationPayload.TryGetProperty("adminUserId", out JsonElement mai) ? mai.GetString() ?? "" : "";
                         string migrationAdminPin = migrationPayload.TryGetProperty("adminPin", out JsonElement map) ? map.GetString() ?? "" : "";
-                        await Respond(requestId, true, ApproveSchemaMigration(migrationModule, migrationAdminId, migrationAdminPin));
+                        object migrationResult = ApproveSchemaMigration(migrationModule, migrationAdminId, migrationAdminPin);
+                        TryRefreshDataHealth("migration");
+                        await Respond(requestId, true, migrationResult);
+                        break;
+                    case "suite:getDataHealthSummary":
+                        await Respond(requestId, true, GetDataHealthSummary());
+                        break;
+                    case "suite:getDataHealth":
+                        if (!root.TryGetProperty("payload", out JsonElement healthPayload)) throw new InvalidOperationException("Missing Data Health credentials.");
+                        string healthAdminId = healthPayload.TryGetProperty("adminUserId", out JsonElement hai) ? hai.GetString() ?? "" : "";
+                        string healthAdminPin = healthPayload.TryGetProperty("adminPin", out JsonElement hap) ? hap.GetString() ?? "" : "";
+                        string healthTrigger = healthPayload.TryGetProperty("trigger", out JsonElement ht) ? ht.GetString() ?? "manual-refresh" : "manual-refresh";
+                        await Respond(requestId, true, GetDataHealthDashboard(healthAdminId, healthAdminPin, healthTrigger));
+                        break;
+                    case "suite:reviewHealthEvents":
+                        if (!root.TryGetProperty("payload", out JsonElement reviewPayload)) throw new InvalidOperationException("Missing review credentials.");
+                        string reviewAdminId = reviewPayload.TryGetProperty("adminUserId", out JsonElement rai) ? rai.GetString() ?? "" : "";
+                        string reviewAdminPin = reviewPayload.TryGetProperty("adminPin", out JsonElement rap) ? rap.GetString() ?? "" : "";
+                        await Respond(requestId, true, ReviewHealthEvents(reviewAdminId, reviewAdminPin));
+                        break;
+                    case "suite:previewLastKnownGood":
+                        if (!root.TryGetProperty("payload", out JsonElement lkgPreviewPayload)) throw new InvalidOperationException("Missing LKG preview payload.");
+                        string lkgPreviewModule = lkgPreviewPayload.TryGetProperty("module", out JsonElement lpm) ? lpm.GetString() ?? "" : "";
+                        string lkgPreviewAdminId = lkgPreviewPayload.TryGetProperty("adminUserId", out JsonElement lpai) ? lpai.GetString() ?? "" : "";
+                        string lkgPreviewAdminPin = lkgPreviewPayload.TryGetProperty("adminPin", out JsonElement lpap) ? lpap.GetString() ?? "" : "";
+                        await Respond(requestId, true, PreviewLastKnownGood(lkgPreviewModule, lkgPreviewAdminId, lkgPreviewAdminPin));
+                        break;
+                    case "suite:restoreLastKnownGood":
+                        if (!root.TryGetProperty("payload", out JsonElement lkgRestorePayload)) throw new InvalidOperationException("Missing LKG restore payload.");
+                        string lkgRestoreModule = lkgRestorePayload.TryGetProperty("module", out JsonElement lrm) ? lrm.GetString() ?? "" : "";
+                        string lkgRestoreReason = lkgRestorePayload.TryGetProperty("reason", out JsonElement lrr) ? lrr.GetString() ?? "" : "";
+                        string lkgRestoreRevision = lkgRestorePayload.TryGetProperty("expectedRevision", out JsonElement lrev) ? lrev.GetString() ?? "" : "";
+                        string lkgRestoreAdminId = lkgRestorePayload.TryGetProperty("adminUserId", out JsonElement lrai) ? lrai.GetString() ?? "" : "";
+                        string lkgRestoreAdminPin = lkgRestorePayload.TryGetProperty("adminPin", out JsonElement lrap) ? lrap.GetString() ?? "" : "";
+                        await Respond(requestId, true, RestoreLastKnownGood(lkgRestoreModule, lkgRestoreReason, lkgRestoreRevision, lkgRestoreAdminId, lkgRestoreAdminPin));
+                        break;
+                    case "suite:exportDataHealthDiagnostics":
+                        if (!root.TryGetProperty("payload", out JsonElement diagnosticsPayload)) throw new InvalidOperationException("Missing diagnostics credentials.");
+                        string diagnosticsAdminId = diagnosticsPayload.TryGetProperty("adminUserId", out JsonElement dai) ? dai.GetString() ?? "" : "";
+                        string diagnosticsAdminPin = diagnosticsPayload.TryGetProperty("adminPin", out JsonElement dap) ? dap.GetString() ?? "" : "";
+                        await Respond(requestId, true, ExportDataHealthDiagnostics(diagnosticsAdminId, diagnosticsAdminPin));
+                        break;
+                    case "suite:recordConflictResolution":
+                        if (!root.TryGetProperty("payload", out JsonElement conflictResolutionPayload)) throw new InvalidOperationException("Missing conflict resolution payload.");
+                        string conflictResolutionModule = conflictResolutionPayload.TryGetProperty("module", out JsonElement crm) ? crm.GetString() ?? "" : "";
+                        string conflictResolution = conflictResolutionPayload.TryGetProperty("resolution", out JsonElement cr) ? cr.GetString() ?? "" : "";
+                        await Respond(requestId, true, RecordConflictResolution(conflictResolutionModule, conflictResolution));
                         break;
                     case "suite:healthCheck":
                         await Respond(requestId, true, RunHealthCheck());
@@ -59,7 +105,11 @@ namespace PWADC.SecurityOperationsSuite
                         break;
                     case "suite:resetModuleFromSeed":
                         string resetModule = root.TryGetProperty("module", out JsonElement rm) ? rm.GetString() ?? "" : "";
-                        string resetJson = ResetModuleFromSeed(resetModule);
+                        if (!root.TryGetProperty("payload", out JsonElement resetPayload)) throw new InvalidOperationException("Missing packaged recovery approval payload.");
+                        string resetReason = resetPayload.TryGetProperty("reason", out JsonElement rr) ? rr.GetString() ?? "" : "";
+                        string resetAdminId = resetPayload.TryGetProperty("adminUserId", out JsonElement rai2) ? rai2.GetString() ?? "" : "";
+                        string resetAdminPin = resetPayload.TryGetProperty("adminPin", out JsonElement rap2) ? rap2.GetString() ?? "" : "";
+                        string resetJson = ResetModuleFromSeed(resetModule, resetReason, resetAdminId, resetAdminPin);
                         string resetPath = Path.Combine(settings.DataRoot, "Data", ModuleFileName(resetModule));
                         await Respond(requestId, true, new { module = resetModule, data = resetJson, revision = GetDataRevision(resetPath).Token, schemaVersion = CurrentSchemaVersion(resetModule), expectedSchemaVersion = CurrentSchemaVersion(resetModule), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true });
                         break;
@@ -135,7 +185,10 @@ namespace PWADC.SecurityOperationsSuite
                         if (!root.TryGetProperty("payload", out JsonElement restorePayload)) throw new InvalidOperationException("Missing restore payload.");
                         string restoreModule = restorePayload.TryGetProperty("module", out JsonElement rsm) ? rsm.GetString() ?? "" : "";
                         string restorePath = restorePayload.TryGetProperty("path", out JsonElement rsp) ? rsp.GetString() ?? "" : "";
-                        string restoredJson = RestoreBackup(restoreModule, restorePath);
+                        string restoreReason = restorePayload.TryGetProperty("reason", out JsonElement rsr) ? rsr.GetString() ?? "" : "";
+                        string restoreAdminId = restorePayload.TryGetProperty("adminUserId", out JsonElement rsai) ? rsai.GetString() ?? "" : "";
+                        string restoreAdminPin = restorePayload.TryGetProperty("adminPin", out JsonElement rsap) ? rsap.GetString() ?? "" : "";
+                        string restoredJson = RestoreBackup(restoreModule, restorePath, restoreReason, restoreAdminId, restoreAdminPin);
                         string restoredLivePath = Path.Combine(settings.DataRoot, "Data", ModuleFileName(restoreModule));
                         await Respond(requestId, true, new { module = restoreModule, data = restoredJson, restoredFrom = restorePath, revision = GetDataRevision(restoredLivePath).Token, schemaVersion = CurrentSchemaVersion(restoreModule), expectedSchemaVersion = CurrentSchemaVersion(restoreModule), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true });
                         break;

@@ -7,6 +7,7 @@ const need=(hay,needle,msg)=>{if(!hay.includes(needle))throw new Error(msg||`Mis
 
 const migration=read('MainForm.SchemaMigrations.cs');
 const schema=read('MainForm.SchemaCompatibility.cs');
+const registry=read('MainForm.GovernedModules.cs');
 const reliability=read('MainForm.DataReliability.cs');
 const storage=read('MainForm.Storage.cs');
 const bridge=read('MainForm.Bridge.cs');
@@ -16,8 +17,8 @@ const dataCore=read('app/js/20-data-core.js');
 const workflow=read('.github/workflows/build-windows.yml');
 const csproj=read('SecurityOperationsSuite.csproj');
 
-need(main,'private const string AppVersion = "4.1.3";','AppVersion must be 4.1.3.');
-need(csproj,'<Version>4.1.3</Version>','Project package version must be 4.1.3.');
+need(main,'private const string AppVersion = "4.2.0";','AppVersion must be 4.2.0.');
+need(csproj,'<Version>4.2.0</Version>','Project package version must be 4.2.0.');
 need(main,'EnsureDailyLastKnownGoodSnapshot();','Daily LKG must remain part of startup.');
 need(main,'EnsureLiveSchemaMetadata();','Schema metadata initialization must remain part of startup.');
 need(main,'ProcessStartupSchemaMigrations();','Controlled schema migration processing must run at startup.');
@@ -36,7 +37,9 @@ need(migration,'private sealed class SchemaMigrationDefinition','Migration defin
 need(migration,'public string Risk { get; init; } = "minor"','Minor/major migration risk classification missing.');
 need(migration,'public bool BusinessMeaningChanged','Business-rule change flag missing.');
 need(migration,'BuildSchemaMigrationDefinitions()','Migration registry missing.');
-need(schema,'["attendance"] = 2','Attendance current schema must be revision 2.');
+const attendanceRegistryLine=registry.split(/\r?\n/).find(x=>x.includes('Id = "attendance"'))||'';
+need(attendanceRegistryLine,'SchemaRevision = 2','Attendance current schema must be revision 2 in the governed-module registry.');
+need(schema,'GovernedModule(module)','Schema migration compatibility must use the governed-module registry.');
 need(migration,'Module = "attendance"','Attendance 1->2 migration is not registered.');
 need(migration,'FromRevision = 1','Attendance migration source revision missing.');
 need(migration,'ToRevision = 2','Attendance migration target revision missing.');

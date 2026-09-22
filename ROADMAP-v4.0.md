@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix**.
+Current production build: **v4.2.0 - Data Health & Recovery Dashboard**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
@@ -50,7 +50,7 @@ Controls:
 - keep normal pre-save/manual/automatic backups separate
 - never silently restore or replace live production data
 
-Admin preview/restore surfacing remains part of the approved **Data Health & Recovery Dashboard** work rather than being duplicated here.
+Admin preview/restore surfacing is implemented through the **Data Health & Recovery Dashboard** and remains module-specific.
 
 ### 2. Schema Version & Compatibility Guarding
 **Status: Completed in v4.0.0**
@@ -89,22 +89,24 @@ Implemented behavior:
 No production schema revision was advanced solely to test the framework. v4.1.1 delivered the first real registered migration, `attendance-1` -> `attendance-2`, for configurable doctor-note reduction policy and doctor-note edit-history containers.
 
 ### 4. Data Health & Recovery Dashboard
-**Status: Approved - Next Active Build Item**
+**Status: Completed in v4.2.0**
 
 Upgrade Data Health into the central view for determining whether shared suite data is healthy, current, compatible, and recoverable.
 
-Target indicators:
+Implemented indicators and controls:
 - valid / invalid live data
 - schema version and compatibility
 - last successful verified save
-- Last-Known-Good availability
-- stale-write / conflict summary
-- pending migration status
-- most recent migration
-- fallback / recovery data currently in use
-- live-file failure with verified recovery available
+- Last-Known-Good availability, age, validation, preview, and controlled restore
+- 30-day stale-write/conflict count, latest source, resolution, and trend
+- pending and most recent migration status/history
+- fallback/recovery data currently in use and shared-storage availability
+- Green / Yellow / Red / Gray severity with persistent Admin navigation indicator
+- permanent meaningful-event history and unreviewed count
+- metadata-only diagnostic ZIP export
+- specialist-data presence/JSON validation without expanding core-suite ownership
 
-Presentation should remain operationally simple with clear status and drill-down details.
+Recovery is Admin-only, reason-required, backup-first, atomic, verified, and audited. There is no Restore All and no automatic restore decision.
 
 ### Deferred: Shared-File Locking / Save Coordination
 **Status: Deferred pending evidence**
@@ -404,15 +406,6 @@ For each approved roadmap item, use the following sequence:
 
 # Immediate Next Work
 
-The next planned build is **Data Health & Recovery Dashboard**.
-
-The migration framework is complete and has now been exercised by the real `attendance-1` -> `attendance-2` upgrade in v4.1.1. Before Item 4 coding begins, define the dashboard one decision at a time, including:
-- which conditions are Green / Yellow / Red
-- Last-Known-Good status and Admin preview/restore workflow
-- live-file validity and schema compatibility presentation
-- most recent verified save and migration history surfacing
-- stale-write/conflict summary thresholds
-- how fallback/recovery-loaded data is identified
-- what remediation actions are available directly from Data Health versus routed to Backup & Restore
+The next planned roadmap item is **Role-Aware Interface & Centralized Permissions**. Its implementation should consolidate visibility and action authorization without duplicating the host-side Admin controls already used by migration and recovery workflows.
 
 Shared-file locking remains deferred unless this dashboard or a real production event provides evidence that the current atomic-save and stale-write controls are insufficient.

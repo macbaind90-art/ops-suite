@@ -1,5 +1,18 @@
 # PWADC Security Operations Suite Design System
 
+## v4.2.0 Data Health & Recovery Status Standard
+
+Data Health uses a status-first hierarchy. Overall suite and shared-storage state appear before module cards; module cards show the operational decision fields; hashes, paths, and validation evidence remain inside technical disclosure.
+
+- Green means current, writable, verified, and recoverable from today's LKG.
+- Yellow means usable but requiring review, including previous schema, older valid LKG, three or more stale-write conflicts in 30 days, or a recent successful recovery.
+- Red means blocked, invalid, incompatible, unrecoverable, failed migration/recovery, or shared storage unavailable.
+- Gray means registered but not in use, no live data yet, or not checkable because shared storage is unavailable.
+- Status must not rely on color alone; labels and summaries remain visible.
+- The Admin navigation indicator carries severity and unreviewed-event count without adding a second dashboard destination.
+- Recovery controls use explicit Preview, Restore, Backup Manager, Migration History, and Diagnostics labels. Destructive restore remains visually red and reason/confirmation gated.
+- Responsive module cards collapse to one column while shared-storage metrics reflow without hiding the last check or last successful connection.
+
 ## v3.3.1.0 Responsive UI Standard
 
 The shared design system now treats responsiveness as a platform rule rather than a screen-specific enhancement. Major pages must remain operational from the maximized desktop view down to the supported 900×600 Windows host minimum. Dense operational grids may use local scrolling, but routine controls and page structure should reflow rather than clip.

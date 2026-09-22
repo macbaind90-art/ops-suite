@@ -89,7 +89,7 @@ namespace PWADC.SecurityOperationsSuite
             catch { }
         }
 
-        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = AppVersion, baseDirectory = AppContext.BaseDirectory };
+        private object GetEnvironmentInfo() => new { user = Environment.UserName, machine = Environment.MachineName, version = AppVersion, baseDirectory = AppContext.BaseDirectory, startupHealthSeverity, startupHealthMessage, openDataHealthAfterLogin };
 
         private string LatestAttendanceDateFromFile(string path)
         {
@@ -237,17 +237,6 @@ namespace PWADC.SecurityOperationsSuite
             return dir;
         }
 
-        private static bool IsKnownModule(string module)
-        {
-            foreach (string m in ModuleNames()) if (string.Equals(m, module, StringComparison.OrdinalIgnoreCase)) return true;
-            return false;
-        }
-
-        private static bool IsKnownJsonModule(string module)
-        {
-            return IsKnownModule(module) && !string.Equals(module, "programs", StringComparison.OrdinalIgnoreCase);
-        }
-
         private bool IsSafeOpenPath(string path)
         {
             string full = Path.GetFullPath(Environment.ExpandEnvironmentVariables(path));
@@ -282,14 +271,5 @@ namespace PWADC.SecurityOperationsSuite
             }
             return false;
         }
-        private static string[] ModuleNames() => new[] { "attendance", "roster", "tasks", "shift-reports", "shift-intelligence", "suite-settings", "programs" };
-        private static string ModuleFileName(string module) => module switch
-        {
-            "attendance" => "attendance-data.json", "roster" => "roster-data.json", "tasks" => "tasks-data.json", "shift-reports" => "shift-reports-data.json", "shift-intelligence" => "shift-intelligence-data.json", _ => module + ".json"
-        };
-        internal static string ModuleFolder(string module) => module switch
-        {
-            "attendance" => "Attendance", "roster" => "Roster", "tasks" => "Task Tracker", "shift-reports" => "Shift Reports", "shift-intelligence" => "Shift Intelligence", "suite-settings" => "Suite Settings", "programs" => "Programs", _ => module
-        };
     }
 }

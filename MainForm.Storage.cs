@@ -58,6 +58,7 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Conflict Audit"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Schema Migrations"));
+            Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Data Health"));
             foreach (string module in ModuleNames())
             {
                 Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module)));
@@ -148,8 +149,8 @@ namespace PWADC.SecurityOperationsSuite
                 expectedSchemaVersion = schema.ExpectedSchemaVersion,
                 lastWrittenByAppVersion = schema.LastWrittenByAppVersion,
                 schemaStatus = schema.Status,
-                schemaMessage = schema.Message,
-                writeAllowed = schema.WriteAllowed,
+                schemaMessage = info.Source == "fallback-storage-unavailable" ? "Shared storage is unavailable. Packaged fallback data is read-only." : schema.Message,
+                writeAllowed = schema.WriteAllowed && info.Source != "fallback-storage-unavailable",
                 dataRoot = settings.DataRoot,
                 loadedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
             };
@@ -157,9 +158,18 @@ namespace PWADC.SecurityOperationsSuite
 
         private ModuleLoadResult LoadModuleDataWithSource(string module)
         {
-            EnsureFolders();
-            string path = Path.Combine(settings.DataRoot, "Data", ModuleFileName(module));
             string seedPath = Path.Combine(appFolder, "seed", ModuleFileName(module));
+            try { EnsureFolders(); }
+            catch (Exception ex)
+            {
+                if (File.Exists(seedPath))
+                {
+                    string fallback = File.ReadAllText(seedPath);
+                    return new ModuleLoadResult { Module = module, Data = fallback, Source = "fallback-storage-unavailable", SourceDetail = "Shared storage is unavailable. Packaged fallback data was loaded and must not be treated as live shared data. " + ex.Message, Path = seedPath, FileModified = File.GetLastWriteTime(seedPath).ToString("yyyy-MM-dd HH:mm:ss"), LiveFileExisted = false, Revision = "missing" };
+                }
+                throw;
+            }
+            string path = Path.Combine(settings.DataRoot, "Data", ModuleFileName(module));
             string fullPath = Path.GetFullPath(path);
             ModuleLoadResult result = new ModuleLoadResult { Module = module, Path = fullPath, LiveFileExisted = File.Exists(fullPath) };
 
@@ -177,31 +187,8 @@ namespace PWADC.SecurityOperationsSuite
                     result.Revision = GetDataRevision(fullPath).Token;
                     return result;
                 }
-                string seedJsonForCompare = File.Exists(seedPath) ? File.ReadAllText(seedPath) : "";
-                if (!ShouldReplaceWithSeed(module, existingJson, seedJsonForCompare))
-                {
-                    FileInfo info = new FileInfo(fullPath);
-                    result.Data = existingJson;
-                    result.Source = "live-shared";
-                    result.SourceDetail = "Loaded existing JSON from the configured shared Data folder.";
-                    result.FileModified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                    result.Revision = GetDataRevision(fullPath).Token;
-                    return result;
-                }
-
-                if (File.Exists(seedPath))
-                {
-                    string seedJson = File.ReadAllText(seedPath);
-                    WriteJsonAtomically(module, fullPath, seedJson, "packaged-recovery-replace-empty", "pre-recovery-atomic");
-                    FileInfo info = new FileInfo(fullPath);
-                    result.Data = seedJson;
-                    result.Source = "packaged-recovery-replaced-empty";
-                    result.SourceDetail = "Live file was missing required data or appeared empty, so packaged recovery JSON was copied after creating a backup.";
-                    result.FileModified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                    result.Revision = GetDataRevision(fullPath).Token;
-                    return result;
-                }
-
+                // Existing valid live data is never replaced automatically. Empty or
+                // suspicious-but-parseable files remain visible for explicit Admin review.
                 result.Data = existingJson;
                 result.Source = "live-shared";
                 result.SourceDetail = "Loaded existing JSON from the configured shared Data folder.";
@@ -231,60 +218,12 @@ namespace PWADC.SecurityOperationsSuite
             return result;
         }
 
-        private bool ShouldReplaceWithSeed(string module, string json, string seedJson = "")
+        private string ResetModuleFromSeed(string module, string reason, string adminUserId, string adminPin)
         {
-            if (module != "attendance" && module != "roster" && module != "tasks") return false;
-            if (string.IsNullOrWhiteSpace(json) || json.Trim() == "{}") return true;
-            try
-            {
-                using JsonDocument doc = JsonDocument.Parse(json);
-                JsonElement root = doc.RootElement;
-
-                if (module == "tasks")
-                {
-                    if (!root.TryGetProperty("tasks", out JsonElement taskArray) || taskArray.ValueKind != JsonValueKind.Array || taskArray.GetArrayLength() == 0) return true;
-                }
-                else
-                {
-                    if (!root.TryGetProperty("employees", out JsonElement employees) || employees.ValueKind != JsonValueKind.Array || employees.GetArrayLength() == 0) return true;
-                }
-
-                if (module == "attendance")
-                {
-                    if (!root.TryGetProperty("attendance", out JsonElement att) || att.ValueKind != JsonValueKind.Object) return true;
-                    int employeeRecords = 0;
-                    foreach (JsonProperty _ in att.EnumerateObject()) employeeRecords++;
-                    if (employeeRecords == 0) return true;
-                }
-
-                if (module == "roster")
-                {
-                    if (!root.TryGetProperty("schedule", out JsonElement schedule) || schedule.ValueKind != JsonValueKind.Array) return true;
-                }
-
-                if (!string.IsNullOrWhiteSpace(seedJson))
-                {
-                    using JsonDocument seedDoc = JsonDocument.Parse(seedJson);
-                    JsonElement seedRoot = seedDoc.RootElement;
-                    string existingSaved = root.TryGetProperty("lastSaved", out JsonElement exLast) ? exLast.GetString() ?? "" : "";
-                    string seedSaved = seedRoot.TryGetProperty("lastSaved", out JsonElement seedLast) ? seedLast.GetString() ?? "" : "";
-                    if (DateTime.TryParse(seedSaved, out DateTime seedDt) && DateTime.TryParse(existingSaved, out DateTime existingDt))
-                    {
-                        if (seedDt > existingDt) return true;
-                    }
-                }
-                return false;
-            }
-            catch
-            {
-                return true;
-            }
-        }
-
-        private string ResetModuleFromSeed(string module)
-        {
+            SuiteUser admin = RequireDataHealthAdmin(adminUserId, adminPin);
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Recovery module was not defined.");
             if (!IsKnownJsonModule(module)) throw new InvalidOperationException("Recovery module is not approved for JSON restore: " + module);
+            if (string.IsNullOrWhiteSpace(reason)) throw new InvalidOperationException("A recovery reason is required.");
             EnsureFolders();
             string seedPath = Path.Combine(appFolder, "seed", ModuleFileName(module));
             if (!File.Exists(seedPath)) throw new FileNotFoundException("Packaged recovery seed file was not found for module: " + module);
@@ -294,8 +233,23 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(dataDir);
             string path = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
             if (!IsPathUnder(path, dataDir)) throw new InvalidOperationException("Resolved recovery path is outside the suite Data folder.");
-            WriteJsonAtomically(module, path, seedJson, "reset-from-packaged-seed", "pre-recovery");
-            return File.ReadAllText(path);
+            DataWriteOutcome? outcome = null;
+            try
+            {
+                string expectedRevision = GetDataRevision(path).Token;
+                outcome = WriteJsonAtomically(module, path, seedJson, "reset-from-packaged-seed", "pre-recovery", expectedRevision);
+                string restored = File.ReadAllText(path);
+                ValidateJsonPayload(restored, ModuleFolder(module) + " packaged recovery verification");
+                WriteRecoveryAudit(module, seedPath, File.GetLastWriteTime(seedPath).ToString("yyyy-MM-dd HH:mm:ss"), admin, reason, outcome.BackupPath, "passed", "Succeeded");
+                TryRefreshDataHealth("manual-recovery");
+                return restored;
+            }
+            catch (Exception ex)
+            {
+                WriteRecoveryAudit(module, seedPath, File.GetLastWriteTime(seedPath).ToString("yyyy-MM-dd HH:mm:ss"), admin, reason, outcome?.BackupPath ?? "", "failed", "Failed: " + ex.Message);
+                TryRefreshDataHealth("manual-recovery-failure");
+                throw;
+            }
         }
 
         private object SaveModuleData(string module, string json, string expectedRevision)

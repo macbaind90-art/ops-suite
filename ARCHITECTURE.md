@@ -1,6 +1,18 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.1.3
+# PWADC Security Operations Suite Architecture - Current Production v4.2.0
 
 - **Windows runtime baseline:** .NET 10 (`net10.0-windows`) built with SDK `10.0.400`; self-contained x64 publish remains the production delivery model.
+
+## v4.2.0 Data Health & Recovery Architecture
+
+`MainForm.GovernedModules.cs` is the authoritative ownership registry for core suite JSON. It defines module identity, label, filename, schema revision, and backup/LKG/migration/recovery eligibility. Schema compatibility, storage paths, health evaluation, and recovery all resolve through this registry; specialist JSON remains outside the governance boundary.
+
+`MainForm.DataHealthRecovery.cs` evaluates shared-storage access and each governed module independently. Health state combines JSON integrity, schema/access state, last verified write, LKG validation/age, migration result, recovery result, and the 30-day stale-write count. Meaningful transitions are appended to permanent JSONL history; routine healthy refreshes are not logged.
+
+The browser dashboard is implemented in `app/js/42-data-health-recovery.js`. It is Admin-only, exposes a persistent severity/event indicator, and uses progressive disclosure: current status and recovery availability first, technical hashes/paths second. Dashboard actions call host-authoritative bridge endpoints for LKG preview/restore, event review, diagnostics export, and conflict-resolution recording.
+
+LKG restore is constrained to one governed module and the current supported schema. It requires verified Admin credentials, a reason, the previewed live revision, a valid LKG hash/manifest, a pre-restore backup, atomic write, disk reopen/schema verification, and permanent recovery audit. Backup Center restore and packaged seed recovery use the same Admin/reason/backup/verification/audit boundary. No Restore All or automatic recovery path exists.
+
+Shared-storage failure is isolated. Startup warns the user, offers the Admin dashboard after sign-in, and permits packaged fallback data to load read-only so unaffected interface functions can open without representing fallback data as live production data.
 
 ## v4.1.3 Employee Profile / Attendance Grid Reliability
 - Employee Profile recent-Attendance rendering now uses the active `pointCodeLabel()` helper from the Attendance point module. The obsolete `codeLabel()` dependency is prohibited by regression validation.
@@ -49,24 +61,26 @@ The design objective is controlled separation, not a framework rewrite.
 3. `app/js/20-data-core.js` - shared module normalization, save/load helpers, attendance/roster synchronization and employee profile data helpers
 4. `app/js/30-shell-audits.js` - navigation shell, module dispatcher, specialist audit wrappers, Data Health backup/file controls
 5. `app/js/40-reports-governance.js` - reporting, office supplies, Data Health findings, restore, change log and governance helpers
-6. `app/js/50-workflows-home.js` - People/Operations workflow navigation, Start Here and Command Center
-7. `app/js/60-roster-schedule.js` - roster maintenance, schedule workspace, mock schedules and schedule print/share
-8. `app/js/70-training-uniforms.js` - training, uniform accountability, labor/coverage analytics and roster import/export helpers
-9. `app/js/80-attendance.js` - legacy Attendance compatibility, shared Attendance utilities, audit/import/export helpers, and preserved historical functions
-10. `app/js/82-attendance-points.js` - v3.5 Attendance Point System, backup-first migration, rolling 90-day points, rolling 14-day CO classification, Live Schedule work/off authority with Roster RDO fallback, positive-credit engine, controlled historical-grid corrections, editable doctor-note date-range coverage with configurable point reduction, manual current-point adjustments, Point Review and Corrective Action
-11. `app/js/90-shift-operations.js` - Shift Reports and Shift Intelligence
-11. `app/js/95-tasks-settings.js` - Task Tracker, Settings and viewport behavior
-12. `app/js/99-startup.js` - validates module registration and then calls `init()`
+6. `app/js/42-data-health-recovery.js` - Admin health dashboard, persistent severity indicator, LKG preview/restore and diagnostic export
+7. `app/js/50-workflows-home.js` - People/Operations workflow navigation, Start Here and Command Center
+8. `app/js/60-roster-schedule.js` - roster maintenance, schedule workspace, mock schedules and schedule print/share
+9. `app/js/70-training-uniforms.js` - training, uniform accountability, labor/coverage analytics and roster import/export helpers
+10. `app/js/80-attendance.js` - legacy Attendance compatibility, shared Attendance utilities, audit/import/export helpers, and preserved historical functions
+11. `app/js/82-attendance-points.js` - Attendance Point System and controlled Attendance workflows
+12. `app/js/90-shift-operations.js` - Shift Reports and Shift Intelligence
+13. `app/js/95-tasks-settings.js` - Task Tracker, Settings and viewport behavior
+14. `app/js/99-startup.js` - validates module registration and then calls `init()`
 
 ## Front-End Module Contract
 Every functional module registers exactly once with `PWADCModuleRegistry` after its source has loaded.
 
-The startup gate expects these 10 functional registrations:
+The startup gate expects these 11 functional registrations:
 
 - `bootstrap`
 - `data-core`
 - `shell-audits`
 - `reports-governance`
+- `data-health-recovery`
 - `workflows-home`
 - `roster-schedule`
 - `training-uniforms`

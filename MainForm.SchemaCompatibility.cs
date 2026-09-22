@@ -32,30 +32,23 @@ namespace PWADC.SecurityOperationsSuite
             public List<string> Issues { get; } = new List<string>();
         }
 
-        private static readonly Dictionary<string, int> CurrentSchemaRevisions = new(StringComparer.OrdinalIgnoreCase)
-        {
-            ["attendance"] = 2,
-            ["roster"] = 1,
-            ["tasks"] = 1,
-            ["shift-reports"] = 1,
-            ["shift-intelligence"] = 1,
-            ["suite-settings"] = 1
-        };
-
         private static string CurrentSchemaVersion(string module)
         {
-            if (!CurrentSchemaRevisions.TryGetValue(module, out int revision))
+            GovernedModuleDefinition? definition = GovernedModule(module);
+            if (definition == null)
                 throw new InvalidOperationException("No schema version is registered for module: " + module);
-            return module + "-" + revision;
+            return module + "-" + definition.SchemaRevision;
         }
 
         private static string InitialSchemaVersionForLegacy(string module)
         {
-            if (!CurrentSchemaRevisions.TryGetValue(module, out int revision))
+            GovernedModuleDefinition? definition = GovernedModule(module);
+            if (definition == null)
                 throw new InvalidOperationException("No schema version is registered for module: " + module);
             // Once a module has real schema history, an unstamped legacy file is first anchored to
             // the immediately previous revision so the controlled migration framework can apply the
             // actual structural upgrade instead of falsely stamping legacy data as current.
+            int revision = definition.SchemaRevision;
             int initialRevision = revision > 1 ? revision - 1 : revision;
             return module + "-" + initialRevision;
         }
@@ -138,7 +131,9 @@ namespace PWADC.SecurityOperationsSuite
                     return result;
                 }
 
-                int expectedRevision = CurrentSchemaRevisions[module];
+                GovernedModuleDefinition? definition = GovernedModule(module);
+                if (definition == null) throw new InvalidOperationException("No governed module registration exists for: " + module);
+                int expectedRevision = definition.SchemaRevision;
                 if (actualRevision > expectedRevision)
                 {
                     result.Status = "newer";
@@ -169,6 +164,7 @@ namespace PWADC.SecurityOperationsSuite
         private static bool IsExplicitInvalidJsonRecoveryOperation(string operation)
         {
             return string.Equals(operation, "restore-backup", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(operation, "restore-last-known-good", StringComparison.OrdinalIgnoreCase)
                 || string.Equals(operation, "reset-from-packaged-seed", StringComparison.OrdinalIgnoreCase);
         }
 

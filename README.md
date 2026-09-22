@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.1.3
+# PWADC Security Operations Suite v4.2.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,10 +7,20 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = the current minor upgrade within the 4.1 feature line. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.2.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
 
 
+## v4.2.0 - Data Health & Recovery Dashboard
 
+- Rebuilt Data Health as one Admin-only operational dashboard driven by a central governed-module registry for Attendance, Roster, Tasks, Shift Reports, Shift Intelligence, and Suite Settings.
+- Added per-module Green / Yellow / Red / Gray status covering live JSON validity, schema compatibility, access state, last verified save, current LKG posture, migration state, conflict frequency, and recovery availability.
+- Added a persistent Admin navigation indicator with unreviewed health-event count and refreshes triggered by startup, saves, save failures, migrations, recovery operations, and manual review.
+- Added verified Last-Known-Good preview and controlled restore with summary-only comparison, required reason, Admin credential verification, loaded-revision protection, pre-restore backup, atomic replacement, post-restore validation, and permanent recovery audit.
+- Added shared-storage reachability, read/write, free-space, data-mode, last-check, and last-successful-connection visibility. Shared-storage failure loads packaged fallback data read-only and never triggers automatic restoration.
+- Added 30-day stale-write conflict summaries, including threshold escalation at three conflicts, latest workstation/user, trend, and recorded resolution.
+- Added metadata-only diagnostic ZIP export. Operational record contents are deliberately excluded.
+- Specialist JSON remains informational only: presence and JSON validity are reported without schema ownership, migration, modification, or direct recovery.
+- Removed the multi-module Restore All implementation. Recovery remains module-specific and deliberate.
 
 ## v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix
 - Corrected Employee Profile rendering after v4.1.2 profile-link expansion. Recent Attendance now resolves labels through the active Attendance point-code label helper instead of the retired `codeLabel()` reference.
@@ -479,7 +489,7 @@ This architecture release reduces regression risk without intentionally changing
 ### Front-End Module Structure
 - Reduces `app/index.html` from the monolithic application container to a small document shell that loads ordered assets.
 - Moves the design system into `app/assets/styles.css`.
-- Splits the former inline JavaScript into 10 bounded functional modules plus a module registry and startup gate.
+- Splits the former inline JavaScript into 11 bounded functional modules plus a module registry and startup gate.
 - Preserves classic-script global compatibility so existing inline UI actions and cross-feature helper calls continue to work without a framework rewrite.
 - Adds `PWADCModuleRegistry`, which verifies all expected front-end modules are present before `init()` is allowed to run.
 - Keeps the existing 85-function render guard and exposes front-end module registration status in the QA guardrail panel.
@@ -598,12 +608,12 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - Provides direct handoffs to Data Health, Backup & Restore, and Change Log when confidence or governance review is required.
 - Retains existing report generation, print, and CSV functions.
 
-### Data Health
-- Moves critical and warning findings ahead of technical inventories and maintenance controls.
-- Separates operational findings from progressive-disclosure technical panels.
-- Gives each finding a direct source-review action instead of presenting diagnostics without a next step.
-- Retains live-file verification, data repairs, backup management, source inventory, QA guardrails, and regression controls.
-- Automated repairs remain secondary to source verification and backup-first handling.
+### Data Health & Recovery
+- Presents overall suite status, shared-storage posture, and one status card for each governed module.
+- Keeps technical evidence behind module detail expansion while surfacing recovery availability and current action first.
+- Provides LKG preview/restore, Backup Manager handoff, module migration history, and metadata-only diagnostics export.
+- Retains the existing Backup & Restore Center as a supporting module-specific recovery tool.
+- Requires explicit Admin action for restore or packaged recovery; no invalid or suspicious live file is silently replaced.
 
 ### Backup & Restore
 - Reframes restoration as a controlled three-step recovery workflow:
@@ -678,9 +688,10 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v3.4.1.1 - Task Tracker Print Customization~~ Completed
 - ~~v4.0.1 - Schema Scope / External Data Compatibility Fix~~ Completed
 - ~~v4.1.0 - Controlled Schema Migration Framework~~ Completed
-- **v4.1.1 - Doctor Note Editing + Configurable Point Reduction** Completed
-- **v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix** Current
-- **v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links**
+- ~~v4.1.1 - Doctor Note Editing + Configurable Point Reduction~~ Completed
+- ~~v4.1.2 - Persistent Attendance Dates + Universal Employee Profile Links~~ Completed
+- ~~v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix~~ Completed
+- **v4.2.0 - Data Health & Recovery Dashboard** Current
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

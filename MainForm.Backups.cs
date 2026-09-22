@@ -280,11 +280,13 @@ namespace PWADC.SecurityOperationsSuite
             return 0;
         }
 
-        private string RestoreBackup(string module, string backupPath)
+        private string RestoreBackup(string module, string backupPath, string reason, string adminUserId, string adminPin)
         {
+            SuiteUser admin = RequireDataHealthAdmin(adminUserId, adminPin);
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Restore module was not defined.");
             if (!IsKnownJsonModule(module)) throw new InvalidOperationException("Restore module is not approved for JSON restore: " + module);
             if (string.IsNullOrWhiteSpace(backupPath)) throw new InvalidOperationException("Restore backup path was not provided.");
+            if (string.IsNullOrWhiteSpace(reason)) throw new InvalidOperationException("A recovery reason is required.");
             EnsureFolders();
             string fullBackupPath = Path.GetFullPath(Environment.ExpandEnvironmentVariables(backupPath));
             string allowedRoot = ModuleBackupDir(module);
@@ -296,8 +298,25 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(dataDir);
             string livePath = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
             if (!IsPathUnder(livePath, dataDir)) throw new InvalidOperationException("Resolved restore target is outside the suite Data folder.");
-            WriteJsonAtomically(module, livePath, json, "restore-backup", "pre-restore");
-            return File.ReadAllText(livePath);
+            DataWriteOutcome? outcome = null;
+            string sourceTimestamp = File.GetLastWriteTime(fullBackupPath).ToString("yyyy-MM-dd HH:mm:ss");
+            try
+            {
+                outcome = WriteJsonAtomically(module, livePath, json, "restore-backup", "pre-restore");
+                string restored = File.ReadAllText(livePath);
+                ValidateJsonPayload(restored, ModuleFolder(module) + " post-restore verification");
+                SchemaCompatibilityInfo restoredSchema = EvaluateSchemaCompatibility(module, restored);
+                if (!restoredSchema.WriteAllowed || restoredSchema.Status != "current") throw new InvalidDataException("Post-restore schema verification failed. " + restoredSchema.Message);
+                WriteRecoveryAudit(module, fullBackupPath, sourceTimestamp, admin, reason, outcome.BackupPath, "passed", "Succeeded");
+                TryRefreshDataHealth("restore");
+                return restored;
+            }
+            catch (Exception ex)
+            {
+                WriteRecoveryAudit(module, fullBackupPath, sourceTimestamp, admin, reason, outcome?.BackupPath ?? "", "failed", "Failed: " + ex.Message);
+                TryRefreshDataHealth("restore-failure");
+                throw;
+            }
         }
     }
 }

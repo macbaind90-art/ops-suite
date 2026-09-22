@@ -1,5 +1,18 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.2.0 - Data Health & Recovery Dashboard
+
+- Rebuilt Data Health as an Admin-only, status-first dashboard for six centrally registered governed modules.
+- Added Green / Yellow / Red / Gray health classification using live JSON integrity, schema/access state, last verified save, LKG posture, migration/recovery outcomes, and 30-day conflict history.
+- Added a persistent Admin navigation indicator and meaningful event history with new-since-review count.
+- Added shared-storage reachability, read/write, free-space, data-mode, last-check, and persisted last-successful-connection reporting.
+- Added LKG summary preview and module-specific restore with Admin authorization, required reason, stale-revision protection, pre-restore backup, atomic replacement, validation, and permanent audit.
+- Added governed authorization/audit controls to Backup Center restore and packaged seed recovery.
+- Added conflict-resolution outcome recording for reload, unsaved-copy export, and abandoned save.
+- Added metadata-only diagnostic ZIP export and informational specialist JSON inventory.
+- Removed silent replacement of existing valid live files from packaged seeds and removed the multi-module Restore All implementation.
+- Added `tools/validate-data-health-recovery.js`, integrated it into GitHub Actions, and limited uploaded Windows artifacts to seven-day retention.
+
 
 ## v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix
 - Fixed a v4.1.2 Employee Profile runtime failure caused by a stale call to the retired `codeLabel()` helper. Recent Attendance labels now use `pointCodeLabel()`.

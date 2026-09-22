@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.1.3 | startup gate + Task Tracker print extension */
+/* PWADC Security Operations Suite v4.2.0 | startup gate + Task Tracker print extension */
 const taskPrintColumnNames=['Project','Status','Priority','Category','Assigned To','Due','Follow-up','Blocked By','Next Action','Last Update'];
 
 function taskPrintFilterSummary(){
@@ -32,7 +32,7 @@ function printTaskTrackerCustom(){
   const list=scope==='all'?taskPrintSort(tasks.tasks||[]):filteredTasks();
   const scopeLabel=scope==='all'?'All task records':'Current filtered view';
   const filterDetail=scope==='all'?'':taskPrintFilterSummary();
-  const body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Task Tracker</h1><div class="print-note">${esc(scopeLabel)} · ${list.length} task(s)${filterDetail?` · ${esc(filterDetail)}`:''}</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v4.1.3</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list.map(t=>`<tr>${cols.map(c=>`<td>${esc(taskPrintCell(t,c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}">No task records match the selected scope.</td></tr>`}</tbody></table>`;
+  const body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Task Tracker</h1><div class="print-note">${esc(scopeLabel)} · ${list.length} task(s)${filterDetail?` · ${esc(filterDetail)}`:''}</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v4.2.0</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list.map(t=>`<tr>${cols.map(c=>`<td>${esc(taskPrintCell(t,c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}">No task records match the selected scope.</td></tr>`}</tbody></table>`;
   closeModal();
   printHtmlDirect('PWADC Security Task Tracker',body,cols.length>6?'landscape':'portrait');
 }
@@ -48,7 +48,7 @@ if(typeof renderTasks==='function'){
 }
 
 (function(){
-  const expected=['bootstrap','data-core','shell-audits','reports-governance','workflows-home','roster-schedule','training-uniforms','attendance','shift-operations','tasks-settings'];
+  const expected=['bootstrap','data-core','shell-audits','reports-governance','data-health-recovery','workflows-home','roster-schedule','training-uniforms','attendance','shift-operations','tasks-settings'];
   const result=PWADCModuleRegistry.validate(expected);
   if(!result.ok){
     const detail='Missing front-end module(s): '+result.missing.join(', ');

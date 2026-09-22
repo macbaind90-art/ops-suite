@@ -1,9 +1,22 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.1.3**
-- Release: **Doctor Note Editing + Configurable Point Reduction**
-- Baseline: **v4.1.0 - Controlled Schema Migration Framework**
+- Version: **4.2.0**
+- Release: **Data Health & Recovery Dashboard**
+- Baseline: **v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix**
+
+## Data Health & Recovery Contract
+
+- Admin-only dashboard and recovery actions: **PASS**
+- Central governed-module registry for six suite-owned JSON modules: **PASS**
+- Green / Yellow / Red / Gray severity rules: **PASS**
+- Shared-storage reachability, access, capacity, data mode, last check, and last successful connection: **PASS**
+- LKG manifest/hash/schema validation, age visibility, summary preview, and recovery availability: **PASS**
+- Module-specific LKG restore with reason, Admin verification, stale revision, pre-restore backup, atomic write, post-write validation, and permanent audit: **PASS**
+- 30-day conflict count, three-event threshold, latest source, trend, and resolution: **PASS**
+- Event-driven checks after startup, save success/failure, migration, and recovery: **PASS**
+- Metadata-only diagnostics and informational specialist-data boundary: **PASS**
+- No Restore All and no silent replacement of existing live data: **PASS**
 
 ## Attendance Policy Contract
 - Rolling negative-point window: **90 days**
@@ -43,7 +56,8 @@
 - Doctor-note records store administrative references only; the UI warns against storing diagnosis/treatment details
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 867 named functions / 212 inline action targets / 10 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 890 named functions / 220 inline action targets / 11 registered modules
+- Data Health & Recovery targeted regression: **PASS**
 - Real 42-employee Attendance backup smoke, including linked Employee Profile render: **PASS**
 - Task Tracker print regression: **PASS**
 - Attendance Point System regression: **PASS**
@@ -80,10 +94,16 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.1.3 source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.2.0 source package is uploaded to `main`.
+## v4.2.0 Targeted Regression - Data Health & Recovery
 
-
-
+- Central registry owns module identity, filenames, and schema revisions: **PASS**.
+- Admin-only bridge authorization covers dashboard, LKG restore, backup restore, and packaged recovery: **PASS**.
+- Persistent status indicator and event review acknowledgment are wired: **PASS**.
+- LKG preview is summary-only and restore is module-specific: **PASS**.
+- Restore All implementation is absent: **PASS**.
+- Existing valid live data cannot be silently replaced from packaged seeds: **PASS**.
+- GitHub Actions runs the targeted validator and retains Windows artifacts for seven days: **PASS**.
 
 
 ## v4.1.3 Targeted Regression - Profile Render + Sticky 90-Day Header

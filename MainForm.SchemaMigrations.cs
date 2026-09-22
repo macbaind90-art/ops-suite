@@ -153,7 +153,7 @@ namespace PWADC.SecurityOperationsSuite
                         continue;
                     }
 
-                    int toRevision = CurrentSchemaRevisions[module];
+                    int toRevision = CurrentSchemaRevision(module);
                     SchemaMigrationDefinition? definition = FindMigrationDefinition(module, fromRevision, toRevision);
                     if (definition == null)
                     {
@@ -453,7 +453,7 @@ namespace PWADC.SecurityOperationsSuite
                         refreshed.Blocked.Add(MigrationBlockedPreview(module, compatibility));
                         continue;
                     }
-                    SchemaMigrationDefinition? definition = FindMigrationDefinition(module, fromRevision, CurrentSchemaRevisions[module]);
+                    SchemaMigrationDefinition? definition = FindMigrationDefinition(module, fromRevision, CurrentSchemaRevision(module));
                     if (definition == null)
                     {
                         refreshed.Blocked.Add(new SchemaMigrationPreview { Module = module, ModuleLabel = ModuleFolder(module), SourceSchema = compatibility.SchemaVersion, TargetSchema = compatibility.ExpectedSchemaVersion, Risk = "blocked", RequiresAdmin = true, Summary = "No approved migration path is registered.", Status = "blocked", Message = "The module remains read-only." });
@@ -482,7 +482,7 @@ namespace PWADC.SecurityOperationsSuite
             }
             if (pending == null) throw new InvalidOperationException("No Admin-approved schema migration is currently pending for " + ModuleFolder(module) + ".");
             if (!TryParseSchemaRevision(pending.SourceSchema, module, out int fromRevision)) throw new InvalidDataException("Pending migration source schema is invalid.");
-            SchemaMigrationDefinition? definition = FindMigrationDefinition(module, fromRevision, CurrentSchemaRevisions[module]);
+            SchemaMigrationDefinition? definition = FindMigrationDefinition(module, fromRevision, CurrentSchemaRevision(module));
             if (definition == null) throw new InvalidOperationException("The approved migration definition is no longer available.");
             if (!IsMajorMigration(definition)) throw new InvalidOperationException("This migration is not an Admin-confirmation migration.");
 

@@ -6,6 +6,7 @@ const read=(f)=>fs.readFileSync(path.join(root,f),'utf8');
 const need=(hay,needle,msg)=>{if(!hay.includes(needle))throw new Error(msg||`Missing: ${needle}`)};
 
 const schema=read('MainForm.SchemaCompatibility.cs');
+const registry=read('MainForm.GovernedModules.cs');
 const main=read('MainForm.cs');
 const storage=read('MainForm.Storage.cs');
 const reliability=read('MainForm.DataReliability.cs');
@@ -17,14 +18,14 @@ const csproj=read('SecurityOperationsSuite.csproj');
 const manifest=read('app.manifest');
 const globalJson=read('global.json');
 
-need(main,'private const string AppVersion = "4.1.3";','AppVersion must be 4.1.3 for this maintenance release.');
+need(main,'private const string AppVersion = "4.2.0";','AppVersion must be 4.2.0 for this maintenance release.');
 need(main,'EnsureLiveSchemaMetadata();','Startup schema metadata initialization is missing.');
-need(schema,'["attendance"] = 2','Attendance schema revision 2 registration missing.');
-need(schema,'["roster"] = 1','Roster schema registration missing.');
-need(schema,'["tasks"] = 1','Tasks schema registration missing.');
-need(schema,'["shift-reports"] = 1','Shift Reports schema registration missing.');
-need(schema,'["shift-intelligence"] = 1','Shift Intelligence schema registration missing.');
-need(schema,'["suite-settings"] = 1','Suite Settings schema registration missing.');
+for(const [id,revision] of [['attendance',2],['roster',1],['tasks',1],['shift-reports',1],['shift-intelligence',1],['suite-settings',1]]){
+  need(registry,`Id = "${id}"`,`${id} governed-module registration missing.`);
+  const line=registry.split(/\r?\n/).find(x=>x.includes(`Id = "${id}"`))||'';
+  need(line,`SchemaRevision = ${revision}`,`${id} schema revision ${revision} registration missing.`);
+}
+need(schema,'GovernedModule(module)','Schema compatibility must resolve revisions through the governed-module registry.');
 need(schema,'private sealed class SchemaCompatibilityException : IOException','SchemaCompatibilityException must derive from IOException; InvalidDataException is sealed on the target framework.');
 if(schema.includes('SchemaCompatibilityException : InvalidDataException'))throw new Error('SchemaCompatibilityException still derives from sealed InvalidDataException.');
 
@@ -52,10 +53,10 @@ need(dataCore,'if(info.writeAllowed===false)','Browser save path does not honor 
 need(shell,'<th>Schema</th>','Data Health live-file table does not display schema state.');
 need(workflow,'node tools/validate-schema-compatibility.js','Windows workflow does not run schema compatibility validation.');
 need(csproj,'<TargetFramework>net10.0-windows</TargetFramework>','Project must target net10.0-windows.');
-need(csproj,'<Version>4.1.3</Version>','Visible application package version must be 4.1.3.');
-need(csproj,'<FileVersion>4.1.3.0</FileVersion>','Windows file metadata must be 4.1.3.0.');
-need(csproj,'<AssemblyVersion>4.1.3.0</AssemblyVersion>','Windows assembly metadata must be 4.1.3.0.');
-need(manifest,'version="4.1.3.0"','Windows manifest identity must be four-part 4.1.3.0.');
+need(csproj,'<Version>4.2.0</Version>','Visible application package version must be 4.2.0.');
+need(csproj,'<FileVersion>4.2.0.0</FileVersion>','Windows file metadata must be 4.2.0.0.');
+need(csproj,'<AssemblyVersion>4.2.0.0</AssemblyVersion>','Windows assembly metadata must be 4.2.0.0.');
+need(manifest,'version="4.2.0.0"','Windows manifest identity must be four-part 4.2.0.0.');
 const sdk=JSON.parse(globalJson).sdk||{};
 if(sdk.version!=='10.0.400'||sdk.rollForward!=='latestPatch')throw new Error('global.json must pin the suite to .NET SDK 10.0.400 with latestPatch roll-forward.');
 need(csproj,'RemoveUnusedWebView2WpfReference','WinForms build must remove the unused WebView2 WPF reference before assembly resolution.');
@@ -74,12 +75,12 @@ const seeds={
 for(const [file,expected] of Object.entries(seeds)){
   const obj=JSON.parse(read(path.join('app','seed',file)));
   if(obj.schemaVersion!==expected)throw new Error(`${file} schemaVersion expected ${expected}, got ${obj.schemaVersion}`);
-  if(obj.lastWrittenByAppVersion!=='4.1.3')throw new Error(`${file} lastWrittenByAppVersion is not 4.1.3`);
+  if(obj.lastWrittenByAppVersion!=='4.2.0')throw new Error(`${file} lastWrittenByAppVersion is not 4.2.0`);
 }
 const attendanceSeed=JSON.parse(read(path.join('app','seed','attendance-data.json')));
 if(Number(attendanceSeed.pointSystem?.policy?.doctorNoteReductionPercent)!==50)throw new Error('Attendance schema-2 seed must initialize doctorNoteReductionPercent to 50.');
 console.log('Schema Version & Compatibility Guarding validation PASS');
 console.log('- Attendance is registered at schema revision 2; other current modules remain at revision 1');
 console.log('- Legacy missing markers can be stamped safely; immediately previous schemas route to migration, older/newer incompatible schemas block writes');
-console.log('- Three-part app version 4.1.3 with four-part Windows metadata retained');
+console.log('- Three-part app version 4.2.0 with four-part Windows metadata retained');
 console.log('- .NET 10 SDK 10.0.400 pinned, net10.0-windows targeted, and unused WebView2 WPF reference removed for clean WinForms assembly resolution');

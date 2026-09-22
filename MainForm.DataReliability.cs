@@ -87,7 +87,7 @@ namespace PWADC.SecurityOperationsSuite
 
                 // v3.4.1.0 stale-write gate. This runs after staging/validation but before
                 // the safety backup or live replacement so a conflict does not touch live data.
-                if (operation == "module-save" || operation == "schema-metadata-initialize" || IsSchemaMigrationOperation(operation))
+                if (operation == "module-save" || operation == "schema-metadata-initialize" || operation == "restore-last-known-good" || operation == "reset-from-packaged-seed" || IsSchemaMigrationOperation(operation))
                     VerifyExpectedRevision(module, fullTarget, expectedRevision, operation);
 
                 existed = File.Exists(fullTarget);
@@ -138,6 +138,7 @@ namespace PWADC.SecurityOperationsSuite
                     Verified = true
                 };
                 WriteDataReliabilityAudit(outcome, true, "");
+                TryRefreshDataHealth("save");
                 return outcome;
             }
             catch (Exception ex)
@@ -154,6 +155,7 @@ namespace PWADC.SecurityOperationsSuite
                     Verified = false
                 };
                 WriteDataReliabilityAudit(failed, false, ex.Message);
+                TryRefreshDataHealth("save-failure");
                 throw;
             }
             finally
