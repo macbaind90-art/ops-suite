@@ -66,7 +66,7 @@ Implemented behavior:
 - schema state is exposed through load envelopes and Data Health file verification
 - schema governance applies only to registered core-suite JSON; specialist/standalone tool JSON under the shared Data tree remains untouched and does not block suite startup
 
-Current schemas: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-1`.
+Current schemas: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-2`.
 
 ### 3. Controlled Schema Migration Framework
 **Status: Completed in v4.1.0**

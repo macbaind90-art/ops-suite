@@ -1,7 +1,7 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.2.0**
+- Version: **4.2.1**
 - Release: **Data Health & Recovery Dashboard**
 - Baseline: **v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix**
 
@@ -94,8 +94,8 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.2.0 source package is uploaded to `main`.
-## v4.2.0 Targeted Regression - Data Health & Recovery
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.2.1 source package is uploaded to `main`.
+## v4.2.1 Targeted Regression - Data Health & Recovery
 
 - Central registry owns module identity, filenames, and schema revisions: **PASS**.
 - Admin-only bridge authorization covers dashboard, LKG restore, backup restore, and packaged recovery: **PASS**.

@@ -118,7 +118,7 @@ Feature-specific print styles embedded inside JavaScript-generated report window
 - `MainForm.Programs.cs` - approved path handling, packaged programs, suite lock files, environment information and module file status
 - `MainForm.SchemaCompatibility.cs` - live JSON schema registration, compatibility classification, metadata stamping, and write guarding
 - `MainForm.SchemaMigrations.cs` - startup migration queue, migration definitions, Admin approval, backup/staging/verification/rollback, and append-only migration history
-- `Models.cs` - backup models, data-integrity/write outcomes, Suite Settings, coverage requirements and suite users
+- `Models.cs` - backup models, data-integrity/write outcomes, Suite Settings and suite users
 
 ## Desktop Bridge Contract
 v3.3.0 does not rename or remove existing WebView message contracts. Current contracts remain the compatibility boundary between the JavaScript application and the Windows host.
@@ -206,7 +206,7 @@ Doctor-note coverage is stored in `attendance.medicalNotes` as an audited admini
 - Daily Last-Known-Good snapshots continue to include external live files beneath `Data`, but exclude nested backup-artifact folders to avoid backing up backups.
 
 ## v4.0.0 Schema Version & Compatibility Guarding
-- Every current suite-managed live JSON module has a registered module-specific schema identifier: `attendance-1`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-1`.
+- Every current suite-managed live JSON module has a registered module-specific schema identifier: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-2`.
 - The host stamps `schemaVersion` and `lastWrittenByAppVersion` on every protected JSON write.
 - On startup, legacy live files with no schema marker are upgraded only by adding metadata through the existing atomic, backup-first, revision-checked write path.
 - Current schema data remains writable. A formally older schema is read-only until the Controlled Schema Migration Framework supplies an approved migration. A newer schema is read-only to protect data created by a later application build.

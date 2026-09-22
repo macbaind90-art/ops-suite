@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Design System
 
-## v4.2.0 Data Health & Recovery Status Standard
+## v4.2.1 Data Health & Recovery Status Standard
 
 Data Health uses a status-first hierarchy. Overall suite and shared-storage state appear before module cards; module cards show the operational decision fields; hashes, paths, and validation evidence remain inside technical disclosure.
 

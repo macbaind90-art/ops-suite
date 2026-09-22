@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.2.0
+# PWADC Security Operations Suite v4.2.1
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,14 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.2.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.2.1` = the current maintenance release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.2.1 - Live Schedule Coverage Authority Cleanup
+
+- Live Schedule is the sole staffing and HPW authority across the dashboard, management reports, Labor Analytics, print output, and CSV export.
+- The legacy Coverage Requirements settings screen and hard-coded staffing rules have been retired.
+- Suite Settings schema revision 2 removes legacy coverage-rule fields through the controlled backup-first migration path while preserving all active administrative and labor settings.
+- Specialist Data remains informational and reports unregistered JSON already present under the configured shared `Data` folder without taking ownership of those files.
 
 
 ## v4.2.0 - Data Health & Recovery Dashboard
@@ -68,7 +75,7 @@ Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.
 
 ## v4.0.0 - Schema Version & Compatibility Guarding
 - Adds `schemaVersion` and `lastWrittenByAppVersion` metadata to every current suite-managed live JSON data file.
-- Current schema identifiers are module-specific: `attendance-1`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-1`.
+- Current schema identifiers are module-specific: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-2`.
 - On startup, legacy live files with no schema marker are backed up and stamped through the existing atomic write path without changing business data.
 - Current compatible files load and save normally.
 - A formally older schema is readable but write-blocked until the approved Controlled Schema Migration Framework can migrate it.

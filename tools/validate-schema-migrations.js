@@ -17,8 +17,8 @@ const dataCore=read('app/js/20-data-core.js');
 const workflow=read('.github/workflows/build-windows.yml');
 const csproj=read('SecurityOperationsSuite.csproj');
 
-need(main,'private const string AppVersion = "4.2.0";','AppVersion must be 4.2.0.');
-need(csproj,'<Version>4.2.0</Version>','Project package version must be 4.2.0.');
+need(main,'private const string AppVersion = "4.2.1";','AppVersion must be 4.2.1.');
+need(csproj,'<Version>4.2.1</Version>','Project package version must be 4.2.1.');
 need(main,'EnsureDailyLastKnownGoodSnapshot();','Daily LKG must remain part of startup.');
 need(main,'EnsureLiveSchemaMetadata();','Schema metadata initialization must remain part of startup.');
 need(main,'ProcessStartupSchemaMigrations();','Controlled schema migration processing must run at startup.');
@@ -39,6 +39,8 @@ need(migration,'public bool BusinessMeaningChanged','Business-rule change flag m
 need(migration,'BuildSchemaMigrationDefinitions()','Migration registry missing.');
 const attendanceRegistryLine=registry.split(/\r?\n/).find(x=>x.includes('Id = "attendance"'))||'';
 need(attendanceRegistryLine,'SchemaRevision = 2','Attendance current schema must be revision 2 in the governed-module registry.');
+const settingsRegistryLine=registry.split(/\r?\n/).find(x=>x.includes('Id = "suite-settings"'))||'';
+need(settingsRegistryLine,'SchemaRevision = 2','Suite Settings current schema must be revision 2 in the governed-module registry.');
 need(schema,'GovernedModule(module)','Schema migration compatibility must use the governed-module registry.');
 need(migration,'Module = "attendance"','Attendance 1->2 migration is not registered.');
 need(migration,'FromRevision = 1','Attendance migration source revision missing.');
@@ -46,6 +48,8 @@ need(migration,'ToRevision = 2','Attendance migration target revision missing.')
 need(migration,'Risk = "minor"','Attendance 1->2 migration must remain low-risk/automatic.');
 need(migration,'doctorNoteReductionPercent','Attendance migration does not initialize configurable doctor-note reduction.');
 need(migration,'note["editHistory"] = new JsonArray()','Attendance migration does not initialize doctor-note edit history.');
+need(migration,'Module = "suite-settings"','Suite Settings 1->2 migration is not registered.');
+need(migration,'root.Remove("CoverageRequirements")','Suite Settings migration does not retire legacy coverage requirements.');
 need(migration,'IsMajorMigration(definition)','Major migration branch missing.');
 need(migration,'summary.Pending.Add(preview)','Major migrations must wait for Admin approval.');
 need(migration,'ExecuteSchemaMigration(definition, preview, "SYSTEM", "automatic-minor")','Minor migrations must be able to run automatically.');
@@ -100,3 +104,6 @@ console.log('- Non-Admin users cannot enter modules awaiting Admin migration app
 
 const attendanceSeed=JSON.parse(read('app/seed/attendance-data.json'));
 if(attendanceSeed.schemaVersion!=='attendance-2')throw new Error('Attendance seed must ship at attendance-2.');
+const settingsSeed=JSON.parse(read('app/seed/suite-settings.json'));
+if(settingsSeed.schemaVersion!=='suite-settings-2')throw new Error('Suite Settings seed must ship at suite-settings-2.');
+if('CoverageRequirements' in settingsSeed||'coverageRequirements' in settingsSeed)throw new Error('Suite Settings seed still contains legacy coverage requirements.');

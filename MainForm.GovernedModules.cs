@@ -30,7 +30,7 @@ namespace PWADC.SecurityOperationsSuite
             new GovernedModuleDefinition { Id = "tasks", Label = "Task Tracker", FileName = "tasks-data.json", SchemaRevision = 1, RecordCountStrategy = "tasks" },
             new GovernedModuleDefinition { Id = "shift-reports", Label = "Shift Reports", FileName = "shift-reports-data.json", SchemaRevision = 1, RecordCountStrategy = "shift-reports" },
             new GovernedModuleDefinition { Id = "shift-intelligence", Label = "Shift Intelligence", FileName = "shift-intelligence-data.json", SchemaRevision = 1, RecordCountStrategy = "shift-intelligence" },
-            new GovernedModuleDefinition { Id = "suite-settings", Label = "Suite Settings", FileName = "suite-settings.json", SchemaRevision = 1, RecordCountStrategy = "suite-settings" }
+            new GovernedModuleDefinition { Id = "suite-settings", Label = "Suite Settings", FileName = "suite-settings.json", SchemaRevision = 2, RecordCountStrategy = "suite-settings" }
         };
 
         private static GovernedModuleDefinition? GovernedModule(string module)

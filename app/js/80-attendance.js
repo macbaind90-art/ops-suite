@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.2.0 | module: attendance-base */
+/* PWADC Security Operations Suite v4.2.1 | module: attendance-base */
 'use strict';
 
 function shiftRank(shift){let i=SHIFT_ORDER.indexOf(shift||'');return i>=0?i:99}

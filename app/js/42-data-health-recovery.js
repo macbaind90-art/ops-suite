@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.2.0 | Data Health & Recovery */
+/* PWADC Security Operations Suite v4.2.1 | Data Health & Recovery */
 'use strict';
 
 let dataHealthDashboard=null,dataHealthLoading=false,dataHealthError='',dataHealthSelectedModule='',dataHealthLkgPreview=null;
@@ -106,7 +106,8 @@ async function exportDataHealthDiagnostics(){
 
 function dataHealthSpecialistHtml(){
   const rows=dataHealthDashboard?.specialistData||[];
-  return `<details class="governance-details"><summary>Specialist Data <span>Informational only</span></summary><div class="governance-details-body"><div class="notice">Specialist files are checked for presence and valid JSON only. Core Data Health does not assign schemas, change access state, migrate, alter, or directly restore these files.</div>${rows.length?`<div class="settings-table-wrap"><table><thead><tr><th>File</th><th>Path</th><th>JSON</th><th>Modified</th><th>Morning LKG</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.name||'')}</td><td>${esc(r.relativePath||'')}</td><td class="${r.validJson?'ok':'bad'}">${r.validJson?'Valid':'Invalid'}</td><td>${esc(r.modified||'')}</td><td>${r.capturedInLkg?'Captured':'Not captured'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><strong>No Specialist JSON Detected</strong>No unregistered specialist JSON files were found in the live Data tree.</div>'}</div></details>`;
+  const source=(settings.dataRoot||'Configured Data Root')+'\\Data';
+  return `<details class="governance-details"><summary>Specialist Data <span>Informational only</span></summary><div class="governance-details-body"><div class="notice">Specialist files are checked for presence and valid JSON only. These entries were discovered under <strong>${esc(source)}</strong>; they are existing standalone-tool data, not files created by Core Data Health. Core Data Health does not assign schemas, change access state, migrate, alter, or directly restore these files.</div>${rows.length?`<div class="settings-table-wrap"><table><thead><tr><th>File</th><th>Path under Data</th><th>JSON</th><th>Modified</th><th>Morning LKG</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${esc(r.name||'')}</td><td>${esc(r.relativePath||'')}</td><td class="${r.validJson?'ok':'bad'}">${r.validJson?'Valid':'Invalid'}</td><td>${esc(r.modified||'')}</td><td>${r.capturedInLkg?'Captured':'Not captured'}</td></tr>`).join('')}</tbody></table></div>`:'<div class="empty-state"><strong>No Specialist JSON Detected</strong>No unregistered specialist JSON files were found in the live Data tree.</div>'}</div></details>`;
 }
 
 function dataHealthHistoryHtml(){

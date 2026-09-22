@@ -104,6 +104,28 @@ namespace PWADC.SecurityOperationsSuite
                         }
                         return root;
                     }
+                },
+                new SchemaMigrationDefinition
+                {
+                    Module = "suite-settings",
+                    FromRevision = 1,
+                    ToRevision = 2,
+                    Risk = "minor",
+                    Summary = "Retires the duplicate coverage-requirements ruleset so the Live Schedule is the sole staffing authority.",
+                    BusinessMeaningChanged = false,
+                    PreserveRecordIdentity = true,
+                    Changes = new List<string>
+                    {
+                        "Removes legacy CoverageRequirements settings rows.",
+                        "Preserves users, roles, authentication settings, labor assumptions, and shared-data configuration.",
+                        "Moves all dashboard, report, print, and CSV coverage calculations to the Live Schedule authority model."
+                    },
+                    Transform = root =>
+                    {
+                        root.Remove("coverageRequirements");
+                        root.Remove("CoverageRequirements");
+                        return root;
+                    }
                 }
             };
         }
@@ -529,7 +551,19 @@ namespace PWADC.SecurityOperationsSuite
             {
                 var ids = new List<string>();
                 int count = 0;
-                if (root.TryGetProperty(property, out JsonElement arr) && arr.ValueKind == JsonValueKind.Array)
+                JsonElement arr = default;
+                bool found = root.TryGetProperty(property, out arr);
+                if (!found)
+                {
+                    foreach (JsonProperty candidate in root.EnumerateObject())
+                    {
+                        if (!string.Equals(candidate.Name, property, StringComparison.OrdinalIgnoreCase)) continue;
+                        arr = candidate.Value;
+                        found = true;
+                        break;
+                    }
+                }
+                if (found && arr.ValueKind == JsonValueKind.Array)
                 {
                     foreach (JsonElement item in arr.EnumerateArray())
                     {
@@ -577,7 +611,7 @@ namespace PWADC.SecurityOperationsSuite
             else if (module == "tasks") ArrayIds("tasks", "tasks");
             else if (module == "shift-reports") { ArrayIds("reports", "reports"); ArrayIds("issues", "issues"); }
             else if (module == "shift-intelligence") { ArrayIds("issues", "issues"); ArrayIds("intake", "intake"); ArrayIds("reference", "reference"); }
-            else if (module == "suite-settings") { ArrayIds("users", "users"); ArrayIds("coverageRequirements", "coverageRequirements"); }
+            else if (module == "suite-settings") ArrayIds("users", "users");
             return fp;
         }
 

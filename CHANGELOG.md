@@ -1,5 +1,13 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.2.1 - Live Schedule Coverage Authority Cleanup
+- Retired the duplicate Coverage Requirements configuration and its hard-coded legacy staffing rows.
+- Standardized the Home dashboard, management reports, Labor Analytics screen, print output, and CSV export on the Live Schedule authority model.
+- Advanced Suite Settings to schema revision 2 with an automatic backup-first migration that removes legacy coverage-requirement fields while preserving users, roles, security settings, labor assumptions, and shared-data configuration.
+- Removed obsolete Grocery Dock and Crosswalk rules from packaged settings so they cannot create false staffing gaps or return through Restore Defaults.
+- Added regression validation to prevent the retired coverage model or settings control from returning.
+- Retained Specialist Data as an informational inventory of unregistered JSON already present under the live shared Data tree; the core suite does not create, migrate, edit, or directly restore those files.
+
 ## v4.2.0 - Data Health & Recovery Dashboard
 
 - Rebuilt Data Health as an Admin-only, status-first dashboard for six centrally registered governed modules.
