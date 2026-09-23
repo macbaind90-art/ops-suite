@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.3.0 - Role-Aware Interface & Centralized Permissions**.
+Current production build: **v4.4.0 - Attendance Notice Generator & Lifecycle**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
@@ -66,7 +66,7 @@ Implemented behavior:
 - schema state is exposed through load envelopes and Data Health file verification
 - schema governance applies only to registered core-suite JSON; specialist/standalone tool JSON under the shared Data tree remains untouched and does not block suite startup
 
-Current schemas: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-3`.
+Current schemas: `attendance-3`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, `suite-settings-3`.
 
 ### 3. Controlled Schema Migration Framework
 **Status: Completed in v4.1.0**
@@ -180,14 +180,13 @@ Implemented scope:
 ## Phase 3 - Attendance Completion
 
 ### 8. Attendance Corrective Action Notice Generator
-**Status: Approved**
+**Status: Completed in v4.4.0**
 
 Build corrective-action notice generation directly into Attendance rather than as a separate report module.
 
 Current thresholds:
-- 3 points - Verbal Counseling
-- 6 points - Written Warning
-- 9 points - Final Written Warning
+- 6–8.99 active points - Notice
+- 9 or more active points - Final Warning
 
 Target workflow:
 **Attendance Event -> Points -> Threshold -> Generate Notice -> Issue Notice -> Acknowledge / Record -> Audit**
@@ -201,6 +200,15 @@ Notice lifecycle should distinguish at minimum:
 - Acknowledged / recorded
 
 Generating a notice must not automatically mark the corrective action as completed.
+
+Implemented scope:
+- point-derived, non-editable notice type
+- frozen employee, trigger-event, active-point, and point-record snapshot
+- backup-first generation and status transitions
+- Generated -> Issued -> Acknowledged or Recorded lifecycle
+- capability-controlled actions, audit history, and immediate governed saves
+- print-ready notice, signatures, receipt-only acknowledgment, and employee comments page
+- automatic `attendance-2` -> `attendance-3` preservation migration for historical records
 
 ### 9. Attendance Action Report
 **Status: Approved**

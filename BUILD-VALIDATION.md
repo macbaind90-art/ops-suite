@@ -1,9 +1,20 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.3.0**
-- Release: **Role-Aware Interface & Centralized Permissions**
-- Baseline upgraded: **v4.2.1 - Live Schedule Coverage Authority Cleanup**
+- Version: **4.4.0**
+- Release: **Attendance Notice Generator & Lifecycle**
+- Baseline upgraded: **v4.3.0 - Role-Aware Interface & Centralized Permissions**
+
+## Attendance Notice Contract
+
+- 6–8.99 active points = Notice; 9+ active points = Final Warning: **PASS**
+- Due / Generated / Issued / Acknowledged / Recorded lifecycle: **PASS**
+- Generation does not imply issuance or completion: **PASS**
+- Frozen triggering event and point-record evidence: **PASS**
+- Backup-first generation and status transitions: **PASS**
+- Capability guard, audit, and governed immediate save: **PASS**
+- Template-derived print warning, acknowledgment, signatures, and comments page: **PASS**
+- Attendance `attendance-2` -> `attendance-3` preservation migration: **PASS**
 
 ## Role Capability Contract
 
@@ -49,7 +60,7 @@
 - Banked positive credits continue to offset future chargeable attendance points dollar-for-dollar
 - Positive credit can carry fractional remainder when only part of an award is required
 - Positive awards earned after a manual current-point adjustment reduce the controlled adjusted balance before banking
-- Corrective thresholds: **3 / 6 / 9**
+- Attendance notice thresholds: **6–8.99 Notice / 9+ Final Warning**
 - NE remains zero-point Not Employed
 - Daily Entry grouped in operational shift order: **3rd / 1st / 2nd / Gate / Reception**
 - Attendance work/off authority: **Live Schedule primary / Roster RDO fallback**
@@ -109,7 +120,7 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.3.0 source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.4.0 source package is uploaded to `main`.
 ## v4.2.1 Targeted Regression - Data Health & Recovery
 
 - Central registry owns module identity, filenames, and schema revisions: **PASS**.
@@ -141,8 +152,9 @@
 - Default 50% reduction preserves prior production behavior: **PASS**.
 - Non-default reduction (80%) recalculates an existing covered CO1 occurrence to 20% of normal points: **PASS**.
 - Doctor-note covered range remains a single occurrence and additional matching days remain zero-additional-point events: **PASS**.
-- Attendance current schema is `attendance-2`; packaged Attendance seed is `attendance-2`: **PASS**.
+- Attendance current schema is `attendance-3`; packaged Attendance seed is `attendance-3`: **PASS**.
 - Registered automatic low-risk `attendance-1` -> `attendance-2` migration initializes the 50% reduction policy and edit-history containers while preserving record identities: **PASS**.
+- Registered automatic low-risk `attendance-2` -> `attendance-3` migration initializes notice lifecycle metadata while preserving record identities: **PASS**.
 - Unstamped legacy modules with schema history anchor to the immediately previous schema before controlled migration: **PASS**.
 - Full front-end/module/action validation remains required after these changes.
 

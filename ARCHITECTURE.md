@@ -1,4 +1,12 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.3.0
+# PWADC Security Operations Suite Architecture - Current Production v4.4.0
+
+## v4.4.0 Attendance Notice Lifecycle
+
+Attendance remains the authoritative source for notice eligibility. `attendancePointSnapshot()` calculates active points; `attendanceActionLevel()` maps 6–8.99 to Notice and 9+ to Final Warning. `correctiveActionWorkflow()` combines the current required level with persisted lifecycle records and prevents duplicate generation for the same or higher current notice level.
+
+Generated records freeze employee identity, notice type, as-of date, active-point total, triggering event, and the active point-detail record. Generation and each status transition create a pre-change Attendance backup, append the Attendance audit, and save through the governed persistence path. Delivery is explicit: Generated -> Issued -> Acknowledged or Recorded. Recorded requires a note when acknowledgment is unavailable or declined.
+
+Attendance schema revision 3 adds lifecycle metadata without changing prior record identities. The automatic `attendance-2` -> `attendance-3` migration normalizes historical Written/Final Written Warning labels and classifies prior one-step records as Recorded. The print view is generated from the frozen record, not from a later recalculation.
 
 ## v4.3.0 Role-Aware Interface & Centralized Permissions
 
@@ -36,7 +44,7 @@ Shared-storage failure is isolated. Startup warns the user, offers the Admin das
 
 ## v4.1.1 Attendance Schema 2 / Doctor-Note Policy Architecture
 
-Attendance is the first core module to consume the controlled schema-migration framework in production. The current Attendance schema is `attendance-2`; `attendance-1` is the immediately previous supported schema and migrates automatically as a low-risk structural upgrade. The migration adds `pointSystem.policy.doctorNoteReductionPercent` with a 50% default and `editHistory` containers on existing doctor-note coverage records while preserving employee, attendance, doctor-note, adjustment, and corrective-action identities.
+Attendance first consumed the controlled schema-migration framework at schema 2. The current Attendance schema is `attendance-3`; `attendance-2` is the immediately previous supported schema and migrates automatically to add notice lifecycle metadata. The earlier 1->2 migration added `pointSystem.policy.doctorNoteReductionPercent` with a 50% default and `editHistory` containers while preserving record identities.
 
 Doctor-note point treatment is now a global Attendance policy rather than a fixed per-note multiplier. `doctorNoteReductionPercent` is normalized to 0-100%; the charged share is `100 - reduction`. A covered range still counts as one attendance occurrence, only the first matching covered event bears the reduced charge, and additional matching days add no points. Changing the policy recalculates current Attendance snapshots and is recorded in the existing point-policy history.
 
@@ -216,7 +224,7 @@ Doctor-note coverage is stored in `attendance.medicalNotes` as an audited admini
 - Daily Last-Known-Good snapshots continue to include external live files beneath `Data`, but exclude nested backup-artifact folders to avoid backing up backups.
 
 ## v4.0.0 Schema Version & Compatibility Guarding
-- Every current suite-managed live JSON module has a registered module-specific schema identifier: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-3`.
+- Every current suite-managed live JSON module has a registered module-specific schema identifier: `attendance-3`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-3`.
 - The host stamps `schemaVersion` and `lastWrittenByAppVersion` on every protected JSON write.
 - On startup, legacy live files with no schema marker are upgraded only by adding metadata through the existing atomic, backup-first, revision-checked write path.
 - Current schema data remains writable. A formally older schema is read-only until the Controlled Schema Migration Framework supplies an approved migration. A newer schema is read-only to protect data created by a later application build.

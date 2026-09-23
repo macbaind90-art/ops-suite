@@ -1,5 +1,14 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.4.0 - Attendance Notice Generator & Lifecycle
+
+- Implemented current thresholds of 6–8.99 active points for a Notice and 9+ active points for a Final Warning; retired the active 3-point Verbal Counseling threshold.
+- Added separate Due, Generated, Issued, Acknowledged, and Recorded lifecycle states so generating a notice never represents delivery or completion.
+- Added frozen point/evidence snapshots, backup-first changes, audit entries, immediate governed saves, and attendance.correctiveAction capability enforcement.
+- Added a professional two-page print notice based on the supplied Confirming Notice template, including warning language, receipt-only acknowledgment, signature lines, point detail, and employee comments.
+- Advanced Attendance to schema revision 3 with an automatic 2->3 migration that preserves historical corrective actions as Recorded records.
+- Updated Home, Point Review, employee profiles, reports, CSV output, documentation, and regression validation for the new thresholds and lifecycle.
+
 ## v4.3.0 - Role-Aware Interface & Centralized Permissions
 
 - Centralized module visibility and action authorization around persisted role capabilities instead of hard-coded role/module lists.

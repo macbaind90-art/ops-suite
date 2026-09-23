@@ -21,7 +21,7 @@ for(const token of ['renderPointDaily','renderPointGrid','renderPointReview','re
   if(!points.includes(token))throw new Error('Current Attendance Point function missing: '+token);
 }
 if(!reports.includes("title:'Attendance Point Summary'"))throw new Error('Report Center is missing the current Attendance Point Summary.');
-if(!reports.includes('Corrective Actions Due')||!reports.includes('Positive Credits Banked'))throw new Error('Current attendance point metrics are missing from reports.');
+if(!reports.includes('Attendance Notices Due')||!reports.includes('Positive Credits Banked'))throw new Error('Current attendance point metrics are missing from reports.');
 if(health.includes('Attendance Notices'))throw new Error('Data Health still presents legacy Attendance Notices as a live module.');
 if(!health.includes('Attendance Points'))throw new Error('Data Health does not validate current Attendance Point controls.');
 // Historical raw fields are intentionally preserved if they exist in old JSON; they are not initialized as live workflows.

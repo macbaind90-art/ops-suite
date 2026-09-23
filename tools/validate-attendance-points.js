@@ -9,12 +9,12 @@ new vm.Script(src,{filename:'app/js/82-attendance-points.js'});
 const required=[
   "'T<5':0","'T5-14':0.5","'T15+':1","'CO1':1.5","'CO2':3","'NCNS':9","'LE':1","'EIA':2",
   'negativeWindowDays:90','calloffWindowDays:14','positiveWorkingDays:12','maxPositiveCredits:3',
-  "{points:3,level:'Verbal Counseling'}","{points:6,level:'Written Warning'}","{points:9,level:'Final Written Warning'}",
+  "{points:6,level:'Notice'}","{points:9,level:'Final Warning'}",
   "if(old==='T')next='T<5'","else if(old==='LE')next='ALE'","else if(old==='UE')next='LE'",
   'Commit Migration + Backup','Positive Credit Bank','Clean Workdays',
   "const ATTENDANCE_DAILY_SHIFT_ORDER=['3rd Shift','1st Shift','2nd Shift','Gate','Reception']",
   "let pointGridMode='all'","All Employees","Single Employee","pointDailyGroups(rows)",
-  "function attendanceEmployeePointClass","if(points<3)return 'att-emp-risk-green'","if(points<7)return 'att-emp-risk-yellow'","return 'att-emp-risk-red'",
+  "function attendanceEmployeePointClass","if(points<6)return 'att-emp-risk-green'","if(points<9)return 'att-emp-risk-yellow'","return 'att-emp-risk-red'",
   "function pointGridStatusClass","if(c==='NE')return 'att-status-ne'","if(c==='O')return ''","if(c==='P')return 'att-status-present'","if(c==='SUS')return 'att-status-suspended'",
   "{code:'SUS',label:'Suspended',points:0,kind:'reset'}","const ATT_RESET_CODES=new Set(['SUS'])","if(ATT_RESET_CODES.has(code))",
   'att-status-approved',"pts>=2?'att-status-issue-high':'att-status-issue-low'",'att-positive-earned','point-positive-award','att-point-grid-shift-row',
@@ -49,7 +49,7 @@ console.log('14-day call-off classification: PASS');
 console.log('12 working-day positive credit: PASS');
 console.log('3-point positive bank cap: PASS');
 console.log('Credit offset, immediate paydown, and consumption: PASS');
-console.log('3/6/9 corrective thresholds: PASS');
+console.log('6-point Notice / 9-point Final Warning thresholds: PASS');
 console.log('NE retained as zero-point neutral code: PASS');
 console.log('Daily Entry shift grouping/order: PASS');
 console.log('90-Day Grid newest-to-oldest order: PASS');

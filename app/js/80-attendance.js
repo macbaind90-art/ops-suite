@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.3.0 | module: attendance-base */
+/* PWADC Security Operations Suite v4.4.0 | module: attendance-base */
 'use strict';
 
 function shiftRank(shift){let i=SHIFT_ORDER.indexOf(shift||'');return i>=0?i:99}
@@ -19,7 +19,7 @@ function openAttendanceRemoveModal(){
   if(!canRemoveAttendanceEmployee()){toast('Attendance employee removal is Admin-only');return;}
   const emps=activeAttendanceEmployees().slice().sort((a,b)=>(a.name||'').localeCompare(b.name||''));
   if(!emps.length){toast('No active Attendance employees found.');return;}
-  showModal(`<div class="modal-head"><div class="modal-title">Remove Employee from Attendance</div><button onclick="closeModal()">Close</button></div><div class="notice"><strong>This does not delete history.</strong><br>The selected person will be hidden from active Daily Entry, 90-Day Grid, Point Review, and Corrective Action screens. Existing attendance, point adjustments, corrective actions, and audit history remain in the JSON.</div><div class="form-grid"><div class="full"><label>Employee</label><select id="attendanceRemoveEmp">${emps.map(e=>`<option value="${esc(e.id)}">${esc(e.name||'Unnamed')} · ${esc(e.shift||'')} · ${esc(e.title||'')}</option>`).join('')}</select></div><div class="full"><label>Reason / Note</label><textarea id="attendanceRemoveNote">Manual Attendance removal backup control.</textarea></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="danger" onclick="confirmAttendanceRemove()">Remove from Active Attendance</button></div>`);
+  showModal(`<div class="modal-head"><div class="modal-title">Remove Employee from Attendance</div><button onclick="closeModal()">Close</button></div><div class="notice"><strong>This does not delete history.</strong><br>The selected person will be hidden from active Daily Entry, 90-Day Grid, Point Review, and Notice Control screens. Existing attendance, point adjustments, attendance notices, and audit history remain in the JSON.</div><div class="form-grid"><div class="full"><label>Employee</label><select id="attendanceRemoveEmp">${emps.map(e=>`<option value="${esc(e.id)}">${esc(e.name||'Unnamed')} · ${esc(e.shift||'')} · ${esc(e.title||'')}</option>`).join('')}</select></div><div class="full"><label>Reason / Note</label><textarea id="attendanceRemoveNote">Manual Attendance removal backup control.</textarea></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="danger" onclick="confirmAttendanceRemove()">Remove from Active Attendance</button></div>`);
 }
 async function confirmAttendanceRemove(){
   if(!canRemoveAttendanceEmployee()){toast('Attendance employee removal is Admin-only');return;}

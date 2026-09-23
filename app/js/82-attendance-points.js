@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.3.0 | Attendance Point System */
+/* PWADC Security Operations Suite v4.4.0 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -28,10 +28,10 @@ const ATT_RESET_CODES=new Set(['SUS']);
 const ATT_NEUTRAL_CODES=new Set(['V','O','AA','NE']);
 const ATT_OLD_ISSUE_CODES=new Set(['T','T>5','CO','UE','U']);
 const ATT_ACTION_LEVELS=[
-  {points:9,level:'Final Written Warning'},
-  {points:6,level:'Written Warning'},
-  {points:3,level:'Verbal Counseling'}
+  {points:9,level:'Final Warning'},
+  {points:6,level:'Notice'}
 ];
+const ATT_ACTION_STATUSES=['Generated','Issued','Acknowledged','Recorded'];
 let selectedPointEmployeeId='';
 let pointReviewShift='All';
 let pointReviewSearch='';
@@ -71,6 +71,7 @@ function attendanceConfiguredPointValues(){
 }
 function ensureAttendancePointSystem(){
   attendance.correctiveActions=Array.isArray(attendance.correctiveActions)?attendance.correctiveActions:[];
+  attendance.correctiveActions=attendance.correctiveActions.map(normalizeCorrectiveActionRecord);
   attendance.recordEdits=Array.isArray(attendance.recordEdits)?attendance.recordEdits:[];
   attendance.pointAdjustments=Array.isArray(attendance.pointAdjustments)?attendance.pointAdjustments:[];
   attendance.medicalNotes=Array.isArray(attendance.medicalNotes)?attendance.medicalNotes:[];
@@ -222,8 +223,8 @@ function latestPointAdjustment(empId,asOf=pointSystemAsOf()){
 
 function attendanceEmployeePointClass(empId,asOf=pointSystemAsOf()){
   const points=attendancePointSnapshot(empId,asOf).activePoints;
-  if(points<3)return 'att-emp-risk-green';
-  if(points<7)return 'att-emp-risk-yellow';
+  if(points<6)return 'att-emp-risk-green';
+  if(points<9)return 'att-emp-risk-yellow';
   return 'att-emp-risk-red';
 }
 function attendanceEmployeeNameHtml(emp,asOf=pointSystemAsOf(),meta=''){
@@ -250,9 +251,31 @@ function attendanceActionLevel(points){
   const p=Number(points)||0;
   return (ATT_ACTION_LEVELS.find(x=>p>=x.points)||{}).level||'None';
 }
-function attendanceActionRank(level){return {'None':0,'Verbal Counseling':1,'Written Warning':2,'Final Written Warning':3}[level]||0;}
+function attendanceCanonicalActionLevel(level){
+  const raw=String(level||'');
+  if(raw==='Final Written Warning'||raw==='Final Warning')return 'Final Warning';
+  if(raw==='Written Warning'||raw==='Notice')return 'Notice';
+  if(raw==='Verbal Counseling')return 'Legacy Verbal Counseling';
+  return raw||'None';
+}
+function attendanceActionRank(level){return {'None':0,'Legacy Verbal Counseling':1,'Notice':2,'Final Warning':3}[attendanceCanonicalActionLevel(level)]||0;}
+function normalizeCorrectiveActionRecord(action){
+  const a=action&&typeof action==='object'?action:{};
+  const legacy=!a.status;
+  const level=attendanceCanonicalActionLevel(a.noticeType||a.level);
+  const at=String(a.generatedAt||a.at||'');
+  return {...a,empId:String(a.empId||''),level,noticeType:level,status:legacy?'Recorded':(ATT_ACTION_STATUSES.includes(a.status)?a.status:'Recorded'),generatedAt:at,generatedBy:String(a.generatedBy||a.by||''),statusHistory:Array.isArray(a.statusHistory)?a.statusHistory:[]};
+}
 function latestCorrectiveAction(empId){
-  return (attendance.correctiveActions||[]).filter(a=>String(a.empId)===String(empId)).sort((a,b)=>String(b.at||'').localeCompare(String(a.at||'')))[0]||null;
+  return (attendance.correctiveActions||[]).filter(a=>String(a.empId)===String(empId)).sort((a,b)=>String(b.generatedAt||b.at||'').localeCompare(String(a.generatedAt||a.at||'')))[0]||null;
+}
+function correctiveActionWorkflow(empId,snap=attendancePointSnapshot(empId)){
+  const required=attendanceCanonicalActionLevel(snap.level);
+  const requiredRank=attendanceActionRank(required);
+  if(!requiredRank)return {required:'None',requiredRank,status:'None',record:null,due:false};
+  const records=(attendance.correctiveActions||[]).filter(a=>String(a.empId)===String(empId)).sort((a,b)=>String(b.generatedAt||b.at||'').localeCompare(String(a.generatedAt||a.at||'')));
+  const record=records.find(a=>attendanceActionRank(a.noticeType||a.level)>=requiredRank)||null;
+  return {required,requiredRank,status:record?(record.status||'Recorded'):'Due',record,due:!record};
 }
 
 function attendanceEventsForEmployee(empId){
@@ -560,9 +583,9 @@ function renderAttendance(){
   ensureAttendancePointSystem();
   const views=['daily','grid','review','medical','actions','audit'];
   if(!views.includes(activeAttView))activeAttView='review';
-  const labels={daily:'Daily Entry',grid:'90-Day Grid',review:'Point Review',medical:'Doctor Notes',actions:'Corrective Action',audit:'Audit Log'};
+  const labels={daily:'Daily Entry',grid:'90-Day Grid',review:'Point Review',medical:'Doctor Notes',actions:'Notice Control',audit:'Audit Log'};
   const migration=attendanceMigrationPending()?`<div class="notice warn"><strong>Attendance Point Migration Required</strong><br>The current Attendance JSON is being preserved in memory. Daily entry is locked until a backup is created and legacy codes are converted to the v3.5 point model. <button class="primary" onclick="commitAttendancePointMigration()">Commit Migration + Backup</button></div>`:'';
-  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, 14-day call-off classification, positive attendance credits, and corrective-action tracking</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="" data-capability="attendance.edit" onclick="openDoctorNoteModal()">Add Doctor Note</button> <button class="" data-capability="attendance.managePolicy" onclick="openPointValueSettingsModal()">Edit Point Values</button> <button class="danger" data-capability="attendance.edit" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> ${attendancePointPolicySummary()}. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit. Newly earned credits immediately pay down active negative points first; any unused remainder is banked, with a maximum positive balance of 3 at any one time. Banked credits are consumed by future chargeable points and can be earned again after use. Suspended (SUS) carries 0 points but resets clean-attendance progress. Doctor-note coverage counts as one occurrence with the configured ${attendanceDoctorNoteReductionPercent()}% point reduction (${attendanceDoctorNoteChargePercent()}% charged) on the first matching event; additional matching days on the same note add no extra points. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='medical'?renderDoctorNotes():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
+  return `<div class="page-head"><div><div class="page-title">Attendance</div><div class="page-sub">90-day point accountability, positive attendance credits, and controlled notice lifecycle</div></div><div><button onclick="document.getElementById('attendanceImportFile').click()">Import JSON</button> <button onclick="createAttendanceBackup()">Backup Now</button> <button onclick="exportAttendanceCSV()">Export CSV</button> <button class="" data-capability="attendance.edit" onclick="openDoctorNoteModal()">Add Doctor Note</button> <button class="" data-capability="attendance.managePolicy" onclick="openPointValueSettingsModal()">Edit Point Values</button> <button class="danger" data-capability="attendance.edit" onclick="openAttendanceRemoveModal()">Remove Employee</button><input id="attendanceImportFile" type="file" accept=".json,application/json" class="hidden" onchange="importAttendanceJSON(this)"></div></div>${migration}<div class="notice"><strong>Point Policy:</strong> ${attendancePointPolicySummary()}. Points roll for 90 days. Every 12 clean working days earns +1 attendance credit. Newly earned credits immediately pay down active negative points first; any unused remainder is banked, with a maximum positive balance of 3 at any one time. Banked credits are consumed by future chargeable points and can be earned again after use. Suspended (SUS) carries 0 points but resets clean-attendance progress. Doctor-note coverage counts as one occurrence with the configured ${attendanceDoctorNoteReductionPercent()}% point reduction (${attendanceDoctorNoteChargePercent()}% charged) on the first matching event; additional matching days on the same note add no extra points. Live Schedule is the primary authority for scheduled/off days; Roster RDO is used only when that weekday has no usable live schedule. Attendance notices are due at 6–8.99 points; Final Warnings are due at 9+ points.</div><div class="subnav">${views.map(v=>`<button class="${activeAttView===v?'active':''}" onclick="activeAttView='${v}';safeRenderPages()">${labels[v]}</button>`).join('')}</div>${activeAttView==='daily'?renderPointDaily():activeAttView==='grid'?renderPointGrid():activeAttView==='review'?renderPointReview():activeAttView==='medical'?renderDoctorNotes():activeAttView==='actions'?renderPointCorrectiveActions():renderAudit()}`;
 }
 
 function attendanceDailyShiftRank(shift){const i=ATTENDANCE_DAILY_SHIFT_ORDER.indexOf(String(shift||''));return i>=0?i:99;}
@@ -901,28 +924,80 @@ function renderPointReview(){
   const shifts=['All',...Array.from(new Set(activeAttendanceEmployees().map(e=>e.shift).filter(Boolean)))];
   const rows=pointReviewRows();
   const asOf=pointSystemAsOf();
-  return `<div class="card"><div class="card-title">Attendance Point Review</div><div class="toolbar"><div><label>Shift</label><select onchange="pointReviewShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${pointReviewShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><div><label>Search</label><input value="${esc(pointReviewSearch)}" oninput="pointReviewSearch=this.value;safeRenderPages({preserveScroll:true})" placeholder="Employee..."></div><div class="chip">As of ${esc(fmt(asOf))}</div><button class="sm" data-capability="attendance.managePolicy" onclick="openPointValueSettingsModal()">Edit Point Values</button></div><div class="mini-note">Edit Current Points creates a controlled point-balance adjustment with a required reason, pre-save backup, and audit record. Attendance incidents through the effective date are excluded from future active-point calculations.</div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Calculated 90-Day</th><th>Active Points</th><th>Positive Bank</th><th>Clean Workdays</th><th>Current Threshold</th><th>Adjustment</th><th>Next Step</th></tr></thead><tbody>${rows.map(({emp,snap})=>{const last=latestCorrectiveAction(emp.id);const due=attendanceActionRank(snap.level)>attendanceActionRank(last&&last.level||'None');const adj=snap.adjustment?`<span class="chip">Set ${esc(snap.adjustment.newActivePoints)} · ${esc(fmt(snap.adjustment.effectiveDate))}</span>`:'None';return `<tr><td class="name">${attendanceEmployeeNameHtml(emp,asOf)}</td><td>${snap.calculatedActivePoints}</td><td><strong>${snap.activePoints}</strong></td><td>${snap.bank} / ${snap.maxCredits}</td><td>${snap.cleanWorkingDays} / 12</td><td>${esc(snap.level)}</td><td>${adj}<br><button class="sm" data-capability="attendance.adjustPoints" onclick="openPointAdjustmentModal('${esc(emp.id)}')">Edit Current Points</button></td><td>${due?`<span class="chip critical">Action Due</span> <button class="sm" data-capability="attendance.correctiveAction" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Record</button>`:'<span class="chip ok">Current</span>'}</td></tr>`}).join('')}</tbody></table></div>`;
+  return `<div class="card"><div class="card-title">Attendance Point Review</div><div class="toolbar"><div><label>Shift</label><select onchange="pointReviewShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${pointReviewShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><div><label>Search</label><input value="${esc(pointReviewSearch)}" oninput="pointReviewSearch=this.value;safeRenderPages({preserveScroll:true})" placeholder="Employee..."></div><div class="chip">As of ${esc(fmt(asOf))}</div><button class="sm" data-capability="attendance.managePolicy" onclick="openPointValueSettingsModal()">Edit Point Values</button></div><div class="mini-note">Edit Current Points creates a controlled point-balance adjustment with a required reason, pre-save backup, and audit record. Attendance incidents through the effective date are excluded from future active-point calculations.</div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Calculated 90-Day</th><th>Active Points</th><th>Positive Bank</th><th>Clean Workdays</th><th>Current Threshold</th><th>Adjustment</th><th>Next Step</th></tr></thead><tbody>${rows.map(({emp,snap})=>{const flow=correctiveActionWorkflow(emp.id,snap);const adj=snap.adjustment?`<span class="chip">Set ${esc(snap.adjustment.newActivePoints)} · ${esc(fmt(snap.adjustment.effectiveDate))}</span>`:'None';const next=flow.due?`<span class="chip critical">Notice Due</span> <button class="sm" data-capability="attendance.correctiveAction" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Generate</button>`:flow.record?`<span class="chip ok">${esc(flow.status)}</span> <button class="sm" onclick="printCorrectiveAction('${esc(flow.record.id)}')">Print</button>`:'<span class="chip ok">No Notice Due</span>';return `<tr><td class="name">${attendanceEmployeeNameHtml(emp,asOf)}</td><td>${snap.calculatedActivePoints}</td><td><strong>${snap.activePoints}</strong></td><td>${snap.bank} / ${snap.maxCredits}</td><td>${snap.cleanWorkingDays} / 12</td><td>${esc(snap.level)}</td><td>${adj}<br><button class="sm" data-capability="attendance.adjustPoints" onclick="openPointAdjustmentModal('${esc(emp.id)}')">Edit Current Points</button></td><td>${next}</td></tr>`}).join('')}</tbody></table></div>`;
 }
 
 function renderPointCorrectiveActions(){
   const asOf=pointSystemAsOf();
-  const rows=sortedEmployees().map(emp=>({emp,snap:attendancePointSnapshot(emp.id,asOf),last:latestCorrectiveAction(emp.id)})).filter(x=>x.snap.level!=='None'||x.last).sort((a,b)=>b.snap.activePoints-a.snap.activePoints||a.emp.name.localeCompare(b.emp.name));
-  return `<div class="card"><div class="card-title">Corrective Action Control</div><div class="notice">Disciplinary thresholds use active points after positive attendance credits are applied: Verbal Counseling at 3, Written Warning at 6, Final Written Warning at 9. Recording an action documents completion; it does not change the point calculation.</div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Active Points</th><th>Required Level</th><th>Last Recorded Action</th><th>Status</th><th>Action</th></tr></thead><tbody>${rows.map(({emp,snap,last})=>{const due=attendanceActionRank(snap.level)>attendanceActionRank(last&&last.level||'None');return `<tr><td class="name">${attendanceEmployeeNameHtml(emp,asOf,emp.shift)}</td><td>${snap.activePoints}</td><td>${esc(snap.level)}</td><td>${last?`${esc(last.level)}<div class="mini-note">${esc(String(last.at||'').slice(0,10))} · ${esc(last.by||'')}</div>`:'None'}</td><td>${due?'<span class="chip critical">Due</span>':'<span class="chip ok">Current</span>'}</td><td><button class="sm" data-capability="attendance.correctiveAction" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Record Action</button></td></tr>`}).join('')||'<tr><td colspan="6">No employees are currently at a corrective-action threshold.</td></tr>'}</tbody></table></div>`;
+  const rows=sortedEmployees().map(emp=>{const snap=attendancePointSnapshot(emp.id,asOf);return {emp,snap,flow:correctiveActionWorkflow(emp.id,snap),last:latestCorrectiveAction(emp.id)}}).filter(x=>x.snap.level!=='None'||x.last).sort((a,b)=>b.snap.activePoints-a.snap.activePoints||a.emp.name.localeCompare(b.emp.name));
+  return `<div class="card"><div class="card-title">Attendance Notice Control</div><div class="notice"><strong>Current thresholds:</strong> 6–8.99 active points = Notice; 9 or more active points = Final Warning. Generating a notice creates a frozen point-record snapshot. It is not treated as delivered until it is marked Issued, and it remains open until Acknowledged or Recorded.</div></div><div class="table-wrap"><table><thead><tr><th>Employee</th><th>Active Points</th><th>Required Notice</th><th>Latest Notice</th><th>Lifecycle Status</th><th>Action</th></tr></thead><tbody>${rows.map(({emp,snap,flow,last})=>{const action=flow.due?`<button class="sm primary" data-capability="attendance.correctiveAction" onclick="openCorrectiveActionModal('${esc(emp.id)}')">Generate ${esc(flow.required)}</button>`:flow.record?correctiveActionButtons(flow.record):'';return `<tr><td class="name">${attendanceEmployeeNameHtml(emp,asOf,emp.shift)}</td><td>${snap.activePoints}</td><td>${esc(flow.required)}</td><td>${last?`${esc(last.noticeType||last.level)}<div class="mini-note">${esc(String(last.generatedAt||last.at||'').slice(0,10))} · ${esc(last.generatedBy||last.by||'')}</div>`:'None'}</td><td>${flow.due?'<span class="chip critical">Due</span>':flow.record?`<span class="chip ${['Acknowledged','Recorded'].includes(flow.status)?'ok':''}">${esc(flow.status)}</span>`:'<span class="chip ok">No Notice Due</span>'}</td><td>${action}</td></tr>`}).join('')||'<tr><td colspan="6">No employees are currently at a notice threshold.</td></tr>'}</tbody></table></div>`;
 }
 
 function openCorrectiveActionModal(empId){if(!hasCapability('attendance.correctiveAction')){toast('The attendance.correctiveAction capability is required.');return;}
   const emp=(attendance.employees||[]).find(e=>String(e.id)===String(empId));if(!emp)return;
   const snap=attendancePointSnapshot(empId);
-  const suggested=snap.level==='None'?'Verbal Counseling':snap.level;
-  showModal(`<div class="modal-head"><div><div class="modal-title">Record Attendance Corrective Action</div><div class="mini-note">${esc(emp.name)} · ${snap.activePoints} active point(s)</div></div><button onclick="closeModal()">Close</button></div><div class="form-grid"><div><label>Action Level</label><select id="caLevel">${['Verbal Counseling','Written Warning','Final Written Warning'].map(x=>`<option ${x===suggested?'selected':''}>${x}</option>`).join('')}</select></div><div><label>Action Date</label><input id="caDate" type="date" value="${new Date().toISOString().slice(0,10)}"></div><div class="full"><label>Notes</label><textarea id="caNote" placeholder="Counseling/document reference, HR note, or management comments"></textarea></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="saveCorrectiveAction('${esc(empId)}')">Record Action</button></div>`);
+  const level=attendanceActionLevel(snap.activePoints);
+  if(level==='None'){toast('No notice is due below 6 active points.');return;}
+  const existing=correctiveActionWorkflow(empId,snap);if(!existing.due){toast(level+' already has a '+existing.status+' record for this employee.');return;}
+  const issues=(snap.activeIssues||[]).filter(i=>Number(i.net)>0).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const re=attendanceRosterEmployee(emp);
+  showModal(`<div class="modal-head"><div><div class="modal-title">Generate Attendance ${esc(level)}</div><div class="mini-note">${esc(emp.name)} · ${snap.activePoints} active point(s) as of ${esc(fmt(snap.asOf))}</div></div><button onclick="closeModal()">Close</button></div><div class="notice warn"><strong>Generation is not issuance.</strong> This creates a frozen notice and point-record snapshot for review and printing. Mark it Issued only after it is delivered to the employee.</div><div class="form-grid"><div><label>Notice Type</label><input value="${esc(level)}" disabled></div><div><label>Notice Date</label><input id="caDate" type="date" value="${attendanceLocalToday()}"></div><div><label>Employee ID</label><input value="${esc(re&&re.eid||'')}" disabled></div><div><label>Title / Rank</label><input value="${esc(emp.title||re&&re.rank||'')}" disabled></div><div class="full"><label>Triggering Attendance Event *</label><select id="caTrigger">${issues.map((i,idx)=>`<option value="${idx}">${esc(fmt(i.date))} · ${esc(pointCodeLabel(i.code))} · ${esc(i.net)} point(s)</option>`).join('')||'<option value="">No active point event available</option>'}</select></div><div class="full"><label>Manager / Supervisor Name *</label><input id="caManager" value="${esc(currentUserName()||env.user||'')}"></div><div class="full"><label>Management Notes</label><textarea id="caNote" placeholder="Optional context for the generated notice record"></textarea></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="saveCorrectiveAction('${esc(empId)}')">Generate Notice</button></div>`);
 }
-function saveCorrectiveAction(empId){if(!hasCapability('attendance.correctiveAction')){toast('The attendance.correctiveAction capability is required.');return;}
+async function saveCorrectiveAction(empId){if(!hasCapability('attendance.correctiveAction')){toast('The attendance.correctiveAction capability is required.');return;}
   const emp=(attendance.employees||[]).find(e=>String(e.id)===String(empId));if(!emp)return;
-  const level=val('caLevel'),date=val('caDate'),note=val('caNote');
-  if(!level||!date){toast('Action level and date are required.');return;}
-  const snap=attendancePointSnapshot(empId,date);
+  const date=String(val('caDate')||''),note=String(val('caNote')||'').trim(),managerName=String(val('caManager')||'').trim();
+  if(!isIsoDateKey(date)||!managerName){toast('A valid notice date and manager / supervisor name are required.');return;}
+  const snap=attendancePointSnapshot(empId,pointSystemAsOf()),level=attendanceActionLevel(snap.activePoints);
+  if(level==='None'){toast('No notice is due below 6 active points.');return;}
+  if(!correctiveActionWorkflow(empId,snap).due){toast(level+' already has a current workflow record.');return;}
+  const issues=(snap.activeIssues||[]).filter(i=>Number(i.net)>0).slice().sort((a,b)=>String(b.date).localeCompare(String(a.date)));
+  const trigger=issues[Number(val('caTrigger')||0)]||null;
+  if(!trigger){toast('A triggering active attendance event is required.');return;}
+  try{await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});}catch(e){toast('Notice generation stopped: backup failed. '+(e.message||e));return;}
+  const now=new Date().toISOString(),actor=currentUserName()||env.user||'',re=attendanceRosterEmployee(emp);
   attendance.correctiveActions=Array.isArray(attendance.correctiveActions)?attendance.correctiveActions:[];
-  attendance.correctiveActions.unshift({id:'ca-'+Date.now(),empId:String(empId),employee:emp.name,level,date,at:new Date().toISOString(),by:currentUserName()||env.user||'',pointsAtAction:snap.activePoints,note});
-  audit('Attendance corrective action recorded',`${emp.name} · ${level} · ${date} · ${snap.activePoints} active points`);
-  closeModal();saveAttendance('corrective-action');safeRenderPages();toast(level+' recorded for '+emp.name);
+  const record={id:'ca-'+Date.now(),noticeNumber:'ATT-'+date.replaceAll('-','')+'-'+String(Date.now()).slice(-5),empId:String(empId),employee:emp.name,employeeEid:String(re&&re.eid||''),employeeTitle:String(emp.title||re&&re.rank||''),employeeShift:String(emp.shift||re&&re.shift||''),level,noticeType:level,status:'Generated',date,asOfDate:snap.asOf,generatedAt:now,generatedBy:actor,managerName,pointsAtAction:snap.activePoints,triggeringEvent:{date:trigger.date,code:trigger.code,label:pointCodeLabel(trigger.code),points:Number(trigger.net)||0},pointRecord:issues.map(i=>({date:i.date,code:i.code,label:pointCodeLabel(i.code),gross:Number(i.gross)||0,offset:Number(i.offset||0)+Number(i.positivePaydown||0),net:Number(i.net)||0})),note,statusHistory:[{status:'Generated',at:now,by:actor,note:'Notice generated; not yet issued.'}]};
+  attendance.correctiveActions.unshift(record);
+  audit('Attendance notice generated',`${emp.name} · ${level} · ${date} · ${snap.activePoints} active points · ${record.noticeNumber}`);
+  closeModal();const ok=await saveAttendanceNow('attendance-notice-generated');if(ok){safeRenderPages();toast(level+' generated for '+emp.name+'. Review and print before issuance.');printCorrectiveAction(record.id);}
+}
+
+function correctiveActionById(id){return (attendance.correctiveActions||[]).find(a=>String(a.id)===String(id))||null;}
+function correctiveActionButtons(record){
+  const print=`<button class="sm" onclick="printCorrectiveAction('${esc(record.id)}')">Print</button>`;
+  if(record.status==='Generated')return `${print} <button class="sm primary" data-capability="attendance.correctiveAction" onclick="openCorrectiveActionStatusModal('${esc(record.id)}','Issued')">Mark Issued</button>`;
+  if(record.status==='Issued')return `${print} <button class="sm primary" data-capability="attendance.correctiveAction" onclick="openCorrectiveActionStatusModal('${esc(record.id)}','Acknowledged')">Complete</button>`;
+  return print;
+}
+function openCorrectiveActionStatusModal(id,target){if(!hasCapability('attendance.correctiveAction')){toast('The attendance.correctiveAction capability is required.');return;}
+  const record=correctiveActionById(id);if(!record)return;
+  if(target==='Issued'&&record.status!=='Generated'){toast('Only a generated notice can be marked Issued.');return;}
+  if(target==='Acknowledged'&&record.status!=='Issued'){toast('Only an issued notice can be completed.');return;}
+  const completion=target==='Acknowledged';
+  showModal(`<div class="modal-head"><div><div class="modal-title">${completion?'Complete':'Issue'} Attendance Notice</div><div class="mini-note">${esc(record.employee)} · ${esc(record.noticeType||record.level)} · ${esc(record.noticeNumber||record.id)}</div></div><button onclick="closeModal()">Close</button></div><div class="form-grid">${completion?`<div class="full"><label>Completion Outcome</label><select id="caOutcome"><option value="Acknowledged">Acknowledged by Employee</option><option value="Recorded">Recorded — Signature Declined / Unavailable</option></select></div>`:''}<div><label>${completion?'Acknowledgment / Record':'Issue'} Date *</label><input id="caStatusDate" type="date" value="${attendanceLocalToday()}"></div><div><label>Manager / Supervisor *</label><input id="caStatusManager" value="${esc(currentUserName()||env.user||record.managerName||'')}"></div><div class="full"><label>${completion?'Employee Comments / Record Note':'Issue Notes'}</label><textarea id="caStatusNote" placeholder="${completion?'Enter employee comments or explain why the notice was recorded without acknowledgment':'Optional delivery details'}"></textarea></div></div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="saveCorrectiveActionStatus('${esc(record.id)}','${esc(target)}')">Save Status</button></div>`);
+}
+async function saveCorrectiveActionStatus(id,target){if(!hasCapability('attendance.correctiveAction')){toast('The attendance.correctiveAction capability is required.');return;}
+  const record=correctiveActionById(id);if(!record)return;
+  const date=String(val('caStatusDate')||''),manager=String(val('caStatusManager')||'').trim(),note=String(val('caStatusNote')||'').trim();
+  const status=target==='Acknowledged'?String(val('caOutcome')||'Acknowledged'):target;
+  if(!isIsoDateKey(date)||!manager){toast('A valid date and manager / supervisor name are required.');return;}
+  if(status==='Recorded'&&!note){toast('A record note is required when employee acknowledgment is not captured.');return;}
+  if((status==='Issued'&&record.status!=='Generated')||(['Acknowledged','Recorded'].includes(status)&&record.status!=='Issued')){toast('This notice status changed. Refresh and try again.');return;}
+  try{await SuiteBridge.send('suite:createBackup',attendance,{module:'attendance'});}catch(e){toast('Status update stopped: backup failed. '+(e.message||e));return;}
+  const now=new Date().toISOString(),actor=currentUserName()||env.user||'';
+  record.status=status;record.statusHistory=Array.isArray(record.statusHistory)?record.statusHistory:[];record.statusHistory.push({status,at:now,by:actor,date,note});record.managerName=manager;
+  if(status==='Issued'){record.issuedAt=now;record.issuedDate=date;record.issuedBy=actor;record.issueNote=note;}
+  else{record.acknowledgedAt=now;record.acknowledgedDate=date;record.acknowledgedBy=actor;record.employeeComments=note;}
+  audit('Attendance notice status updated',`${record.employee} · ${record.noticeType||record.level} · ${record.noticeNumber||record.id} · ${status}`);
+  closeModal();const ok=await saveAttendanceNow('attendance-notice-status');if(ok){safeRenderPages();toast('Notice marked '+status+'.');}
+}
+
+function printCorrectiveAction(id){
+  const r=correctiveActionById(id);if(!r){toast('Notice record not found.');return;}
+  const final=attendanceCanonicalActionLevel(r.noticeType||r.level)==='Final Warning';
+  const trigger=r.triggeringEvent||{};
+  const pointRows=(Array.isArray(r.pointRecord)?r.pointRecord:[]).map(x=>`<tr><td>${esc(fmt(x.date))}</td><td>${esc(x.code||'')}</td><td>${esc(x.label||pointCodeLabel(x.code))}</td><td>${esc(x.gross)}</td><td>${esc(x.offset)}</td><td><strong>${esc(x.net)}</strong></td></tr>`).join();
+  const body=final?'This Final Warning documents that your attendance has reached 9 or more active points. Immediate and sustained improvement is required. Any future violation may result in further action up to and including termination of your employment.':'This Confirming Notice serves as a Written Warning that your violation of the company’s attendance policy is unacceptable and must not reoccur. Please understand that future instances may result in further action up to and including termination of your employment.';
+  const html=`<style>.attendance-notice{font-size:12px;line-height:1.45}.notice-brand{border-top:9px solid #c8102e;padding-top:10px;display:flex;justify-content:space-between;gap:20px}.notice-company{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}.notice-title{font-size:25px;font-weight:800;color:#c8102e;margin-top:4px}.notice-number{text-align:right;color:#555}.notice-fields{display:grid;grid-template-columns:90px 1fr;gap:0;border:1px solid #888;margin:18px 0}.notice-fields b,.notice-fields span{padding:6px 8px;border-bottom:1px solid #bbb}.notice-fields b:nth-last-child(-n+2),.notice-fields span:nth-last-child(-n+2){border-bottom:0}.notice-section{margin:16px 0}.notice-callout{border-left:5px solid #c8102e;background:#f3f3f3;padding:12px 14px;font-weight:700}.notice-signatures{display:grid;grid-template-columns:1fr 120px;gap:22px;margin-top:42px}.notice-line{border-top:1px solid #111;padding-top:4px}.notice-comments{page-break-before:always}.notice-comments-box{height:6.6in;border:1px solid #777;margin-top:10px}.notice-footer{margin-top:18px;font-size:9px;color:#666;text-align:center}</style><article class="attendance-notice"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Attendance ${esc(r.noticeType||r.level)}</div><div>Security Operations Suite</div></div><div class="notice-number"><strong>${esc(r.noticeNumber||r.id)}</strong><br>Status: ${esc(r.status||'Recorded')}<br>Generated: ${esc(fmt(r.generatedAt||r.at||r.date))}</div></header><div class="notice-fields"><b>Date</b><span>${esc(fmt(r.date))}</span><b>To</b><span>${esc(r.employee)}${r.employeeEid?` · EID #${esc(r.employeeEid)}`:''}${r.employeeTitle?` · ${esc(r.employeeTitle)}`:''}</span><b>From</b><span>${esc(r.managerName||r.generatedBy||r.by||'')}</span><b>Subject</b><span>Attendance</span></div><div class="notice-section">This is to confirm our conversation during which I communicated the following:</div><div class="notice-section">You were assessed <strong>${esc(trigger.points||0)} point(s)</strong> under the company’s Absenteeism and Tardiness Policy for <strong>${esc(trigger.label||pointCodeLabel(trigger.code))}</strong>${trigger.date?` on <strong>${esc(fmt(trigger.date))}</strong>`:''}.</div><div class="notice-callout">You had ${esc(r.pointsAtAction)} active attendance point(s) when this notice was generated.</div><div class="notice-section">${body}</div>${r.note?`<div class="notice-section"><strong>Management note:</strong> ${esc(r.note)}</div>`:''}<h2>Attendance Point Record at Generation</h2><table><thead><tr><th>Date</th><th>Code</th><th>Attendance Event</th><th>Gross</th><th>Credits / Reductions</th><th>Active</th></tr></thead><tbody>${pointRows||'<tr><td colspan="6">No point-detail snapshot was stored for this legacy record.</td></tr>'}</tbody></table><div class="notice-section"><strong>Acknowledgment:</strong> My signature below confirms only that I received this notice. It does not necessarily mean that I agree or disagree with its contents. I may provide comments on the following page.</div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div><div class="notice-line">Manager / Supervisor Signature</div><div class="notice-line">Date</div></div><div class="notice-footer">Confidential personnel record · ${esc(r.noticeNumber||r.id)} · PWADC Security Operations Suite v4.4.0</div><section class="notice-comments"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Employee Comments</div><div>${esc(r.employee)} · ${esc(r.noticeNumber||r.id)}</div></div></header><div class="notice-comments-box"></div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div></div></section></article>`;
+  printHtmlDirect('Attendance '+(r.noticeType||r.level)+' - '+r.employee,html,'portrait');
 }

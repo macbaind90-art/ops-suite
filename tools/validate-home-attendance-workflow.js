@@ -8,14 +8,14 @@ const required=[
   'function homeAttendanceMetrics(',
   "label:'Daily Entry'",
   "label:'Point Review'",
-  "label:'Corrective'",
+  "label:'Notice Control'",
   "activeAttView='daily';navigate('attendance')",
   "activeAttView='grid';navigate('attendance')",
   "activeAttView='review';navigate('attendance')",
   "activeAttView='actions';navigate('attendance')",
   'Attendance Entries Missing',
-  'Attendance Corrective Action Due',
-  'High Attendance Points',
+  'Attendance Notice Due',
+  'Final Warning Threshold',
   'Positive Attendance Credits',
   'Attendance Control Flow',
   'Live Schedule is the primary work/off authority',
@@ -36,11 +36,11 @@ const forbidden=[
 ];
 for(const token of forbidden){if(src.includes(token))throw new Error('Legacy attendance Home control returned: '+token);}
 
-if(!/correctiveDue/.test(src)||!/attendanceActionRank\(snap\.level\)>attendanceActionRank/.test(src))throw new Error('Home corrective-action due metric is not point-threshold based.');
+if(!/correctiveDue/.test(src)||!/correctiveActionWorkflow\(emp\.id,snap\)\.due/.test(src))throw new Error('Home attendance-notice due metric is not lifecycle-aware.');
 if(!/missingToday/.test(src)||!/attendanceScheduleStatus\(emp,asOf\)/.test(src))throw new Error('Home daily attendance completion is not schedule-aware.');
 if(!/totalPositiveBank/.test(src)||!/positiveEmployees/.test(src))throw new Error('Home positive attendance credit summary missing.');
-if(!src.includes('v4.3.0'))throw new Error('Home release version not updated to v4.3.0.');
+if(!src.includes('v4.4.0'))throw new Error('Home release version not updated to v4.4.0.');
 
 console.log('Home Attendance Workflow validation PASS');
 console.log('- Legacy pattern/notice Home queues removed');
-console.log('- Daily completion, Point Review, Corrective Action, positive credits, and Live Schedule workflow present');
+console.log('- Daily completion, Point Review, Notice Control, positive credits, and Live Schedule workflow present');

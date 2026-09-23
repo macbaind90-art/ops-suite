@@ -25,7 +25,7 @@ namespace PWADC.SecurityOperationsSuite
         // tool files are intentionally excluded and remain informational only.
         private static IReadOnlyList<GovernedModuleDefinition> GovernedModuleRegistry() => new[]
         {
-            new GovernedModuleDefinition { Id = "attendance", Label = "Attendance", FileName = "attendance-data.json", SchemaRevision = 2, RecordCountStrategy = "attendance" },
+            new GovernedModuleDefinition { Id = "attendance", Label = "Attendance", FileName = "attendance-data.json", SchemaRevision = 3, RecordCountStrategy = "attendance" },
             new GovernedModuleDefinition { Id = "roster", Label = "Roster", FileName = "roster-data.json", SchemaRevision = 1, RecordCountStrategy = "roster" },
             new GovernedModuleDefinition { Id = "tasks", Label = "Task Tracker", FileName = "tasks-data.json", SchemaRevision = 1, RecordCountStrategy = "tasks" },
             new GovernedModuleDefinition { Id = "shift-reports", Label = "Shift Reports", FileName = "shift-reports-data.json", SchemaRevision = 1, RecordCountStrategy = "shift-reports" },

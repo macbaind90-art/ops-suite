@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.3.0
+# PWADC Security Operations Suite v4.4.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,18 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.3.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.4.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.4.0 - Attendance Notice Generator & Lifecycle
+
+- Replaced the legacy 3 / 6 / 9 corrective-action selector with point-derived thresholds: **6–8.99 active points = Notice** and **9+ active points = Final Warning**.
+- Added a controlled lifecycle with distinct **Due**, **Generated**, **Issued**, **Acknowledged**, and **Recorded** states. Generating a notice does not mark it delivered or complete.
+- Added backup-first generation and lifecycle transitions, capability guards, audit records, and governed immediate saves.
+- Each generated notice freezes the employee identity, active-point total, triggering attendance event, and full active point record used at generation time.
+- Added a professional two-page print notice that preserves the approved warning language, receipt-only acknowledgment, signature lines, and employee comments page from the supplied template.
+- Preserved existing corrective-action history as Recorded records through the automatic `attendance-2` -> `attendance-3` migration.
+- Updated Point Review, employee profiles, Home, reports, CSV output, and status colors to the current 6-point and 9-point thresholds.
+- Added `tools/validate-corrective-action-notices.js` and a Windows build gate.
 
 ## v4.3.0 - Role-Aware Interface & Centralized Permissions
 
@@ -86,7 +97,7 @@ Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.
 
 ## v4.0.0 - Schema Version & Compatibility Guarding
 - Adds `schemaVersion` and `lastWrittenByAppVersion` metadata to every current suite-managed live JSON data file.
-- Current schema identifiers are module-specific: `attendance-2`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-3`.
+- Current schema identifiers are module-specific: `attendance-3`, `roster-1`, `tasks-1`, `shift-reports-1`, `shift-intelligence-1`, and `suite-settings-3`.
 - On startup, legacy live files with no schema marker are backed up and stamped through the existing atomic write path without changing business data.
 - Current compatible files load and save normally.
 - A formally older schema is readable but write-blocked until the approved Controlled Schema Migration Framework can migrate it.
@@ -150,7 +161,7 @@ The live Attendance module now uses only the current point-system workflow: Dail
 - Rolling 14-day CO1 / CO2 classification.
 - +1 positive attendance credit for each 12 clean scheduled working days, bank maximum 3 at any one time.
 - Newly earned positive credits immediately reduce active negative points first, then bank any remainder.
-- Corrective-action thresholds: Verbal at 3, Written at 6, Final Written at 9.
+- Attendance notice thresholds: Notice at 6–8.99 active points; Final Warning at 9+ active points.
 - Live Schedule is the primary scheduled/off authority; Roster RDO is fallback only when no usable live schedule exists for that weekday.
 - Historical 90-Day Grid edits require a reason and are audited.
 - Manual current-point adjustments require a reason, backup, effective date, and audit record.
@@ -158,7 +169,7 @@ The live Attendance module now uses only the current point-system workflow: Dail
 ## v3.5.0.8 - Command Center Attendance Workflow Alignment
 The Home / Command Center uses the current Attendance Point System as its people-work authority. The former Pattern and Notice workflows are retired from live code. Historical raw pattern/notice fields are preserved only when they already exist in older Attendance JSON and are not consumed by the current application.
 
-Home now prioritizes **missing scheduled attendance entries**, **corrective action due**, **employees at 7+ active points**, overdue tasks, Shift Intelligence intake/action queues, and schedule gaps. The People Workflow provides direct access to **Daily Entry, Point Review, Corrective Action, Roster, Training, and Uniforms**. Positive attendance credit balances and the current 3-point bank cap are also visible from Home.
+Home now prioritizes **missing scheduled attendance entries**, **attendance notices due**, **employees at 9+ active points**, overdue tasks, Shift Intelligence intake/action queues, and schedule gaps. The People Workflow provides direct access to **Daily Entry, Point Review, Notice Control, Roster, Training, and Uniforms**. Positive attendance credit balances and the current 3-point bank cap are also visible from Home.
 
 The daily operating sequence is now: complete Daily Attendance → review points/corrective action → confirm Live Schedule/Roster → process Shift Operations → move owned follow-ups to Task Tracker → close with Reports/Data Health. Live Schedule remains the primary scheduled/off authority with Roster RDO fallback.
 
@@ -711,7 +722,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v4.1.3 - Employee Profile Render + 90-Day Header Reliability Fix~~ Completed
 - ~~v4.2.0 - Data Health & Recovery Dashboard~~ Completed
 - ~~v4.2.1 - Live Schedule Coverage Authority Cleanup~~ Completed
-- **v4.3.0 - Role-Aware Interface & Centralized Permissions** Current
+- ~~v4.3.0 - Role-Aware Interface & Centralized Permissions~~ Completed
+- **v4.4.0 - Attendance Notice Generator & Lifecycle** Current
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

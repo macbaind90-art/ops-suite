@@ -107,6 +107,47 @@ namespace PWADC.SecurityOperationsSuite
                 },
                 new SchemaMigrationDefinition
                 {
+                    Module = "attendance",
+                    FromRevision = 2,
+                    ToRevision = 3,
+                    Risk = "minor",
+                    Summary = "Adds the generated, issued, and acknowledged/recorded lifecycle to attendance notices while preserving prior corrective-action records.",
+                    BusinessMeaningChanged = false,
+                    PreserveRecordIdentity = true,
+                    Changes = new List<string>
+                    {
+                        "Classifies existing corrective-action records as Recorded historical actions.",
+                        "Adds normalized Notice and Final Warning types for the current 6-point and 9-point thresholds.",
+                        "Adds generatedBy, generatedAt, statusHistory, and noticeType fields without changing record identifiers or point balances."
+                    },
+                    Transform = root =>
+                    {
+                        if (root["correctiveActions"] is JsonArray actions)
+                        {
+                            foreach (JsonNode? item in actions)
+                            {
+                                if (item is not JsonObject action) continue;
+                                string oldLevel = action["noticeType"]?.ToString() ?? action["level"]?.ToString() ?? "";
+                                string noticeType = oldLevel switch
+                                {
+                                    "Final Written Warning" => "Final Warning",
+                                    "Written Warning" => "Notice",
+                                    "Verbal Counseling" => "Legacy Verbal Counseling",
+                                    _ => oldLevel
+                                };
+                                action["level"] = noticeType;
+                                action["noticeType"] = noticeType;
+                                if (action["status"] == null) action["status"] = "Recorded";
+                                if (action["generatedAt"] == null) action["generatedAt"] = action["at"]?.DeepClone() ?? JsonValue.Create("");
+                                if (action["generatedBy"] == null) action["generatedBy"] = action["by"]?.DeepClone() ?? JsonValue.Create("");
+                                if (action["statusHistory"] is not JsonArray) action["statusHistory"] = new JsonArray();
+                            }
+                        }
+                        return root;
+                    }
+                },
+                new SchemaMigrationDefinition
+                {
                     Module = "suite-settings",
                     FromRevision = 1,
                     ToRevision = 2,
