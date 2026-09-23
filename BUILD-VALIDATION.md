@@ -1,9 +1,21 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.4.0**
-- Release: **Attendance Notice Generator & Lifecycle**
-- Baseline upgraded: **v4.3.0 - Role-Aware Interface & Centralized Permissions**
+- Version: **4.5.0**
+- Release: **Attendance Action Report**
+- Baseline upgraded: **v4.4.0 - Attendance Notice Generator & Lifecycle**
+
+## Attendance Action Report Contract
+
+- Manager-facing current attention queue: **PASS**
+- Open Attention defaults to Due / Generated / Issued: **PASS**
+- Date range, shift, required-level, and lifecycle filters: **PASS**
+- Active points, positive credits, latest point event, and management next action: **PASS**
+- Period point additions and reductions: **PASS**
+- Manual adjustment indicator: **PASS**
+- Doctor-note Yes/No indicator with medical detail excluded: **PASS**
+- Professional landscape print/PDF and CSV outputs: **PASS**
+- Shared Attendance point and lifecycle logic; no duplicate threshold engine: **PASS**
 
 ## Attendance Notice Contract
 
@@ -120,7 +132,7 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.4.0 source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.5.0 source package is uploaded to `main`.
 ## v4.2.1 Targeted Regression - Data Health & Recovery
 
 - Central registry owns module identity, filenames, and schema revisions: **PASS**.

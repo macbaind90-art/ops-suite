@@ -1,4 +1,12 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.4.0
+# PWADC Security Operations Suite Architecture - Current Production v4.5.0
+
+## v4.5.0 Attendance Action Report
+
+The Attendance Action Report is a derived management view in `app/js/40-reports-governance.js`; it does not persist a second attendance model. `attendanceActionReportRows()` evaluates `attendancePointSnapshot()` and `correctiveActionWorkflow()` as of the selected end date, then applies report-only shift, required-level, and lifecycle filters.
+
+The default Open Attention scope contains Due, Generated, and Issued records. Acknowledged, Recorded, and No Notice Due records remain available for evidence or broader review. Period movement separates point additions from reductions and incorporates attendance charges, positive-credit offsets/paydown, policy-approved doctor-note reductions, and manual current-point adjustments. Doctor-note visibility is deliberately reduced to a Yes/No relevance indicator.
+
+Print/PDF and CSV outputs use the same derived row set and filter state. The report does not reproduce the 90-Day Grid and does not introduce a schema revision because it adds no stored business record.
 
 ## v4.4.0 Attendance Notice Lifecycle
 

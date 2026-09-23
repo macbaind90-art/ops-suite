@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.4.0 - Attendance Notice Generator & Lifecycle**.
+Current production build: **v4.5.0 - Attendance Action Report**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
@@ -211,7 +211,7 @@ Implemented scope:
 - automatic `attendance-2` -> `attendance-3` preservation migration for historical records
 
 ### 9. Attendance Action Report
-**Status: Approved**
+**Status: Completed in v4.5.0**
 
 Manager-facing report answering:
 **Who currently requires attention, and why?**
@@ -229,6 +229,17 @@ Target content:
 - doctor-note indicator when relevant, without medical detail
 
 Do not duplicate the full 90-Day Grid.
+
+Implemented scope:
+- date-range, shift, required-level, and lifecycle-status filters
+- Open Attention default queue covering Due, Generated, and Issued work
+- current active points and positive attendance credit balance
+- most recent point-bearing event and period point additions/reductions
+- manual current-point adjustment indicator
+- doctor-note relevance as Yes/No only, with no medical detail
+- management next-action guidance
+- professional landscape print/PDF preview and CSV export
+- shared v4.4.0 point and notice-lifecycle logic with no duplicate threshold engine
 
 ### 10. Attendance Trend & Risk Report
 **Status: Approved**

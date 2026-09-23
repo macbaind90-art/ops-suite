@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.4.0
+# PWADC Security Operations Suite v4.5.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,16 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.4.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.5.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.5.0 - Attendance Action Report
+
+- Added a manager-facing Attendance Action Report answering who currently requires attention, why, and what management must do next.
+- Added filters for shift, required notice level, lifecycle status, and date range. The default **Open Attention** queue includes Due, Generated, and Issued records.
+- Added current active points, positive-credit balance, required notice level, lifecycle status, most recent point-bearing event, period point additions/reductions, manual current-point adjustment indicator, and doctor-note relevance.
+- Doctor-note relevance is limited to a Yes/No indicator; medical and administrative note details are excluded.
+- Added print/PDF preview and CSV export using the same Attendance point snapshots and v4.4.0 notice lifecycle records.
+- Added runtime and static regression coverage through `tools/validate-attendance-action-report.js` and the Windows build workflow.
 
 ## v4.4.0 - Attendance Notice Generator & Lifecycle
 
@@ -723,7 +732,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v4.2.0 - Data Health & Recovery Dashboard~~ Completed
 - ~~v4.2.1 - Live Schedule Coverage Authority Cleanup~~ Completed
 - ~~v4.3.0 - Role-Aware Interface & Centralized Permissions~~ Completed
-- **v4.4.0 - Attendance Notice Generator & Lifecycle** Current
+- ~~v4.4.0 - Attendance Notice Generator & Lifecycle~~ Completed
+- **v4.5.0 - Attendance Action Report** Current
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

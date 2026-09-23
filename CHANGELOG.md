@@ -1,5 +1,14 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.5.0 - Attendance Action Report
+
+- Added the manager-facing Attendance Action Report to the Report Center.
+- Added date-range, shift, required-level, and lifecycle-status filters with an Open Attention default covering Due, Generated, and Issued notice work.
+- Added current active points, positive-credit balance, required notice level, lifecycle status, most recent point-bearing event, period additions/reductions, manual adjustment indicator, doctor-note relevance, and explicit management next action.
+- Limited doctor-note visibility to a Yes/No indicator and excluded medical detail.
+- Added professional landscape print/PDF output and CSV export driven by the same point snapshots and notice-lifecycle records used by Attendance.
+- Added static and runtime regression validation plus the Windows workflow gate.
+
 ## v4.4.0 - Attendance Notice Generator & Lifecycle
 
 - Implemented current thresholds of 6–8.99 active points for a Notice and 9+ active points for a Final Warning; retired the active 3-point Verbal Counseling threshold.
