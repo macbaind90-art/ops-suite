@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.5.0 | module: shell-audits */
+/* PWADC Security Operations Suite v4.6.0 | module: shell-audits */
 function navModule(id){return MODULES.find(m=>m.id===id)}
 function navGroupFor(id){return NAV_GROUPS.find(g=>(g.items||[]).includes(id))}
 function navDisplayLabel(m){return m.id==='data-health'&&typeof dataHealthNavLabel==='function'?dataHealthNavLabel():m.label}

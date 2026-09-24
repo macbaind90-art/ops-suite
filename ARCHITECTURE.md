@@ -1,4 +1,14 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.5.0
+# PWADC Security Operations Suite Architecture - Current Production v4.6.0
+
+## v4.6.0 Attendance Trend & Risk Report
+
+The Attendance Trend & Risk Report is a read-only aggregate view built on the existing Attendance event and point-calculation functions. `attendanceTrendMetricsForRange()` derives event and point measures for the selected period; it does not persist a parallel analytics dataset or introduce a schema revision.
+
+The default scope is the current Attendance as-of date and preceding 90 days. The comparison period is the immediately preceding equal-length period. Weekly or monthly buckets and current-shift groupings are calculated from the same aggregate measures. The selectable trend focus drives a Rising, Stable, or Falling pressure signal. Rising/Falling requires at least two events of count movement, at least three combined observations, and a rate change greater than 20%; otherwise the signal remains Stable.
+
+Point-bearing events and points charged are derived from `attendancePointSnapshot()` issue records. Doctor-note-covered multi-day ranges follow the existing single-occurrence treatment and expose only aggregate counts. Corrective thresholds are counted when a point event or controlled point adjustment moves the calculated level upward into Notice or Final Warning. Positive credits use the point engine's earned-credit history.
+
+The default print/PDF and CSV views exclude employee names and doctor-note details. Shift attribution uses the employee's current Attendance assignment because the suite does not retain a historical shift-assignment ledger. Detailed employee investigation remains in Attendance and the Attendance Action Report.
 
 ## v4.5.0 Attendance Action Report
 

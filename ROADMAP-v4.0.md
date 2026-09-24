@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.5.0 - Attendance Action Report**.
+Current production build: **v4.6.0 - Attendance Trend & Risk Report**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
@@ -242,7 +242,7 @@ Implemented scope:
 - shared v4.4.0 point and notice-lifecycle logic with no duplicate threshold engine
 
 ### 10. Attendance Trend & Risk Report
-**Status: Approved**
+**Status: Completed in v4.6.0**
 
 Aggregate management report for detecting developing attendance pressure by period, shift, and event type.
 
@@ -258,6 +258,18 @@ Potential measures include:
 - positive attendance credits earned
 
 Employee names should not be the default view; detailed employee review remains in Attendance.
+
+Implemented scope:
+- default 90-day range with an immediately preceding equal-length comparison period
+- date range, shift scope, weekly/monthly grouping, and selectable trend focus
+- point-bearing events and points charged before credits
+- call-offs, tardies by severity, NCNS, left early, early clock-in, and suspended days
+- aggregate doctor-note-covered occurrences without medical detail
+- corrective threshold crossings and positive credits earned
+- transparent Rising / Stable / Falling pressure signals based on minimum volume, count movement, and rate change
+- period trend and current-period shift comparison without employee names
+- professional landscape print/PDF preview and CSV export from the same aggregate dataset
+- shared Attendance point logic with no duplicate analytics store or schema revision
 
 ### 11. Standardized Report Controls
 **Status: Approved**

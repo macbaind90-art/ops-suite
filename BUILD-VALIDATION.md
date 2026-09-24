@@ -1,9 +1,23 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.5.0**
-- Release: **Attendance Action Report**
-- Baseline upgraded: **v4.4.0 - Attendance Notice Generator & Lifecycle**
+- Version: **4.6.0**
+- Release: **Attendance Trend & Risk Report**
+- Baseline upgraded: **v4.5.0 - Attendance Action Report**
+
+## Attendance Trend & Risk Report Contract
+
+- Aggregate output without employee names in the default report: **PASS**
+- Default 90-day range and immediately preceding equal-length comparison: **PASS**
+- Shift scope, weekly/monthly grouping, and selectable trend focus: **PASS**
+- Point-bearing events and points charged before credits: **PASS**
+- Call-offs, tardies by severity, NCNS, left early, early clock-in, and suspended days: **PASS**
+- Doctor-note-covered occurrences without medical detail: **PASS**
+- Corrective threshold crossings and positive credits earned: **PASS**
+- Transparent Rising / Stable / Falling signal rules: **PASS**
+- Period trend and current-period shift comparison: **PASS**
+- Professional landscape print/PDF and CSV outputs: **PASS**
+- Shared Attendance point logic with no duplicate analytics store or schema revision: **PASS**
 
 ## Attendance Action Report Contract
 
@@ -132,7 +146,7 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.5.0 source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.6.0 source package is uploaded to `main`.
 ## v4.2.1 Targeted Regression - Data Health & Recovery
 
 - Central registry owns module identity, filenames, and schema revisions: **PASS**.

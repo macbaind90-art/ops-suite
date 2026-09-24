@@ -1,5 +1,14 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.6.0 - Attendance Trend & Risk Report
+
+- Added an aggregate Attendance Trend & Risk Report to the Report Center.
+- Added date-range, shift-scope, weekly/monthly grouping, and selectable trend-focus controls.
+- Added point-bearing events, points charged before credits, call-offs, tardies by severity, NCNS, left early, early clock-in, suspended days, doctor-note-covered occurrences, corrective threshold crossings, and positive credits earned.
+- Added comparison with the immediately preceding equal-length period and transparent Rising / Stable / Falling signals using minimum-volume, count-movement, and rate-change rules.
+- Added period and shift breakdowns without employee names or medical detail in the default view.
+- Added landscape print/PDF output, CSV export, runtime validation, a dedicated contract validator, and the Windows workflow gate.
+
 ## v4.5.0 - Attendance Action Report
 
 - Added the manager-facing Attendance Action Report to the Report Center.

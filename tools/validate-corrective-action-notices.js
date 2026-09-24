@@ -36,7 +36,7 @@ for(const token of [
   'Employee Comments',
   'This Confirming Notice serves as a Written Warning',
   'This Final Warning documents that your attendance has reached 9 or more active points.',
-  'PWADC Security Operations Suite v4.5.0'
+  'PWADC Security Operations Suite v4.6.0'
 ])need(attendance,token,`Attendance notice contract missing: ${token}`);
 
 if(attendance.includes("{points:3,level:'Verbal Counseling'}"))throw new Error('Retired 3-point corrective threshold is still active.');
@@ -53,7 +53,7 @@ need(workflow,'node tools/validate-corrective-action-notices.js','Windows workfl
 
 const seed=JSON.parse(read('app/seed/attendance-data.json'));
 if(seed.schemaVersion!=='attendance-3')throw new Error('Attendance seed must ship at attendance-3.');
-if(seed.lastWrittenByAppVersion!=='4.5.0')throw new Error('Attendance seed must be stamped v4.5.0.');
+if(seed.lastWrittenByAppVersion!=='4.6.0')throw new Error('Attendance seed must be stamped v4.6.0.');
 
 console.log('Attendance Notice Lifecycle validation PASS');
 console.log('- 6–8.99 points = Notice; 9+ points = Final Warning');
