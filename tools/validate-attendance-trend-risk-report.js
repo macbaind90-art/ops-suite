@@ -45,7 +45,7 @@ for(const token of [
   "attendanceTrendFocus='Point-Bearing Events'"
 ])need(bootstrap,token,`Attendance Trend & Risk Report state missing: ${token}`);
 
-need(reports,"r.id==='attendance-trends'?attendanceTrendReportControlsHtml():''",'Report Center does not display Attendance Trend & Risk controls.');
+need(reports,"id==='attendance-trends'?attendanceTrendReportControlsHtml()",'Report Center does not display Attendance Trend & Risk controls.');
 need(reports,"if(id==='attendance-trends')",'Report Center does not explain aggregate trend scope.');
 need(workflow,'node tools/validate-attendance-trend-risk-report.js','Windows workflow does not run Attendance Trend & Risk Report validation.');
 

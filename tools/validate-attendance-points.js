@@ -24,12 +24,13 @@ const required=[
   'rawActiveIssues.filter(x=>x.date>adjustment.effectiveDate)',"const adjustmentExpires=adjustment?addDays(adjustment.effectiveDate,89):''",'calculatedActivePoints',
   'function applyPositiveAward','appliedToNegative','adjustmentOutstanding','const room=Math.max(0,maxCredits-bank)','if(award.appliedToNegative>0||award.banked>0)',
   "if(code==='T')return values['T<5'];",'function isLegacyMigratedTardy','function attendanceEventPointValue(empId,date,code){return pointValue(code);}','const gross=attendanceEventPointValue(empId,e.date,code)'
+  ,"const ATT_POLICY_EFFECTIVE_DATE='2026-09-28'",'function attendancePolicyEffectiveDate()','e.date>=policyEffectiveDate','rollingStart<policyEffectiveDate?policyEffectiveDate:rollingStart'
 ];
 for(const token of required)if(!src.includes(token))throw new Error('Attendance point contract missing: '+token);
 if(!src.includes("prior&&dayDiff(prior.date,date)<=13?'CO2':'CO1'"))throw new Error('Rolling 14-day call-off classification missing.');
 if(!src.includes('if(cleanWorkingDays>=12)'))throw new Error('12-working-day positive credit award missing.');
 if(!src.includes('const offset=Math.min(bank,gross)'))throw new Error('Positive credit consumption/offset missing.');
-if(!src.includes('const start90=addDays(asOf,-89)'))throw new Error('Rolling 90-day window missing.');
+if(!src.includes('const rollingStart=addDays(asOf,-89)'))throw new Error('Rolling 90-day window missing.');
 if(!src.includes('const room=Math.max(0,maxCredits-bank)')||!src.includes('const banked=Math.min(remaining,room)'))throw new Error('3-credit bank must use the canonical at-any-one-time balance cap.');
 if(!src.includes("if(!reason){toast('A reason is required to edit a 90-Day Grid record.')"))throw new Error('90-Day Grid edit reason gate missing.');
 if(!src.includes("if(!reason){toast('A reason is required to edit current attendance points.')"))throw new Error('Manual point-adjustment reason gate missing.');
@@ -58,5 +59,6 @@ console.log('90-Day Grid shift sections/status colors: PASS');
 console.log('Employee-name point-status colors: PASS');
 console.log('Manual current-point adjustment + future exclusion: PASS');
 console.log('Point-adjustment backup/audit controls: PASS');
+console.log('2026-09-28 fresh-start calculation boundary with historical retention: PASS');
 
 console.log('Suspended 0-point clean-streak reset contract: PASS');

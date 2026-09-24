@@ -13,7 +13,7 @@ const expectedRefs=[
   'js/70-training-uniforms.js','js/80-attendance.js','js/82-attendance-points.js','js/90-shift-operations.js',
   'js/95-tasks-settings.js','js/99-startup.js'
 ];
-if(JSON.stringify(scriptRefs)!==JSON.stringify(expectedRefs)) throw new Error('Front-end script load order does not match the v4.6.0 architecture contract.');
+if(JSON.stringify(scriptRefs)!==JSON.stringify(expectedRefs)) throw new Error('Front-end script load order does not match the v4.7.0 architecture contract.');
 for(const ref of scriptRefs){if(!fs.existsSync(path.join(appRoot,ref)))throw new Error('Missing front-end script: '+ref);}
 if(!fs.existsSync(path.join(appRoot,'assets','styles.css')))throw new Error('Missing app/assets/styles.css');
 if(/<script>([\s\S]*?)<\/script>/.test(html))throw new Error('Inline application script detected in index.html.');
@@ -89,7 +89,7 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'4.6.0'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'4.7.0'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
@@ -100,7 +100,7 @@ if(!registry.ok||registry.unexpected.length)throw new Error('Front-end module re
 const major=['home','start-here','attendance','roster','employee-profile','training','office-supplies','shift-reports','shift-intelligence','reports','settings','tasks','data-health','restore','change-log','other-programs'];
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
 
-// v4.6.0: render a real linked Employee Profile, not just the empty profile shell.
+// v4.7.0: render a real linked Employee Profile, not just the empty profile shell.
 const linkedProfileTest=evalx(`(()=>{
   const r=(roster.employees||[]).find(x=>attendanceEmployeeForRoster(x));
   if(!r)return {ok:false,reason:'No roster employee linked to Attendance seed'};
@@ -114,20 +114,33 @@ const linkedProfileTest=evalx(`(()=>{
 if(!linkedProfileTest.ok)throw new Error('Linked Employee Profile render validation failed: '+JSON.stringify(linkedProfileTest));
 for(const view of ['daily','grid','review','medical','actions','audit']){const out=evalx(`activeAttView='${view}'; renderAttendance()`);if(typeof out!=='string'||out.length<20)throw new Error('Attendance render failed: '+view);}
 
+const attendanceEffectiveDateTest=evalx(`(()=>{
+  const emp=(attendance.employees||[])[0];if(!emp)return {ok:false,reason:'No Attendance employee'};
+  const id=String(emp.id),priorRow=JSON.stringify((attendance.attendance||{})[id]||{}),priorAdjustments=JSON.stringify(attendance.pointAdjustments||[]);
+  attendance.attendance[id]=JSON.parse(priorRow);attendance.attendance[id]['2026-09-27']='NCNS';attendance.attendance[id]['2026-09-28']='CO1';
+  attendance.pointAdjustments=[{empId:id,effectiveDate:'2026-09-27',newActivePoints:9,at:'2026-09-27T12:00:00Z'},...(attendance.pointAdjustments||[])];
+  const snap=attendancePointSnapshot(id,'2026-09-28'),historicalRetained=attendance.attendance[id]['2026-09-27']==='NCNS';
+  attendance.attendance[id]=JSON.parse(priorRow);attendance.pointAdjustments=JSON.parse(priorAdjustments);
+  return {ok:attendancePolicyEffectiveDate()==='2026-09-28'&&historicalRetained&&snap.activePoints===1.5&&snap.calculatedActivePoints===1.5&&snap.start90==='2026-09-28'&&!snap.adjustment,activePoints:snap.activePoints,start90:snap.start90,historicalRetained};
+})()`);
+if(!attendanceEffectiveDateTest.ok)throw new Error('Attendance policy effective-date boundary failed: '+JSON.stringify(attendanceEffectiveDateTest));
+
 const attendanceActionReportTest=evalx(`(()=>{
+  const priorEffective=attendance.pointSystem.policy.effectiveDate;attendance.pointSystem.policy.effectiveDate='2026-01-01';
   reportDateStart='2026-03-01';reportDateEnd='2026-06-04';attendanceActionShiftFilter='All';attendanceActionLevelFilter='All';attendanceActionStatusFilter='All';
   const data=attendanceActionReportRows();
   let captured={};const oldShow=showReport;
   showReport=(title,subtitle,body,orientation)=>{captured={title,subtitle,body,orientation};};
   reportAttendanceAction(false);showReport=oldShow;
   const csv=attendanceActionReportCsvRows();
-  attendanceActionStatusFilter='Open Attention';reportDateStart='';reportDateEnd='';
+  attendanceActionStatusFilter='Open Attention';reportDateStart='';reportDateEnd='';attendance.pointSystem.policy.effectiveDate=priorEffective;
   const row=data.rows[0]||{};
   return {ok:data.range.valid&&data.rows.length>0&&Number.isFinite(row.pointsAdded)&&Number.isFinite(row.pointsReduced)&&captured.title==='Attendance Action Report'&&captured.orientation==='landscape'&&captured.body.includes('Attendance Management Action Queue')&&Array.isArray(csv)&&csv.some(r=>Array.isArray(r)&&r.includes('Management Action')),rows:data.rows.length};
 })()`);
 if(!attendanceActionReportTest.ok)throw new Error('Attendance Action Report runtime validation failed: '+JSON.stringify(attendanceActionReportTest));
 
 const attendanceTrendRiskReportTest=evalx(`(()=>{
+  const priorEffective=attendance.pointSystem.policy.effectiveDate;attendance.pointSystem.policy.effectiveDate='2026-01-01';
   reportDateStart='2026-03-07';reportDateEnd='2026-06-04';attendanceTrendShiftFilter='All';attendanceTrendGroupBy='Week';attendanceTrendFocus='Point-Bearing Events';
   const data=attendanceTrendReportData();
   let captured={};const oldShow=showReport;
@@ -135,10 +148,27 @@ const attendanceTrendRiskReportTest=evalx(`(()=>{
   reportAttendanceTrendRisk(false);showReport=oldShow;
   const csv=attendanceTrendReportCsvRows();
   const sampleName=(attendance.employees||[])[0]?.name||'__no_employee__';
-  reportDateStart='';reportDateEnd='';attendanceTrendShiftFilter='All';attendanceTrendGroupBy='Week';attendanceTrendFocus='Point-Bearing Events';
+  reportDateStart='';reportDateEnd='';attendanceTrendShiftFilter='All';attendanceTrendGroupBy='Week';attendanceTrendFocus='Point-Bearing Events';attendance.pointSystem.policy.effectiveDate=priorEffective;
   return {ok:data.range.valid&&data.range.days===90&&data.buckets.length>=12&&data.current.pointEvents>0&&Array.isArray(data.shiftRows)&&data.shiftRows.length>0&&['Rising','Stable','Falling'].includes(data.signal.label)&&captured.title==='Attendance Trend & Risk Report'&&captured.orientation==='landscape'&&captured.body.includes('Period Trend')&&captured.body.includes('Current Period by Shift')&&!captured.body.includes(sampleName)&&Array.isArray(csv)&&csv.some(r=>Array.isArray(r)&&r.includes('Corrective Thresholds Triggered'))&&!csv.some(r=>Array.isArray(r)&&r.includes('Employee')),buckets:data.buckets.length,pointEvents:data.current.pointEvents,signal:data.signal.label};
 })()`);
 if(!attendanceTrendRiskReportTest.ok)throw new Error('Attendance Trend & Risk Report runtime validation failed: '+JSON.stringify(attendanceTrendRiskReportTest));
+
+const standardizedReportControlsTest=evalx(`(()=>{
+  reportCenterSelection='training';const trainingUi=renderReports();
+  reportCenterSelection='tasks';const taskUi=renderReports();
+  const first=(attendance.employees||[]).find(e=>!isArchivedAttendanceEmployee(e));
+  reportShiftFilter=first&&first.shift||'All';reportEmployeeFilter=first&&first.name||'All';
+  const scoped=reportScopedAttendanceEmployees('attendance');
+  reportEmployeeFilter='All';reportShiftFilter='All';reportStatusFilter='Waiting';
+  const expected=reportTaskItemsForScope();let exported=[];const oldDownload=downloadCSV,oldToast=toast;
+  downloadCSV=(name,rows)=>{exported=rows;};toast=()=>{};exportReportCSV('tasks');downloadCSV=oldDownload;toast=oldToast;
+  const headerIndex=exported.findIndex(r=>Array.isArray(r)&&r[0]==='Project'&&r[1]==='Status'),data=headerIndex>=0?exported.slice(headerIndex+1):[];
+  const doc=reportDoc('Task Status Report','Validation','<div>Body</div>');
+  reportStatusFilter='All';reportCenterSelection='executive';
+  const checks={trainingShift:trainingUi.includes('Shift Scope'),trainingEmployee:trainingUi.includes('Employee Scope'),trainingStatus:trainingUi.includes('Status Scope'),reset:trainingUi.includes('Reset Scope'),print:trainingUi.includes('Print / Save PDF'),taskStatus:taskUi.includes('Status Scope'),taskNoDate:!taskUi.includes('Reporting Period Start'),attendanceEmployee:scoped.length===1&&String(scoped[0].id)===String(first.id),taskScope:expected.every(t=>t.status==='Waiting'),csvCount:data.length===expected.length,csvScope:data.every(r=>r[1]==='Waiting'),generatedBy:doc.includes('Generated by'),period:doc.includes('Reporting period:'),scope:doc.includes('Scope:')};
+  return {ok:Object.values(checks).every(Boolean),checks,trainingControls:trainingUi.length,taskRows:expected.length,csvRows:data.length};
+})()`);
+if(!standardizedReportControlsTest.ok)throw new Error('Standardized Report Controls runtime validation failed: '+JSON.stringify(standardizedReportControlsTest));
 
 // Attendance point behavior is validated by dedicated v3.5 regression validators.
 

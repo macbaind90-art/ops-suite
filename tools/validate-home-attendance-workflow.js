@@ -39,7 +39,7 @@ for(const token of forbidden){if(src.includes(token))throw new Error('Legacy att
 if(!/correctiveDue/.test(src)||!/correctiveActionWorkflow\(emp\.id,snap\)\.due/.test(src))throw new Error('Home attendance-notice due metric is not lifecycle-aware.');
 if(!/missingToday/.test(src)||!/attendanceScheduleStatus\(emp,asOf\)/.test(src))throw new Error('Home daily attendance completion is not schedule-aware.');
 if(!/totalPositiveBank/.test(src)||!/positiveEmployees/.test(src))throw new Error('Home positive attendance credit summary missing.');
-if(!src.includes('v4.6.0'))throw new Error('Home release version not updated to v4.6.0.');
+if(!src.includes('v4.7.0'))throw new Error('Home release version not updated to v4.7.0.');
 
 console.log('Home Attendance Workflow validation PASS');
 console.log('- Legacy pattern/notice Home queues removed');

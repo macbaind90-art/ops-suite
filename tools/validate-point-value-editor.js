@@ -29,7 +29,7 @@ const attendance={
   employees:[{id:'e1',name:'Test Employee',shift:'1st Shift'}],
   attendance:{e1:{'2026-09-01':'T15+','2026-09-02':'CO1'}},notes:{},audit:[],pointAdjustments:[],correctiveActions:[],recordEdits:[],tardyReclassifications:{},autoOff:{},workdayBasis:{},
   medicalNotes:[{id:'mn1',empId:'e1',employee:'Test Employee',startDate:'2026-09-02',endDate:'2026-09-02',receivedDate:'2026-09-02',coveredCodes:['CO'],reference:'Ref',editHistory:[],voided:false}],
-  pointSystem:{version:1,migrationPending:false,policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:50}}
+  pointSystem:{version:1,migrationPending:false,policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:50,effectiveDate:'2026-01-01'}}
 };
 const sandbox={
   console,attendance,roster:{employees:[],schedule:[]},normalizeAttendance(){},setCode(){},renderAttendance(){},

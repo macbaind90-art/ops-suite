@@ -504,6 +504,10 @@ td.td-name,.td-name{font-weight:800;color:var(--text);text-align:left;}
 .report-detail-fact strong{display:block;color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.7px}
 .report-detail-fact span{display:block;margin-top:4px;line-height:1.4}
 .report-scope-controls{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.report-standard-controls{grid-template-columns:repeat(auto-fit,minmax(180px,1fr));padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface2)}
+.report-specialized-controls{padding:10px;border:1px dashed var(--border);border-radius:12px;background:rgba(255,255,255,.02)}
+.report-control-footer{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:8px 0 12px;color:var(--muted);font-size:11px}
+.report-output-actions{padding-top:4px}
 .governance-rail{display:grid;gap:10px}
 .governance-rail-card{border:1px solid var(--border);border-radius:12px;background:var(--surface2);padding:11px}
 .governance-rail-card strong{display:block;color:var(--text)}
@@ -552,7 +556,7 @@ td.td-name,.td-name{font-weight:800;color:var(--text);text-align:left;}
 .settings-active-panel{min-width:0}
 .settings-scope-note{border:1px solid var(--border);border-radius:12px;background:var(--surface2);padding:10px;color:var(--muted);font-size:11px;line-height:1.4;margin-bottom:10px}
 @media(max-width:1200px){.report-center-layout,.restore-workspace{grid-template-columns:1fr}.report-library-list{max-height:none}.data-health-layout{grid-template-columns:1fr}.settings-command-layout{grid-template-columns:1fr}.settings-section-nav{position:static;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}}
-@media(max-width:800px){.governance-path{grid-template-columns:1fr}.report-detail-grid,.report-scope-controls{grid-template-columns:1fr}.audit-command{grid-template-columns:1fr}.audit-table-head{display:none}.audit-row{grid-template-columns:1fr}.governance-nav{display:grid;grid-template-columns:1fr 1fr}}
+@media(max-width:800px){.governance-path{grid-template-columns:1fr}.report-detail-grid,.report-scope-controls{grid-template-columns:1fr}.report-control-footer{align-items:flex-start;flex-direction:column}.audit-command{grid-template-columns:1fr}.audit-table-head{display:none}.audit-row{grid-template-columns:1fr}.governance-nav{display:grid;grid-template-columns:1fr 1fr}}
 
 /* v3.3.0.1 Schedule assignment typeahead */
 .schedule-person-picker{position:relative}.schedule-person-picker>input{width:100%}.schedule-typeahead{display:none;position:absolute;z-index:140;left:0;right:0;top:calc(100% + 4px);max-height:310px;overflow:auto;border:1px solid var(--border);border-radius:9px;background:var(--surface2);box-shadow:0 14px 32px rgba(0,0,0,.35);padding:5px}.schedule-typeahead.open{display:block}.schedule-typeahead-option{display:block;width:100%;text-align:left;border:0;border-radius:7px;background:transparent;color:var(--text);padding:8px 9px;cursor:pointer}.schedule-typeahead-option:hover,.schedule-typeahead-option.active{background:var(--surface3)}.schedule-typeahead-option strong{display:block;font-size:12px}.schedule-typeahead-option span{display:block;color:var(--muted);font-size:10px;margin-top:2px}.schedule-typeahead-empty{padding:10px;color:var(--muted);font-size:11px}
@@ -675,7 +679,7 @@ label:has(>input[type=checkbox]),label:has(>input[type=radio]){display:flex;alig
 .attendance-point-grid-wrap thead th{position:sticky;top:0;z-index:31;background:var(--surface2);background-clip:padding-box;box-shadow:0 2px 0 var(--border),0 5px 10px rgba(0,0,0,.18)}
 .attendance-point-grid-wrap thead th.name{left:0;z-index:36;background:var(--surface2)}
 
-/* v4.6.0 Data Health & Recovery */
+/* v4.7.0 Data Health & Recovery */
 .health-nav-green{box-shadow:inset 0 -3px 0 var(--green)}
 .health-nav-yellow{box-shadow:inset 0 -3px 0 var(--gold);color:var(--gold)!important}
 .health-nav-red{box-shadow:inset 0 -3px 0 var(--red);color:#ffb0b0!important}

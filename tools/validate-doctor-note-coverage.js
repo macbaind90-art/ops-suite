@@ -29,7 +29,7 @@ function makeSandbox(attendance,asOf){
 function baseAttendance(events,medicalNotes=[],reduction=50){return {
   employees:[{id:'e1',name:'Test Employee',shift:'1st Shift'}],attendance:{e1:events},notes:{},audit:[],medicalNotes,
   pointAdjustments:[],correctiveActions:[],recordEdits:[],tardyReclassifications:{},autoOff:{},workdayBasis:{},
-  pointSystem:{version:1,migrationPending:false,pointValues:{'T<5':0,'T5-14':0.5,'T15+':1,CO1:1.5,CO2:3,NCNS:9,LE:1,EIA:2},policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:reduction}}
+  pointSystem:{version:1,migrationPending:false,pointValues:{'T<5':0,'T5-14':0.5,'T15+':1,CO1:1.5,CO2:3,NCNS:9,LE:1,EIA:2},policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:reduction,effectiveDate:'2026-01-01'}}
 };}
 function note(startDate,endDate,codes,extra={}){return {id:'mn1',empId:'e1',employee:'Test Employee',startDate,endDate,receivedDate:endDate,coveredCodes:codes,reference:'Administrative reference',editHistory:[],at:endDate+'T12:00:00Z',voided:false,...extra};}
 function assertEq(actual,expected,msg){if(Number(actual)!==Number(expected))throw new Error(`${msg}: expected ${expected}, got ${actual}`);}

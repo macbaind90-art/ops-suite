@@ -1,5 +1,15 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.7.0 - Standardized Report Controls
+
+- Added shared reporting-period, shift, employee, and status controls where applicable across the Report Center.
+- Applied the selected scope consistently to screen preview, print/Save PDF, and CSV output for Attendance, Training, Uniforms, Office Supplies, Tasks, and Shift Intelligence.
+- Standardized PWADC report title, reporting period, scope, generated timestamp, and generated-by metadata.
+- Preserved specialized Attendance Action level and Attendance Trend grouping/focus controls within the common control shell.
+- Added consistent Preview / Print / Export actions and Reset Scope behavior.
+- Set the Attendance point-policy effective date to September 28, 2026. Historical records remain stored and visible, but pre-effective-date events and point adjustments no longer contribute to current calculations.
+- Added standardized-report and effective-date regression coverage plus the Windows workflow gate.
+
 ## v4.6.0 - Attendance Trend & Risk Report
 
 - Added an aggregate Attendance Trend & Risk Report to the Report Center.

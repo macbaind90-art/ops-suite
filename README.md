@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.6.0
+# PWADC Security Operations Suite v4.7.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,17 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.6.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.7.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.7.0 - Standardized Report Controls
+
+- Standardized applicable Report Center controls for reporting period, shift, employee, and status scope.
+- Applied the same selected scope to screen preview, print/Save PDF, and CSV export for Attendance, Training, Uniforms, Office Supplies, Tasks, and Shift Intelligence reports.
+- Standardized report title, reporting period, scope, generated timestamp, generated-by identity, and PWADC output formatting.
+- Retained specialized Attendance Action and Attendance Trend controls inside the common report-control shell.
+- Added a reset-scope action and consistent Preview / Print / Export controls in both the selected-report header and report detail.
+- Established **September 28, 2026** as the Attendance point-policy effective date. All stored pre-effective-date attendance and evidence remain intact for history and audit, but points, positive credits, clean-workday progress, thresholds, and manual point baselines calculate only from the effective date forward.
+- Added `tools/validate-standardized-report-controls.js`, effective-date runtime coverage, and a Windows build gate.
 
 ## v4.6.0 - Attendance Trend & Risk Report
 
@@ -744,7 +754,8 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v4.3.0 - Role-Aware Interface & Centralized Permissions~~ Completed
 - ~~v4.4.0 - Attendance Notice Generator & Lifecycle~~ Completed
 - ~~v4.5.0 - Attendance Action Report~~ Completed
-- **v4.6.0 - Attendance Trend & Risk Report** Current
+- ~~v4.6.0 - Attendance Trend & Risk Report~~ Completed
+- **v4.7.0 - Standardized Report Controls** Current
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

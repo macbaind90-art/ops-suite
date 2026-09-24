@@ -28,7 +28,7 @@ for(let i=0;i<12;i++)events[addDays('2026-08-13',i)]='P';
 const attendance={
   employees:[{id:'e1',name:'Test Employee',shift:'1st Shift'}],attendance:{e1:events},notes:{},audit:[],medicalNotes:[],
   pointAdjustments:[],correctiveActions:[],recordEdits:[],tardyReclassifications:{},autoOff:{},workdayBasis:{},
-  pointSystem:{version:1,migrationPending:false,pointValues:{'T<5':0,'T5-14':0.5,'T15+':1,CO1:1.5,CO2:3,NCNS:9,LE:1,EIA:2},policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3}}
+  pointSystem:{version:1,migrationPending:false,pointValues:{'T<5':0,'T5-14':0.5,'T15+':1,CO1:1.5,CO2:3,NCNS:9,LE:1,EIA:2},policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,effectiveDate:'2026-01-01'}}
 };
 const sandbox={
   console,attendance,roster:{employees:[],schedule:[]},normalizeAttendance(){},setCode(){},renderAttendance(){},

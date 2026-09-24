@@ -1,4 +1,12 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.6.0
+# PWADC Security Operations Suite Architecture - Current Production v4.7.0
+
+## v4.7.0 Standardized Report Controls and Attendance Effective Date
+
+`REPORT_CONTROL_PROFILES` defines which common controls apply to each report. The Report Center renders reporting-period, shift, employee, and status controls from that profile and keeps report-specific controls only for operational requirements such as Attendance notice level or trend grouping/focus. Preview, print/Save PDF, and CSV use the same shared state and scoped-row helpers, preventing output channels from silently using different filters.
+
+`reportDoc()` supplies consistent PWADC identity, title, generated timestamp, generated-by identity, reporting period, and scope metadata. CSV exports receive the same metadata envelope before their report-specific tables. Reports that do not have meaningful scope filters state that they use current authoritative data.
+
+Attendance retains schema `attendance-3`; no structural migration is required. `pointSystem.policy.effectiveDate` defaults to **2026-09-28**. `attendancePointSnapshot()` keeps all stored attendance history unchanged but excludes events before the effective date from point balances, positive-credit banking/paydown, clean-workday progress, and threshold evaluation. Pre-effective-date manual point adjustments are also excluded. The effective date becomes the earliest possible start of the rolling calculation window, while historical grid, audit, doctor-note, and notice evidence remains available.
 
 ## v4.6.0 Attendance Trend & Risk Report
 

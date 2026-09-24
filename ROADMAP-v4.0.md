@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.6.0 - Attendance Trend & Risk Report**.
+Current production build: **v4.7.0 - Standardized Report Controls**.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
@@ -272,7 +272,7 @@ Implemented scope:
 - shared Attendance point logic with no duplicate analytics store or schema revision
 
 ### 11. Standardized Report Controls
-**Status: Approved**
+**Status: Completed in v4.7.0**
 
 Standardize common report behavior where applicable:
 - date range
@@ -285,6 +285,18 @@ Standardize common report behavior where applicable:
 - report title / reporting period / generated-by information
 
 Reports may retain specialized controls when their operational purpose requires them.
+
+Implemented scope:
+- shared report-control profiles that show only filters relevant to each report
+- reporting-period controls for date-driven Attendance and Shift Intelligence reports
+- shift and employee scope for applicable Attendance, Training, and Uniform reports
+- status scope for Attendance Action, Training, Uniform, Office Supplies, Task, and Shift Intelligence reports
+- one selected scope used consistently by preview, print/Save PDF, and CSV export
+- standardized title, reporting period, scope, generated timestamp, and generated-by metadata
+- consistent Preview / Print / Export actions plus Reset Scope
+- specialized Attendance Action level and Attendance Trend grouping/focus controls retained inside the common shell
+- September 28, 2026 Attendance calculation boundary: historical records remain stored, while points, credits, clean-workday progress, thresholds, and point adjustments calculate only from the effective date forward
+- dedicated validator and Windows build gate with no schema revision
 
 ---
 

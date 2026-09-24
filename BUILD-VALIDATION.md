@@ -1,9 +1,33 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.6.0**
-- Release: **Attendance Trend & Risk Report**
-- Baseline upgraded: **v4.5.0 - Attendance Action Report**
+- Version: **4.7.0**
+- Release: **Standardized Report Controls**
+- Baseline upgraded: **v4.6.0 - Attendance Trend & Risk Report**
+
+## Standardized Report Controls Contract
+
+- Applicable reporting-period, shift, employee, and status controls: **PASS**
+- Shared selected scope for preview, print/Save PDF, and CSV: **PASS**
+- Attendance Summary shift/employee/date scope: **PASS**
+- Attendance Action date/shift/employee/status plus required-level scope: **PASS**
+- Attendance Trend date/shift plus grouping/focus scope: **PASS**
+- Training and Uniform shift/employee/status scope: **PASS**
+- Office Supplies and Task status scope: **PASS**
+- Shift Intelligence date/shift/status scope: **PASS**
+- Standard title, reporting period, scope, generated timestamp, and generated-by metadata: **PASS**
+- Reset Scope and consistent Preview / Print / Export actions: **PASS**
+- Existing specialized controls retained where operationally required: **PASS**
+
+## September 28, 2026 Attendance Effective-Date Contract
+
+- All stored historical attendance data remains present: **PASS**
+- Pre-effective-date events excluded from point calculations: **PASS**
+- Pre-effective-date events excluded from positive-credit and clean-workday calculations: **PASS**
+- Pre-effective-date manual point adjustments excluded from current balances: **PASS**
+- Rolling calculation start cannot precede September 28, 2026: **PASS**
+- Post-effective-date events calculate normally from a zero baseline: **PASS**
+- Attendance schema remains `attendance-3`; no destructive migration: **PASS**
 
 ## Attendance Trend & Risk Report Contract
 
@@ -107,7 +131,8 @@
 - Doctor-note records store administrative references only; the UI warns against storing diagnosis/treatment details
 
 ## Source Validation Result
-- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 884 named functions / 220 inline action targets / 11 registered modules
+- Full modular front-end validator: **PASS** - 16 major modules / 6 Attendance views / 5 Roster views / 941 named functions / 227 inline action targets / 11 registered modules
+- Standardized Report Controls and Attendance effective-date regression: **PASS**
 - Data Health & Recovery targeted regression: **PASS**
 - Real 42-employee Attendance backup smoke, including linked Employee Profile render: **PASS**
 - Task Tracker print regression: **PASS**
@@ -146,7 +171,7 @@
 - The first v4.0.0 GitHub compile exposed `CS0509` because `SchemaCompatibilityException` inherited from the sealed `InvalidDataException` type. The source is corrected to inherit from `IOException`.
 - `global.json` now pins SDK selection to .NET 10 SDK `10.0.400` with `latestPatch` roll-forward, and the project targets `net10.0-windows`.
 - The WinForms project removes the unused `Microsoft.Web.WebView2.Wpf` reference before `ResolveAssemblyReferences`, addressing the `WindowsBase` MSB3277 warning source from the WebView2 package.
-- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.6.0 source package is uploaded to `main`.
+- Local source validation is complete. The authoritative .NET 10 compile/publish remains the GitHub Actions Windows run after the v4.7.0 source package is uploaded to `main`.
 ## v4.2.1 Targeted Regression - Data Health & Recovery
 
 - Central registry owns module identity, filenames, and schema revisions: **PASS**.

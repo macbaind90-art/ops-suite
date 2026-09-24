@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.6.0 | Data Health & Recovery */
+/* PWADC Security Operations Suite v4.7.0 | Data Health & Recovery */
 'use strict';
 
 let dataHealthDashboard=null,dataHealthLoading=false,dataHealthError='',dataHealthSelectedModule='',dataHealthLkgPreview=null;

@@ -1,7 +1,8 @@
-/* PWADC Security Operations Suite v4.6.0 | Attendance Point System */
+/* PWADC Security Operations Suite v4.7.0 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
+const ATT_POLICY_EFFECTIVE_DATE='2026-09-28';
 const ATT_POINT_CODES=[
   {code:'P',label:'Present',points:0,kind:'work'},
   {code:'T<5',label:'Tardy Less Than 5 Minutes',points:0,kind:'issue'},
@@ -90,11 +91,11 @@ function ensureAttendancePointSystem(){
       targetVersion:ATT_POINT_SYSTEM_VERSION,
       pointValues:normalizeAttendancePointValues(attendance.pointSystem.pointValues),
       pointValueHistory:Array.isArray(attendance.pointSystem.pointValueHistory)?attendance.pointSystem.pointValueHistory:[],
-      policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:50}
+      policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:50,effectiveDate:ATT_POLICY_EFFECTIVE_DATE}
     };
   }else{
     attendance.pointSystem.migrationPending=false;
-    attendance.pointSystem.policy={negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:50,...(attendance.pointSystem.policy||{})};
+    attendance.pointSystem.policy={negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:50,effectiveDate:ATT_POLICY_EFFECTIVE_DATE,...(attendance.pointSystem.policy||{})};
     attendance.pointSystem.policy.maxPositiveCredits=3;
     attendance.pointSystem.policy.doctorNoteReductionPercent=normalizeDoctorNoteReductionPercent(attendance.pointSystem.policy.doctorNoteReductionPercent);
     attendance.pointSystem.pointValues=normalizeAttendancePointValues(attendance.pointSystem.pointValues);
@@ -110,6 +111,10 @@ function attendanceDoctorNoteReductionPercent(){
   return normalizeDoctorNoteReductionPercent(attendance&&attendance.pointSystem&&attendance.pointSystem.policy&&attendance.pointSystem.policy.doctorNoteReductionPercent);
 }
 function attendanceDoctorNoteChargePercent(){return Number((100-attendanceDoctorNoteReductionPercent()).toFixed(2));}
+function attendancePolicyEffectiveDate(){
+  const configured=attendance&&attendance.pointSystem&&attendance.pointSystem.policy&&attendance.pointSystem.policy.effectiveDate;
+  return isIsoDateKey(configured)?configured:ATT_POLICY_EFFECTIVE_DATE;
+}
 
 function attendanceMigrationPending(){return !!(attendance.pointSystem&&attendance.pointSystem.migrationPending);}
 function attendanceLocalToday(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
@@ -209,7 +214,7 @@ function attendancePointDisplayValue(code){
 }
 function attendancePointPolicySummary(){
   const v=attendanceConfiguredPointValues();
-  return `T&lt;5 = ${v['T<5']} · T5-14 = ${v['T5-14']} · T15+ = ${v['T15+']} · CO1 = ${v.CO1} · CO2 = ${v.CO2} · NCNS = ${v.NCNS} · LE = ${v.LE} · EIA = ${v.EIA} · Doctor Note Reduction = ${attendanceDoctorNoteReductionPercent()}%`;
+  return `Effective ${fmt(attendancePolicyEffectiveDate())} · T&lt;5 = ${v['T<5']} · T5-14 = ${v['T5-14']} · T15+ = ${v['T15+']} · CO1 = ${v.CO1} · CO2 = ${v.CO2} · NCNS = ${v.NCNS} · LE = ${v.LE} · EIA = ${v.EIA} · Doctor Note Reduction = ${attendanceDoctorNoteReductionPercent()}%`;
 }
 function tardyRecordKey(empId,date){return String(empId)+'|'+String(date);}
 function isLegacyMigratedTardy(empId,date,code){
@@ -218,7 +223,8 @@ function isLegacyMigratedTardy(empId,date,code){
 }
 function attendanceEventPointValue(empId,date,code){return pointValue(code);}
 function latestPointAdjustment(empId,asOf=pointSystemAsOf()){
-  return (attendance.pointAdjustments||[]).filter(a=>String(a.empId)===String(empId)&&isIsoDateKey(a.effectiveDate)&&a.effectiveDate<=asOf).sort((a,b)=>String(b.effectiveDate).localeCompare(String(a.effectiveDate))||String(b.at||'').localeCompare(String(a.at||'')))[0]||null;
+  const policyStart=attendancePolicyEffectiveDate();
+  return (attendance.pointAdjustments||[]).filter(a=>String(a.empId)===String(empId)&&isIsoDateKey(a.effectiveDate)&&a.effectiveDate>=policyStart&&a.effectiveDate<=asOf).sort((a,b)=>String(b.effectiveDate).localeCompare(String(a.effectiveDate))||String(b.at||'').localeCompare(String(a.at||'')))[0]||null;
 }
 
 function attendanceEmployeePointClass(empId,asOf=pointSystemAsOf()){
@@ -346,7 +352,8 @@ function classifyCalloffAtDate(empId,date,eventsOverride=null){
 }
 
 function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
-  const events=attendanceEventsForEmployee(empId).filter(e=>e.date<=asOf);
+  const policyEffectiveDate=attendancePolicyEffectiveDate();
+  const events=attendanceEventsForEmployee(empId).filter(e=>e.date>=policyEffectiveDate&&e.date<=asOf);
   const legacyMode=attendanceMigrationPending();
   const maxCredits=Number(attendance.pointSystem&&attendance.pointSystem.policy&&attendance.pointSystem.policy.maxPositiveCredits||3);
   const adjustment=latestPointAdjustment(empId,asOf);
@@ -462,7 +469,8 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
   }
 
   activateAdjustmentIfNeeded('9999-12-31');
-  const start90=addDays(asOf,-89);
+  const rollingStart=addDays(asOf,-89);
+  const start90=rollingStart<policyEffectiveDate?policyEffectiveDate:rollingStart;
   const rawActiveIssues=issues.filter(x=>x.date>=start90&&x.date<=asOf);
   const gross90=Number(rawActiveIssues.reduce((sum,x)=>sum+(Number(x.gross)||0),0).toFixed(2));
   const offsets90=Number(rawActiveIssues.reduce((sum,x)=>sum+(Number(x.offset)||0)+(Number(x.positivePaydown)||0),0).toFixed(2));
@@ -475,7 +483,7 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
   const postAdjustmentPoints=Number(activeIssues.reduce((sum,x)=>sum+(Number(x.net)||0),0).toFixed(2));
   const activePoints=Number((adjustmentBase+postAdjustmentPoints).toFixed(2));
   const level=attendanceActionLevel(activePoints);
-  return {empId:String(empId),asOf,start90,bank:Number(bank.toFixed(2)),maxCredits,cleanWorkingDays,gross90,offsets90,calculatedActivePoints,activePoints,level,issues,activeIssues,earned,adjustment,adjustmentBase,adjustmentExpires,postAdjustmentPoints};
+  return {empId:String(empId),asOf,start90,policyEffectiveDate,bank:Number(bank.toFixed(2)),maxCredits,cleanWorkingDays,gross90,offsets90,calculatedActivePoints,activePoints,level,issues,activeIssues,earned,adjustment,adjustmentBase,adjustmentExpires,postAdjustmentPoints};
 }
 
 function migrateLegacyAttendanceCodes(){
@@ -518,7 +526,7 @@ async function commitAttendancePointMigration(){
     migrationPending:false,
     migratedAt:new Date().toISOString(),
     migratedBy:currentUserName()||env.user||'',
-    policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:50},
+    policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,doctorNoteReductionPercent:50,effectiveDate:ATT_POLICY_EFFECTIVE_DATE},
     pointValues:configuredValues,
     pointValueHistory,
     migrationSummary:result
@@ -998,6 +1006,6 @@ function printCorrectiveAction(id){
   const trigger=r.triggeringEvent||{};
   const pointRows=(Array.isArray(r.pointRecord)?r.pointRecord:[]).map(x=>`<tr><td>${esc(fmt(x.date))}</td><td>${esc(x.code||'')}</td><td>${esc(x.label||pointCodeLabel(x.code))}</td><td>${esc(x.gross)}</td><td>${esc(x.offset)}</td><td><strong>${esc(x.net)}</strong></td></tr>`).join();
   const body=final?'This Final Warning documents that your attendance has reached 9 or more active points. Immediate and sustained improvement is required. Any future violation may result in further action up to and including termination of your employment.':'This Confirming Notice serves as a Written Warning that your violation of the company’s attendance policy is unacceptable and must not reoccur. Please understand that future instances may result in further action up to and including termination of your employment.';
-  const html=`<style>.attendance-notice{font-size:12px;line-height:1.45}.notice-brand{border-top:9px solid #c8102e;padding-top:10px;display:flex;justify-content:space-between;gap:20px}.notice-company{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}.notice-title{font-size:25px;font-weight:800;color:#c8102e;margin-top:4px}.notice-number{text-align:right;color:#555}.notice-fields{display:grid;grid-template-columns:90px 1fr;gap:0;border:1px solid #888;margin:18px 0}.notice-fields b,.notice-fields span{padding:6px 8px;border-bottom:1px solid #bbb}.notice-fields b:nth-last-child(-n+2),.notice-fields span:nth-last-child(-n+2){border-bottom:0}.notice-section{margin:16px 0}.notice-callout{border-left:5px solid #c8102e;background:#f3f3f3;padding:12px 14px;font-weight:700}.notice-signatures{display:grid;grid-template-columns:1fr 120px;gap:22px;margin-top:42px}.notice-line{border-top:1px solid #111;padding-top:4px}.notice-comments{page-break-before:always}.notice-comments-box{height:6.6in;border:1px solid #777;margin-top:10px}.notice-footer{margin-top:18px;font-size:9px;color:#666;text-align:center}</style><article class="attendance-notice"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Attendance ${esc(r.noticeType||r.level)}</div><div>Security Operations Suite</div></div><div class="notice-number"><strong>${esc(r.noticeNumber||r.id)}</strong><br>Status: ${esc(r.status||'Recorded')}<br>Generated: ${esc(fmt(r.generatedAt||r.at||r.date))}</div></header><div class="notice-fields"><b>Date</b><span>${esc(fmt(r.date))}</span><b>To</b><span>${esc(r.employee)}${r.employeeEid?` · EID #${esc(r.employeeEid)}`:''}${r.employeeTitle?` · ${esc(r.employeeTitle)}`:''}</span><b>From</b><span>${esc(r.managerName||r.generatedBy||r.by||'')}</span><b>Subject</b><span>Attendance</span></div><div class="notice-section">This is to confirm our conversation during which I communicated the following:</div><div class="notice-section">You were assessed <strong>${esc(trigger.points||0)} point(s)</strong> under the company’s Absenteeism and Tardiness Policy for <strong>${esc(trigger.label||pointCodeLabel(trigger.code))}</strong>${trigger.date?` on <strong>${esc(fmt(trigger.date))}</strong>`:''}.</div><div class="notice-callout">You had ${esc(r.pointsAtAction)} active attendance point(s) when this notice was generated.</div><div class="notice-section">${body}</div>${r.note?`<div class="notice-section"><strong>Management note:</strong> ${esc(r.note)}</div>`:''}<h2>Attendance Point Record at Generation</h2><table><thead><tr><th>Date</th><th>Code</th><th>Attendance Event</th><th>Gross</th><th>Credits / Reductions</th><th>Active</th></tr></thead><tbody>${pointRows||'<tr><td colspan="6">No point-detail snapshot was stored for this legacy record.</td></tr>'}</tbody></table><div class="notice-section"><strong>Acknowledgment:</strong> My signature below confirms only that I received this notice. It does not necessarily mean that I agree or disagree with its contents. I may provide comments on the following page.</div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div><div class="notice-line">Manager / Supervisor Signature</div><div class="notice-line">Date</div></div><div class="notice-footer">Confidential personnel record · ${esc(r.noticeNumber||r.id)} · PWADC Security Operations Suite v4.6.0</div><section class="notice-comments"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Employee Comments</div><div>${esc(r.employee)} · ${esc(r.noticeNumber||r.id)}</div></div></header><div class="notice-comments-box"></div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div></div></section></article>`;
+  const html=`<style>.attendance-notice{font-size:12px;line-height:1.45}.notice-brand{border-top:9px solid #c8102e;padding-top:10px;display:flex;justify-content:space-between;gap:20px}.notice-company{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}.notice-title{font-size:25px;font-weight:800;color:#c8102e;margin-top:4px}.notice-number{text-align:right;color:#555}.notice-fields{display:grid;grid-template-columns:90px 1fr;gap:0;border:1px solid #888;margin:18px 0}.notice-fields b,.notice-fields span{padding:6px 8px;border-bottom:1px solid #bbb}.notice-fields b:nth-last-child(-n+2),.notice-fields span:nth-last-child(-n+2){border-bottom:0}.notice-section{margin:16px 0}.notice-callout{border-left:5px solid #c8102e;background:#f3f3f3;padding:12px 14px;font-weight:700}.notice-signatures{display:grid;grid-template-columns:1fr 120px;gap:22px;margin-top:42px}.notice-line{border-top:1px solid #111;padding-top:4px}.notice-comments{page-break-before:always}.notice-comments-box{height:6.6in;border:1px solid #777;margin-top:10px}.notice-footer{margin-top:18px;font-size:9px;color:#666;text-align:center}</style><article class="attendance-notice"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Attendance ${esc(r.noticeType||r.level)}</div><div>Security Operations Suite</div></div><div class="notice-number"><strong>${esc(r.noticeNumber||r.id)}</strong><br>Status: ${esc(r.status||'Recorded')}<br>Generated: ${esc(fmt(r.generatedAt||r.at||r.date))}</div></header><div class="notice-fields"><b>Date</b><span>${esc(fmt(r.date))}</span><b>To</b><span>${esc(r.employee)}${r.employeeEid?` · EID #${esc(r.employeeEid)}`:''}${r.employeeTitle?` · ${esc(r.employeeTitle)}`:''}</span><b>From</b><span>${esc(r.managerName||r.generatedBy||r.by||'')}</span><b>Subject</b><span>Attendance</span></div><div class="notice-section">This is to confirm our conversation during which I communicated the following:</div><div class="notice-section">You were assessed <strong>${esc(trigger.points||0)} point(s)</strong> under the company’s Absenteeism and Tardiness Policy for <strong>${esc(trigger.label||pointCodeLabel(trigger.code))}</strong>${trigger.date?` on <strong>${esc(fmt(trigger.date))}</strong>`:''}.</div><div class="notice-callout">You had ${esc(r.pointsAtAction)} active attendance point(s) when this notice was generated.</div><div class="notice-section">${body}</div>${r.note?`<div class="notice-section"><strong>Management note:</strong> ${esc(r.note)}</div>`:''}<h2>Attendance Point Record at Generation</h2><table><thead><tr><th>Date</th><th>Code</th><th>Attendance Event</th><th>Gross</th><th>Credits / Reductions</th><th>Active</th></tr></thead><tbody>${pointRows||'<tr><td colspan="6">No point-detail snapshot was stored for this legacy record.</td></tr>'}</tbody></table><div class="notice-section"><strong>Acknowledgment:</strong> My signature below confirms only that I received this notice. It does not necessarily mean that I agree or disagree with its contents. I may provide comments on the following page.</div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div><div class="notice-line">Manager / Supervisor Signature</div><div class="notice-line">Date</div></div><div class="notice-footer">Confidential personnel record · ${esc(r.noticeNumber||r.id)} · PWADC Security Operations Suite v4.7.0</div><section class="notice-comments"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Employee Comments</div><div>${esc(r.employee)} · ${esc(r.noticeNumber||r.id)}</div></div></header><div class="notice-comments-box"></div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div></div></section></article>`;
   printHtmlDirect('Attendance '+(r.noticeType||r.level)+' - '+r.employee,html,'portrait');
 }

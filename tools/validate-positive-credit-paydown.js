@@ -28,7 +28,7 @@ function makeSandbox(attendance,asOf){
 function baseAttendance(events,adjustments=[]){return {
   employees:[{id:'e1',name:'Test Employee',shift:'1st Shift'}],attendance:{e1:events},notes:{},audit:[],
   pointAdjustments:adjustments,correctiveActions:[],recordEdits:[],tardyReclassifications:{},autoOff:{},workdayBasis:{},
-  pointSystem:{version:1,migrationPending:false,policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3}}
+  pointSystem:{version:1,migrationPending:false,policy:{negativeWindowDays:90,calloffWindowDays:14,positiveWorkingDays:12,maxPositiveCredits:3,effectiveDate:'2026-01-01'}}
 };}
 function workdays(events,start,count){for(let i=0;i<count;i++)events[addDays(start,i)]='P';}
 function assertEq(actual,expected,msg){if(Number(actual)!==Number(expected))throw new Error(`${msg}: expected ${expected}, got ${actual}`);}

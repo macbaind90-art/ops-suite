@@ -20,10 +20,10 @@ for(const token of [
   'function attendanceActionReportControlsHtml()',
   'function reportAttendanceAction(',
   'function attendanceActionReportCsvRows()',
-  "attendanceActionStatusFilter==='Open Attention'",
+  "reportControlStatusValue('attendance-actions')==='Open Attention'",
   "['Due','Generated','Issued'].includes(x.status)",
   "const levels=['All','Notice','Final Warning','Below Threshold']",
-  "const statuses=['Open Attention','All','Due','Generated','Issued','Acknowledged','Recorded','No Notice Due']",
+  "if(id==='attendance-actions')return [['Open Attention','Open Attention']",
   'Most Recent Point Event',
   'Points Added in Period',
   'Points Reduced in Period',
@@ -42,7 +42,8 @@ for(const token of [
 ])need(bootstrap,token,`Attendance Action Report state missing: ${token}`);
 
 if(reports.includes('doctorNote.reference')||reports.includes('doctorNote.note')||reports.includes('medicalNote.reference'))throw new Error('Attendance Action Report exposes doctor-note detail.');
-need(reports,"r.id==='attendance-actions'?attendanceActionReportControlsHtml():''",'Report Center does not display Attendance Action Report filters.');
+need(reports,"id==='attendance-actions'?attendanceActionReportControlsHtml()",'Report Center does not display Attendance Action Report filters.');
+need(reports,"reportControlEmployeeValue('attendance-actions')",'Attendance Action Report does not apply employee scope.');
 need(reports,"showReport('Attendance Action Report'",'Attendance Action Report print/PDF preview is not wired.');
 need(workflow,'node tools/validate-attendance-action-report.js','Windows workflow does not run Attendance Action Report validation.');
 

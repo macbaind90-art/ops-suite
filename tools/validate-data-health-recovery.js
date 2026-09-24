@@ -48,7 +48,7 @@ need(governance,"...dataHealthAdminAuth(),module,path,reason",'Backup restore do
 if(governance.includes('restoreEverythingLatest'))throw new Error('Prohibited Restore All implementation remains present.');
 for(const token of ['Preview Last Known Good','Restore Last Known Good','Open Backup Manager','View Migration History','Export Diagnostics','Summary comparison only'])need(dashboard,token,`Dashboard control missing: ${token}`);
 need(dashboard,'PWADCModuleRegistry.register(\'data-health-recovery\')','Data Health front-end module is not registered.');
-need(styles,'v4.6.0 Data Health & Recovery','Data Health dashboard styling missing.');
+need(styles,'v4.7.0 Data Health & Recovery','Data Health dashboard styling missing.');
 need(html,'js/42-data-health-recovery.js','Data Health script is not loaded.');
 need(workflow,'node tools/validate-data-health-recovery.js','GitHub workflow does not enforce this regression validator.');
 need(workflow,'retention-days: 7','GitHub artifact retention is not bounded.');
