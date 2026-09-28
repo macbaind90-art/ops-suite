@@ -4,356 +4,356 @@
   "templates": [
     {
       "tier": "T1-T2",
-      "revision": 1,
+      "revision": 2,
       "active": true,
       "checklist": [
         {
           "id": "T1-T2-C01",
-          "text": "Explain the duties, safety limits, and escalation path for each assigned post."
+          "text": "Verify 90-day probation attendance and any prior written Security Manager approval for an authorized absence."
         },
         {
           "id": "T1-T2-C02",
-          "text": "Demonstrate accurate identity and appointment checks at the Gate."
+          "text": "Confirm signed OJT-001 and PMC-T1-Core, PMC-T1-Gate, PMC-T1-Patrol, and PMC-T1-Base are on file; sign-offs reflect observed work by an authorized evaluator."
         },
         {
           "id": "T1-T2-C03",
-          "text": "Demonstrate radio discipline, pass-down, and accurate shift documentation."
+          "text": "Under supervision, demonstrate Gate identity, badge, visitor, and vendor verification using the current Gate Reference and approved systems."
         },
         {
           "id": "T1-T2-C04",
-          "text": "Complete a patrol route, recognize a hazard, and document the finding."
+          "text": "State the T1 limit: verbally hold a driver pending Officer or Supervisor direction; do not independently grant or deny entry or physically detain anyone."
         },
         {
           "id": "T1-T2-C05",
-          "text": "Describe when to stop an unsafe activity and call a Supervisor."
+          "text": "Under supervision, patrol assigned areas with attention to forklift traffic, hazards, perimeter, and factual notifications."
         },
         {
           "id": "T1-T2-C06",
-          "text": "Explain the Base / EOC incident intake and notification workflow."
+          "text": "Demonstrate Base Station awareness and the escalation route without independent system operation."
         },
         {
           "id": "T1-T2-C07",
-          "text": "Show current, documented qualification for the posts required for this assignment."
+          "text": "Give accurate radio updates, pass-down, and factual logs without guessing or omitting required information."
         },
         {
           "id": "T1-T2-C08",
-          "text": "Confirm the candidate can work assigned posts without direct coaching."
+          "text": "Explain emergency first actions, safe withdrawal, 911 when clearly needed, and the current EAP and Supervisor notification route."
         }
       ],
       "scenarios": [
         {
           "id": "T1-T2-S01",
-          "prompt": "A driver arrives at the Gate without a working badge and says dispatch expects them. Describe what you verify before granting access and how you document the encounter."
+          "prompt": "A driver has no working badge and says Dispatch expects them. As a Trainee, explain your words and actions, how you hold for an Officer or Supervisor, and what you record. What if the driver refuses to wait?"
         },
         {
           "id": "T1-T2-S02",
-          "prompt": "A visitor says they have an appointment, but their name is absent from the daily appointment list. What do you do from first contact through resolution?"
+          "prompt": "A visitor says they have an appointment but cannot be verified through the standard Base process. As a Trainee, explain how you seek qualified assistance and keep the visitor outside pending a decision."
         },
         {
           "id": "T1-T2-S03",
-          "prompt": "A truck driver presents a red access indication while traffic builds behind them. Describe the safe way to control the lane and verify access."
+          "prompt": "A badge reader shows red during a busy arrival period. What can you do as a Trainee to control the immediate situation, and who makes the access decision?"
         },
         {
           "id": "T1-T2-S04",
-          "prompt": "On patrol you find a propped exterior door with no one nearby. Describe your immediate actions, notifications, and report."
+          "prompt": "While accompanying a qualified officer on patrol, you find a propped exterior door. Describe safe observations, radio notification, and factual documentation without assuming authority to clear the area alone."
         },
         {
           "id": "T1-T2-S05",
-          "prompt": "An officer gives you an incomplete pass-down about an unresolved alarm. What details do you confirm before accepting the post?"
+          "prompt": "At post relief, the outgoing officer mentions an unresolved alarm without a location or disposition. What facts do you ask for, and when do you involve the Lead or Supervisor before accepting the assignment?"
         },
         {
           "id": "T1-T2-S06",
-          "prompt": "You observe a forklift moving toward a pedestrian in a shared area. How do you address the immediate risk and report it?"
+          "prompt": "During a supervised patrol, a forklift approaches a pedestrian. Describe immediate safe warning, where you position yourself, whom you notify, and the facts to document."
         },
         {
           "id": "T1-T2-S07",
-          "prompt": "The Base receives a report of an employee injury with a vague location. Explain how you gather information and route the report."
+          "prompt": "While observing at Base, you hear a report of an injury with an unclear location. Explain the information you relay, when 911 may be called, and why a qualified Base officer or Supervisor directs the response."
         },
         {
           "id": "T1-T2-S08",
-          "prompt": "A camera view goes down during your shift. What do you check, who do you notify, and how do you maintain coverage?"
+          "prompt": "During Base familiarization, a critical camera view fails. What information do you pass to the qualified Base officer and Supervisor, and what system actions are outside Trainee authority?"
         },
         {
           "id": "T1-T2-S09",
-          "prompt": "You find a discrepancy between a vehicle's presented credentials and the information in the Gate reference. How do you proceed?"
+          "prompt": "A driver presents information that conflicts with the current Gate Reference. Explain how a Trainee holds for a qualified Officer or Supervisor and avoids making an independent exception."
         },
         {
           "id": "T1-T2-S10",
-          "prompt": "A coworker asks you to skip a required log entry because the shift is busy. What do you do and why?"
+          "prompt": "A coworker asks you to omit a required log entry because the shift is busy. Explain how you make a truthful entry and escalate pressure to change the record."
         }
       ]
     },
     {
       "tier": "T2-T3",
-      "revision": 1,
+      "revision": 2,
       "active": true,
       "checklist": [
         {
           "id": "T2-T3-C01",
-          "text": "Demonstrate independent mastery of Gate, Patrol, and Base / EOC duties."
+          "text": "Verify the 60-day review shows at least 98% accuracy across logs, reports, and Gate documentation as assessed by the Security Manager."
         },
         {
           "id": "T2-T3-C02",
-          "text": "Apply access controls consistently across drivers, visitors, vendors, and employees."
+          "text": "Confirm verified solo proficiency in Gate, Patrol, and Base Station, with Base authorization and observed evaluation on file."
         },
         {
           "id": "T2-T3-C03",
-          "text": "Recognize and manage competing safety, security, and traffic priorities."
+          "text": "Confirm completed PMC-Officer v2.0 with authorized Lead sign-off, section average at least 2.5, and no required item scored 1."
         },
         {
           "id": "T2-T3-C04",
-          "text": "Use the relevant handbook and controlled procedures without improvising authority."
+          "text": "Review 60 days of genuine solo patrol activity, missed or delayed cycles with reasons, and safe movement around active operations."
         },
         {
           "id": "T2-T3-C05",
-          "text": "Produce clear incident documentation with times, facts, and evidence references."
+          "text": "Demonstrate Gate entry decisions under the current Gate Reference, visitor verification via Base, and vendor appointment and routing checks in the current program."
         },
         {
           "id": "T2-T3-C06",
-          "text": "Coordinate effectively across posts and shifts and give complete pass-down."
+          "text": "Demonstrate designated outbound Gate Pass checks for PWADC / Pig, Purity, Arka Express, Mayfield, and Marvin Keller; return discrepancies to Dispatch without a Gate lane hold or invented third-party stop."
         },
         {
           "id": "T2-T3-C07",
-          "text": "Identify when an event requires immediate Supervisor or emergency escalation."
+          "text": "Write independent incident reports and witness statements with complete facts, chronology, evidence references, and no unsupported opinion."
         },
         {
           "id": "T2-T3-C08",
-          "text": "Show signed current training evidence for each applicable post."
+          "text": "Operate Base independently when authorized: monitor, log, bookmark relevant video, dispatch within tier authority, and escalate critical system failures."
         },
         {
           "id": "T2-T3-C09",
-          "text": "Explain corrective action when a process failure is identified."
+          "text": "Show safe emergency response, current EAP use, immediate 911 when clearly needed, and prompt Supervisor notification."
         },
         {
           "id": "T2-T3-C10",
-          "text": "Demonstrate readiness to coach a less experienced officer on routine duties."
+          "text": "Verify no active Step 2 Written Warning or above in the review period and record required Manager review of the complete promotion file."
         }
       ],
       "scenarios": [
         {
           "id": "T2-T3-S01",
-          "prompt": "A badge reader denies access to a known employee during a high-volume arrival period. Explain verification, line control, and documentation."
+          "prompt": "A known employee receives a denied badge read in a busy lane. Explain the current Gate Reference check, safe lane control, decision authority, Base escalation if unresolved, and documentation."
         },
         {
           "id": "T2-T3-S02",
-          "prompt": "A driver reports a seal discrepancy while another truck is waiting at the Gate. Describe your response and who resolves the discrepancy."
+          "prompt": "A PWADC / Pig driver presents a Gate Pass whose trailer or seal number does not match. Explain badge and pass checks, routing the truck back to Dispatch, and what Security records without reconciling the load."
         },
         {
           "id": "T2-T3-S03",
-          "prompt": "A fire alarm activates while you are monitoring cameras at the Base. Describe your immediate priorities and notifications."
+          "prompt": "While authorized at Base, a fire alarm activates. Describe immediate EAP and 911 decisions, notifications, radio traffic, log entries, and qualified coverage of Base."
         },
         {
           "id": "T2-T3-S04",
-          "prompt": "A patrol officer reports a suspicious vehicle near a perimeter gate but cannot read the plate. Explain how you coordinate a safe response."
+          "prompt": "On solo patrol you notice an unfamiliar vehicle by a perimeter access point. Explain your safe observations, Base and Supervisor notifications, and factual record."
         },
         {
           "id": "T2-T3-S05",
-          "prompt": "An unauthorized person asks a second officer to let them through because a supervisor supposedly approved it. What do you do?"
+          "prompt": "A visitor claims a supervisor approved access but the standard Base verification has not confirmed it. Explain how you hold or deny entry under the current Gate Reference without inventing an exception."
         },
         {
           "id": "T2-T3-S06",
-          "prompt": "A coworker reports possible smoke in a warehouse area while normal traffic continues. Describe your response under the current fire procedures."
+          "prompt": "You observe possible smoke in a warehouse area while Gate traffic continues. Explain safe withdrawal and fire procedure, who receives the report, and how you avoid leaving Gate without qualified relief."
         },
         {
           "id": "T2-T3-S07",
-          "prompt": "A vendor arrives outside normal appointment hours with a convincing email. Explain verification and escalation without assuming the email is authority."
+          "prompt": "An inbound vendor presents an email appointment after hours. Describe verification through the current vendor program, routing, access decision, and escalation if authorization remains unclear."
         },
         {
           "id": "T2-T3-S08",
-          "prompt": "An employee injury is reported while the only available patrol officer is handling another call. Explain how you prioritize and dispatch resources."
+          "prompt": "An injury is reported while Patrol is on another assignment. As the authorized Base officer, explain emergency call, notifications and dispatch within your authority, and what you ask the Supervisor to decide."
         },
         {
           "id": "T2-T3-S09",
-          "prompt": "A camera recording is requested for a potential investigation. Explain how you preserve the relevant details and maintain a traceable handoff."
+          "prompt": "Another department requests video of a possible incident. Explain bookmarking with at least 30 seconds before and after, preserving the request and event times, and who may authorize or perform an export."
         },
         {
           "id": "T2-T3-S10",
-          "prompt": "An alarm and a vehicle queue develop at the same time. Describe how you assign attention across the Gate and Base."
+          "prompt": "A patrol alarm arrives while a vehicle queue builds. Explain your own assigned-post actions, prompt coordination with Base and the Supervisor, and the need for qualified Gate and Base relief."
         },
         {
           "id": "T2-T3-S11",
-          "prompt": "You find conflicting entries in the prior shift's incident log and access record. How do you verify and document the facts?"
+          "prompt": "Two shift records conflict about an access event. Explain how you preserve each original account, verify times and facts, and submit a correction with attribution."
         },
         {
           "id": "T2-T3-S12",
-          "prompt": "An officer repeatedly fails to report a post hazard. How do you address the risk and coach the officer within your authority?"
+          "prompt": "A junior officer repeatedly overlooks a hazard. Explain immediate safety notification and factual coaching within T2 authority, including when the Lead or Supervisor must address performance."
         },
         {
           "id": "T2-T3-S13",
-          "prompt": "A potential ammonia release is reported near an occupied work area. Explain your protective actions, escalation, and procedural limits."
+          "prompt": "An ammonia alarm sounds near your patrol area. Explain withdrawal, 911 and notifications under the EAP, how you keep others away, and why a detector reading alone cannot authorize re-entry."
         },
         {
           "id": "T2-T3-S14",
-          "prompt": "A severe weather warning arrives during a shift change. Describe the operational handoff and accountability checks."
+          "prompt": "Severe weather information arrives during post relief. Describe your handoff, radio and log facts, and how you confirm qualified coverage without changing assignments on your own."
         },
         {
           "id": "T2-T3-S15",
-          "prompt": "An unknown person is seen on camera entering a restricted area. Describe the coordinated response and documentation."
+          "prompt": "While authorized at Base, you see an unknown person entering a restricted area. Explain safe dispatch within Base authority, Supervisor notification, event bookmarking, and factual documentation."
         },
         {
           "id": "T2-T3-S16",
-          "prompt": "You learn that a post order changed overnight but only one officer has seen the update. What do you verify and communicate?"
+          "prompt": "You hear a post instruction has changed but have not seen the controlled update. Explain how you verify current direction and communicate it without inventing policy."
         },
         {
           "id": "T2-T3-S17",
-          "prompt": "A truck requests an exception to exit controls; its operator says the company is exempt. Explain how you check the current exception list and record the outcome."
+          "prompt": "A third-party outbound truck requests release while a designated Gate Pass check is in progress. Explain which carriers receive routine outbound checks and how you keep the lane moving without a new routine stop."
         },
         {
           "id": "T2-T3-S18",
-          "prompt": "A patrol finding may be a safety problem or a security incident. Explain how you classify, notify, and document it."
+          "prompt": "During patrol you find an apparent seal or cargo concern by a dock. Explain observations and notifications to Base, the Supervisor, and responsible Dispatch or warehouse staff; identify who owns load and release decisions."
         }
       ]
     },
     {
       "tier": "T3-T4",
-      "revision": 1,
+      "revision": 2,
       "active": true,
       "checklist": [
         {
           "id": "T3-T4-C01",
-          "text": "Direct a shift response while preserving life safety and officer accountability."
+          "text": "Review 60 days of sound independent operational judgment with minimal reversals, supported by specific access, safety, and escalation examples."
         },
         {
           "id": "T3-T4-C02",
-          "text": "Delegate by post and qualification without leaving critical coverage gaps."
+          "text": "Confirm verified independent Base Station proficiency, with Manager or designee sign-off for Lead readiness and evidence across surveillance, forensic review/export, dispatch, and accurate logs."
         },
         {
           "id": "T3-T4-C03",
-          "text": "Communicate decisions, priorities, and changing conditions clearly."
+          "text": "Confirm Gate and Patrol mastery and appropriate training across the three Security posts; dock and Crosswalk awareness remains part of patrol and response."
         },
         {
           "id": "T3-T4-C04",
-          "text": "Use the current incident and emergency procedures and state the limits of your authority."
+          "text": "Document successful mentoring of Trainees to solo proficiency and fair, observed competency evaluations within authorized sign-off scope."
         },
         {
           "id": "T3-T4-C05",
-          "text": "Conduct a factual handoff and preserve evidence and report quality."
+          "text": "Demonstrate objective review of Officer incident reports for factual gaps, chronology, required sections, and unsupported conclusions."
         },
         {
           "id": "T3-T4-C06",
-          "text": "Coach, evaluate, and correct performance fairly with written evidence."
+          "text": "Explain Lead authority for routine coordination and Base dispatch, and the need for explicit formal Acting Supervisor activation before exercising shift authority."
         },
         {
           "id": "T3-T4-C07",
-          "text": "Manage competing incidents and request assistance when needed."
+          "text": "Preserve Gate and Base qualified coverage and patrol continuity when arranging relief with the Supervisor."
         },
         {
           "id": "T3-T4-C08",
-          "text": "Maintain continuity through staffing shortages and operational disruptions."
+          "text": "Apply the current EAP, rapid 911 notification when clearly needed, safe evacuation and responder support without claiming incident command by default."
         },
         {
           "id": "T3-T4-C09",
-          "text": "Lead after-action review and document corrective follow-up."
+          "text": "Demonstrate impartial coaching, professional boundaries, accurate records, and escalation of formal conduct actions to the Supervisor or Manager."
         },
         {
           "id": "T3-T4-C10",
-          "text": "Demonstrate mastery of all posts before evaluating leadership performance."
+          "text": "Show sound handling of access exceptions and designated Gate Pass concerns without assuming Dispatch or warehouse release authority."
         },
         {
           "id": "T3-T4-C11",
-          "text": "Explain when to elevate a matter to the Security Manager, Safety, HR, or emergency services."
+          "text": "Explain video bookmarks, authorized Lead export, source preservation, recipient controls, and documented evidence transfer."
         },
         {
           "id": "T3-T4-C12",
-          "text": "Make a reasoned Supervisor recommendation based on documented evidence."
+          "text": "Record Supervisor recommendation with observed evidence and the Security Manager's final promotion review; a scenario answer alone is not a post qualification."
         }
       ],
       "scenarios": [
         {
           "id": "T3-T4-S01",
-          "prompt": "An ammonia release is reported during a busy shift. Describe how you establish command, protect personnel, delegate roles, and hand off to the appropriate responders."
+          "prompt": "An ammonia alarm sounds while you are the Senior Officer. Describe safe withdrawal, 911 and EAP notifications, how you support the Supervisor, and the conditions for any later re-entry."
         },
         {
           "id": "T3-T4-S02",
-          "prompt": "A fire alarm occurs while one officer is missing during evacuation. Explain accountability, radio priorities, and command decisions."
+          "prompt": "A fire alarm begins and a colleague is unaccounted for. Explain the facts you relay to the Supervisor or incident commander, responder access support, and why you do not send an officer into the affected area on your own."
         },
         {
           "id": "T3-T4-S03",
-          "prompt": "Two officers disagree over whether a person on the unauthorized list may enter. Explain the immediate access decision, coaching, and escalation."
+          "prompt": "Two officers disagree about a denied access indication. Explain the current Gate Reference decision, calm coaching, record, and escalation without creating an exception."
         },
         {
           "id": "T3-T4-S04",
-          "prompt": "An employee is injured while a separate perimeter alarm activates. Explain triage, staffing assignments, and escalation."
+          "prompt": "An injury and a perimeter alarm are reported together. As Senior Officer, describe what you can safely do, how you coordinate with Base, and which resource priorities the Supervisor decides."
         },
         {
           "id": "T3-T4-S05",
-          "prompt": "A truck queue blocks emergency access as an ambulance is expected. Describe your shift-wide response and communications."
+          "prompt": "A truck queue blocks an expected ambulance. Explain immediate safe lane steps and communications with Gate, Base, and the Supervisor while preserving qualified post coverage."
         },
         {
           "id": "T3-T4-S06",
-          "prompt": "A supervisor from another department asks you to ignore an access exception. Explain how you handle the request and preserve the record."
+          "prompt": "A manager from another department asks you to bypass an access rule. Describe the response, record, and escalation through Security leadership."
         },
         {
           "id": "T3-T4-S07",
-          "prompt": "A bomb threat call is received at the Base. Explain how you direct the response under current procedures without improvising search or evacuation authority."
+          "prompt": "A bomb threat call is received at Base while you are supporting the shift. Explain accurate capture, 911/EAP and Supervisor notification, and why search or evacuation orders follow controlled procedures."
         },
         {
           "id": "T3-T4-S08",
-          "prompt": "Power fails and camera coverage is degraded across multiple areas. Describe your coverage plan, notifications, and handoff."
+          "prompt": "Power fails and multiple cameras are lost. Explain what you document, who you notify, how you help cover vulnerable areas, and when a critical outage reaches the Security Manager."
         },
         {
           "id": "T3-T4-S09",
-          "prompt": "An officer reports misconduct by a coworker who is well liked by the team. Explain protection of facts, impartial review, and confidentiality."
+          "prompt": "A colleague reports possible misconduct by another officer. Explain immediate safety, objective facts, confidentiality, and referral to the Supervisor without conducting independent discipline."
         },
         {
           "id": "T3-T4-S10",
-          "prompt": "Your only qualified Gate officer calls off shortly before a high-volume window. Explain your coverage decision and escalation."
+          "prompt": "The only Gate-qualified officer calls off before a busy window. Explain coverage options you raise with the Supervisor, qualified relief, and the limits on approving overtime or changing staffing."
         },
         {
           "id": "T3-T4-S11",
-          "prompt": "An officer repeatedly skips a required patrol interval. Explain how you verify the facts, address immediate risk, and document coaching."
+          "prompt": "A trainee's patrol log suggests repeated missed rounds. Explain how you verify actual activity, distinguish documented operational delays, coach fairly, and refer a performance decision."
         },
         {
           "id": "T3-T4-S12",
-          "prompt": "Two emergency calls arrive from different areas at once. Describe how you set priorities, delegate, and reassess."
+          "prompt": "Two urgent calls come from different areas. Explain immediate life safety and 911, communications with Base and the Supervisor, and how you support assigned responders without self-activating shift command."
         },
         {
           "id": "T3-T4-S13",
-          "prompt": "During a severe weather warning, shift change begins and several officers are out of radio contact. Explain accountability and command communications."
+          "prompt": "Severe weather begins at shift change and two officers are out of radio contact. Explain the accountability information you collect and your handoff to the Supervisor or designated incident lead."
         },
         {
           "id": "T3-T4-S14",
-          "prompt": "A senior officer gives a candidate an unsupported qualification signoff. Explain how you protect operations and correct the record."
+          "prompt": "A Senior Officer has signed a trainee competency item without observing the work. Explain how you protect post qualification, correct the record with attribution, and arrange a valid live evaluation."
         },
         {
           "id": "T3-T4-S15",
-          "prompt": "A supervisor leaves an incident scene without a clear handoff. Describe how you regain control, preserve evidence, and manage the reporting chain."
+          "prompt": "The Supervisor departs during an incident without a clear handoff. Explain immediate protective actions and how you establish who has authority; if formally activated as Acting Supervisor, what do you log and whom do you notify?"
         },
         {
           "id": "T3-T4-S16",
-          "prompt": "A visitor reports a threat from a person outside the property. Explain your immediate protective decisions and when you involve law enforcement."
+          "prompt": "A visitor reports a threat from outside the property. Explain safe access control, immediate emergency call when warranted, evidence preservation, and Supervisor coordination."
         },
         {
           "id": "T3-T4-S17",
-          "prompt": "An officer makes an unsafe access decision, but no loss occurs. Explain how you assess, document, and correct it fairly."
+          "prompt": "An officer makes an unsafe Gate decision with no resulting loss. Explain factual review, coaching and training evidence, and which formal corrective decisions stay with the Supervisor or Manager."
         },
         {
           "id": "T3-T4-S18",
-          "prompt": "Your team is asked to return to routine operations after a serious incident. Explain your readiness check and staff support plan."
+          "prompt": "After a serious incident, someone asks the team to resume routine work. Explain how you check coverage, unresolved hazards, and personnel accountability with the Supervisor before normal operations resume."
         },
         {
           "id": "T3-T4-S19",
-          "prompt": "A camera failure overlaps with a suspected unauthorized entry. Describe temporary coverage, evidence preservation, and notifications."
+          "prompt": "A camera failure coincides with suspected unauthorized entry. Explain bookmarks of available footage, temporary observation and notification, and the limits of video export authority before promotion."
         },
         {
           "id": "T3-T4-S20",
-          "prompt": "A manager asks you to change the wording of an officer's factual report. Explain your response and the correction process."
+          "prompt": "A manager asks you to rewrite an officer's factual incident report. Explain how you preserve the original account, request an attributed correction, and route the report for Lead and Supervisor review."
         },
         {
           "id": "T3-T4-S21",
-          "prompt": "A fuel spill is reported near active vehicle lanes. Describe containment limits, traffic controls, and the notifications you direct."
+          "prompt": "A fuel spill affects vehicle traffic. Explain safe exclusion and emergency notifications, coordination with the Supervisor and responders, and why Security does not improvise containment beyond training."
         },
         {
           "id": "T3-T4-S22",
-          "prompt": "An unverified rumor spreads during a security event. Explain how you establish a single factual update and prevent conflicting orders."
+          "prompt": "An unverified rumor spreads during an active event. Explain how you confirm facts with Base and the Supervisor and give a clear, attributed update to officers you are authorized to direct."
         },
         {
           "id": "T3-T4-S23",
-          "prompt": "A candidate fails a practical assessment but is urgently needed on a post. Explain how you handle staffing pressure and qualification standards."
+          "prompt": "A candidate is urgently needed on a post but fails a live competency assessment. Explain withholding an unsupported sign-off, maintaining qualified coverage, and planning another observed evaluation."
         },
         {
           "id": "T3-T4-S24",
-          "prompt": "At end of shift, one high-priority incident is unresolved and the incoming supervisor is late. Explain continuity of command and pass-down."
+          "prompt": "At shift end, an incident is unresolved and the incoming Supervisor is delayed. Explain complete pass-down, continued qualified Gate and Base coverage, and the formal activation required before assuming Acting Supervisor authority."
         }
       ]
     }
