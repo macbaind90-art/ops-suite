@@ -1,9 +1,19 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.7.0**
-- Release: **Standardized Report Controls**
-- Baseline upgraded: **v4.6.0 - Attendance Trend & Risk Report**
+- Version: **4.8.0**
+- Release: **Governed Training & Qualification**
+- Baseline upgraded: **v4.7.0 - Standardized Report Controls**
+
+## Governed Training Contract
+
+- Separate Training schema and starter requirements: **PASS**
+- Assignment → observation → independent signoff → retraining state validation: **PASS**
+- Correction preserves evidence history: **PASS**
+- Dedicated host command and generic-save denial: **PASS**
+- Front-end module registry, Training page, reports, and profile render: **PASS**
+- Existing Node validators: **PASS**
+- .NET 10 Windows compile/publish: **PENDING GitHub Actions run**
 
 ## Standardized Report Controls Contract
 

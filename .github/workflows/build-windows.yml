@@ -22,6 +22,9 @@ jobs:
       - name: Validate modular front end
         run: node tools/validate-frontend.js
 
+      - name: Validate governed Training replacement
+        run: node tools/validate-training-replacement.js
+
       - name: Validate Task Tracker print regression
         run: node tools/validate-task-print.js
 

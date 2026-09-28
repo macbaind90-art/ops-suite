@@ -1,5 +1,13 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.8.0 - Governed Training & Qualification
+
+- Replaced the roster topic tracker with an independent Training data file and protected operation-specific writes.
+- Added named assignments, observed evidence, independent signoff, renewals, acknowledgments, retraining, correction history, and printable employee records.
+- Introduced a narrow Senior Officer application role and connected Training to profiles, reports, backups, and Data Health.
+- Retained legacy roster training arrays as inert historical fields. Retired Dock/Crosswalk from new Training requirements.
+- Deferred Promotion Packets to a separate module.
+
 ## v4.7.0 - Standardized Report Controls
 
 - Added shared reporting-period, shift, employee, and status controls where applicable across the Report Center.

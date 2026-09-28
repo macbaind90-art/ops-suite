@@ -18,7 +18,9 @@ namespace PWADC.SecurityOperationsSuite
                 matrix = SuiteSettings.DefaultRoleCapabilities();
                 matrix.TryGetValue(role ?? "", out assigned);
             }
-            return assigned != null && (assigned.Contains("*") || assigned.Contains(capability, StringComparer.OrdinalIgnoreCase));
+            return assigned != null && (assigned.Contains("*") || assigned.Contains(capability, StringComparer.OrdinalIgnoreCase) ||
+                ((capability == "training.record" || capability == "training.signoff") &&
+                 assigned.Contains("training.manage", StringComparer.OrdinalIgnoreCase)));
         }
 
         private SuiteUser RequireCapabilityCredentials(string userId, string pin, string capability)
@@ -59,6 +61,7 @@ namespace PWADC.SecurityOperationsSuite
             {
                 "attendance" => RequireAnyCapabilityCredentials(userId, pin, "attendance.edit", "attendance.adjustPoints", "attendance.correctiveAction", "attendance.managePolicy"),
                 "roster" => RequireAnyCapabilityCredentials(userId, pin, "roster.edit", "schedule.edit", "schedule.publish", "training.manage", "uniforms.manage", "supplies.manage"),
+                "training" => throw new UnauthorizedAccessException("Training changes must use protected training commands."),
                 "tasks" => RequireCapabilityCredentials(userId, pin, "tasks.manage"),
                 "shift-reports" => RequireCapabilityCredentials(userId, pin, "shiftReports.manage"),
                 "shift-intelligence" => RequireCapabilityCredentials(userId, pin, "shiftIntelligence.manage"),
@@ -81,7 +84,7 @@ namespace PWADC.SecurityOperationsSuite
             }
             Dictionary<string, List<string>> defaults = SuiteSettings.DefaultRoleCapabilities();
             candidate.RoleCapabilities ??= defaults;
-            foreach (string role in new[] { "Supervisor", "Lead", "Viewer" })
+            foreach (string role in new[] { "Supervisor", "Lead", "Senior Officer", "Viewer" })
                 if (!candidate.RoleCapabilities.ContainsKey(role)) candidate.RoleCapabilities[role] = new List<string>(defaults[role]);
             candidate.RoleCapabilities["Admin"] = new List<string> { "*" };
         }

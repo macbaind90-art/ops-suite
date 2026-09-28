@@ -27,6 +27,7 @@ namespace PWADC.SecurityOperationsSuite
         {
             new GovernedModuleDefinition { Id = "attendance", Label = "Attendance", FileName = "attendance-data.json", SchemaRevision = 3, RecordCountStrategy = "attendance" },
             new GovernedModuleDefinition { Id = "roster", Label = "Roster", FileName = "roster-data.json", SchemaRevision = 1, RecordCountStrategy = "roster" },
+            new GovernedModuleDefinition { Id = "training", Label = "Training", FileName = "training-data.json", SchemaRevision = 1, RecordCountStrategy = "training" },
             new GovernedModuleDefinition { Id = "tasks", Label = "Task Tracker", FileName = "tasks-data.json", SchemaRevision = 1, RecordCountStrategy = "tasks" },
             new GovernedModuleDefinition { Id = "shift-reports", Label = "Shift Reports", FileName = "shift-reports-data.json", SchemaRevision = 1, RecordCountStrategy = "shift-reports" },
             new GovernedModuleDefinition { Id = "shift-intelligence", Label = "Shift Intelligence", FileName = "shift-intelligence-data.json", SchemaRevision = 1, RecordCountStrategy = "shift-intelligence" },

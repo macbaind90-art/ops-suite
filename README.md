@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.7.0
+# PWADC Security Operations Suite v4.8.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,17 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.7.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.8.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.8.0 - Governed Training & Qualification
+
+- Training is a separate governed `training-data.json` module (`training-1`), with its own revision checks, atomic writes, backups, restore, and Data Health visibility.
+- New Employee Orientation, Gate, Patrol, and Base / EOC are starter **requirements**, not assumed completions or automatically assigned obligations. Supervisors assign requirements to named employees and set a target date where appropriate.
+- Observations capture method, outcome, date, actor, notes, and evidence reference. A passing observation and a second authorized account are required for independent qualification signoff. Senior Officer has a narrow Training record/signoff role; existing Lead and Supervisor roles retain their training authority.
+- Requirement changes retain prior definitions; corrections and closed assignments retain evidence history. Renewal intervals are explicit per requirement and default to no automatic renewal.
+- Training reports, employee profiles, printouts, CSV, and Data Health now use the new module. The legacy roster training arrays remain stored but inert; no legacy completions are migrated or interpreted.
+- Promotion Packets, including candidate scenarios and checklists, remain a separate planned module and are not part of this build.
+- Validate with `node tools/validate-training-replacement.js` and `node tools/validate-frontend.js`. The Windows GitHub Actions build is the authoritative .NET compile and publish check.
 
 ## v4.7.0 - Standardized Report Controls
 
@@ -755,7 +765,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - ~~v4.4.0 - Attendance Notice Generator & Lifecycle~~ Completed
 - ~~v4.5.0 - Attendance Action Report~~ Completed
 - ~~v4.6.0 - Attendance Trend & Risk Report~~ Completed
-- **v4.7.0 - Standardized Report Controls** Current
+- **v4.7.0 - Standardized Report Controls**
 - Future development sequencing is maintained in `ROADMAP-v4.0.md`; there is no committed platform-rewrite milestone.
 
 ## Current Project Map

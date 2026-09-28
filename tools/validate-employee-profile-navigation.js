@@ -4,6 +4,7 @@ function need(src,needle,msg){if(!src.includes(needle))throw new Error(msg+' Mis
 const core=read('app/js/20-data-core.js');
 const roster=read('app/js/60-roster-schedule.js');
 const training=read('app/js/70-training-uniforms.js');
+const newTraining=read('app/js/72-training-replacement.js');
 const att=read('app/js/82-attendance-points.js');
 const tasks=read('app/js/95-tasks-settings.js');
 const css=read('app/assets/styles.css');
@@ -16,7 +17,7 @@ if(/\bcodeLabel\s*\(/.test(core))throw new Error('Legacy undefined codeLabel() r
 need(roster,'${rosterEmployeeProfileLink(e)}</td>','Roster names are not linked to profiles.');
 need(roster,'${rosterEmployeeProfileLink(e)} <span class="archive-badge">Archived</span>','Archived roster names are not linked.');
 need(roster,'employeeProfileLinkByName(p.display)','Schedule employee names are not linked.');
-need(training,'<div class="training-employee-name">${rosterEmployeeProfileLink(emp)}</div>','Training employee names are not linked.');
+need(newTraining,'${rosterEmployeeProfileLink(emp)}','Training employee names are not linked.');
 need(training,'<div class="card-title">${rosterEmployeeProfileLink(e)}</div>','Uniform employee names are not linked.');
 need(training,'employeeProfileLink(r.id,r.employee)','Labor detail employee names are not linked.');
 need(att,'${attendanceEmployeeProfileLink(e)}<span>${esc(e.title)}','Daily Attendance employee names are not linked.');

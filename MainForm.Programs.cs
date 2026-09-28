@@ -192,6 +192,7 @@ namespace PWADC.SecurityOperationsSuite
                 if (module == "attendance") newestDataDate = LatestAttendanceDateFromFile(info.FullName);
                 else if (module == "shift-reports") newestDataDate = NewestDatePropertyFromFile(info.FullName, "reports", "issues");
                 else if (module == "shift-intelligence") newestDataDate = NewestDatePropertyFromFile(info.FullName, "issues", "intake", "reference");
+                else if (module == "training") newestDataDate = NewestDatePropertyFromFile(info.FullName, "requirements", "assignments", "audit");
                 else if (module == "tasks") newestDataDate = NewestDatePropertyFromFile(info.FullName, "tasks", "audit");
                 else if (module == "roster") newestDataDate = NewestDatePropertyFromFile(info.FullName, "employees", "schedule", "audit");
             }

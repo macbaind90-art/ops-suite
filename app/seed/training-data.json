@@ -1,0 +1,13 @@
+{
+  "schemaVersion": "training-1",
+  "lastWrittenByAppVersion": "4.8.0",
+  "requirements": [
+    {"id":"neo","title":"New Employee Orientation","category":"NEO","renewalDays":0,"reference":"NEO checklist and current controlled documents","active":true},
+    {"id":"gate","title":"Gate independent qualification","category":"Gate","renewalDays":0,"reference":"Current Gate post orders","active":true},
+    {"id":"patrol","title":"Patrol independent qualification","category":"Patrol","renewalDays":0,"reference":"Current Patrol post orders","active":true},
+    {"id":"base-eoc","title":"Base / EOC independent qualification","category":"Base/EOC","renewalDays":0,"reference":"Current Base / EOC post orders","active":true}
+  ],
+  "assignments": [],
+  "audit": [],
+  "lastSaved": ""
+}

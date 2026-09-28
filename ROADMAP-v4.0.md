@@ -1,6 +1,6 @@
 # PWADC Security Operations Suite Development Roadmap
 
-Current production build: **v4.7.0 - Standardized Report Controls**.
+Current production build: **v4.8.0 - Governed Training & Qualification**. Promotion Packets is the next separate module.
 
 This roadmap is the active development plan for the PWADC Security Operations Suite. Detailed release history belongs in `CHANGELOG.md`; system design and implementation details belong in `ARCHITECTURE.md`.
 
