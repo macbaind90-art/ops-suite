@@ -10,7 +10,7 @@ const scriptRefs=[...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map(m=>
 const expectedRefs=[
   'js/00-module-registry.js','js/10-bootstrap.js','js/20-data-core.js','js/30-shell-audits.js',
   'js/40-reports-governance.js','js/42-data-health-recovery.js','js/50-workflows-home.js','js/60-roster-schedule.js',
-  'js/70-training-uniforms.js','js/72-training-replacement.js','js/80-attendance.js','js/82-attendance-points.js','js/90-shift-operations.js',
+  'js/70-training-uniforms.js','js/72-training-replacement.js','js/74-promotion-packets.js','js/80-attendance.js','js/82-attendance-points.js','js/90-shift-operations.js',
   'js/95-tasks-settings.js','js/99-startup.js'
 ];
 if(JSON.stringify(scriptRefs)!==JSON.stringify(expectedRefs)) throw new Error('Front-end script load order does not match the v4.7.0 architecture contract.');
@@ -93,11 +93,11 @@ evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAtte
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
-const expectedModules=['bootstrap','data-core','shell-audits','reports-governance','data-health-recovery','workflows-home','roster-schedule','training-uniforms','training-replacement','attendance','shift-operations','tasks-settings'];
+const expectedModules=['bootstrap','data-core','shell-audits','reports-governance','data-health-recovery','workflows-home','roster-schedule','training-uniforms','training-replacement','promotion-packets','attendance','shift-operations','tasks-settings'];
 const registry=evalx(`PWADCModuleRegistry.validate(${JSON.stringify(expectedModules)})`);
 if(!registry.ok||registry.unexpected.length)throw new Error('Front-end module registry failure: '+JSON.stringify(registry));
 
-const major=['home','start-here','attendance','roster','employee-profile','training','office-supplies','shift-reports','shift-intelligence','reports','settings','tasks','data-health','restore','change-log','other-programs'];
+const major=['home','start-here','attendance','roster','employee-profile','training','promotion-packets','office-supplies','shift-reports','shift-intelligence','reports','settings','tasks','data-health','restore','change-log','other-programs'];
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
 
 // v4.7.0: render a real linked Employee Profile, not just the empty profile shell.

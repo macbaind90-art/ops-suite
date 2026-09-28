@@ -296,7 +296,7 @@ namespace PWADC.SecurityOperationsSuite
             // A same-day snapshot from an older release can predate a newly introduced
             // governed module. Its live file remains writable, but recovery is unavailable
             // until the next daily snapshot. Do not label the valid live file "Blocked".
-            bool newTrainingAwaitingLkg = definition.Id == "training" && !result.Lkg.Available &&
+            bool newTrainingAwaitingLkg = (definition.Id == "training" || definition.Id == "promotion-packets") && !result.Lkg.Available &&
                 result.Lkg.CurrentToday && result.Lkg.Error == "The module is not present in the current LKG.";
             if (!schema.ReadAllowed || (!schema.WriteAllowed && schema.Status != "previous") || fileReadOnly || failedMigration || failedRecovery ||
                 ((!result.Lkg.Available || !result.Lkg.Valid) && !newTrainingAwaitingLkg))
@@ -313,7 +313,7 @@ namespace PWADC.SecurityOperationsSuite
             {
                 result.Severity = "yellow";
                 result.StatusLabel = "Attention";
-                result.Summary = newTrainingAwaitingLkg ? "Training is valid and writable, but today's suite snapshot predates this new file. Recovery from LKG will become available after the next daily snapshot." :
+                result.Summary = newTrainingAwaitingLkg ? definition.Label + " is valid and writable, but today's suite snapshot predates this new file. Recovery from LKG will become available after the next daily snapshot." :
                     schema.Status == "previous" ? "A controlled schema migration is pending." :
                     !result.Lkg.CurrentToday ? "A valid LKG exists, but it is older than today." :
                     result.Conflicts.Count30Days >= 3 ? "The 30-day stale-write threshold has been reached." :

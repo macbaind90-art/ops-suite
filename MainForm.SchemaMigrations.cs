@@ -664,6 +664,7 @@ namespace PWADC.SecurityOperationsSuite
                 ArrayIds("officeSupplies", "officeSupplies");
             }
             else if (module == "training") { ArrayIds("requirements", "requirements"); ArrayIds("assignments", "assignments"); }
+            else if (module == "promotion-packets") { ArrayIds("templates", "templates"); ArrayIds("packets", "packets"); }
             else if (module == "tasks") ArrayIds("tasks", "tasks");
             else if (module == "shift-reports") { ArrayIds("reports", "reports"); ArrayIds("issues", "issues"); }
             else if (module == "shift-intelligence") { ArrayIds("issues", "issues"); ArrayIds("intake", "intake"); ArrayIds("reference", "reference"); }

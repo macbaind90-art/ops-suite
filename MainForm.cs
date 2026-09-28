@@ -17,7 +17,7 @@ namespace PWADC.SecurityOperationsSuite
         private readonly string appFolder;
         private readonly string indexPath;
 
-        private const string AppVersion = "4.8.4";
+        private const string AppVersion = "5.0.0";
         private const string DefaultRoot = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         private const string SettingsFileName = "suite-settings.json";
         private SuiteSettings settings = new SuiteSettings();
@@ -55,6 +55,8 @@ namespace PWADC.SecurityOperationsSuite
                     // is captured. Existing live Training data is never replaced here.
                     if (!File.Exists(Path.Combine(settings.DataRoot, "Data", ModuleFileName("training"))))
                         LoadModuleDataWithSource("training");
+                    if (!File.Exists(Path.Combine(settings.DataRoot, "Data", ModuleFileName("promotion-packets"))))
+                        LoadModuleDataWithSource("promotion-packets");
                     DailyLkgResult lkg = EnsureDailyLastKnownGoodSnapshot();
                     if (!lkg.Success) MessageBox.Show(lkg.Message, "PWADC Daily Last-Known-Good", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     SchemaInitializationResult schemaInit = EnsureLiveSchemaMetadata();
