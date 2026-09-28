@@ -13,7 +13,7 @@ for(const template of seed.templates){
 }
 const host=read('MainForm.PromotionPackets.cs'),auth=read('MainForm.Authorization.cs'),registry=read('MainForm.GovernedModules.cs');
 const browser=read('app/js/74-promotion-packets.js'),bootstrap=read('app/js/10-bootstrap.js');
-vm.Script(browser,{filename:'app/js/74-promotion-packets.js'});
+new vm.Script(browser,{filename:'app/js/74-promotion-packets.js'});
 need(host,'RandomNumberGenerator.GetInt32(i, available.Length)','Selection must use unbiased per-issue randomness');
 need(host,'for (int i = 0; i < 6; i++)','Each packet must freeze exactly six questions');
 need(host,'["scenarios"] = chosen','Frozen questions must be saved with packet');
