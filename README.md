@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v5.0.1
+# PWADC Security Operations Suite v5.0.2
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## v5.0.1 - Promotion approval packet
