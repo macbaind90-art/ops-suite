@@ -29,7 +29,7 @@ need(host,'["scenarios"] = chosen','Frozen questions must be saved with packet')
 need(host,'activeBank.Select','Selection must exclude archived scenarios');
 need(host,'["previousVersions"] = history','Bank edits must preserve old template revision');
 need(browser,'openPromotionBank','Manager must be able to inspect and edit banks');
-need(browser,'p.scenarios.map((s,i)=>','Reprint must use issued questions');
+need(browser,'p.scenarios.map((x,i)=>','Reprint must use issued questions');
 need(host,'["trainingEvidence"] = evidence','Issue must capture training evidence');
 for(const marker of ['"delete" or "restore" => "promotion.manage"','["deletedPreviousStatus"]','packet["status"] = "Deleted"','packet["status"] = previous','history.Add(new JsonObject { ["action"] = action','Only the Security Manager/Admin may delete or restore'])need(host,marker,'Packet delete/restore audit or role guard missing: '+marker);
 for(const marker of ['openPromotionDeleteModal','savePromotionDelete','Show deleted packets',"p.status!=='Deleted'",'promotionCommand(action,{packetId:id,notes})'])need(browser,marker,'Packet delete/restore UI missing: '+marker);
