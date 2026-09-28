@@ -16,7 +16,7 @@ async function loadPromotionPackets(){
 function promotionPacket(id){return (promotionPackets.packets||[]).find(p=>p.id===id)}
 function promotionLocalDate(value){const date=new Date(value||'');return Number.isNaN(date.getTime())?'':date.toLocaleDateString()}
 function promotionEmployee(id){return (roster.employees||[]).find(e=>String(e.id)===String(id))}
-function promotionPacketCan(action){return hasCapability(action==='issue'||action==='scenario'?'promotion.manage':action==='review'?'promotion.review':'promotion.decide')}
+function promotionPacketCan(action){return hasCapability(action==='issue'||action==='scenario'||action==='delete'||action==='restore'?'promotion.manage':action==='review'?'promotion.review':'promotion.decide')}
 async function promotionCommand(action,fields){
   if(!promotionPacketCan(action)){toast('Promotion packet permission is required.');return null}
   const info=moduleLoadInfo['promotion-packets']||{};
@@ -41,20 +41,32 @@ function renderPromotionPackets(){
   const all=[...(promotionPackets.packets||[])].sort((a,b)=>String(b.issuedAt).localeCompare(String(a.issuedAt)));
   const focus=String(window._promotionEmployeeFocus||'');
   const q=String(window._promotionSearch||'').toLowerCase();
-  const rows=all.filter(p=>(!focus||String(p.employeeId)===focus)&&(!q||((p.employee?.name||'')+' '+(p.employee?.eid||'')+' '+p.tier+' '+p.status).toLowerCase().includes(q)));
+  const showDeleted=window._promotionShowDeleted===true;
+  const visible=all.filter(p=>showDeleted?p.status==='Deleted':p.status!=='Deleted');
+  const rows=visible.filter(p=>(!focus||String(p.employeeId)===focus)&&(!q||((p.employee?.name||'')+' '+(p.employee?.eid||'')+' '+p.tier+' '+p.status).toLowerCase().includes(q)));
   const pending=all.filter(p=>p.status==='Reviewed').length;
   const canIssue=promotionPacketCan('issue');
   return `<div class="page-head"><div><div class="page-title">Promotion Packets</div><div class="page-sub">Issue a controlled print packet, collect the candidate's six written answers, and record the supervisor recommendation and manager decision.</div></div><div class="top-actions">${canIssue?'<button class="primary" onclick="openPromotionIssueModal()">+ Issue Packet</button><button onclick="openPromotionBank()">Manage Scenario Banks</button>':''}<button onclick="printPromotionRegister()">Print Register</button><button onclick="exportPromotionRegister()">Export CSV</button></div></div>
     ${renderPeopleWorkflowNav('promotion-packets')}
-    <div class="notice">Issue creates one permanent packet with six randomly selected scenarios from its level's bank. Reprinting uses those same questions. A packet recommendation does not change rank, pay, or HR approval.</div>
-    <div class="grid cols-3"><div class="kpi"><div class="num">${all.length}</div><div class="lbl">Issued Packets</div></div><div class="kpi"><div class="num">${all.filter(p=>p.status==='Issued').length}</div><div class="lbl">With Supervisor</div></div><div class="kpi"><div class="num">${pending}</div><div class="lbl">Awaiting Manager</div></div></div>
-    <div class="card"><div class="card-title">Packet Register</div><div class="training-filters"><div><label>Search</label><input value="${esc(window._promotionSearch||'')}" placeholder="Employee, ID, level or status" oninput="window._promotionSearch=this.value;safeRenderPages()"></div>${focus?'<div><label>Employee</label><button onclick="window._promotionEmployeeFocus=\'\';safeRenderPages()">Clear employee filter</button></div>':''}</div>
-    <div class="settings-table-wrap"><table><thead><tr><th>Employee</th><th>Promotion</th><th>Issued</th><th>Status</th><th>Packet ID</th><th>Actions</th></tr></thead><tbody>${rows.map(p=>`<tr><td>${esc(p.employee?.name||'Employee removed')}<div class="mini-note">${esc(p.employee?.eid||'')} · ${esc(p.employee?.shift||'')}</div></td><td>${esc(p.tier?.replace('-', ' → ')||'')}</td><td>${esc(promotionLocalDate(p.issuedAt))}</td><td>${esc(p.status||'')}</td><td><small>${esc(p.id||'')}</small></td><td><div class="td-actions"><button class="sm" onclick="printPromotionPacket('${esc(p.id)}')">Print / Reprint</button>${p.status==='Issued'&&promotionPacketCan('review')?`<button class="sm" onclick="openPromotionReviewModal('${esc(p.id)}')">Record Review</button>`:''}${p.status==='Reviewed'&&promotionPacketCan('decide')?`<button class="sm gold" onclick="openPromotionDecisionModal('${esc(p.id)}')">Manager Decision</button>`:''}</div></td></tr>`).join('')||'<tr><td colspan="6">No packets match the filter.</td></tr>'}</tbody></table></div></div>`;
+    <div class="notice">Issue creates a packet with six randomly selected scenarios from its level's bank. Manager deletion hides a packet and preserves an audit record. Reprinting uses those same questions. A packet recommendation does not change rank, pay, or HR approval.</div>
+    <div class="grid cols-3"><div class="kpi"><div class="num">${all.filter(p=>p.status!=='Deleted').length}</div><div class="lbl">Active Packets</div></div><div class="kpi"><div class="num">${all.filter(p=>p.status==='Issued').length}</div><div class="lbl">With Supervisor</div></div><div class="kpi"><div class="num">${pending}</div><div class="lbl">Awaiting Manager</div></div></div>
+    <div class="card"><div class="card-title">Packet Register</div><div class="training-filters"><div><label>Search</label><input value="${esc(window._promotionSearch||'')}" placeholder="Employee, ID, level or status" oninput="window._promotionSearch=this.value;safeRenderPages()"></div>${canAdmin()?'<div><label>Register view</label><button onclick="window._promotionShowDeleted=!window._promotionShowDeleted;safeRenderPages()">'+(showDeleted?'Show active packets':'Show deleted packets')+'</button></div>':''}${focus?'<div><label>Employee</label><button onclick="window._promotionEmployeeFocus=\'\';safeRenderPages()">Clear employee filter</button></div>':''}</div>
+    <div class="settings-table-wrap"><table><thead><tr><th>Employee</th><th>Promotion</th><th>Issued</th><th>Status</th><th>Packet ID</th><th>Actions</th></tr></thead><tbody>${rows.map(p=>`<tr><td>${esc(p.employee?.name||'Employee removed')}<div class="mini-note">${esc(p.employee?.eid||'')} · ${esc(p.employee?.shift||'')}</div></td><td>${esc(p.tier?.replace('-', ' → ')||'')}</td><td>${esc(promotionLocalDate(p.issuedAt))}</td><td>${esc(p.status||'')}</td><td><small>${esc(p.id||'')}</small></td><td><div class="td-actions">${p.status!=='Deleted'?`<button class="sm" onclick="printPromotionPacket('${esc(p.id)}')">Print / Reprint</button>`:''}${p.status==='Issued'&&promotionPacketCan('review')?`<button class="sm" onclick="openPromotionReviewModal('${esc(p.id)}')">Record Review</button>`:''}${p.status==='Reviewed'&&promotionPacketCan('decide')?`<button class="sm gold" onclick="openPromotionDecisionModal('${esc(p.id)}')">Manager Decision</button>`:''}${canAdmin()?`<button class="sm ${p.status==='Deleted'?'':'danger'}" onclick="openPromotionDeleteModal('${esc(p.id)}','${p.status==='Deleted'?'restore':'delete'}')">${p.status==='Deleted'?'Restore':'Delete'}</button>`:''}</div></td></tr>`).join('')||'<tr><td colspan="6">No packets match the filter.</td></tr>'}</tbody></table></div></div>`;
 }
 function openPromotionForEmployee(id){window._promotionEmployeeFocus=String(id||'');navigate('promotion-packets')}
 function renderEmployeeProfilePromotion(emp){
-  const list=(promotionPackets.packets||[]).filter(p=>String(p.employeeId)===String(emp.id)).sort((a,b)=>String(b.issuedAt).localeCompare(String(a.issuedAt)));
+  const list=(promotionPackets.packets||[]).filter(p=>p.status!=='Deleted'&&String(p.employeeId)===String(emp.id)).sort((a,b)=>String(b.issuedAt).localeCompare(String(a.issuedAt)));
   return `<div class="card"><div class="card-title">Promotion Packets</div><div class="td-actions">${promotionPacketCan('issue')?`<button class="sm primary" onclick="openPromotionIssueModal('${esc(emp.id)}')">Issue Packet</button>`:''}<button class="sm" onclick="openPromotionForEmployee('${esc(emp.id)}')">Open Promotion Packets</button></div>${list.length?`<div class="profile-list">${list.map(p=>`<div class="profile-list-row"><strong>${esc(p.tier?.replace('-', ' → ')||'')} · ${esc(p.status||'')}</strong><br><span class="mini-note">${esc(promotionLocalDate(p.issuedAt))} · ID ${esc(p.id)}</span> <button class="sm" onclick="printPromotionPacket('${esc(p.id)}')">Print</button></div>`).join('')}</div>`:'<p class="mini-note">No promotion packets issued.</p>'}</div>`;
+}
+function openPromotionDeleteModal(id,action){
+  if(!canAdmin()||!promotionPacketCan(action))return;
+  const p=promotionPacket(id);if(!p||((action==='restore')!==(p.status==='Deleted')))return;
+  showModal(`<div class="modal-head"><div class="modal-title">${action==='delete'?'Delete':'Restore'} Promotion Packet</div><button onclick="closeModal()">Close</button></div><p>${esc(p.employee?.name||'')} · ${esc(p.tier?.replace('-', ' → ')||'')} · ${esc(p.id)}</p><div class="notice">${action==='delete'?'This removes the packet from the active register and employee profile. Its history remains in the audit record; you can restore it from the deleted view.':'Restore the prior packet status and its original questions, review, and decision.'}</div><label>Reason (at least 10 characters)</label><textarea id="promoDeleteReason" rows="3" placeholder="Document why this packet is being ${action==='delete'?'deleted':'restored'}"></textarea><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="${action==='delete'?'danger':'primary'}" onclick="savePromotionDelete('${esc(id)}','${action}')">${action==='delete'?'Delete packet':'Restore packet'}</button></div>`);
+}
+function savePromotionDelete(id,action){
+  const notes=val('promoDeleteReason')?.trim()||'';
+  if(notes.length<10){toast('Enter a reason of at least 10 characters.');return}
+  promotionCommand(action,{packetId:id,notes});
 }
 function openPromotionBank(tier='T1-T2'){
   if(!promotionPacketCan('scenario'))return;
@@ -113,7 +125,7 @@ function savePromotionDecision(id){
   promotionCommand('decide',{packetId:id,decision:val('promoDecision'),reference,notes});
 }
 function printPromotionPacket(id){
-  const p=promotionPacket(id);if(!p)return;
+  const p=promotionPacket(id);if(!p||p.status==='Deleted')return;
   if(!Array.isArray(p.scenarios)||p.scenarios.length!==6){toast('This packet does not contain exactly six scenarios.');return}
   const title='PWADC Promotion Packet · '+p.tier?.replace('-', ' to ');
   const style=`<style>@page{size:letter;margin:.65in}body{font-family:"Century Gothic",Arial,sans-serif!important;font-size:10pt!important;line-height:1.4!important;color:#171717!important}.pp-top{border-top:8px solid #c8102e;padding-top:12px}.pp-top h1{font-size:21pt;color:#c8102e;margin:5px 0}.pp-sub{letter-spacing:2px;font-weight:bold;font-size:9pt}.pp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:14px 0}.pp-field{border-bottom:1px solid #777;padding:5px 1px;min-height:30px}.pp-field b{font-size:8pt;color:#555;text-transform:uppercase}.pp-note{background:#f6f3f0;border-left:4px solid #c8102e;padding:10px;margin:12px 0}.pp-section{break-before:page;page-break-before:always}.pp-section.first{break-before:auto;page-break-before:auto}.pp-heading{color:#c8102e;border-bottom:2px solid #c8102e;padding-bottom:5px;margin:18px 0 9px;font-size:14pt}.pp-check{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid #ddd;break-inside:avoid}.pp-box{font-size:15pt;line-height:1}.pp-eval{font-size:8pt;color:#444;margin-top:4px}.pp-scenario{break-inside:avoid;page-break-inside:avoid;padding-top:8px;margin-bottom:16px}.pp-lines{height:140px;background:repeating-linear-gradient(to bottom,transparent 0,transparent 26px,#bbb 27px,#bbb 28px)}.pp-sign{min-height:55px;border-bottom:1px solid #777;margin:10px 0}.pp-small{font-size:8pt;color:#555}.pp-footer{font-size:8pt;border-top:1px solid #999;margin-top:18px;padding-top:5px}</style>`;
@@ -125,11 +137,11 @@ function printPromotionPacket(id){
   printHtmlDirect(title,style+header+evidence+checklist+scenarios+close,'portrait');
 }
 function printPromotionRegister(){
-  const rows=promotionPackets.packets||[];
+  const rows=(promotionPackets.packets||[]).filter(p=>p.status!=='Deleted');
   const body=`<div class="print-header"><div><div class="print-brand">PWADC Security</div><h1>Promotion Packet Register</h1></div><div class="print-meta">${esc(new Date().toLocaleString())}</div></div>${reportTable(['Candidate','Level','Issued','Status','Supervisor recommendation','Manager decision','Packet ID'],rows.map(p=>[esc(p.employee?.name||''),esc(p.tier||''),esc(promotionLocalDate(p.issuedAt)),esc(p.status||''),esc(p.review?.recommendation||''),esc(p.decision?.result||''),esc(p.id||'')]))}`;
   printHtmlDirect('PWADC Promotion Packet Register',body,'landscape');
 }
 function exportPromotionRegister(){
-  downloadCSV('PWADC_Promotion_Packets_'+new Date().toISOString().slice(0,10)+'.csv',[['Candidate','EID','Level','Issued','Status','Supervisor recommendation','Manager decision','Packet ID'],...(promotionPackets.packets||[]).map(p=>[p.employee?.name||'',p.employee?.eid||'',p.tier||'',p.issuedAt||'',p.status||'',p.review?.recommendation||'',p.decision?.result||'',p.id||''])]);
+  downloadCSV('PWADC_Promotion_Packets_'+new Date().toISOString().slice(0,10)+'.csv',[['Candidate','EID','Level','Issued','Status','Supervisor recommendation','Manager decision','Packet ID'],...(promotionPackets.packets||[]).filter(p=>p.status!=='Deleted').map(p=>[p.employee?.name||'',p.employee?.eid||'',p.tier||'',p.issuedAt||'',p.status||'',p.review?.recommendation||'',p.decision?.result||'',p.id||''])]);
 }
 PWADCModuleRegistry.register('promotion-packets');
