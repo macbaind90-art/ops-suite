@@ -1,5 +1,12 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.8.1 - Daily Entry RDO Catch-up
+
+- Filled blank RDO cells in the prior 90 days when Daily Entry opens after missed days.
+- Preserved existing attendance, pre-hire dates, and dates intentionally cleared by a user. Backfill provenance and an audit summary are recorded.
+- Used current Roster RDO (Attendance RDO fallback) because historical schedule snapshots are not stored; today's Live Schedule authority remains in place.
+- Added targeted regression coverage to the Windows build workflow.
+
 ## v4.8.0 - Governed Training & Qualification
 
 - Replaced the roster topic tracker with an independent Training data file and protected operation-specific writes.

@@ -1,6 +1,6 @@
 {
   "schemaVersion": "training-1",
-  "lastWrittenByAppVersion": "4.8.0",
+  "lastWrittenByAppVersion": "4.8.1",
   "requirements": [
     {"id":"neo","title":"New Employee Orientation","category":"NEO","renewalDays":0,"reference":"NEO checklist and current controlled documents","active":true},
     {"id":"gate","title":"Gate independent qualification","category":"Gate","renewalDays":0,"reference":"Current Gate post orders","active":true},

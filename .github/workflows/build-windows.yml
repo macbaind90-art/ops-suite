@@ -22,6 +22,9 @@ jobs:
       - name: Validate modular front end
         run: node tools/validate-frontend.js
 
+      - name: Validate missed RDO backfill
+        run: node tools/validate-attendance-rdo-backfill.js
+
       - name: Validate governed Training replacement
         run: node tools/validate-training-replacement.js
 

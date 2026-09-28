@@ -36,7 +36,7 @@ for(const token of [
   'Employee Comments',
   'This Confirming Notice serves as a Written Warning',
   'This Final Warning documents that your attendance has reached 9 or more active points.',
-  'PWADC Security Operations Suite v4.8.0'
+  'PWADC Security Operations Suite v4.8.1'
 ])need(attendance,token,`Attendance notice contract missing: ${token}`);
 
 if(attendance.includes("{points:3,level:'Verbal Counseling'}"))throw new Error('Retired 3-point corrective threshold is still active.');

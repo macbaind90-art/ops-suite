@@ -1,9 +1,17 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.8.0**
-- Release: **Governed Training & Qualification**
-- Baseline upgraded: **v4.7.0 - Standardized Report Controls**
+- Version: **4.8.1**
+- Release: **Daily Entry RDO Catch-up**
+- Baseline upgraded: **v4.8.0 - Governed Training & Qualification**
+
+## Daily Entry RDO Catch-up Contract
+
+- Prior 90-day blank-only RDO backfill: **PASS**
+- Existing codes and pre-hire dates preserved: **PASS**
+- Explicit manual clear respected and repeat open is idempotent: **PASS**
+- Provenance marker, one audit event, and one batched save: **PASS**
+- .NET 10 Windows compile/publish: **PENDING GitHub Actions run**
 
 ## Governed Training Contract
 

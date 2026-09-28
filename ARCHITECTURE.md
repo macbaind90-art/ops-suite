@@ -1,4 +1,8 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.8.0
+# PWADC Security Operations Suite Architecture - Current Production v4.8.1
+
+## v4.8.1 Historical RDO Catch-up
+
+When Daily Entry opens, `backfillHistoricalRdos()` scans the previous 90 dates and writes `O` only into blank cells matching a current Roster RDO (Attendance RDO fallback). It skips dates before employment, existing codes, and manual-clear tombstones. One audit event and one debounced governed Attendance save cover the batch. Today's Live Schedule synchronization is separate and remains authoritative. Historical schedule snapshots do not exist, so the backfill does not infer off status from today's weekly schedule.
 
 ## v4.8.0 Governed Training
 

@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.8.0 | governed Training */
+/* PWADC Security Operations Suite v4.8.1 | governed Training */
 let training={schemaVersion:'training-1',requirements:[],assignments:[],audit:[]};
 const TRAINING_POSTS=[{key:'Gate',label:'Gate'},{key:'Patrol',label:'Patrol'},{key:'Base/EOC',label:'Base / EOC'}];
 async function loadTraining(){

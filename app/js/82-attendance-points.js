@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.8.0 | Attendance Point System */
+/* PWADC Security Operations Suite v4.8.1 | Attendance Point System */
 'use strict';
 
 const ATT_POINT_SYSTEM_VERSION=1;
@@ -180,7 +180,7 @@ function syncAttendanceOffFromAuthority(date){
     const key=attendanceAutoOffKey(emp.id,date),stored=getCode(emp.id,date),marker=attendance.autoOff[key],status=attendanceScheduleStatus(emp,date);
     attendance.attendance[String(emp.id)]=attendance.attendance[String(emp.id)]||{};
     if(status.off){
-      if(!stored){attendance.attendance[String(emp.id)][date]='O';attendance.autoOff[key]={source:status.source,at:new Date().toISOString()};changed++;added++;}
+      if(!stored&&marker?.source!=='manual-clear'){attendance.attendance[String(emp.id)][date]='O';attendance.autoOff[key]={source:status.source,at:new Date().toISOString()};changed++;added++;}
       else if(stored==='O'&&marker&&marker.source!==status.source){attendance.autoOff[key]={source:status.source,at:new Date().toISOString()};}
     }else if(stored==='O'&&marker){
       delete attendance.attendance[String(emp.id)][date];delete attendance.autoOff[key];changed++;cleared++;
@@ -190,6 +190,35 @@ function syncAttendanceOffFromAuthority(date){
   return {changed,added,cleared};
 }
 function autoFillRdosForDate(date){return syncAttendanceOffFromAuthority(date);}
+function backfillHistoricalRdos(today=attendanceLocalToday()){
+  if(!isIsoDateKey(today)||attendanceMigrationPending()||!hasCapability('attendance.edit')||moduleLoadInfo.attendance?.writeAllowed===false||moduleLoadInfo.attendance?.conflict)return {changed:0,source:'blocked'};
+  attendance.autoOff=attendance.autoOff&&typeof attendance.autoOff==='object'?attendance.autoOff:{};
+  const end=new Date(today+'T12:00:00Z');
+  let changed=0,first='',last='';
+  for(let offset=90;offset>=1;offset--){
+    const day=new Date(end);day.setUTCDate(day.getUTCDate()-offset);
+    const date=day.toISOString().slice(0,10),dow=day.getUTCDay();
+    for(const emp of activeAttendanceEmployees()){
+      const re=attendanceRosterEmployee(emp);
+      const start=emp.startDate||re?.doh||re?.dop||'';
+      if(isIsoDateKey(start)&&date<start)continue;
+      // There is no historical schedule snapshot. Only a named RDO is safe to infer for missed dates.
+      const rdos=re&&Array.isArray(re.rdo)?rosterRdoToAttendanceRdos(re.rdo):(Array.isArray(emp.rdos)?emp.rdos:[]);
+      if(!rdos.includes(dow))continue;
+      const key=attendanceAutoOffKey(emp.id,date);
+      if(getCode(emp.id,date)||attendance.autoOff[key]?.source==='manual-clear')continue;
+      const row=attendance.attendance[String(emp.id)]=attendance.attendance[String(emp.id)]||{};
+      row[date]='O';
+      attendance.autoOff[key]={source:'roster-rdo-history',at:new Date().toISOString()};
+      changed++;if(!first)first=date;last=date;
+    }
+  }
+  if(changed){
+    audit('Historical RDO backfill',`${changed} blank RDO cell(s) filled · ${first} through ${last} · current Roster RDO / Attendance RDO fallback · existing entries preserved`);
+    saveAttendance('historical-rdo-backfill');
+  }
+  return {changed,first,last,source:'roster-rdo-history'};
+}
 function pointSystemAsOf(){return isIsoDateKey(gridEnd)?gridEnd:(latestAttendanceDataDate(attendance)||new Date().toISOString().slice(0,10));}
 function dayDiff(a,b){return Math.round((parseISO(b)-parseISO(a))/86400000);}
 function pointCodeLabel(code){
@@ -566,7 +595,7 @@ function setAttendancePointCode(empId,date,rawCode){
   let code=String(rawCode||'').trim().toUpperCase();
   const noteKey=key+'|'+date;
   if(code==='CO')code=classifyCalloffAtDate(key,date);
-  if(!code){delete attendance.attendance[key][date];delete attendance.notes[noteKey];delete attendance.tardyReclassifications[noteKey];if(attendance.workdayBasis)delete attendance.workdayBasis[noteKey];if(attendance.autoOff)delete attendance.autoOff[noteKey];reclassifyCalloffsForEmployee(key);audit('Attendance code cleared',key+' · '+date);saveAttendance();return true;}
+  if(!code){delete attendance.attendance[key][date];delete attendance.notes[noteKey];delete attendance.tardyReclassifications[noteKey];if(attendance.workdayBasis)delete attendance.workdayBasis[noteKey];attendance.autoOff=attendance.autoOff||{};attendance.autoOff[noteKey]={source:'manual-clear',at:new Date().toISOString()};reclassifyCalloffsForEmployee(key);audit('Attendance code cleared',key+' · '+date);saveAttendance();return true;}
   if(ATT_ISSUE_CODES.has(code)){
     const existing=attendance.notes[noteKey]||'';
     const note=prompt(`${pointCodeLabel(code)} requires a reason/note:`,existing);
@@ -614,11 +643,12 @@ function pointDailyGroups(rows){
 }
 function renderPointDaily(){
   autoFillRdosForDate(entryDate);
+  backfillHistoricalRdos();
   const shifts=['All',...attendanceDailyShiftList()];
   const rows=pointDailyRows();
   const groups=pointDailyGroups(rows);
   const locked=attendanceMigrationPending();
-  return `<div class="card"><div class="card-title">Daily Attendance Entry</div><div class="toolbar"><div><label>Date</label><input type="date" value="${entryDate}" onchange="entryDate=this.value;safeRenderPages()"></div><div><label>Shift</label><select onchange="entryShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${entryShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><button onclick="showBlanks=!showBlanks;safeRenderPages()">${showBlanks?'Show All':'Missing Entries Only'}</button></div><div class="mini-note">Daily Entry order: 3rd Shift → 1st Shift → 2nd Shift → Gate → Reception. Off status comes from the Live Schedule when populated for that weekday, with Roster RDO as fallback.</div>${locked?'<div class="notice warn">Entry is locked until the legacy Attendance migration is committed.</div>':''}</div><div class="people-list">${groups.map(g=>renderPointDailyGroup(g,locked)).join('')}</div>`;
+  return `<div class="card"><div class="card-title">Daily Attendance Entry</div><div class="toolbar"><div><label>Date</label><input type="date" value="${entryDate}" onchange="entryDate=this.value;safeRenderPages()"></div><div><label>Shift</label><select onchange="entryShift=this.value;safeRenderPages()">${shifts.map(s=>`<option ${entryShift===s?'selected':''}>${esc(s)}</option>`).join('')}</select></div><button onclick="showBlanks=!showBlanks;safeRenderPages()">${showBlanks?'Show All':'Missing Entries Only'}</button></div><div class="mini-note">Daily Entry order: 3rd Shift → 1st Shift → 2nd Shift → Gate → Reception. Today's Off status uses the Live Schedule when populated, with Roster RDO as fallback. Blank RDO dates in the prior 90 days are filled from the current Roster RDO; existing entries and manually cleared dates are preserved.</div>${locked?'<div class="notice warn">Entry is locked until the legacy Attendance migration is committed.</div>':''}</div><div class="people-list">${groups.map(g=>renderPointDailyGroup(g,locked)).join('')}</div>`;
 }
 function pointDailyCounts(rows){let entered=0,blank=0,off=0;for(const e of rows||[]){const c=attendanceEffectiveCode(e,entryDate);if(c){entered++;if(c==='O')off++;}else blank++;}return{entered,blank,off,total:(rows||[]).length};}
 function renderPointDailyGroup(g,locked=false){
@@ -670,7 +700,7 @@ function savePointGridEdit(empId,date){
   let requested=String(val('gridEditCode')||'').trim().toUpperCase();
   const newNote=String(val('gridEditNote')||'').trim();
   attendance.attendance=attendance.attendance||{};attendance.attendance[key]=attendance.attendance[key]||{};attendance.notes=attendance.notes||{};
-  if(!requested){delete attendance.attendance[key][date];delete attendance.notes[noteKey];if(attendance.workdayBasis)delete attendance.workdayBasis[noteKey];if(attendance.autoOff)delete attendance.autoOff[noteKey];}
+  if(!requested){delete attendance.attendance[key][date];delete attendance.notes[noteKey];if(attendance.workdayBasis)delete attendance.workdayBasis[noteKey];attendance.autoOff=attendance.autoOff||{};attendance.autoOff[noteKey]={source:'manual-clear',at:new Date().toISOString()};}
   else{
     attendance.attendance[key][date]=requested;
     if(newNote)attendance.notes[noteKey]=newNote;else delete attendance.notes[noteKey];
@@ -1006,6 +1036,6 @@ function printCorrectiveAction(id){
   const trigger=r.triggeringEvent||{};
   const pointRows=(Array.isArray(r.pointRecord)?r.pointRecord:[]).map(x=>`<tr><td>${esc(fmt(x.date))}</td><td>${esc(x.code||'')}</td><td>${esc(x.label||pointCodeLabel(x.code))}</td><td>${esc(x.gross)}</td><td>${esc(x.offset)}</td><td><strong>${esc(x.net)}</strong></td></tr>`).join();
   const body=final?'This Final Warning documents that your attendance has reached 9 or more active points. Immediate and sustained improvement is required. Any future violation may result in further action up to and including termination of your employment.':'This Confirming Notice serves as a Written Warning that your violation of the company’s attendance policy is unacceptable and must not reoccur. Please understand that future instances may result in further action up to and including termination of your employment.';
-  const html=`<style>.attendance-notice{font-size:12px;line-height:1.45}.notice-brand{border-top:9px solid #c8102e;padding-top:10px;display:flex;justify-content:space-between;gap:20px}.notice-company{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}.notice-title{font-size:25px;font-weight:800;color:#c8102e;margin-top:4px}.notice-number{text-align:right;color:#555}.notice-fields{display:grid;grid-template-columns:90px 1fr;gap:0;border:1px solid #888;margin:18px 0}.notice-fields b,.notice-fields span{padding:6px 8px;border-bottom:1px solid #bbb}.notice-fields b:nth-last-child(-n+2),.notice-fields span:nth-last-child(-n+2){border-bottom:0}.notice-section{margin:16px 0}.notice-callout{border-left:5px solid #c8102e;background:#f3f3f3;padding:12px 14px;font-weight:700}.notice-signatures{display:grid;grid-template-columns:1fr 120px;gap:22px;margin-top:42px}.notice-line{border-top:1px solid #111;padding-top:4px}.notice-comments{page-break-before:always}.notice-comments-box{height:6.6in;border:1px solid #777;margin-top:10px}.notice-footer{margin-top:18px;font-size:9px;color:#666;text-align:center}</style><article class="attendance-notice"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Attendance ${esc(r.noticeType||r.level)}</div><div>Security Operations Suite</div></div><div class="notice-number"><strong>${esc(r.noticeNumber||r.id)}</strong><br>Status: ${esc(r.status||'Recorded')}<br>Generated: ${esc(fmt(r.generatedAt||r.at||r.date))}</div></header><div class="notice-fields"><b>Date</b><span>${esc(fmt(r.date))}</span><b>To</b><span>${esc(r.employee)}${r.employeeEid?` · EID #${esc(r.employeeEid)}`:''}${r.employeeTitle?` · ${esc(r.employeeTitle)}`:''}</span><b>From</b><span>${esc(r.managerName||r.generatedBy||r.by||'')}</span><b>Subject</b><span>Attendance</span></div><div class="notice-section">This is to confirm our conversation during which I communicated the following:</div><div class="notice-section">You were assessed <strong>${esc(trigger.points||0)} point(s)</strong> under the company’s Absenteeism and Tardiness Policy for <strong>${esc(trigger.label||pointCodeLabel(trigger.code))}</strong>${trigger.date?` on <strong>${esc(fmt(trigger.date))}</strong>`:''}.</div><div class="notice-callout">You had ${esc(r.pointsAtAction)} active attendance point(s) when this notice was generated.</div><div class="notice-section">${body}</div>${r.note?`<div class="notice-section"><strong>Management note:</strong> ${esc(r.note)}</div>`:''}<h2>Attendance Point Record at Generation</h2><table><thead><tr><th>Date</th><th>Code</th><th>Attendance Event</th><th>Gross</th><th>Credits / Reductions</th><th>Active</th></tr></thead><tbody>${pointRows||'<tr><td colspan="6">No point-detail snapshot was stored for this legacy record.</td></tr>'}</tbody></table><div class="notice-section"><strong>Acknowledgment:</strong> My signature below confirms only that I received this notice. It does not necessarily mean that I agree or disagree with its contents. I may provide comments on the following page.</div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div><div class="notice-line">Manager / Supervisor Signature</div><div class="notice-line">Date</div></div><div class="notice-footer">Confidential personnel record · ${esc(r.noticeNumber||r.id)} · PWADC Security Operations Suite v4.8.0</div><section class="notice-comments"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Employee Comments</div><div>${esc(r.employee)} · ${esc(r.noticeNumber||r.id)}</div></div></header><div class="notice-comments-box"></div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div></div></section></article>`;
+  const html=`<style>.attendance-notice{font-size:12px;line-height:1.45}.notice-brand{border-top:9px solid #c8102e;padding-top:10px;display:flex;justify-content:space-between;gap:20px}.notice-company{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.6px}.notice-title{font-size:25px;font-weight:800;color:#c8102e;margin-top:4px}.notice-number{text-align:right;color:#555}.notice-fields{display:grid;grid-template-columns:90px 1fr;gap:0;border:1px solid #888;margin:18px 0}.notice-fields b,.notice-fields span{padding:6px 8px;border-bottom:1px solid #bbb}.notice-fields b:nth-last-child(-n+2),.notice-fields span:nth-last-child(-n+2){border-bottom:0}.notice-section{margin:16px 0}.notice-callout{border-left:5px solid #c8102e;background:#f3f3f3;padding:12px 14px;font-weight:700}.notice-signatures{display:grid;grid-template-columns:1fr 120px;gap:22px;margin-top:42px}.notice-line{border-top:1px solid #111;padding-top:4px}.notice-comments{page-break-before:always}.notice-comments-box{height:6.6in;border:1px solid #777;margin-top:10px}.notice-footer{margin-top:18px;font-size:9px;color:#666;text-align:center}</style><article class="attendance-notice"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Attendance ${esc(r.noticeType||r.level)}</div><div>Security Operations Suite</div></div><div class="notice-number"><strong>${esc(r.noticeNumber||r.id)}</strong><br>Status: ${esc(r.status||'Recorded')}<br>Generated: ${esc(fmt(r.generatedAt||r.at||r.date))}</div></header><div class="notice-fields"><b>Date</b><span>${esc(fmt(r.date))}</span><b>To</b><span>${esc(r.employee)}${r.employeeEid?` · EID #${esc(r.employeeEid)}`:''}${r.employeeTitle?` · ${esc(r.employeeTitle)}`:''}</span><b>From</b><span>${esc(r.managerName||r.generatedBy||r.by||'')}</span><b>Subject</b><span>Attendance</span></div><div class="notice-section">This is to confirm our conversation during which I communicated the following:</div><div class="notice-section">You were assessed <strong>${esc(trigger.points||0)} point(s)</strong> under the company’s Absenteeism and Tardiness Policy for <strong>${esc(trigger.label||pointCodeLabel(trigger.code))}</strong>${trigger.date?` on <strong>${esc(fmt(trigger.date))}</strong>`:''}.</div><div class="notice-callout">You had ${esc(r.pointsAtAction)} active attendance point(s) when this notice was generated.</div><div class="notice-section">${body}</div>${r.note?`<div class="notice-section"><strong>Management note:</strong> ${esc(r.note)}</div>`:''}<h2>Attendance Point Record at Generation</h2><table><thead><tr><th>Date</th><th>Code</th><th>Attendance Event</th><th>Gross</th><th>Credits / Reductions</th><th>Active</th></tr></thead><tbody>${pointRows||'<tr><td colspan="6">No point-detail snapshot was stored for this legacy record.</td></tr>'}</tbody></table><div class="notice-section"><strong>Acknowledgment:</strong> My signature below confirms only that I received this notice. It does not necessarily mean that I agree or disagree with its contents. I may provide comments on the following page.</div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div><div class="notice-line">Manager / Supervisor Signature</div><div class="notice-line">Date</div></div><div class="notice-footer">Confidential personnel record · ${esc(r.noticeNumber||r.id)} · PWADC Security Operations Suite v4.8.1</div><section class="notice-comments"><header class="notice-brand"><div><div class="notice-company">Piggly Wiggly Alabama Distributing Company</div><div class="notice-title">Employee Comments</div><div>${esc(r.employee)} · ${esc(r.noticeNumber||r.id)}</div></div></header><div class="notice-comments-box"></div><div class="notice-signatures"><div class="notice-line">Employee Signature</div><div class="notice-line">Date</div></div></section></article>`;
   printHtmlDirect('Attendance '+(r.noticeType||r.level)+' - '+r.employee,html,'portrait');
 }

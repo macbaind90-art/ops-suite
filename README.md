@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.8.0
+# PWADC Security Operations Suite v4.8.1
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,13 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.8.0` = the current feature release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.8.1` = the current minor release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.8.1 - Daily Entry RDO Catch-up
+
+- Opening Daily Entry fills blank RDO dates within the prior 90 days, including days missed while the app was closed. It uses the current Roster RDO assignment, with the Attendance RDO copy as fallback because the suite does not store historical schedule snapshots.
+- Existing attendance codes, dates before a person's start date, today's live-schedule handling, and explicit manual clears remain unchanged. The backfill records provenance, adds one audit summary, and saves once through the governed Attendance path.
+- Added a focused missed-RDO validator and Windows workflow gate. The .NET Windows build remains the authoritative compile check.
 
 ## v4.8.0 - Governed Training & Qualification
 
