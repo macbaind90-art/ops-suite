@@ -1,5 +1,12 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.0.1 - Comprehensive Promotion Approval Packet
+
+- Expanded the T1→T2, T2→T3, and T3→T4 checklists into grouped eligibility, post, evidence, leadership, and final review standards.
+- Six random scenarios are answered verbally and graded by the evaluator on the paper packet, with key responses and gaps documented.
+- The Security Manager's final approval confirms signed qualifications, checklist evidence, and all six verbal grades. T4 approval also requires a dated live Manager interview rated Meets standard and a documented assessment.
+- Preview opens before printing. Existing live templates receive the expanded checklist through a revision-checked upgrade that preserves edited scenario banks and issued packets.
+
 ## v5.0.0 - Promotion Packets
 
 - Training opens on an employee register. Each employee's assignments show current qualifications and items needing updates. Security Manager/Admin can sign off 2–50 selected assignments for one employee in one atomic save, with per-item evidence and a specific basis for each manager exception.
