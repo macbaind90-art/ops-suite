@@ -2,6 +2,8 @@
 
 ## v5.0.0 - Promotion Packets
 
+- Training opens on an employee register. Each employee's assignments show current qualifications and items needing updates. Security Manager/Admin can sign off 2–50 selected assignments for one employee in one atomic save, with per-item evidence and a specific basis for each manager exception.
+- Security Manager/Admin can delete a promotion packet from active views and restore it from the deleted register. The action requires a reason and retains packet history and an audit record.
 - Added a separate Promotion Packets module with frozen employee and Training snapshots, printed checklist, six random written scenarios, supervisor recommendation, manager decision, and a packet register.
 - Added Manager controls to revise and archive bank questions for future issues while preserving earlier packet versions. Added scenario banks of 10 for T1→T2, 18 for T2→T3, and 24 for T3→T4; T3 to T4 prompts prioritize Lead leadership, incident support, training judgment, and the limits on Acting Supervisor authority. The banks and checklists reflect the current Career Framework v2.2 and post manuals.
 - Added controlled persistence, role checks, Data Health registration, employee profile links, backup/recovery coverage, and build validation. Reprints preserve the original selection.
