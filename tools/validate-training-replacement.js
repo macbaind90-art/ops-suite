@@ -39,6 +39,15 @@ run("training.assignments.push({id:'manager',employeeId:'1',requirementId:'neo',
 if(run("trainingAssignmentStatus(training.assignments[1],trainingRequirement('neo'))")!=='Qualified')throw Error('Manager signoff without an observation must qualify the assignment');
 run("training.assignments[1].events.push({id:'void-approval',type:'void',at:'2026-09-28T16:00:00Z',reference:'approval',notes:'Correction reason'})");
 if(run("trainingAssignmentStatus(training.assignments[1],trainingRequirement('neo'))")!=='Assigned')throw Error('Corrected manager approval must no longer qualify');
+const employeesHtml=run('renderTrainingPage()');
+if(!employeesHtml.includes('Employees · 1')||!employeesHtml.includes('Open training'))throw Error('Training must open on an employee list');
+context.canAdmin=()=>true;run("window._trainingEmployeeFocus='1'");
+const detailHtml=run('renderTrainingPage()');
+if(!detailHtml.includes('Alex Sample · Training')||!detailHtml.includes('Sign off multiple'))throw Error('Employee Training detail or manager bulk control missing');
+run("training.assignments.push({id:'b',employeeId:'1',requirementId:'patrol',assignedAt:'2026-09-28T00:00:00Z',dueDate:'',status:'active',events:[]})");
+context.canAdmin=()=>true;run("openBulkTrainingSignoff('1')");
+if(!context.modalHtml.includes('trBulkItem')||!context.modalHtml.includes('trBulkOverride')||!context.modalHtml.includes('trBulkNotes_b'))throw Error('Bulk modal must select items and capture individual bases');
+for(const text of ['"bulkSignoff" => "training.signoff"','items.GetArrayLength() < 2','items.GetArrayLength() > 50','selected.Add(assignmentId)','SaveModuleData("training"','["batchId"] = batchId','string.Equals(actor.Role, "Admin"','A candidate cannot sign off their own training.'])if(!host.includes(text))throw Error('Manager bulk signoff guard missing: '+text);
 if(source.includes('DockCrosswalk')||JSON.stringify(seed).includes('Crosswalk'))throw Error('Retired Dock/Crosswalk seeded into new Training');
 for(const text of ['suite:trainingCommand','training-data.json','Training changes must use protected training commands.']){
  const combined=fs.readFileSync('MainForm.Bridge.cs','utf8')+registry+authorization;if(!combined.includes(text))throw Error('Host boundary missing: '+text);
