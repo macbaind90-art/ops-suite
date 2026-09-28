@@ -451,7 +451,7 @@
     },
     {
       "tier": "T3-T4",
-      "revision": 4,
+      "revision": 5,
       "active": true,
       "checklist": [
         {
@@ -655,6 +655,70 @@
           "category": "leadership",
           "focus": "injury",
           "active": true
+        },
+        {
+          "id": "C-01",
+          "title": "Your Friend Is Wrong",
+          "prompt": "An officer you are personally close with is working Gate. During review of a situation, you determine the officer allowed someone through without completing the required verification process. The officer tells you privately, “Nothing happened. Don’t make this into a thing. Just tell the Supervisor everything checked out.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "access"
+        },
+        {
+          "id": "C-02",
+          "title": "Between You and Me",
+          "prompt": "A Supervisor tells you an officer is being reviewed over a personnel matter because you may need to assist with coverage. Later another officer asks, “What’s going on with him? Everybody says he’s about to get written up.” What do you say?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-03",
+          "title": "Public Challenge",
+          "prompt": "You give an authorized operational direction. The officer responds in front of the team, “That’s stupid. You don’t know what you’re doing.” What happens next?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-04",
+          "title": "The Candidate Gets Corrected",
+          "prompt": "You make an operational decision. The Supervisor says, “That’s not how we’re handling this. Reverse it and do it this way.” You believe your original decision was better. What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-05",
+          "title": "Officer Complains About Another Officer",
+          "prompt": "An officer approaches privately and says, “Don’t tell anybody I said this, but Officer Smith has been sleeping on patrol.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-06",
+          "title": "Break Rotation and Favoritism",
+          "prompt": "Two officers want the same break period. One is your close friend. The other has been covering a difficult post longer and operationally should probably receive relief first. Your friend says, “Come on. You’re about to be Lead. Take care of me.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-07",
+          "title": "Bad-Mouthing Leadership",
+          "prompt": "Several officers start criticizing the Supervisor during downtime. One turns to you and says, “You know we’re right. He doesn’t know how to run this shift.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-08",
+          "title": "Employee Tries to Bait Security",
+          "prompt": "An employee who was denied access to an area becomes verbally insulting. No threat is made. The employee says, “You rent-a-cops are all useless. You’re only acting tough because of that uniform.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
         },
         {
           "id": "E-01",
