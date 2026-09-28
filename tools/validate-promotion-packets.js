@@ -9,7 +9,9 @@ for(const template of seed.templates){
   if(template.scenarios.length!==expected[template.tier])throw new Error('Unexpected bank size for '+template.tier);
   if(new Set(template.scenarios.map(x=>x.id)).size!==template.scenarios.length)throw new Error('Duplicate scenario IDs');
   if(template.scenarios.some(x=>!x.prompt||x.prompt.length<45))throw new Error('Scenario needs a substantive question');
-  if(template.checklist.length<8)throw new Error('Promotion checklist is incomplete');
+  if(template.checklist.length<({'T1-T2':18,'T2-T3':23,'T3-T4':24}[template.tier]))throw new Error('Promotion checklist is incomplete');
+  if(template.checklist.some(x=>!x.section||!x.text||x.text.length<55))throw new Error('Checklist needs grouped, substantive standards');
+  if(new Set(template.checklist.map(x=>x.id)).size!==template.checklist.length)throw new Error('Duplicate checklist IDs');
 }
 const byTier=Object.fromEntries(seed.templates.map(t=>[t.tier,t]));
 const content=t=>[...byTier[t].checklist.map(x=>x.text),...byTier[t].scenarios.map(x=>x.prompt)].join(' ');
@@ -38,5 +40,21 @@ need(auth,'"promotion-packets" => throw','Generic writes must not bypass the pac
 need(registry,'Id = "promotion-packets"');
 need(bootstrap,"await loadPromotionPackets()");
 need(read('app/index.html'),'js/74-promotion-packets.js');
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.0</Version>');
+for(const term of ['UpgradePromotionPacketChecklists','current.Count != oldCount','["checklist"] = current.DeepClone()','template["checklist"] = replacement.DeepClone()','SaveModuleData("promotion-packets", data.ToJsonString(JsonOptions), loaded.Revision)'])need(host,term,'Live checklist upgrade must preserve prior revisions and issued packets: '+term);
+need(read('MainForm.cs'),'UpgradePromotionPacketChecklists();');
+for(const term of ['"Approve promotion"','recordsVerified','checklistReviewed','scenariosReviewed','interviewDate','interviewOutcome != "Meets standard"','interviewNotes.Length < 20'])need(host,term,'Manager approval gate missing: '+term);
+for(const term of ['openReportWindow(style+header+evidence+checklist+scenarios+supervisor+interview+decision,false','Six verbal scenarios','Evaluator grade:','Security Manager interview'])need(browser,term,'Verbal evaluation or preview missing: '+term);
+const ctx={console,Date,PWADCModuleRegistry:{register(){}},esc:x=>String(x??''),openReportWindow:(html,auto,orientation)=>{ctx.preview={html,auto,orientation}},toast:()=>{}};
+vm.createContext(ctx);vm.runInContext(browser,ctx);
+for(const tier of Object.keys(expected)){
+  ctx.sample={id:'test',tier,status:'Issued',employee:{name:'Candidate',eid:'1'},issuedAt:'2026-09-28',templateRevision:3,
+    checklist:byTier[tier].checklist,scenarios:byTier[tier].scenarios.slice(0,6),trainingEvidence:[]};
+  vm.runInContext('promotionPackets.packets=[sample];printPromotionPacket("test")',ctx);
+  if(!ctx.preview||ctx.preview.auto!==false||ctx.preview.orientation!=='portrait')throw Error('Packet must open in preview before print');
+  if((ctx.preview.html.match(/Evaluator grade:/g)||[]).length!==6)throw Error('Packet needs six evaluator grades');
+  if(ctx.preview.html.includes('Candidate written scenarios'))throw Error('Verbal answers should not be a written candidate form');
+  if(!ctx.preview.html.includes('Security Manager final decision'))throw Error('Manager approval page missing');
+  if(tier==='T3-T4'&&!ctx.preview.html.includes('Security Manager interview · required for T4'))throw Error('T4 interview page missing');
+}
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.1</Version>');
 console.log('Promotion Packets validation PASS');
