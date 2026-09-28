@@ -57,7 +57,7 @@ for(const tier of Object.keys(expected)){
   if(!ctx.preview||ctx.preview.auto!==false||ctx.preview.orientation!=='portrait')throw Error('Packet must open in preview before print');
   if((ctx.preview.html.match(/Evaluator grade:/g)||[]).length!==6)throw Error('Packet needs six evaluator grades');
   if(ctx.preview.html.includes('Candidate written scenarios'))throw Error('Verbal answers should not be a written candidate form');
-  if(!ctx.preview.html.includes('Security Manager final decision'))throw Error('Manager approval page missing');
+  if(!ctx.preview.html.includes(tier==='T3-T4'?'Security Manager final determination':'Security Manager final decision'))throw Error('Manager approval page missing');
   if(tier==='T3-T4'){
     if(!ctx.preview.html.includes('Security Manager final candidate interview'))throw Error('T4 Manager interview page missing');
     if((ctx.preview.html.match(/Gate [1-8] ·/g)||[]).length<8)throw Error('All eight evidence gates must be printable');
