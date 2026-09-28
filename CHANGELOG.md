@@ -3,7 +3,7 @@
 ## v5.0.0 - Promotion Packets
 
 - Added a separate Promotion Packets module with frozen employee and Training snapshots, printed checklist, six random written scenarios, supervisor recommendation, manager decision, and a packet register.
-- Added scenario banks of 10 for T1→T2, 18 for T2→T3, and 24 for T3→T4; T4 prompts prioritize leadership and incident command.
+- Added Manager controls to revise and archive bank questions for future issues while preserving earlier packet versions. Added scenario banks of 10 for T1→T2, 18 for T2→T3, and 24 for T3→T4; T4 prompts prioritize leadership and incident command.
 - Added controlled persistence, role checks, Data Health registration, employee profile links, backup/recovery coverage, and build validation. Reprints preserve the original selection.
 - Promotion recommendations remain separate from changes to rank, pay, and HR approvals.
 

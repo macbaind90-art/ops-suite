@@ -15,7 +15,7 @@ async function loadPromotionPackets(){
 }
 function promotionPacket(id){return (promotionPackets.packets||[]).find(p=>p.id===id)}
 function promotionEmployee(id){return (roster.employees||[]).find(e=>String(e.id)===String(id))}
-function promotionPacketCan(action){return hasCapability(action==='issue'?'promotion.manage':action==='review'?'promotion.review':'promotion.decide')}
+function promotionPacketCan(action){return hasCapability(action==='issue'||action==='scenario'?'promotion.manage':action==='review'?'promotion.review':'promotion.decide')}
 async function promotionCommand(action,fields){
   if(!promotionPacketCan(action)){toast('Promotion packet permission is required.');return null}
   const info=moduleLoadInfo['promotion-packets']||{};
@@ -43,7 +43,7 @@ function renderPromotionPackets(){
   const rows=all.filter(p=>(!focus||String(p.employeeId)===focus)&&(!q||((p.employee?.name||'')+' '+(p.employee?.eid||'')+' '+p.tier+' '+p.status).toLowerCase().includes(q)));
   const pending=all.filter(p=>p.status==='Reviewed').length;
   const canIssue=promotionPacketCan('issue');
-  return `<div class="page-head"><div><div class="page-title">Promotion Packets</div><div class="page-sub">Issue a controlled print packet, collect the candidate's six written answers, and record the supervisor recommendation and manager decision.</div></div><div class="top-actions">${canIssue?'<button class="primary" onclick="openPromotionIssueModal()">+ Issue Packet</button>':''}<button onclick="printPromotionRegister()">Print Register</button><button onclick="exportPromotionRegister()">Export CSV</button></div></div>
+  return `<div class="page-head"><div><div class="page-title">Promotion Packets</div><div class="page-sub">Issue a controlled print packet, collect the candidate's six written answers, and record the supervisor recommendation and manager decision.</div></div><div class="top-actions">${canIssue?'<button class="primary" onclick="openPromotionIssueModal()">+ Issue Packet</button><button onclick="openPromotionBank()">Manage Scenario Banks</button>':''}<button onclick="printPromotionRegister()">Print Register</button><button onclick="exportPromotionRegister()">Export CSV</button></div></div>
     ${renderPeopleWorkflowNav('promotion-packets')}
     <div class="notice">Issue creates one permanent packet with six randomly selected scenarios from its level's bank. Reprinting uses those same questions. A packet recommendation does not change rank, pay, or HR approval.</div>
     <div class="grid cols-3"><div class="kpi"><div class="num">${all.length}</div><div class="lbl">Issued Packets</div></div><div class="kpi"><div class="num">${all.filter(p=>p.status==='Issued').length}</div><div class="lbl">With Supervisor</div></div><div class="kpi"><div class="num">${pending}</div><div class="lbl">Awaiting Manager</div></div></div>
@@ -55,10 +55,35 @@ function renderEmployeeProfilePromotion(emp){
   const list=(promotionPackets.packets||[]).filter(p=>String(p.employeeId)===String(emp.id)).sort((a,b)=>String(b.issuedAt).localeCompare(String(a.issuedAt)));
   return `<div class="card"><div class="card-title">Promotion Packets</div><div class="td-actions">${promotionPacketCan('issue')?`<button class="sm primary" onclick="openPromotionIssueModal('${esc(emp.id)}')">Issue Packet</button>`:''}<button class="sm" onclick="openPromotionForEmployee('${esc(emp.id)}')">Open Promotion Packets</button></div>${list.length?`<div class="profile-list">${list.map(p=>`<div class="profile-list-row"><strong>${esc(p.tier?.replace('-', ' → ')||'')} · ${esc(p.status||'')}</strong><br><span class="mini-note">${esc((p.issuedAt||'').slice(0,10))} · ID ${esc(p.id)}</span> <button class="sm" onclick="printPromotionPacket('${esc(p.id)}')">Print</button></div>`).join('')}</div>`:'<p class="mini-note">No promotion packets issued.</p>'}</div>`;
 }
+function openPromotionBank(tier='T1-T2'){
+  if(!promotionPacketCan('scenario'))return;
+  const t=(promotionPackets.templates||[]).find(x=>x.tier===tier);if(!t)return;
+  const bank=t.scenarios||[];
+  showModal(`<div class="modal-head"><div><div class="modal-title">Scenario Banks</div><div class="mini-note">Changes create a new template revision. Issued packets keep their original questions.</div></div><button onclick="closeModal()">Close</button></div>
+    <div class="form-grid"><div><label>Promotion level</label><select onchange="openPromotionBank(this.value)">${(promotionPackets.templates||[]).map(x=>`<option value="${esc(x.tier)}" ${x.tier===tier?'selected':''}>${esc(x.tier.replace('-', ' → '))}</option>`).join('')}</select></div><div><label>Active scenarios / revision</label><p>${bank.filter(x=>x.active!==false).length} active · version ${esc(t.revision||1)}</p></div></div>
+    <div class="notice">Six distinct active questions are selected at random for each new packet. Keep at least six active scenarios.</div>
+    <div class="settings-table-wrap"><table><thead><tr><th>Scenario</th><th>Status</th><th>Actions</th></tr></thead><tbody>${bank.map(s=>`<tr><td>${esc(s.prompt)}</td><td>${s.active===false?'Archived':'Active'}</td><td><button class="sm" onclick="openPromotionScenarioEdit('${esc(tier)}','${esc(s.id)}')">Edit</button> <button class="sm" onclick="togglePromotionScenario('${esc(tier)}','${esc(s.id)}',${s.active===false})">${s.active===false?'Restore':'Archive'}</button></td></tr>`).join('')}</tbody></table></div>
+    <div class="modal-actions"><button onclick="closeModal()">Close</button><button class="primary" onclick="openPromotionScenarioEdit('${esc(tier)}')">+ Add Scenario</button></div>`);
+}
+function openPromotionScenarioEdit(tier,id=''){
+  if(!promotionPacketCan('scenario'))return;
+  const t=(promotionPackets.templates||[]).find(x=>x.tier===tier),s=t?.scenarios?.find(x=>x.id===id);
+  showModal(`<div class="modal-head"><div class="modal-title">${id?'Edit':'Add'} ${esc(tier.replace('-', ' → '))} Scenario</div><button onclick="openPromotionBank('${esc(tier)}')">Back</button></div><div class="notice">Use current handbook language. Changes apply to future packets; existing issued packets retain their wording.</div><label>Candidate question</label><textarea id="promoScenarioPrompt" rows="7">${esc(s?.prompt||'')}</textarea><div class="modal-actions"><button onclick="openPromotionBank('${esc(tier)}')">Cancel</button><button class="primary" onclick="savePromotionScenario('${esc(tier)}','${esc(id)}')">Save Scenario</button></div>`);
+}
+async function savePromotionScenario(tier,id){
+  const prompt=val('promoScenarioPrompt')?.trim();
+  if(!prompt||prompt.length<45){toast('Write a complete scenario question of at least 45 characters.');return}
+  await promotionCommand('scenario',{tier,scenarioId:id,prompt,active:true});
+}
+async function togglePromotionScenario(tier,id,active){
+  const t=(promotionPackets.templates||[]).find(x=>x.tier===tier),s=t?.scenarios?.find(x=>x.id===id);
+  if(!s||!confirm((active?'Restore':'Archive')+' this scenario for future packets?'))return;
+  await promotionCommand('scenario',{tier,scenarioId:id,prompt:s.prompt,active});
+}
 function openPromotionIssueModal(employeeId=''){
   if(!promotionPacketCan('issue'))return;
   const employees=(roster.employees||[]).filter(e=>!isArchivedEmployee(e)).sort((a,b)=>fullName(a).localeCompare(fullName(b)));
-  showModal(`<div class="modal-head"><div><div class="modal-title">Issue Promotion Packet</div><div class="mini-note">The selected six questions are frozen on issue and printed with the checklist.</div></div><button onclick="closeModal()">Close</button></div><div class="form-grid"><div><label>Candidate</label><select id="promoEmployee"><option value="">Choose employee</option>${employees.map(e=>`<option value="${esc(e.id)}" ${String(e.id)===String(employeeId)?'selected':''}>${esc(fullName(e))} · ${esc(e.eid||'')}</option>`).join('')}</select></div><div><label>Promotion Level</label><select id="promoTier">${(promotionPackets.templates||[]).filter(t=>t.active!==false).map(t=>`<option value="${esc(t.tier)}">${esc(t.tier.replace('-', ' → '))} · ${t.scenarios?.length||0} scenarios in bank</option>`).join('')}</select></div></div><div class="notice">Check the candidate's current qualifications before issuance. The packet captures a snapshot of Training assignments; missing signoffs do not become qualifications.</div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="issuePromotionPacket()">Issue and Print</button></div>`);
+  showModal(`<div class="modal-head"><div><div class="modal-title">Issue Promotion Packet</div><div class="mini-note">The selected six questions are frozen on issue and printed with the checklist.</div></div><button onclick="closeModal()">Close</button></div><div class="form-grid"><div><label>Candidate</label><select id="promoEmployee"><option value="">Choose employee</option>${employees.map(e=>`<option value="${esc(e.id)}" ${String(e.id)===String(employeeId)?'selected':''}>${esc(fullName(e))} · ${esc(e.eid||'')}</option>`).join('')}</select></div><div><label>Promotion Level</label><select id="promoTier">${(promotionPackets.templates||[]).filter(t=>t.active!==false).map(t=>`<option value="${esc(t.tier)}">${esc(t.tier.replace('-', ' → '))} · ${(t.scenarios||[]).filter(s=>s.active!==false).length} active scenarios</option>`).join('')}</select></div></div><div class="notice">Check the candidate's current qualifications before issuance. The packet captures a snapshot of Training assignments; missing signoffs do not become qualifications.</div><div class="modal-actions"><button onclick="closeModal()">Cancel</button><button class="primary" onclick="issuePromotionPacket()">Issue and Print</button></div>`);
 }
 async function issuePromotionPacket(){
   const employeeId=val('promoEmployee'),tier=val('promoTier');

@@ -29,7 +29,7 @@ namespace PWADC.SecurityOperationsSuite
             string action = PacketText(command, "action", 30, true);
             string capability = action switch
             {
-                "issue" => "promotion.manage",
+                "issue" or "scenario" => "promotion.manage",
                 "review" => "promotion.review",
                 "decide" => "promotion.decide",
                 _ => throw new InvalidDataException("Unknown promotion packet action.")
@@ -46,7 +46,41 @@ namespace PWADC.SecurityOperationsSuite
             JsonArray audit = data["audit"] as JsonArray ?? throw new InvalidDataException("Packet audit is missing.");
             string now = DateTime.UtcNow.ToString("o");
             string subject = "";
-            if (action == "issue")
+            if (action == "scenario")
+            {
+                string tier = PacketText(command, "tier", 20, true);
+                JsonObject template = templates.OfType<JsonObject>().FirstOrDefault(x => x["tier"]?.ToString() == tier && x["active"]?.ToString() == "true")
+                    ?? throw new InvalidDataException("Active packet template is unavailable.");
+                JsonArray bank = template["scenarios"] as JsonArray ?? throw new InvalidDataException("Scenario bank is missing.");
+                string scenarioId = PacketText(command, "scenarioId", 80);
+                string prompt = PacketText(command, "prompt", 1200, true);
+                bool active = !command.TryGetProperty("active", out JsonElement activeValue) || activeValue.ValueKind != JsonValueKind.False;
+                JsonObject? scenario = scenarioId.Length > 0
+                    ? bank.OfType<JsonObject>().FirstOrDefault(x => x["id"]?.ToString() == scenarioId)
+                    : null;
+                if (scenarioId.Length > 0 && scenario == null) throw new InvalidDataException("Scenario was not found.");
+                int currentRevision = int.TryParse(template["revision"]?.ToString(), out int parsedRevision) ? parsedRevision : 1;
+                JsonArray history = template["previousVersions"] as JsonArray ?? new JsonArray();
+                if (template["previousVersions"] == null) template["previousVersions"] = history;
+                history.Add(new JsonObject { ["revision"] = currentRevision, ["scenarios"] = bank.DeepClone(),
+                    ["checklist"] = template["checklist"]?.DeepClone(), ["replacedAt"] = now, ["replacedBy"] = actor.Id });
+                if (scenario == null)
+                {
+                    if (!active) throw new InvalidDataException("A new scenario must start active.");
+                    scenarioId = Guid.NewGuid().ToString("N");
+                    bank.Add(new JsonObject { ["id"] = scenarioId, ["prompt"] = prompt, ["active"] = true });
+                }
+                else
+                {
+                    scenario["prompt"] = prompt;
+                    scenario["active"] = active;
+                }
+                if (bank.OfType<JsonObject>().Count(x => x["active"]?.ToString() != "false") < 6)
+                    throw new InvalidDataException("A bank must retain at least six active scenarios.");
+                template["revision"] = currentRevision + 1;
+                subject = scenarioId;
+            }
+            else if (action == "issue")
             {
                 string employeeId = PacketText(command, "employeeId", 80, true);
                 string tier = PacketText(command, "tier", 20, true);
@@ -58,15 +92,17 @@ namespace PWADC.SecurityOperationsSuite
                 JsonObject template = templates.OfType<JsonObject>().FirstOrDefault(x => x["tier"]?.ToString() == tier && x["active"]?.ToString() == "true")
                     ?? throw new InvalidDataException("Active packet template is unavailable.");
                 JsonArray bank = template["scenarios"] as JsonArray ?? throw new InvalidDataException("Scenario bank is missing.");
-                if (bank.Count < 6 || bank.OfType<JsonObject>().Select(x => x["id"]?.ToString()).Distinct().Count() != bank.Count)
-                    throw new InvalidDataException("The scenario bank needs six distinct entries.");
+                JsonNode?[] activeBank = bank.OfType<JsonObject>().Where(x => x["active"]?.ToString() != "false")
+                    .Select(x => (JsonNode?)x).ToArray();
+                if (activeBank.Length < 6 || bank.OfType<JsonObject>().Select(x => x["id"]?.ToString()).Distinct().Count() != bank.Count)
+                    throw new InvalidDataException("The scenario bank needs six active, distinct entries.");
                 JsonArray checklist = template["checklist"] as JsonArray ?? throw new InvalidDataException("Checklist is missing.");
                 JsonObject roster = JsonNode.Parse(LoadModuleDataWithSource("roster").Data) as JsonObject ?? throw new InvalidDataException("Roster is unavailable.");
                 JsonObject employee = (roster["employees"] as JsonArray)?.OfType<JsonObject>().FirstOrDefault(x => x["id"]?.ToString() == employeeId)
                     ?? throw new InvalidDataException("Employee was not found in the roster.");
                 if (employee["archived"]?.ToString() == "true") throw new InvalidDataException("An archived employee cannot receive a packet.");
                 JsonArray chosen = new JsonArray();
-                JsonNode?[] available = bank.Select(x => x?.DeepClone()).ToArray();
+                JsonNode?[] available = activeBank.Select(x => x?.DeepClone()).ToArray();
                 for (int i = 0; i < 6; i++)
                 {
                     int pick = RandomNumberGenerator.GetInt32(i, available.Length);
@@ -144,7 +180,8 @@ namespace PWADC.SecurityOperationsSuite
                         ["result"] = decision, ["notes"] = notes, ["paperReference"] = reference });
                 }
             }
-            audit.Add(new JsonObject { ["at"] = now, ["action"] = action, ["actorId"] = actor.Id, ["packetId"] = subject });
+            audit.Add(new JsonObject { ["at"] = now, ["action"] = action, ["actorId"] = actor.Id, ["packetId"] = action == "scenario" ? "" : subject,
+                ["scenarioId"] = action == "scenario" ? subject : "" });
             data["schemaVersion"] = "promotion-packets-1";
             data["lastWrittenByAppVersion"] = AppVersion;
             data["lastSaved"] = now;
