@@ -11,6 +11,13 @@ for(const template of seed.templates){
   if(template.scenarios.some(x=>!x.prompt||x.prompt.length<45))throw new Error('Scenario needs a substantive question');
   if(template.checklist.length<8)throw new Error('Promotion checklist is incomplete');
 }
+const byTier=Object.fromEntries(seed.templates.map(t=>[t.tier,t]));
+const content=t=>[...byTier[t].checklist.map(x=>x.text),...byTier[t].scenarios.map(x=>x.prompt)].join(' ');
+for(const [tier,terms] of Object.entries({
+  'T1-T2':['OJT-001','PMC-T1-Core','verbally hold','independently grant or deny'],
+  'T2-T3':['PMC-Officer v2.0','98%','Dispatch','Base Station'],
+  'T3-T4':['Acting Supervisor','explicit formal','mentoring','Security Manager']
+}))for(const term of terms)need(content(tier),term,tier+' missing current policy: '+term);
 const host=read('MainForm.PromotionPackets.cs'),auth=read('MainForm.Authorization.cs'),registry=read('MainForm.GovernedModules.cs');
 const browser=read('app/js/74-promotion-packets.js'),bootstrap=read('app/js/10-bootstrap.js');
 new vm.Script(browser,{filename:'app/js/74-promotion-packets.js'});
