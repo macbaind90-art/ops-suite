@@ -72,6 +72,27 @@ namespace PWADC.SecurityOperationsSuite
                     changed++;
                 }
             }
+            // Upgrade only stock lower-tier scenario banks. Manager-edited banks remain untouched.
+            foreach (string tier in new[] { "T1-T2", "T2-T3" })
+            {
+                JsonObject? template = templates.OfType<JsonObject>().FirstOrDefault(x => x["tier"]?.ToString() == tier);
+                JsonObject? packaged = seedTemplates.OfType<JsonObject>().FirstOrDefault(x => x["tier"]?.ToString() == tier);
+                if (template == null || packaged == null) continue;
+                JsonArray? bank = template["scenarios"] as JsonArray;
+                int revision = int.TryParse(template["revision"]?.ToString(), out int parsedRevision) ? parsedRevision : 1;
+                int stockCount = tier == "T1-T2" ? 10 : 18;
+                if (bank?.Count != stockCount || revision > 3 ||
+                    !bank.OfType<JsonObject>().Select((x, i) =>
+                        x["id"]?.ToString() == tier + "-S" + (i + 1).ToString("D2")).All(x => x)) continue;
+                JsonArray versions = template["previousVersions"] as JsonArray ?? new JsonArray();
+                if (template["previousVersions"] == null) template["previousVersions"] = versions;
+                versions.Add(new JsonObject { ["revision"] = revision, ["scenarios"] = bank.DeepClone(),
+                    ["checklist"] = template["checklist"]?.DeepClone(), ["replacedAt"] = now,
+                    ["replacedBy"] = "system-upgrade-v5.0.3" });
+                template["scenarios"] = packaged["scenarios"]?.DeepClone();
+                template["revision"] = Math.Max(revision + 1, 4);
+                changed++;
+            }
             if (changed == 0) return;
             audit.Add(new JsonObject { ["at"] = now, ["action"] = "upgrade-checklists",
                 ["actorId"] = "system-upgrade-v5.0.1", ["templateCount"] = changed });
@@ -124,12 +145,17 @@ namespace PWADC.SecurityOperationsSuite
                 JsonArray bank = template["scenarios"] as JsonArray ?? throw new InvalidDataException("Scenario bank is missing.");
                 string scenarioId = PacketText(command, "scenarioId", 80);
                 string prompt = PacketText(command, "prompt", 1200, true);
-                string category = tier == "T3-T4" ? PacketText(command, "category", 30, true) : "";
+                string title = PacketText(command, "title", 120);
+                string category = PacketText(command, "category", 30, true);
                 string focus = tier == "T3-T4" ? PacketText(command, "focus", 30, true) : "";
+                string inject = tier != "T3-T4" ? PacketText(command, "inject", 900) : "";
                 if (tier == "T3-T4" && (category != "leadership" && category != "emergency" ||
                     (category == "leadership" && focus != "access" && focus != "personnel" && focus != "safety" && focus != "priorities" && focus != "hazard" && focus != "fire" && focus != "evacuation" && focus != "injury") ||
                     (category == "emergency" && focus != "medicalFire" && focus != "hazardEvac" && focus != "compound")))
                     throw new InvalidDataException("Select a valid leadership or emergency scenario focus.");
+                if ((tier == "T1-T2" && category != "gate" && category != "patrol" && category != "base" && category != "professional") ||
+                    (tier == "T2-T3" && category != "gate" && category != "patrol" && category != "base" && category != "incident"))
+                    throw new InvalidDataException("Select an eligible scenario category for this promotion level.");
                 bool active = !command.TryGetProperty("active", out JsonElement activeValue) || activeValue.ValueKind != JsonValueKind.False;
                 JsonObject? scenario = scenarioId.Length > 0
                     ? bank.OfType<JsonObject>().FirstOrDefault(x => x["id"]?.ToString() == scenarioId)
@@ -144,16 +170,30 @@ namespace PWADC.SecurityOperationsSuite
                 {
                     if (!active) throw new InvalidDataException("A new scenario must start active.");
                     scenarioId = Guid.NewGuid().ToString("N");
-                    bank.Add(new JsonObject { ["id"] = scenarioId, ["prompt"] = prompt, ["category"] = category, ["focus"] = focus, ["active"] = true });
+                    bank.Add(new JsonObject { ["id"] = scenarioId, ["prompt"] = prompt, ["title"] = title, ["category"] = category, ["focus"] = focus, ["inject"] = inject, ["active"] = true });
                 }
                 else
                 {
                     scenario["prompt"] = prompt;
-                    if (tier == "T3-T4") { scenario["category"] = category; scenario["focus"] = focus; }
+                    scenario["title"] = title;
+                    scenario["category"] = category;
+                    if (tier == "T3-T4") scenario["focus"] = focus;
+                    else scenario["inject"] = inject;
                     scenario["active"] = active;
                 }
                 if (bank.OfType<JsonObject>().Count(x => x["active"]?.ToString() != "false") < 6)
                     throw new InvalidDataException("A bank must retain at least six active scenarios.");
+                JsonObject[] activeScenarios = bank.OfType<JsonObject>()
+                    .Where(x => x["active"]?.ToString() != "false").ToArray();
+                if (tier != "T3-T4" && activeScenarios.All(x => !string.IsNullOrEmpty(x["category"]?.ToString())))
+                {
+                    string fourth = tier == "T1-T2" ? "professional" : "incident";
+                    if (activeScenarios.Count(x => x["category"]?.ToString() == "gate") < 2 ||
+                        activeScenarios.Count(x => x["category"]?.ToString() == "patrol") < 2 ||
+                        activeScenarios.Count(x => x["category"]?.ToString() == "base") < 1 ||
+                        activeScenarios.Count(x => x["category"]?.ToString() == fourth) < 1)
+                        throw new InvalidDataException("Keep two Gate, two Patrol, one Base, and one " + fourth + " active scenario.");
+                }
                 template["revision"] = currentRevision + 1;
                 subject = scenarioId;
             }
@@ -194,6 +234,25 @@ namespace PWADC.SecurityOperationsSuite
                     }
                     Draw("leadership", "access"); Draw("leadership", "personnel"); Draw("leadership", "");
                     Draw("emergency", "medicalFire"); Draw("emergency", "hazardEvac"); Draw("emergency", "compound");
+                }
+                else if (tier != "T3-T4" && activeBank.All(x => x?["category"] != null && x?["category"]?.ToString() != ""))
+                {
+                    var chosenIds = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+                    void DrawTier(string category, int count)
+                    {
+                        for (int n = 0; n < count; n++)
+                        {
+                            JsonNode?[] candidates = activeBank.Where(x => x?["category"]?.ToString() == category &&
+                                !chosenIds.Contains(x?["id"]?.ToString() ?? "")).ToArray();
+                            if (candidates.Length == 0)
+                                throw new InvalidDataException("Scenario bank lacks the required " + category + " coverage for " + tier + ".");
+                            JsonNode selected = candidates[RandomNumberGenerator.GetInt32(candidates.Length)]!;
+                            chosenIds.Add(selected["id"]?.ToString() ?? "");
+                            chosen.Add(selected.DeepClone());
+                        }
+                    }
+                    DrawTier("gate", 2); DrawTier("patrol", 2); DrawTier("base", 1);
+                    DrawTier(tier == "T1-T2" ? "professional" : "incident", 1);
                 }
                 else
                 {
@@ -311,22 +370,24 @@ namespace PWADC.SecurityOperationsSuite
                     bool checklistReviewed = command.TryGetProperty("checklistReviewed", out JsonElement checklistValue) && checklistValue.ValueKind == JsonValueKind.True;
                     bool scenariosReviewed = command.TryGetProperty("scenariosReviewed", out JsonElement scenariosValue) && scenariosValue.ValueKind == JsonValueKind.True;
                     JsonObject gateStatuses = new JsonObject();
-                    if (packet["tier"]?.ToString() == "T3-T4")
-                    {
-                        if (command.TryGetProperty("gateStatuses", out JsonElement gates) && gates.ValueKind == JsonValueKind.Object)
-                            for (int gate = 1; gate <= 8; gate++)
-                            {
-                                string key = "Gate " + gate;
-                                string status = gates.TryGetProperty(key, out JsonElement value) && value.ValueKind == JsonValueKind.String
-                                    ? value.GetString() ?? "" : "";
-                                if (status != "" && status != "PASS" && status != "REMEDIATE" && status != "HOLD" && status != "NOT ELIGIBLE")
-                                    throw new InvalidDataException("Unknown status for " + key + ".");
-                                gateStatuses[key] = status;
-                            }
-                        if (decision == "Approve promotion" && Enumerable.Range(1, 8).Any(g =>
-                            gateStatuses["Gate " + g]?.ToString() != "PASS"))
-                            throw new InvalidDataException("All eight T4 evidence gates must be recorded PASS before approval.");
-                    }
+                    string level = packet["tier"]?.ToString() ?? "";
+                    int gateCount = level == "T3-T4" ? 8 : level == "T2-T3" ? 6 : level == "T1-T2" ? 5 : 0;
+                    if (gateCount == 0) throw new InvalidDataException("Unknown packet level.");
+                    if (command.TryGetProperty("gateStatuses", out JsonElement gates) && gates.ValueKind == JsonValueKind.Object)
+                        for (int gate = 1; gate <= gateCount; gate++)
+                        {
+                            string key = "Gate " + gate;
+                            string status = gates.TryGetProperty(key, out JsonElement value) && value.ValueKind == JsonValueKind.String
+                                ? value.GetString() ?? "" : "";
+                            if (status != "" && status != "PASS" && status != "REMEDIATE" && status != "HOLD" && status != "NOT ELIGIBLE")
+                                throw new InvalidDataException("Unknown status for " + key + ".");
+                            gateStatuses[key] = status;
+                        }
+                    if (decision == "Approve promotion" && Enumerable.Range(1, gateCount).Any(g =>
+                        gateStatuses["Gate " + g]?.ToString() != "PASS"))
+                        throw new InvalidDataException(level == "T3-T4"
+                            ? "All eight T4 evidence gates must be recorded PASS before approval."
+                            : "All evidence gates must be recorded PASS before promotion approval.");
                     if (decision == "Approve promotion" && (!recordsVerified || !checklistReviewed || !scenariosReviewed))
                         throw new InvalidDataException("Confirm signed qualifications, the completed checklist, and all six verbal scenario evaluations before approval.");
                     if (packet["tier"]?.ToString() == "T3-T4" && decision == "Approve promotion" &&
