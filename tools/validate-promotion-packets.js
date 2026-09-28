@@ -29,6 +29,9 @@ need(host,'["previousVersions"] = history','Bank edits must preserve old templat
 need(browser,'openPromotionBank','Manager must be able to inspect and edit banks');
 need(browser,'p.scenarios.map((s,i)=>','Reprint must use issued questions');
 need(host,'["trainingEvidence"] = evidence','Issue must capture training evidence');
+for(const marker of ['"delete" or "restore" => "promotion.manage"','["deletedPreviousStatus"]','packet["status"] = "Deleted"','packet["status"] = previous','history.Add(new JsonObject { ["action"] = action','Only the Security Manager/Admin may delete or restore'])need(host,marker,'Packet delete/restore audit or role guard missing: '+marker);
+for(const marker of ['openPromotionDeleteModal','savePromotionDelete','Show deleted packets',"p.status!=='Deleted'",'promotionCommand(action,{packetId:id,notes})'])need(browser,marker,'Packet delete/restore UI missing: '+marker);
+
 for(const s of ['promotion.manage','promotion.review','promotion.decide'])need(host,s);
 need(host,'candidate cannot review or decide','Candidate self review denial missing');
 need(auth,'"promotion-packets" => throw','Generic writes must not bypass the packet command');
