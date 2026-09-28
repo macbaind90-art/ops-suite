@@ -1,6 +1,13 @@
-# PWADC Security Operations Suite v5.0.0
+# PWADC Security Operations Suite v5.0.1
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
+## v5.0.1 - Promotion approval packet
+
+- Expanded tier-specific eligibility and competency checks, grouped by operational area and documented evidence.
+- Candidate answers to six randomized scenarios are verbal. The evaluator records a 0–3 grade, key answer, gap, and recheck on the printed packet.
+- Security Manager reviews signed records, the checklist, and six grades before approving. T3→T4 approval requires a dated Security Manager interview rated Meets standard.
+- Packet opens in preview before printing. Existing shared packet templates receive the new checklist through a guarded, revision-checked startup update; previously issued packets remain frozen.
+
 ## v5.0.0 - Promotion Packets
 
 - Separate governed `promotion-packets-data.json` (`promotion-packets-1`) with protected issue, supervisor review, and Security Manager decision commands.
