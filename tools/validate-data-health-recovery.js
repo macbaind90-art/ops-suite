@@ -37,7 +37,11 @@ need(health,'ReadJsonHistoryRecords(path).Reverse()','History summary must read 
 need(health,'ReadJsonHistoryRecords(eventsPath)','Health-event count must read legacy multi-line records.');
 need(health,'JsonSerializer.Serialize(row) + Environment.NewLine','New health/recovery history must use compact JSONL.');
 need(migrations,'ReadJsonHistoryRecords(path).Reverse()','Migration history must read legacy multi-line records.');
-need(migrations,'                });\n\n                for (int attempt','New migration history must use compact JSONL.');
+const migrationWriter=migrations.slice(migrations.indexOf('private void WriteSchemaMigrationHistory'),migrations.indexOf('private object GetSchemaMigrationHistory'));
+if(!migrationWriter.includes('string line = JsonSerializer.Serialize(new')||
+   !/\}\s*\);\s*for\s*\(int attempt/.test(migrationWriter)||
+   !/\}\s*\);\s*for\s*\(int attempt/.test(migrationWriter.replace(/\r?\n/g,'\r\n')))
+  throw new Error('New migration history must use compact JSONL.');
 need(health,'PreviewLastKnownGood','LKG preview backend missing.');
 need(health,'RestoreLastKnownGood','LKG restore backend missing.');
 need(health,'WriteRecoveryAudit','Permanent recovery audit missing.');
