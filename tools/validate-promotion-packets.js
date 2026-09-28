@@ -3,7 +3,7 @@ const read=p=>fs.readFileSync(p,'utf8');
 const need=(hay,needle,msg)=>{if(!hay.includes(needle))throw new Error(msg||'Missing: '+needle)};
 const seed=JSON.parse(read('app/seed/promotion-packets-data.json'));
 if(seed.schemaVersion!=='promotion-packets-1')throw new Error('Wrong packet schema');
-const expected={'T1-T2':10,'T2-T3':18,'T3-T4':24};
+const expected={'T1-T2':10,'T2-T3':18,'T3-T4':17};
 if(seed.templates.length!==3)throw new Error('Expected exactly three promotion templates');
 for(const template of seed.templates){
   if(template.scenarios.length!==expected[template.tier])throw new Error('Unexpected bank size for '+template.tier);
@@ -13,6 +13,9 @@ for(const template of seed.templates){
   if(template.checklist.some(x=>!x.section||!x.text||x.text.length<55))throw new Error('Checklist needs grouped, substantive standards');
   if(new Set(template.checklist.map(x=>x.id)).size!==template.checklist.length)throw new Error('Duplicate checklist IDs');
 }
+const t4=seed.templates.find(x=>x.tier==='T3-T4');
+for(const [category,focus] of [['leadership','access'],['leadership','personnel'],['emergency','medicalFire'],['emergency','hazardEvac'],['emergency','compound']])
+  if(!t4.scenarios.some(x=>x.category===category&&x.focus===focus))throw Error('T4 bank missing '+category+' '+focus);
 const byTier=Object.fromEntries(seed.templates.map(t=>[t.tier,t]));
 const content=t=>[...byTier[t].checklist.map(x=>x.text),...byTier[t].scenarios.map(x=>x.prompt)].join(' ');
 for(const [tier,terms] of Object.entries({
@@ -30,6 +33,7 @@ need(host,'activeBank.Select','Selection must exclude archived scenarios');
 need(host,'["previousVersions"] = history','Bank edits must preserve old template revision');
 need(browser,'openPromotionBank','Manager must be able to inspect and edit banks');
 need(browser,'p.scenarios.map((x,i)=>','Reprint must use issued questions');
+for(const text of ['Draw("leadership", "access")','Draw("leadership", "personnel")','Draw("emergency", "medicalFire")','Draw("emergency", "hazardEvac")','Draw("emergency", "compound")','All eight T4 evidence gates must be recorded PASS'])need(host,text,'T4 coverage or approval gate missing: '+text);
 need(host,'["trainingEvidence"] = evidence','Issue must capture training evidence');
 for(const marker of ['"delete" or "restore" => "promotion.manage"','["deletedPreviousStatus"]','packet["status"] = "Deleted"','packet["status"] = previous','history.Add(new JsonObject { ["action"] = action','Only the Security Manager/Admin may delete or restore'])need(host,marker,'Packet delete/restore audit or role guard missing: '+marker);
 for(const marker of ['openPromotionDeleteModal','savePromotionDelete','Show deleted packets',"p.status!=='Deleted'",'promotionCommand(action,{packetId:id,notes})'])need(browser,marker,'Packet delete/restore UI missing: '+marker);
@@ -44,17 +48,23 @@ for(const term of ['UpgradePromotionPacketChecklists','current.Count != oldCount
 need(read('MainForm.cs'),'UpgradePromotionPacketChecklists();');
 for(const term of ['"Approve promotion"','recordsVerified','checklistReviewed','scenariosReviewed','interviewDate','interviewOutcome != "Meets standard"','interviewNotes.Length < 20'])need(host,term,'Manager approval gate missing: '+term);
 for(const term of ['openReportWindow(style+header+evidence+checklist+scenarios+supervisor+interview+decision,false','Six verbal scenarios','Evaluator grade:','Security Manager interview'])need(browser,term,'Verbal evaluation or preview missing: '+term);
-const ctx={console,Date,PWADCModuleRegistry:{register(){}},esc:x=>String(x??''),openReportWindow:(html,auto,orientation)=>{ctx.preview={html,auto,orientation}},toast:()=>{}};
+const ctx={console,Date,hasCapability:()=>true,PWADCModuleRegistry:{register(){}},esc:x=>String(x??''),openReportWindow:(html,auto,orientation)=>{ctx.preview={html,auto,orientation}},toast:()=>{}};
 vm.createContext(ctx);vm.runInContext(browser,ctx);
 for(const tier of Object.keys(expected)){
   ctx.sample={id:'test',tier,status:'Issued',employee:{name:'Candidate',eid:'1'},issuedAt:'2026-09-28',templateRevision:3,
-    checklist:byTier[tier].checklist,scenarios:byTier[tier].scenarios.slice(0,6),trainingEvidence:[]};
+    checklist:byTier[tier].checklist,scenarios:tier==='T3-T4'?[...byTier[tier].scenarios.filter(x=>x.category==='leadership').slice(0,3),...byTier[tier].scenarios.filter(x=>x.category==='emergency').slice(0,3)]:byTier[tier].scenarios.slice(0,6),trainingEvidence:[]};
   vm.runInContext('promotionPackets.packets=[sample];printPromotionPacket("test")',ctx);
   if(!ctx.preview||ctx.preview.auto!==false||ctx.preview.orientation!=='portrait')throw Error('Packet must open in preview before print');
   if((ctx.preview.html.match(/Evaluator grade:/g)||[]).length!==6)throw Error('Packet needs six evaluator grades');
   if(ctx.preview.html.includes('Candidate written scenarios'))throw Error('Verbal answers should not be a written candidate form');
   if(!ctx.preview.html.includes('Security Manager final decision'))throw Error('Manager approval page missing');
-  if(tier==='T3-T4'&&!ctx.preview.html.includes('Security Manager interview · required for T4'))throw Error('T4 interview page missing');
+  if(tier==='T3-T4'){
+    if(!ctx.preview.html.includes('Security Manager final candidate interview'))throw Error('T4 Manager interview page missing');
+    if((ctx.preview.html.match(/Gate [1-8] ·/g)||[]).length<8)throw Error('All eight evidence gates must be printable');
+    for(const term of ['two successful practicals','Three shadow report reviews','Targeted factual 360 input','Remediation and reevaluation plan','Package completion checklist'])
+      if(!ctx.preview.html.toLowerCase().includes(term.toLowerCase()))throw Error('T4 workbook missing '+term);
+    if(ctx.preview.html.includes('Expected Decision Points')||ctx.preview.html.includes('Critical Failure Conditions'))throw Error('Restricted evaluator answer keys must not be included in the packet');
+  }
 }
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.1</Version>');
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.2</Version>');
 console.log('Promotion Packets validation PASS');
