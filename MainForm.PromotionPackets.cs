@@ -29,7 +29,7 @@ namespace PWADC.SecurityOperationsSuite
             string action = PacketText(command, "action", 30, true);
             string capability = action switch
             {
-                "issue" or "scenario" => "promotion.manage",
+                "issue" or "scenario" or "delete" or "restore" => "promotion.manage",
                 "review" => "promotion.review",
                 "decide" => "promotion.decide",
                 _ => throw new InvalidDataException("Unknown promotion packet action.")
@@ -151,6 +151,34 @@ namespace PWADC.SecurityOperationsSuite
                     string.Equals(actor.DisplayName, name, StringComparison.OrdinalIgnoreCase))
                     throw new UnauthorizedAccessException("The candidate cannot review or decide their own packet.");
                 JsonArray history = packet["history"] as JsonArray ?? throw new InvalidDataException("Packet history is invalid.");
+                if (action == "delete" || action == "restore")
+                {
+                    if (!string.Equals(actor.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+                        throw new UnauthorizedAccessException("Only the Security Manager/Admin may delete or restore a promotion packet.");
+                    string reason = PacketText(command, "notes", 2000, true);
+                    if (reason.Length < 10) throw new InvalidDataException("Enter a reason of at least 10 characters.");
+                    if (action == "delete")
+                    {
+                        if (packet["status"]?.ToString() == "Deleted") throw new InvalidOperationException("This packet is already deleted.");
+                        packet["deletedPreviousStatus"] = packet["status"]?.ToString() ?? "Issued";
+                        packet["status"] = "Deleted"; packet["deletedAt"] = now; packet["deletedBy"] = actor.Id;
+                    }
+                    else
+                    {
+                        if (packet["status"]?.ToString() != "Deleted") throw new InvalidOperationException("Only a deleted packet can be restored.");
+                        string previous = packet["deletedPreviousStatus"]?.ToString() ?? "Issued";
+                        if ((previous == "Issued" || previous == "Reviewed") && packets.OfType<JsonObject>().Any(x =>
+                            !ReferenceEquals(x, packet) && x["employeeId"]?.ToString() == packet["employeeId"]?.ToString() &&
+                            x["tier"]?.ToString() == packet["tier"]?.ToString() &&
+                            (x["status"]?.ToString() == "Issued" || x["status"]?.ToString() == "Reviewed")))
+                            throw new InvalidOperationException("A replacement open packet exists for this employee and level.");
+                        packet["status"] = previous;
+                        packet.Remove("deletedPreviousStatus"); packet.Remove("deletedAt"); packet.Remove("deletedBy");
+                    }
+                    history.Add(new JsonObject { ["action"] = action, ["at"] = now, ["actorId"] = actor.Id, ["notes"] = reason });
+                }
+                else
+                {
                 string reference = PacketText(command, "reference", 300, true);
                 string notes = PacketText(command, "notes", 2000, true);
                 if (action == "review")
@@ -178,6 +206,7 @@ namespace PWADC.SecurityOperationsSuite
                         ["paperReference"] = reference, ["decidedAt"] = now, ["decidedBy"] = actor.Id, ["managerName"] = actor.DisplayName };
                     history.Add(new JsonObject { ["action"] = "decide", ["at"] = now, ["actorId"] = actor.Id,
                         ["result"] = decision, ["notes"] = notes, ["paperReference"] = reference });
+                }
                 }
             }
             audit.Add(new JsonObject { ["at"] = now, ["action"] = action, ["actorId"] = actor.Id, ["packetId"] = action == "scenario" ? "" : subject,
