@@ -1,5 +1,5 @@
 @echo off
 setlocal
-echo Building PWADC Security Operations Suite v4.8.3
+echo Building PWADC Security Operations Suite v4.8.4
 dotnet publish SecurityOperationsSuite.csproj -c Release -r win-x64 --self-contained true /p:PublishSingleFile=true /p:IncludeNativeLibrariesForSelfExtract=true
 pause

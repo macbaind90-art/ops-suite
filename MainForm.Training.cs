@@ -194,26 +194,29 @@ namespace PWADC.SecurityOperationsSuite
                         throw new UnauthorizedAccessException("A candidate cannot record or sign off their own training.");
                 }
                 JsonArray events = assignment["events"] as JsonArray ?? throw new InvalidDataException("Assignment event history is invalid.");
+                bool managerOverride = action == "signoff" && command.TryGetProperty("managerOverride", out JsonElement overrideValue) && overrideValue.ValueKind == JsonValueKind.True;
                 if (action == "signoff")
                 {
+                    if (managerOverride && !string.Equals(actor.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+                        throw new UnauthorizedAccessException("Only the Security Manager/Admin may sign off without a passing observation.");
                     JsonObject? latestPass = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "record" && x["outcome"]?.ToString() == "Pass" &&
                         !events.OfType<JsonObject>().Any(c => c["type"]?.ToString() == "void" && c["reference"]?.ToString() == x["id"]?.ToString()));
                     JsonObject? latestRetrain = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "retrain");
-                    if (latestPass == null || (latestRetrain != null && string.CompareOrdinal(latestRetrain["at"]?.ToString(), latestPass["at"]?.ToString()) > 0))
+                    if (!managerOverride && (latestPass == null || (latestRetrain != null && string.CompareOrdinal(latestRetrain["at"]?.ToString(), latestPass["at"]?.ToString()) > 0)))
                         throw new InvalidDataException("A passing observation after any retraining is required before signoff.");
                     JsonObject? latestSignoff = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "signoff" &&
                         !events.OfType<JsonObject>().Any(c => c["type"]?.ToString() == "void" && c["reference"]?.ToString() == x["id"]?.ToString()));
-                    if (latestSignoff != null && string.CompareOrdinal(latestSignoff["at"]?.ToString(), latestPass["at"]?.ToString()) > 0)
+                    if (!managerOverride && latestSignoff != null && string.CompareOrdinal(latestSignoff["at"]?.ToString(), latestPass!["at"]?.ToString()) > 0)
                         throw new InvalidDataException("A new passing observation is required before renewal signoff.");
-                    if (latestPass["actorId"]?.ToString() == actor.Id)
-                        throw new UnauthorizedAccessException("The observer and independent signoff actor must be different accounts.");
-                    if (string.CompareOrdinal(TrainingDate(command, "date", true), latestPass["date"]?.ToString()) < 0)
+                    if (!managerOverride && string.CompareOrdinal(TrainingDate(command, "date", true), latestPass!["date"]?.ToString()) < 0)
                         throw new InvalidDataException("Signoff date cannot precede the passing observation.");
                 }
                 if (action == "void" && events.Count == 0) throw new InvalidDataException("There is no event to correct.");
                 string effectiveDate = TrainingDate(command, "date", action != "void");
                 string notes = TrainingText(command, "notes");
                 if (notes.Length > 2000) throw new InvalidDataException("Notes exceed 2000 characters.");
+                if (managerOverride && notes.Length < 10)
+                    throw new InvalidDataException("Manager signoff without a passing observation requires a documented reason of at least 10 characters.");
                 string method = TrainingText(command, "method"), outcome = TrainingText(command, "outcome");
                 if (action == "record" && (!new[] { "Observed", "Practical", "Discussion", "Document review" }.Contains(method) || !new[] { "Pass", "Needs practice" }.Contains(outcome)))
                     throw new InvalidDataException("Select a valid method and outcome.");
@@ -225,7 +228,7 @@ namespace PWADC.SecurityOperationsSuite
                 events.Add(new JsonObject { ["id"] = id, ["type"] = action, ["date"] = effectiveDate,
                     ["at"] = now, ["actorId"] = actor.Id, ["actorName"] = actor.DisplayName,
                     ["method"] = method, ["outcome"] = outcome, ["notes"] = notes,
-                    ["reference"] = reference });
+                    ["reference"] = reference, ["managerOverride"] = managerOverride });
             }
             audit.Add(new JsonObject { ["at"] = now, ["actorId"] = actor.Id, ["action"] = action, ["subjectId"] = subject });
             data["schemaVersion"] = "training-1"; data["lastWrittenByAppVersion"] = AppVersion; data["lastSaved"] = now;

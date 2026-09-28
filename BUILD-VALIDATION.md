@@ -1,9 +1,17 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.8.3**
-- Release: **Training on Employee Profiles**
-- Baseline upgraded: **v4.8.2 - Training Data Health & History Fix**
+- Version: **4.8.4**
+- Release: **Training Signoff Policy**
+- Baseline upgraded: **v4.8.3 - Training on Employee Profiles**
+
+## Training Signoff Policy Contract
+
+- Same authorized actor can observe and sign off a passing result: **PASS**
+- Security Manager/Admin-only approval without observation, with documented reason and event marker: **PASS**
+- Non-Admin standard pass and candidate self-approval restrictions preserved: **PASS**
+- Manager approval remains correctable and visible in history/print: **PASS**
+- .NET 10 Windows compile/publish: **PENDING GitHub Actions run**
 
 ## Training Profile and Current-Roster Contract
 
@@ -31,7 +39,7 @@
 ## Governed Training Contract
 
 - Separate Training schema and starter requirements: **PASS**
-- Assignment → observation → independent signoff → retraining state validation: **PASS**
+- Assignment → observation → signoff → retraining state validation: **PASS**
 - Correction preserves evidence history: **PASS**
 - Dedicated host command and generic-save denial: **PASS**
 - Front-end module registry, Training page, reports, and profile render: **PASS**

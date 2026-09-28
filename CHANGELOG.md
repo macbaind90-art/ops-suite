@@ -1,5 +1,11 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.8.4 - Training Signoff Policy
+
+- Allowed the authorized observer to sign off the same assignment after a passing observation.
+- Added an explicit Security Manager/Admin signoff path without a passing observation, with a required reason and permanent event marker. Other roles retain the normal passing-observation requirement.
+- Updated the Training modal, employee profile, history, and print record to explain and distinguish the approval path.
+
 ## v4.8.3 - Training on Employee Profiles
 
 - Added direct Training management to Employee Profiles: assignment, observation, independent signoff, due-date edit with reason, evidence history, and print record.

@@ -1,4 +1,8 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.8.3
+# PWADC Security Operations Suite Architecture - Current Production v4.8.4
+
+## v4.8.4 Training Signoff Authority
+
+The Training host accepts the observer as signoff actor for a passing observation. Standard signoff still checks for a non-voided pass after any retraining and prevents candidate self approval. An explicit `managerOverride` flag permits signoff without the pass only when the authenticated actor has the Admin role and provides a documented reason. The signoff event records that flag and reason; the UI shows the option only to Admin and identifies manager approvals in the history and print record. Correction events can void either signoff path without removing the original audit evidence.
 
 ## v4.8.3 Training Profile and Current-Roster Enrollment
 
@@ -20,7 +24,7 @@ The `training` registry entry owns `training-data.json` schema `training-1`. The
 
 The browser issues `suite:trainingCommand` operations with a loaded revision and signed-in account credentials. The host checks capability and operation parameters, validates roster and requirement references, appends evidence events, then uses the same atomic JSON writer, pre-save safety backup, and stale-write guard as other governed modules. Generic module-save endpoints reject Training writes. Corrected events remain in history; closed assignments remain inspectable. Independent signoff requires a passing observation after retraining, a different actor from the observer, and a candidate who is not the signoff actor.
 
-Training dashboards, employee profiles, reporting, printing, CSV, and Data Health read the new store. Requirement renewal days are explicit, with zero meaning no automatic expiration. An unassigned requirement does not count as a missing employee qualification. Promotion Packets will be implemented as a distinct governed module in a later release.
+Training dashboards, employee profiles, reporting, printing, CSV, and Data Health read the new store. Requirement renewal days are explicit, with zero meaning no automatic expiration. An unassigned requirement does not count as a missing employee qualification. Promotion Packets will be implemented as a distinct governed module in a later release. Current signoff authority is defined in v4.8.4 above.
 
 ## v4.7.0 Standardized Report Controls and Attendance Effective Date
 

@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v4.8.3 | uniforms and roster analytics */
+/* PWADC Security Operations Suite v4.8.4 | uniforms and roster analytics */
 const DEFAULT_EQUIPMENT_TYPES=['Shirt','Pants','Jacket','Safety Vest','Other'];
 const NON_UNIFORM_ITEM_TYPES=['Badge','Radio','Keys','Access Card','Flashlight','Rain Gear'];
 function isUniformItemType(item){const x=String(item||'').trim().toLowerCase();return !NON_UNIFORM_ITEM_TYPES.some(n=>n.toLowerCase()===x);}
@@ -179,7 +179,7 @@ function printUniformCustom(){
       rows+=`<tr class="group-row"><th colspan="${cols.length}">${esc(titleCase(st))}</th></tr>`+part.map(i=>`<tr>${cols.map(c=>`<td>${esc(uniformPrintCell(i,c))}</td>`).join('')}</tr>`).join('');
     }
   }else rows=items.map(i=>`<tr>${cols.map(c=>`<td>${esc(uniformPrintCell(i,c))}</td>`).join('')}</tr>`).join('');
-  let body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Uniform Accountability</h1><div class="print-note">${items.length} uniform row(s) · scope: ${esc(scope||'all')}</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v4.8.3</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows||`<tr><td colspan="${cols.length}">No uniform rows match the selected print options.</td></tr>`}</tbody></table>`;
+  let body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Uniform Accountability</h1><div class="print-note">${items.length} uniform row(s) · scope: ${esc(scope||'all')}</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v4.8.4</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${rows||`<tr><td colspan="${cols.length}">No uniform rows match the selected print options.</td></tr>`}</tbody></table>`;
   closeModal();printHtmlDirect('PWADC Security Uniform Accountability',body,cols.length>8?'landscape':'portrait');
 }
 function printUniformOrderSheet(){openUniformPrintModal()}

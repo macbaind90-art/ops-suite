@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.8.3
+# PWADC Security Operations Suite v4.8.4
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,11 +7,17 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.8.3` = the current minor release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.8.4` = the current minor release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.8.4 - Training Signoff Policy
+
+- An authorized observer may sign off their own passing observation. Candidate self recording and self signoff remain blocked.
+- The Security Manager/Admin can explicitly sign off without a current passing observation. The host verifies the Admin role and requires a documented reason of at least 10 characters. The signoff event retains the manager override marker, actor, date, reason, and reference, including in history and employee printouts.
+- Standard signoff still requires a current passing observation after retraining. An override does not create a fictitious observation.
 
 ## v4.8.3 - Training on Employee Profiles
 
-- Employee Profiles show each Training assignment and its evidence with direct actions to assign, observe, sign off, change a target date, and inspect history. Role capabilities and independent signoff rules still apply.
+- Employee Profiles show each Training assignment and its evidence with direct actions to assign, observe, sign off, change a target date, and inspect history. Role capabilities still apply; current signoff authority is described in v4.8.4 above.
 - At the first startup after upgrade, the app assigns every active Training requirement to every current active roster employee. Existing assignments and evidence, including deliberately closed assignments, are preserved; the one-time batch is audited and saved through the governed Training path. Assignment does not establish completion or qualification.
 - New employees and requirements added later continue to use explicit assignment.
 
@@ -31,7 +37,7 @@ Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.
 
 - Training is a separate governed `training-data.json` module (`training-1`), with its own revision checks, atomic writes, backups, restore, and Data Health visibility.
 - New Employee Orientation, Gate, Patrol, and Base / EOC are starter **requirements**, not assumed completions or automatically assigned obligations. Supervisors assign requirements to named employees and set a target date where appropriate.
-- Observations capture method, outcome, date, actor, notes, and evidence reference. A passing observation and a second authorized account are required for independent qualification signoff. Senior Officer has a narrow Training record/signoff role; existing Lead and Supervisor roles retain their training authority.
+- Observations capture method, outcome, date, actor, notes, and evidence reference. At release, signoff required a passing observation and a second authorized account; v4.8.4 updates that policy. Senior Officer has a narrow Training record/signoff role; existing Lead and Supervisor roles retain their training authority.
 - Requirement changes retain prior definitions; corrections and closed assignments retain evidence history. Renewal intervals are explicit per requirement and default to no automatic renewal.
 - Training reports, employee profiles, printouts, CSV, and Data Health now use the new module. The legacy roster training arrays remain stored but inert; no legacy completions are migrated or interpreted.
 - Promotion Packets, including candidate scenarios and checklists, remain a separate planned module and are not part of this build.
