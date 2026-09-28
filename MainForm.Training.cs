@@ -89,7 +89,7 @@ namespace PWADC.SecurityOperationsSuite
             {
                 "requirement" or "assign" or "archive" or "closeAssignment" or "updateDueDate" => "training.manage",
                 "record" or "acknowledge" or "retrain" => "training.record",
-                "signoff" or "void" => "training.signoff",
+                "signoff" or "void" or "bulkSignoff" => "training.signoff",
                 _ => throw new InvalidDataException("Unknown training command.")
             };
             SuiteUser actor = RequireBridgeCapability(root, capability);
@@ -175,6 +175,66 @@ namespace PWADC.SecurityOperationsSuite
                         ["at"] = now, ["actorId"] = actor.Id, ["actorName"] = actor.DisplayName,
                         ["oldDueDate"] = oldDate, ["newDueDate"] = dueDate, ["notes"] = reason });
                 subject = assignment["id"]!.ToString();
+            }
+            else if (action == "bulkSignoff")
+            {
+                if (!string.Equals(actor.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+                    throw new UnauthorizedAccessException("Only the Security Manager/Admin may sign off multiple trainings.");
+                string employeeId = TrainingRequired(command, "employeeId", 80);
+                string effectiveDate = TrainingDate(command, "date", true);
+                bool managerOverride = command.TryGetProperty("managerOverride", out JsonElement bulkOverride) && bulkOverride.ValueKind == JsonValueKind.True;
+                if (!command.TryGetProperty("items", out JsonElement items) || items.ValueKind != JsonValueKind.Array ||
+                    items.GetArrayLength() < 2 || items.GetArrayLength() > 50)
+                    throw new InvalidDataException("Select 2 to 50 training assignments for bulk signoff.");
+                JsonObject rosterData = JsonNode.Parse(LoadModuleDataWithSource("roster").Data) as JsonObject ?? throw new InvalidDataException("Roster is unavailable.");
+                JsonObject employee = (rosterData["employees"] as JsonArray)?.OfType<JsonObject>().FirstOrDefault(x => x["id"]?.ToString() == employeeId)
+                    ?? throw new InvalidDataException("Employee was not found in the roster.");
+                string employeeName = ((employee["first"]?.ToString() ?? "") + " " + (employee["last"]?.ToString() ?? "")).Trim();
+                if (string.Equals(actor.Id, employeeId, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(actor.Id, employee["eid"]?.ToString(), StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(actor.Username, employeeName, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(actor.DisplayName, employeeName, StringComparison.OrdinalIgnoreCase))
+                    throw new UnauthorizedAccessException("A candidate cannot sign off their own training.");
+                string batchId = id;
+                var selected = new System.Collections.Generic.HashSet<string>(StringComparer.Ordinal);
+                foreach (JsonElement entry in items.EnumerateArray())
+                {
+                    if (entry.ValueKind != JsonValueKind.Object) throw new InvalidDataException("A bulk signoff item is invalid.");
+                    string assignmentId = TrainingRequired(entry, "assignmentId", 80);
+                    if (!selected.Add(assignmentId)) throw new InvalidDataException("A training assignment was selected more than once.");
+                    JsonObject assignment = TrainingFind(assignments, assignmentId);
+                    if (assignment["employeeId"]?.ToString() != employeeId || assignment["status"]?.ToString() != "active")
+                        throw new InvalidDataException("Every selected assignment must be active for the selected employee.");
+                    JsonObject requirement = TrainingFind(requirements, assignment["requirementId"]?.ToString() ?? "");
+                    if (requirement["active"]?.ToString() == "false")
+                        throw new InvalidDataException("An archived requirement cannot be signed off.");
+                    JsonArray events = assignment["events"] as JsonArray ?? throw new InvalidDataException("Assignment event history is invalid.");
+                    JsonObject? latestPass = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "record" && x["outcome"]?.ToString() == "Pass" &&
+                        !events.OfType<JsonObject>().Any(c => c["type"]?.ToString() == "void" && c["reference"]?.ToString() == x["id"]?.ToString()));
+                    JsonObject? latestRetrain = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "retrain");
+                    JsonObject? latestSignoff = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "signoff" &&
+                        !events.OfType<JsonObject>().Any(c => c["type"]?.ToString() == "void" && c["reference"]?.ToString() == x["id"]?.ToString()));
+                    if (!managerOverride && (latestPass == null ||
+                        (latestRetrain != null && string.CompareOrdinal(latestRetrain["at"]?.ToString(), latestPass["at"]?.ToString()) > 0) ||
+                        (latestSignoff != null && string.CompareOrdinal(latestSignoff["at"]?.ToString(), latestPass["at"]?.ToString()) > 0) ||
+                        string.CompareOrdinal(effectiveDate, latestPass["date"]?.ToString()) < 0))
+                        throw new InvalidDataException("A new passing observation is required for " + requirement["title"]?.ToString() + ".");
+                    if (latestSignoff != null && string.CompareOrdinal(latestSignoff["date"]?.ToString(), effectiveDate) >= 0)
+                        throw new InvalidDataException("This training already has a signoff on or after that date: " + requirement["title"]?.ToString());
+                    string notes = TrainingText(entry, "notes");
+                    string reference = TrainingText(entry, "reference");
+                    if (notes.Length > 2000 || reference.Length > 300)
+                        throw new InvalidDataException("A signoff note or reference is too long.");
+                    if (managerOverride && notes.Length < 10)
+                        throw new InvalidDataException("Enter a specific manager basis for " + requirement["title"]?.ToString() + ".");
+                    events.Add(new JsonObject { ["id"] = Guid.NewGuid().ToString("N"), ["type"] = "signoff", ["date"] = effectiveDate,
+                        ["at"] = now, ["actorId"] = actor.Id, ["actorName"] = actor.DisplayName,
+                        ["method"] = "", ["outcome"] = "", ["notes"] = notes, ["reference"] = reference,
+                        ["managerOverride"] = managerOverride, ["batchId"] = batchId });
+                }
+                subject = employeeId;
+                audit.Add(new JsonObject { ["at"] = now, ["actorId"] = actor.Id, ["action"] = "bulkSignoff",
+                    ["subjectId"] = employeeId, ["batchId"] = batchId, ["count"] = selected.Count });
             }
             else
             {
