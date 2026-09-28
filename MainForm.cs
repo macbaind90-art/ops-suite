@@ -17,7 +17,7 @@ namespace PWADC.SecurityOperationsSuite
         private readonly string appFolder;
         private readonly string indexPath;
 
-        private const string AppVersion = "5.0.0";
+        private const string AppVersion = "5.0.1";
         private const string DefaultRoot = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         private const string SettingsFileName = "suite-settings.json";
         private SuiteSettings settings = new SuiteSettings();
@@ -62,6 +62,8 @@ namespace PWADC.SecurityOperationsSuite
                     SchemaInitializationResult schemaInit = EnsureLiveSchemaMetadata();
                     StartupMigrationSummary migrationSummary = ProcessStartupSchemaMigrations();
                     var startupSchemaIssues = new List<string>();
+                    try { UpgradePromotionPacketChecklists(); }
+                    catch (Exception ex) { startupSchemaIssues.Add("Promotion checklist update is pending: " + ex.Message); }
                     try { AssignCurrentTrainingToCurrentEmployees(); }
                     catch (Exception ex) { startupSchemaIssues.Add("Training current-roster assignment is pending: " + ex.Message); }
                     startupSchemaIssues.AddRange(schemaInit.Issues);

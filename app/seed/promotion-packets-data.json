@@ -1,43 +1,101 @@
 {
   "schemaVersion": "promotion-packets-1",
-  "lastWrittenByAppVersion": "5.0.0",
+  "lastWrittenByAppVersion": "5.0.1",
   "templates": [
     {
       "tier": "T1-T2",
-      "revision": 2,
+      "revision": 3,
       "active": true,
       "checklist": [
         {
           "id": "T1-T2-C01",
-          "text": "Verify 90-day probation attendance and any prior written Security Manager approval for an authorized absence."
+          "section": "Required file and eligibility",
+          "text": "90-day probation is complete; attendance record and any prior written Security Manager approval for an authorized absence are reviewed."
         },
         {
           "id": "T1-T2-C02",
-          "text": "Confirm signed OJT-001 and PMC-T1-Core, PMC-T1-Gate, PMC-T1-Patrol, and PMC-T1-Base are on file; sign-offs reflect observed work by an authorized evaluator."
+          "section": "Required file and eligibility",
+          "text": "OJT-001 is complete, signed, and supported by live observed work."
         },
         {
           "id": "T1-T2-C03",
-          "text": "Under supervision, demonstrate Gate identity, badge, visitor, and vendor verification using the current Gate Reference and approved systems."
+          "section": "Required file and eligibility",
+          "text": "PMC-T1-Core, PMC-T1-Gate, PMC-T1-Patrol, and PMC-T1-Base are complete and signed by a Lead or other authorized evaluator."
         },
         {
           "id": "T1-T2-C04",
-          "text": "State the T1 limit: verbally hold a driver pending Officer or Supervisor direction; do not independently grant or deny entry or physically detain anyone."
+          "section": "Required file and eligibility",
+          "text": "Evaluator dates, names, and underlying shift or training evidence support each competency signoff; gaps and rechecks are identified."
         },
         {
           "id": "T1-T2-C05",
-          "text": "Under supervision, patrol assigned areas with attention to forklift traffic, hazards, perimeter, and factual notifications."
+          "section": "Gate fundamentals under supervision",
+          "text": "Identifies the current Gate Reference and follows the badge, red or denied read, and no-badge verification path under qualified direction."
         },
         {
           "id": "T1-T2-C06",
-          "text": "Demonstrate Base Station awareness and the escalation route without independent system operation."
+          "section": "Gate fundamentals under supervision",
+          "text": "Explains the limited T1 authority to verbally hold a driver pending Officer or Supervisor direction, promptly escalate, and never make an independent grant or denial."
         },
         {
           "id": "T1-T2-C07",
-          "text": "Give accurate radio updates, pass-down, and factual logs without guessing or omitting required information."
+          "section": "Gate fundamentals under supervision",
+          "text": "Explains visitor verification through Base and vendor appointment/routing verification through the current program without inventing an exception."
         },
         {
           "id": "T1-T2-C08",
-          "text": "Explain emergency first actions, safe withdrawal, 911 when clearly needed, and the current EAP and Supervisor notification route."
+          "section": "Gate fundamentals under supervision",
+          "text": "Communicates calmly, keeps the lane safe, records who/what/when/outcome, and does not physically detain a driver who refuses to hold."
+        },
+        {
+          "id": "T1-T2-C09",
+          "section": "Patrol fundamentals under supervision",
+          "text": "Completes observed patrols with safe positioning around forklifts, dock movement, vehicles, and restricted areas."
+        },
+        {
+          "id": "T1-T2-C10",
+          "section": "Patrol fundamentals under supervision",
+          "text": "Recognizes an unsecured door, perimeter concern, maintenance issue, or unsafe behavior and gives a prompt factual report to Base and the Supervisor."
+        },
+        {
+          "id": "T1-T2-C11",
+          "section": "Patrol fundamentals under supervision",
+          "text": "Understands planned patrol cycles, accurate logs, and documented reasons for a missed or delayed round; does not fabricate checkpoint activity."
+        },
+        {
+          "id": "T1-T2-C12",
+          "section": "Base awareness and emergency response",
+          "text": "Identifies the qualified Base officer's role in incident intake, radio traffic, camera monitoring, dispatch, and documentation; does not operate systems independently at T1."
+        },
+        {
+          "id": "T1-T2-C13",
+          "section": "Base awareness and emergency response",
+          "text": "Relays a clear location, nature of event, persons involved, time, and immediate hazards without guessing or assuming an outcome."
+        },
+        {
+          "id": "T1-T2-C14",
+          "section": "Base awareness and emergency response",
+          "text": "Explains when any officer may call 911 for a clear emergency and how to notify Base and the Supervisor."
+        },
+        {
+          "id": "T1-T2-C15",
+          "section": "Base awareness and emergency response",
+          "text": "Describes safe withdrawal and current EAP direction for fire or ammonia; no re-entry on a detector reading alone."
+        },
+        {
+          "id": "T1-T2-C16",
+          "section": "Professional readiness",
+          "text": "Provides complete post relief and pass-down, uses appropriate radio discipline, and makes truthful, timely log entries."
+        },
+        {
+          "id": "T1-T2-C17",
+          "section": "Professional readiness",
+          "text": "Demonstrates respectful direction, de-escalation, and awareness of when a confrontation must move to a qualified Officer or Supervisor."
+        },
+        {
+          "id": "T1-T2-C18",
+          "section": "Professional readiness",
+          "text": "Supervisor records observed strengths, development needs, recheck dates, and readiness for T2 independent post development."
         }
       ],
       "scenarios": [
@@ -85,48 +143,123 @@
     },
     {
       "tier": "T2-T3",
-      "revision": 2,
+      "revision": 3,
       "active": true,
       "checklist": [
         {
           "id": "T2-T3-C01",
-          "text": "Verify the 60-day review shows at least 98% accuracy across logs, reports, and Gate documentation as assessed by the Security Manager."
+          "section": "Required file and review window",
+          "text": "PMC-Officer v2.0 is complete with authorized Lead signoff, overall section average at least 2.5, and no required item scored 1."
         },
         {
           "id": "T2-T3-C02",
-          "text": "Confirm verified solo proficiency in Gate, Patrol, and Base Station, with Base authorization and observed evaluation on file."
+          "section": "Required file and review window",
+          "text": "Security Manager verifies at least 98% documentation accuracy across logs, reports, and Gate paperwork during the preceding 60 days."
         },
         {
           "id": "T2-T3-C03",
-          "text": "Confirm completed PMC-Officer v2.0 with authorized Lead sign-off, section average at least 2.5, and no required item scored 1."
+          "section": "Required file and review window",
+          "text": "Sixty-day record shows sustained documented solo patrol activity, with operational reasons entered for missed or delayed cycles."
         },
         {
           "id": "T2-T3-C04",
-          "text": "Review 60 days of genuine solo patrol activity, missed or delayed cycles with reasons, and safe movement around active operations."
+          "section": "Required file and review window",
+          "text": "No active Step 2 Written Warning or above exists during the applicable review period; any lesser concern is documented for Manager consideration."
         },
         {
           "id": "T2-T3-C05",
-          "text": "Demonstrate Gate entry decisions under the current Gate Reference, visitor verification via Base, and vendor appointment and routing checks in the current program."
+          "section": "Required file and review window",
+          "text": "Independent Gate, Patrol, and Base qualifications are verified by observed performance and the applicable signed post records."
         },
         {
           "id": "T2-T3-C06",
-          "text": "Demonstrate designated outbound Gate Pass checks for PWADC / Pig, Purity, Arka Express, Mayfield, and Marvin Keller; return discrepancies to Dispatch without a Gate lane hold or invented third-party stop."
+          "section": "Independent Gate mastery",
+          "text": "Applies the current Gate Reference for employee, driver, visitor, and vendor access, including denied or red reads and no-badge cases."
         },
         {
           "id": "T2-T3-C07",
-          "text": "Write independent incident reports and witness statements with complete facts, chronology, evidence references, and no unsupported opinion."
+          "section": "Independent Gate mastery",
+          "text": "Verifies visitors through Base and inbound vendors through the current appointment and dock-routing program; escalates unresolved exceptions."
         },
         {
           "id": "T2-T3-C08",
-          "text": "Operate Base independently when authorized: monitor, log, bookmark relevant video, dispatch within tier authority, and escalate critical system failures."
+          "section": "Independent Gate mastery",
+          "text": "Checks designated outbound Gate Passes for PWADC/Pig, Purity, Arka Express, Mayfield, and Marvin Keller without routinely stopping other third-party trucks."
         },
         {
           "id": "T2-T3-C09",
-          "text": "Show safe emergency response, current EAP use, immediate 911 when clearly needed, and prompt Supervisor notification."
+          "section": "Independent Gate mastery",
+          "text": "For PWADC/Pig exit, verifies driver badge and compares truck, trailer, and seal identifiers with the pass."
         },
         {
           "id": "T2-T3-C10",
-          "text": "Verify no active Step 2 Written Warning or above in the review period and record required Manager review of the complete promotion file."
+          "section": "Independent Gate mastery",
+          "text": "Returns a designated truck with a pass discrepancy to Dispatch without holding it in the Gate lane or taking over load-release decisions."
+        },
+        {
+          "id": "T2-T3-C11",
+          "section": "Independent Patrol mastery",
+          "text": "Conducts genuine perimeter and interior rounds with situational awareness around traffic, forklifts, active docks, and restricted areas."
+        },
+        {
+          "id": "T2-T3-C12",
+          "section": "Independent Patrol mastery",
+          "text": "Identifies and reports access, safety, maintenance, seal, or apparent cargo concerns with location and factual details."
+        },
+        {
+          "id": "T2-T3-C13",
+          "section": "Independent Patrol mastery",
+          "text": "Coordinates dock-area concerns with Base, the Supervisor, and Dispatch or warehouse personnel without performing a separate Dock/Crosswalk post or release inspection."
+        },
+        {
+          "id": "T2-T3-C14",
+          "section": "Independent Patrol mastery",
+          "text": "Documents completed, delayed, and missed patrol activity accurately and preserves required post coverage."
+        },
+        {
+          "id": "T2-T3-C15",
+          "section": "Independent Base mastery",
+          "text": "Operates Base independently when authorized: monitors active views, handles intake, logs accurately, and maintains radio communication."
+        },
+        {
+          "id": "T2-T3-C16",
+          "section": "Independent Base mastery",
+          "text": "Dispatches within Base officer authority, seeks Supervisor direction when required, and calls 911 immediately when emergency services are clearly needed."
+        },
+        {
+          "id": "T2-T3-C17",
+          "section": "Independent Base mastery",
+          "text": "Bookmarks relevant footage with at least 30 seconds before and after the event and preserves event times and evidence chain; does not export video below Lead authority."
+        },
+        {
+          "id": "T2-T3-C18",
+          "section": "Independent Base mastery",
+          "text": "Reports critical camera or system failures promptly to the Security Manager through the current notification chain."
+        },
+        {
+          "id": "T2-T3-C19",
+          "section": "Incident, reporting, and judgment",
+          "text": "Produces independent incident reports and witness statements with complete facts, chronology, required sections, and attributed evidence references."
+        },
+        {
+          "id": "T2-T3-C20",
+          "section": "Incident, reporting, and judgment",
+          "text": "Separates direct observation, reported information, and labeled professional opinion; corrects records without changing another person's factual account."
+        },
+        {
+          "id": "T2-T3-C21",
+          "section": "Incident, reporting, and judgment",
+          "text": "Applies the current EAP to fire, ammonia, injury, spill, weather, and access emergencies within training and authority."
+        },
+        {
+          "id": "T2-T3-C22",
+          "section": "Incident, reporting, and judgment",
+          "text": "Shows sound routine access and safety judgment, de-escalates basic disagreement, and escalates threats, posturing, or persistent noncompliance."
+        },
+        {
+          "id": "T2-T3-C23",
+          "section": "Incident, reporting, and judgment",
+          "text": "Coordinates a complete handoff across Gate, Patrol, Base, and shift change while preserving qualified Gate and Base relief."
         }
       ],
       "scenarios": [
@@ -206,56 +339,128 @@
     },
     {
       "tier": "T3-T4",
-      "revision": 2,
+      "revision": 3,
       "active": true,
       "checklist": [
         {
           "id": "T3-T4-C01",
-          "text": "Review 60 days of sound independent operational judgment with minimal reversals, supported by specific access, safety, and escalation examples."
+          "section": "Prerequisites and observed record",
+          "text": "Signed post records confirm independent Gate, Patrol, and Base proficiency; post mastery was established before this leadership review."
         },
         {
           "id": "T3-T4-C02",
-          "text": "Confirm verified independent Base Station proficiency, with Manager or designee sign-off for Lead readiness and evidence across surveillance, forensic review/export, dispatch, and accurate logs."
+          "section": "Prerequisites and observed record",
+          "text": "Sixty-day review shows sound independent operational judgment with minimal leadership reversals and specific supporting examples."
         },
         {
           "id": "T3-T4-C03",
-          "text": "Confirm Gate and Patrol mastery and appropriate training across the three Security posts; dock and Crosswalk awareness remains part of patrol and response."
+          "section": "Prerequisites and observed record",
+          "text": "Independent Base proficiency is verified by a Lead or above, and Lead-level technical readiness is verified by the Security Manager or designee."
         },
         {
           "id": "T3-T4-C04",
-          "text": "Document successful mentoring of Trainees to solo proficiency and fair, observed competency evaluations within authorized sign-off scope."
+          "section": "Prerequisites and observed record",
+          "text": "Manager/designee verifies surveillance across active camera positions, forensic review and authorized clip extraction, multi-channel dispatch, and accurate Base logs."
         },
         {
           "id": "T3-T4-C05",
-          "text": "Demonstrate objective review of Officer incident reports for factual gaps, chronology, required sections, and unsupported conclusions."
+          "section": "Prerequisites and observed record",
+          "text": "Lead or above confirms objective review of Officer reports for factual gaps, chronology errors, required sections, and unsupported conclusions."
         },
         {
           "id": "T3-T4-C06",
-          "text": "Explain Lead authority for routine coordination and Base dispatch, and the need for explicit formal Acting Supervisor activation before exercising shift authority."
+          "section": "Training and development leadership",
+          "text": "Demonstrates success mentoring Trainees to solo proficiency through observed training and documented outcomes."
         },
         {
           "id": "T3-T4-C07",
-          "text": "Preserve Gate and Base qualified coverage and patrol continuity when arranging relief with the Supervisor."
+          "section": "Training and development leadership",
+          "text": "Explains the Lead's primary FTO responsibility, plans training across Gate, Patrol, and Base, and maintains training continuity across shifts."
         },
         {
           "id": "T3-T4-C08",
-          "text": "Apply the current EAP, rapid 911 notification when clearly needed, safe evacuation and responder support without claiming incident command by default."
+          "section": "Training and development leadership",
+          "text": "Evaluates live competency fairly, withholds unsupported signoffs, records evidence, and uses a Senior Officer as supporting FTO when authorized."
         },
         {
           "id": "T3-T4-C09",
-          "text": "Demonstrate impartial coaching, professional boundaries, accurate records, and escalation of formal conduct actions to the Supervisor or Manager."
+          "section": "Training and development leadership",
+          "text": "Provides specific, respectful feedback and rechecks a gap without lowering the qualification standard to solve a staffing shortage."
         },
         {
           "id": "T3-T4-C10",
-          "text": "Show sound handling of access exceptions and designated Gate Pass concerns without assuming Dispatch or warehouse release authority."
+          "section": "Training and development leadership",
+          "text": "Maintains professional boundaries and impartiality when assessing peers, friends, or officers with performance concerns."
         },
         {
           "id": "T3-T4-C11",
-          "text": "Explain video bookmarks, authorized Lead export, source preservation, recipient controls, and documented evidence transfer."
+          "section": "Operational leadership within authority",
+          "text": "Coordinates routine relief and coverage with the Supervisor, keeping Gate and Base staffed by qualified personnel and patrol activity documented."
         },
         {
           "id": "T3-T4-C12",
-          "text": "Record Supervisor recommendation with observed evidence and the Security Manager's final promotion review; a scenario answer alone is not a post qualification."
+          "section": "Operational leadership within authority",
+          "text": "Prioritizes life safety, clear radio updates, 911 when needed, and assistance to the Supervisor and incident commander without claiming their authority."
+        },
+        {
+          "id": "T3-T4-C13",
+          "section": "Operational leadership within authority",
+          "text": "Recognizes the difference between Lead operational direction and formal Acting Supervisor activation by explicit Supervisor communication for a prolonged absence."
+        },
+        {
+          "id": "T3-T4-C14",
+          "section": "Operational leadership within authority",
+          "text": "On a formal Acting Supervisor assignment, records activation and duration, manages only delegated operational needs, and notifies the Security Manager if the absence extends."
+        },
+        {
+          "id": "T3-T4-C15",
+          "section": "Operational leadership within authority",
+          "text": "Obtains Security Manager direction before formal counseling, sending an employee home for conduct/performance, or approving overtime; never self-authorizes promotion or pay."
+        },
+        {
+          "id": "T3-T4-C16",
+          "section": "Operational leadership within authority",
+          "text": "Coordinates access and designated Gate Pass concerns without taking over Dispatch or warehouse cargo release decisions."
+        },
+        {
+          "id": "T3-T4-C17",
+          "section": "Technical, evidence, and reporting leadership",
+          "text": "Reviews Officer incident reports for the 5 W's, sequence, factual support, required sections, and unlabeled opinion before Supervisor review."
+        },
+        {
+          "id": "T3-T4-C18",
+          "section": "Technical, evidence, and reporting leadership",
+          "text": "Preserves original accounts and corrections with attribution and gives complete incident and shift handoffs."
+        },
+        {
+          "id": "T3-T4-C19",
+          "section": "Technical, evidence, and reporting leadership",
+          "text": "Demonstrates appropriate video bookmarking, source preservation, Lead-level authorized export, recipient controls, and transfer documentation."
+        },
+        {
+          "id": "T3-T4-C20",
+          "section": "Technical, evidence, and reporting leadership",
+          "text": "Monitors critical Base equipment and camera issues, documents impact, and escalates outages through the proper chain."
+        },
+        {
+          "id": "T3-T4-C21",
+          "section": "Technical, evidence, and reporting leadership",
+          "text": "Models calm decisions, factual communication, and constructive coaching during concurrent calls or changing conditions."
+        },
+        {
+          "id": "T3-T4-C22",
+          "section": "Final Manager assessment",
+          "text": "Supervisor recommendation identifies observed leadership evidence, each development gap, the verbal scenario grades, and any recheck."
+        },
+        {
+          "id": "T3-T4-C23",
+          "section": "Final Manager assessment",
+          "text": "Security Manager interview is completed in person or live conversation, dated, recorded, and rated before final T4 approval."
+        },
+        {
+          "id": "T3-T4-C24",
+          "section": "Final Manager assessment",
+          "text": "Security Manager reviews signed qualifications, the 60-day record, report review ability, Base technical verification, and the interview before approving or deferring promotion."
         }
       ],
       "scenarios": [

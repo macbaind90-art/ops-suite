@@ -1,6 +1,6 @@
-# PWADC Security Operations Suite Architecture - v5.0.0
+# PWADC Security Operations Suite Architecture - v5.0.1
 
-## v5.0.0 Promotion Packet Ownership
+## v5.0.1 Promotion Packet Ownership
 
 The `promotion-packets` governed module owns `promotion-packets-data.json` schema `promotion-packets-1`. The Security Manager issues a packet through `suite:promotionPacketCommand`, which checks actor capability and loaded revision, samples six distinct scenarios with `RandomNumberGenerator.GetInt32`, freezes the checklist, employee identity, selected questions, and the Training evidence snapshot, and writes with the shared atomic backup-first path. Generic saves cannot alter packet state. The supervisor review records the paper or scan location and recommendation; the Security Manager/Admin alone records a decision. Paper answers and signatures remain physical or in controlled scans. Reprints read the frozen packet and never resample. Promotion state does not write to roster rank or compensation.
 

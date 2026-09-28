@@ -10,6 +10,53 @@ namespace PWADC.SecurityOperationsSuite
 {
     public partial class MainForm : Form
     {
+        // Upgrade the packaged checklist while preserving manager-edited scenario banks
+        // and every previously issued packet's frozen assessment.
+        private void UpgradePromotionPacketChecklists()
+        {
+            ModuleLoadResult loaded = LoadModuleDataWithSource("promotion-packets");
+            if (loaded.Source != "live-shared" && loaded.Source != "packaged-recovery-created")
+                throw new InvalidOperationException("Live Promotion Packets data is unavailable.");
+            if (!EvaluateSchemaCompatibility("promotion-packets", loaded.Data).WriteAllowed)
+                throw new InvalidOperationException("Promotion Packets schema is not writable.");
+            JsonObject data = JsonNode.Parse(loaded.Data) as JsonObject ?? throw new InvalidDataException("Promotion Packets data is invalid.");
+            JsonObject seed = JsonNode.Parse(File.ReadAllText(Path.Combine(appFolder, "seed", "promotion-packets-data.json"))) as JsonObject
+                ?? throw new InvalidDataException("Packaged Promotion Packets checklists are invalid.");
+            JsonArray templates = data["templates"] as JsonArray ?? throw new InvalidDataException("Promotion templates are missing.");
+            JsonArray seedTemplates = seed["templates"] as JsonArray ?? throw new InvalidDataException("Packaged promotion templates are missing.");
+            JsonArray audit = data["audit"] as JsonArray ?? throw new InvalidDataException("Promotion audit is missing.");
+            int changed = 0;
+            string now = DateTime.UtcNow.ToString("o");
+            foreach (JsonObject template in templates.OfType<JsonObject>())
+            {
+                string tier = template["tier"]?.ToString() ?? "";
+                JsonObject packaged = seedTemplates.OfType<JsonObject>().FirstOrDefault(x => x["tier"]?.ToString() == tier)
+                    ?? throw new InvalidDataException("Packaged checklist missing for " + tier);
+                JsonArray current = template["checklist"] as JsonArray ?? throw new InvalidDataException("Live checklist missing for " + tier);
+                JsonArray replacement = packaged["checklist"] as JsonArray ?? throw new InvalidDataException("Packaged checklist invalid for " + tier);
+                if (current.Count == replacement.Count && current.ToJsonString() == replacement.ToJsonString()) continue;
+                int oldCount = tier == "T1-T2" ? 8 : tier == "T2-T3" ? 10 : tier == "T3-T4" ? 12 : -1;
+                if (current.Count != oldCount || !current.OfType<JsonObject>().Select((x, i) =>
+                    x["id"]?.ToString() == tier + "-C" + (i + 1).ToString("D2")).All(x => x))
+                    throw new InvalidDataException("Checklist was customized for " + tier + "; Manager review is required before replacing it.");
+                int previousRevision = int.TryParse(template["revision"]?.ToString(), out int n) ? n : 1;
+                JsonArray versions = template["previousVersions"] as JsonArray ?? new JsonArray();
+                if (template["previousVersions"] == null) template["previousVersions"] = versions;
+                versions.Add(new JsonObject { ["revision"] = previousRevision, ["checklist"] = current.DeepClone(),
+                    ["scenarios"] = template["scenarios"]?.DeepClone(), ["replacedAt"] = now,
+                    ["replacedBy"] = "system-upgrade-v5.0.1" });
+                template["checklist"] = replacement.DeepClone();
+                template["revision"] = previousRevision + 1;
+                changed++;
+            }
+            if (changed == 0) return;
+            audit.Add(new JsonObject { ["at"] = now, ["action"] = "upgrade-checklists",
+                ["actorId"] = "system-upgrade-v5.0.1", ["templateCount"] = changed });
+            data["lastWrittenByAppVersion"] = AppVersion;
+            data["lastSaved"] = now;
+            SaveModuleData("promotion-packets", data.ToJsonString(JsonOptions), loaded.Revision);
+        }
+
         private static string PacketText(JsonElement obj, string name, int max = 2000, bool required = false)
         {
             string value = obj.TryGetProperty(name, out JsonElement el) && el.ValueKind == JsonValueKind.String ? el.GetString()?.Trim() ?? "" : "";
@@ -199,13 +246,34 @@ namespace PWADC.SecurityOperationsSuite
                     if (!string.Equals(actor.Role, "Admin", StringComparison.OrdinalIgnoreCase))
                         throw new UnauthorizedAccessException("Only the Security Manager/Admin can decide a promotion packet.");
                     string decision = PacketText(command, "decision", 25, true);
-                    if (decision != "Recommend promotion" && decision != "Defer" && decision != "Decline")
+                    if (decision != "Approve promotion" && decision != "Defer" && decision != "Decline")
                         throw new InvalidDataException("Unknown manager decision.");
+                    string interviewDate = PacketText(command, "interviewDate", 10);
+                    string interviewOutcome = PacketText(command, "interviewOutcome", 30);
+                    string interviewNotes = PacketText(command, "interviewNotes", 2000);
+                    if (interviewDate.Length > 0 && (interviewDate.Length != 10 ||
+                        !DateTime.TryParseExact(interviewDate, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture,
+                            System.Globalization.DateTimeStyles.None, out DateTime parsedInterviewDate) ||
+                        parsedInterviewDate.ToString("yyyy-MM-dd") != interviewDate))
+                        throw new InvalidDataException("Interview date must be an ISO date.");
+                    if (interviewOutcome.Length > 0 && interviewOutcome != "Meets standard" && interviewOutcome != "Needs development")
+                        throw new InvalidDataException("Unknown interview outcome.");
+                    bool recordsVerified = command.TryGetProperty("recordsVerified", out JsonElement recordsValue) && recordsValue.ValueKind == JsonValueKind.True;
+                    bool checklistReviewed = command.TryGetProperty("checklistReviewed", out JsonElement checklistValue) && checklistValue.ValueKind == JsonValueKind.True;
+                    bool scenariosReviewed = command.TryGetProperty("scenariosReviewed", out JsonElement scenariosValue) && scenariosValue.ValueKind == JsonValueKind.True;
+                    if (decision == "Approve promotion" && (!recordsVerified || !checklistReviewed || !scenariosReviewed))
+                        throw new InvalidDataException("Confirm signed qualifications, the completed checklist, and all six verbal scenario evaluations before approval.");
+                    if (packet["tier"]?.ToString() == "T3-T4" && decision == "Approve promotion" &&
+                        (interviewDate.Length == 0 || interviewOutcome != "Meets standard" || interviewNotes.Length < 20))
+                        throw new InvalidDataException("T4 approval requires a dated Security Manager interview rated Meets standard with a documented assessment.");
                     packet["status"] = "Decided";
                     packet["decision"] = new JsonObject { ["result"] = decision, ["notes"] = notes,
-                        ["paperReference"] = reference, ["decidedAt"] = now, ["decidedBy"] = actor.Id, ["managerName"] = actor.DisplayName };
+                        ["paperReference"] = reference, ["decidedAt"] = now, ["decidedBy"] = actor.Id, ["managerName"] = actor.DisplayName,
+                        ["interviewDate"] = interviewDate, ["interviewOutcome"] = interviewOutcome, ["interviewNotes"] = interviewNotes,
+                        ["recordsVerified"] = recordsVerified, ["checklistReviewed"] = checklistReviewed, ["scenariosReviewed"] = scenariosReviewed };
                     history.Add(new JsonObject { ["action"] = "decide", ["at"] = now, ["actorId"] = actor.Id,
-                        ["result"] = decision, ["notes"] = notes, ["paperReference"] = reference });
+                        ["result"] = decision, ["notes"] = notes, ["paperReference"] = reference,
+                        ["interviewDate"] = interviewDate, ["interviewOutcome"] = interviewOutcome, ["interviewNotes"] = interviewNotes });
                 }
                 }
             }
