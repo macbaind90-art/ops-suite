@@ -1,6 +1,6 @@
 {
   "schemaVersion": "promotion-packets-1",
-  "lastWrittenByAppVersion": "5.0.1",
+  "lastWrittenByAppVersion": "5.0.2",
   "templates": [
     {
       "tier": "T1-T2",
@@ -339,7 +339,7 @@
     },
     {
       "tier": "T3-T4",
-      "revision": 3,
+      "revision": 4,
       "active": true,
       "checklist": [
         {
@@ -465,100 +465,140 @@
       ],
       "scenarios": [
         {
-          "id": "T3-T4-S01",
-          "prompt": "An ammonia alarm sounds while you are the Senior Officer. Describe safe withdrawal, 911 and EAP notifications, how you support the Supervisor, and the conditions for any later re-entry."
+          "id": "L-01",
+          "title": "The Driver Who “Comes Here Every Week”",
+          "prompt": "You are supporting Gate operations. A driver arrives with a delivery and says he comes to PWADC every week. His company is recognized, but the information presented does not match what Security expects for the delivery. The driver says, “Receiving knows me. Just let me through and I’ll straighten it out at the dock.” Receiving is not answering immediately. Three trucks are waiting behind him and the driver is becoming irritated. A warehouse employee says, “He’s probably fine. Just send him in.” Walk through what you do.",
+          "category": "leadership",
+          "focus": "access",
+          "active": true
         },
         {
-          "id": "T3-T4-S02",
-          "prompt": "A fire alarm begins and a colleague is unaccounted for. Explain the facts you relay to the Supervisor or incident commander, responder access support, and why you do not send an officer into the affected area on your own."
+          "id": "L-02",
+          "title": "Safety Violation That Will Not Stop",
+          "prompt": "While on warehouse patrol, you observe a forklift operator repeatedly entering intersections without following the required internal safety practice. You address the operator professionally. The behavior continues. You notify the appropriate warehouse supervisor. Ten minutes later, you observe the same behavior again. The warehouse supervisor says, “I already talked to him. Don’t worry about it.” What do you do?",
+          "category": "leadership",
+          "focus": "safety",
+          "active": true
         },
         {
-          "id": "T3-T4-S03",
-          "prompt": "Two officers disagree about a denied access indication. Explain the current Gate Reference decision, calm coaching, record, and escalation without creating an exception."
+          "id": "L-03",
+          "title": "Coverage Starts Falling Apart",
+          "prompt": "You are the T3 Senior Officer on duty. One rover calls out. Another officer is due for a break. Gate traffic is unusually heavy. BASE advises that an officer is needed for a warehouse issue. The Security Supervisor is temporarily occupied and says, “Handle the rotations and keep everybody covered. Call me if you actually need me.” What do you do?",
+          "category": "leadership",
+          "focus": "personnel",
+          "active": true
         },
         {
-          "id": "T3-T4-S04",
-          "prompt": "An injury and a perimeter alarm are reported together. As Senior Officer, describe what you can safely do, how you coordinate with Base, and which resource priorities the Supervisor decides."
+          "id": "L-04",
+          "title": "BASE Gets Hit From Four Directions",
+          "prompt": "You are operating BASE. Within approximately one minute: Gate calls requesting verification of an individual; a rover reports an employee injury; another officer radios about a suspicious vehicle; and a warehouse manager calls asking for immediate camera review of an earlier incident. Walk through your priorities.",
+          "category": "leadership",
+          "focus": "priorities",
+          "active": true
         },
         {
-          "id": "T3-T4-S05",
-          "prompt": "A truck queue blocks an expected ambulance. Explain immediate safe lane steps and communications with Gate, Base, and the Supervisor while preserving qualified post coverage."
+          "id": "L-05",
+          "title": "Ammonia Report Changes Mid-Incident",
+          "prompt": "BASE receives a call from an employee near the cold side: “I smell ammonia. I don’t see anything, but it’s strong.” What do you do?",
+          "category": "leadership",
+          "focus": "hazard",
+          "active": true
         },
         {
-          "id": "T3-T4-S06",
-          "prompt": "A manager from another department asks you to bypass an access rule. Describe the response, record, and escalation through Security leadership."
+          "id": "L-06",
+          "title": "Fire Alarm, Then Conflicting Information",
+          "prompt": "BASE receives a fire-related alarm from a warehouse area. An officer checks the vicinity and reports, “I don’t see fire. I don’t see smoke.” A warehouse employee then calls from the same general area and says, “Something smells like it’s burning.” What do you do?",
+          "category": "leadership",
+          "focus": "fire",
+          "active": true
         },
         {
-          "id": "T3-T4-S07",
-          "prompt": "A bomb threat call is received at Base while you are supporting the shift. Explain accurate capture, 911/EAP and Supervisor notification, and why search or evacuation orders follow controlled procedures."
+          "id": "L-07",
+          "title": "The Officer Who Challenges You in Front of Everyone",
+          "prompt": "You direct an officer to rotate from Patrol to Gate to maintain coverage. In front of two other officers, the officer responds, “You’re not my Supervisor. You’re just trying to act important because you want T4.” The officer refuses to move. What do you do?",
+          "category": "leadership",
+          "focus": "personnel",
+          "active": true
         },
         {
-          "id": "T3-T4-S08",
-          "prompt": "Power fails and multiple cameras are lost. Explain what you document, who you notify, how you help cover vulnerable areas, and when a critical outage reaches the Security Manager."
+          "id": "L-08",
+          "title": "Supervisor Gives a Questionable Shortcut",
+          "prompt": "A busy Security Supervisor tells you, “We’re backed up. Skip part of the normal verification process for these next few drivers. Receiving is expecting a bunch of them.” You believe the instruction conflicts with established Gate procedure. What do you do?",
+          "category": "leadership",
+          "focus": "access",
+          "active": true
         },
         {
-          "id": "T3-T4-S09",
-          "prompt": "A colleague reports possible misconduct by another officer. Explain immediate safety, objective facts, confidentiality, and referral to the Supervisor without conducting independent discipline."
+          "id": "L-09",
+          "title": "Missing Person During Evacuation",
+          "prompt": "An evacuation has been initiated. Department accountability reports one employee missing. Another employee says, “I saw him go back inside because he left his keys.” What do you do?",
+          "category": "leadership",
+          "focus": "evacuation",
+          "active": true
         },
         {
-          "id": "T3-T4-S10",
-          "prompt": "The only Gate-qualified officer calls off before a busy window. Explain coverage options you raise with the Supervisor, qualified relief, and the limits on approving overtime or changing staffing."
+          "id": "L-10",
+          "title": "Injury With Pressure to Keep It Quiet",
+          "prompt": "An employee reports an injury. The employee’s supervisor says, “He’s fine. He doesn’t want to make a big deal out of it. Don’t call anyone and don’t write anything.” The employee then tells Security, “Actually, I do want to be checked out.” What happens next?",
+          "category": "leadership",
+          "focus": "injury",
+          "active": true
         },
         {
-          "id": "T3-T4-S11",
-          "prompt": "A trainee's patrol log suggests repeated missed rounds. Explain how you verify actual activity, distinguish documented operational delays, coach fairly, and refer a performance decision."
+          "id": "E-01",
+          "title": "It Is Probably Nothing",
+          "prompt": "BASE receives an alarm associated with a warehouse area. An officer checks the general area and reports, “I don’t see anything.” A minute later, an employee calls and says, “I smell something burning over here.” What do you do?",
+          "category": "emergency",
+          "focus": "medicalFire",
+          "active": true
         },
         {
-          "id": "T3-T4-S12",
-          "prompt": "Two urgent calls come from different areas. Explain immediate life safety and 911, communications with Base and the Supervisor, and how you support assigned responders without self-activating shift command."
+          "id": "E-02",
+          "title": "Ammonia Odor Becomes a Cloud",
+          "prompt": "An employee near the cold side radios BASE: “I smell ammonia pretty strong.” No visible cloud has been reported. What do you do?",
+          "category": "emergency",
+          "focus": "hazardEvac",
+          "active": true
         },
         {
-          "id": "T3-T4-S13",
-          "prompt": "Severe weather begins at shift change and two officers are out of radio contact. Explain the accountability information you collect and your handoff to the Supervisor or designated incident lead."
+          "id": "E-03",
+          "title": "Serious Employee Injury",
+          "prompt": "A rover reports, “Employee fell from a dock area. He’s awake and talking.” What information do you need and what do you do?",
+          "category": "emergency",
+          "focus": "medicalFire",
+          "active": true
         },
         {
-          "id": "T3-T4-S14",
-          "prompt": "A Senior Officer has signed a trainee competency item without observing the work. Explain how you protect post qualification, correct the record with attribution, and arrange a valid live evaluation."
+          "id": "E-04",
+          "title": "Missing Employee During Evacuation",
+          "prompt": "An evacuation is underway. Area supervisors report headcounts. One department reports, “We are missing one employee.” A coworker says, “I think he went back for his truck keys.” What do you do?",
+          "category": "emergency",
+          "focus": "hazardEvac",
+          "active": true
         },
         {
-          "id": "T3-T4-S15",
-          "prompt": "The Supervisor departs during an incident without a clear handoff. Explain immediate protective actions and how you establish who has authority; if formally activated as Acting Supervisor, what do you log and whom do you notify?"
+          "id": "E-05",
+          "title": "Power Failure Becomes More Than a Power Failure",
+          "prompt": "The facility loses power. Emergency lighting is functioning. Several people begin calling BASE asking when power will return. What do you prioritize?",
+          "category": "emergency",
+          "focus": "compound",
+          "active": true
         },
         {
-          "id": "T3-T4-S16",
-          "prompt": "A visitor reports a threat from outside the property. Explain safe access control, immediate emergency call when warranted, evidence preservation, and Supervisor coordination."
+          "id": "E-06",
+          "title": "Bomb Threat Call",
+          "prompt": "BASE answers the phone. The caller states, “There’s a bomb in your building.” What do you do?",
+          "category": "emergency",
+          "focus": "hazardEvac",
+          "active": true
         },
         {
-          "id": "T3-T4-S17",
-          "prompt": "An officer makes an unsafe Gate decision with no resulting loss. Explain factual review, coaching and training evidence, and which formal corrective decisions stay with the Supervisor or Manager."
-        },
-        {
-          "id": "T3-T4-S18",
-          "prompt": "After a serious incident, someone asks the team to resume routine work. Explain how you check coverage, unresolved hazards, and personnel accountability with the Supervisor before normal operations resume."
-        },
-        {
-          "id": "T3-T4-S19",
-          "prompt": "A camera failure coincides with suspected unauthorized entry. Explain bookmarks of available footage, temporary observation and notification, and the limits of video export authority before promotion."
-        },
-        {
-          "id": "T3-T4-S20",
-          "prompt": "A manager asks you to rewrite an officer's factual incident report. Explain how you preserve the original account, request an attributed correction, and route the report for Lead and Supervisor review."
-        },
-        {
-          "id": "T3-T4-S21",
-          "prompt": "A fuel spill affects vehicle traffic. Explain safe exclusion and emergency notifications, coordination with the Supervisor and responders, and why Security does not improvise containment beyond training."
-        },
-        {
-          "id": "T3-T4-S22",
-          "prompt": "An unverified rumor spreads during an active event. Explain how you confirm facts with Base and the Supervisor and give a clear, attributed update to officers you are authorized to direct."
-        },
-        {
-          "id": "T3-T4-S23",
-          "prompt": "A candidate is urgently needed on a post but fails a live competency assessment. Explain withholding an unsupported sign-off, maintaining qualified coverage, and planning another observed evaluation."
-        },
-        {
-          "id": "T3-T4-S24",
-          "prompt": "At shift end, an incident is unresolved and the incoming Supervisor is delayed. Explain complete pass-down, continued qualified Gate and Base coverage, and the formal activation required before assuming Acting Supervisor authority."
+          "id": "E-07",
+          "title": "Two Emergencies at Once",
+          "prompt": "While BASE is coordinating an employee medical emergency, Gate reports a vehicle attempting to follow another vehicle through controlled entry. A fire alarm appears from another part of the building. The Supervisor is responding to the medical call and is not immediately available by radio. Walk through your first 60 seconds.",
+          "category": "emergency",
+          "focus": "compound",
+          "active": true
         }
       ]
     }

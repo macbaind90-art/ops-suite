@@ -1,5 +1,11 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.0.2 - Evidence-Based T3 to T4 Evaluator Workbook
+
+- T3 to T4 print preview follows the eight evidence gates, two BASE practicals, three operational leadership observations, candidate report and shadow reviews, controlled EAP practical, factual 360 input, nine interview prompts, remediation, final decision, and package completion record from the supplied v1.1 controlled drafts.
+- Six frozen oral scenarios now draw three operational leadership exercises and three emergency exercises from the supplied detailed prompt bank, with access, personnel, medical/fire, hazard/evacuation, and compound incident coverage. Restricted evaluator answer keys remain in the separate source document.
+- Manager approval requires explicit PASS for every T4 gate in addition to the dated Security Manager interview. Existing issued questions stay frozen; an unmodified stock T4 bank upgrades with version history.
+
 ## v5.0.1 - Comprehensive Promotion Approval Packet
 
 - Expanded the T1→T2, T2→T3, and T3→T4 checklists into grouped eligibility, post, evidence, leadership, and final review standards.
