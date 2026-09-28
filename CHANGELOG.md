@@ -3,9 +3,9 @@
 ## v5.0.0 - Promotion Packets
 
 - Added a separate Promotion Packets module with frozen employee and Training snapshots, printed checklist, six random written scenarios, supervisor recommendation, manager decision, and a packet register.
-- Added Manager controls to revise and archive bank questions for future issues while preserving earlier packet versions. Added scenario banks of 10 for T1→T2, 18 for T2→T3, and 24 for T3→T4; T4 prompts prioritize leadership and incident command.
+- Added Manager controls to revise and archive bank questions for future issues while preserving earlier packet versions. Added scenario banks of 10 for T1→T2, 18 for T2→T3, and 24 for T3→T4; T3 to T4 prompts prioritize Lead leadership, incident support, training judgment, and the limits on Acting Supervisor authority. The banks and checklists reflect the current Career Framework v2.2 and post manuals.
 - Added controlled persistence, role checks, Data Health registration, employee profile links, backup/recovery coverage, and build validation. Reprints preserve the original selection.
-- Promotion recommendations remain separate from changes to rank, pay, and HR approvals.
+- Supervisors may recommend advancement with a documented Needs Development item; the Security Manager reviews the required signed qualifications and makes the final decision. Promotion packet actions do not change rank or pay.
 
 ## v4.8.4 - Training Signoff Policy
 
