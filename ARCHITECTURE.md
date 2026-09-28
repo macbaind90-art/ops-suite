@@ -1,4 +1,14 @@
-# PWADC Security Operations Suite Architecture - Current Production v4.8.1
+# PWADC Security Operations Suite Architecture - Current Production v4.8.3
+
+## v4.8.3 Training Profile and Current-Roster Enrollment
+
+Employee Profile renders rows from the governed Training module and calls the same capability-checked Training commands used by the Training workspace. Target-date edits require a reason and append an audit event. The first startup after upgrade loads live Training and Roster data after schema processing, then atomically adds missing active employee / active requirement pairs once. A completion marker and batch audit make the operation idempotent. Preexisting pairs, including closed assignments, retain their history. Future employees and requirements are not automatically enrolled. Concurrent workstation updates are guarded by the loaded Training revision.
+
+## v4.8.2 Training LKG and JSONL History
+
+On startup, a missing Training seed is created before the daily LKG capture. If a same-day current LKG already predates Training, the valid live module shows Attention and remains writable; its LKG recovery is unavailable until the next daily snapshot. The current snapshot is not replaced mid-day.
+
+Data Health, migration, and recovery histories now read both legacy indented top-level JSON objects and compact JSONL records. New append-only history writes use compact single-line JSON. Existing history files are not rewritten.
 
 ## v4.8.1 Historical RDO Catch-up
 

@@ -293,7 +293,13 @@ namespace PWADC.SecurityOperationsSuite
 
             bool failedMigration = result.LastMigrationStatus.StartsWith("Failed", StringComparison.OrdinalIgnoreCase);
             bool failedRecovery = result.LastRecoveryStatus.StartsWith("Failed", StringComparison.OrdinalIgnoreCase);
-            if (!schema.ReadAllowed || (!schema.WriteAllowed && schema.Status != "previous") || fileReadOnly || failedMigration || failedRecovery || !result.Lkg.Available || !result.Lkg.Valid)
+            // A same-day snapshot from an older release can predate a newly introduced
+            // governed module. Its live file remains writable, but recovery is unavailable
+            // until the next daily snapshot. Do not label the valid live file "Blocked".
+            bool newTrainingAwaitingLkg = definition.Id == "training" && !result.Lkg.Available &&
+                result.Lkg.CurrentToday && result.Lkg.Error == "The module is not present in the current LKG.";
+            if (!schema.ReadAllowed || (!schema.WriteAllowed && schema.Status != "previous") || fileReadOnly || failedMigration || failedRecovery ||
+                ((!result.Lkg.Available || !result.Lkg.Valid) && !newTrainingAwaitingLkg))
             {
                 result.Severity = "red";
                 result.StatusLabel = "Blocked";
@@ -303,11 +309,12 @@ namespace PWADC.SecurityOperationsSuite
                     failedRecovery ? "The most recent recovery failed verification." :
                     fileReadOnly ? "The live file is marked read-only and cannot accept protected writes." : schema.Message;
             }
-            else if (schema.Status == "previous" || !result.Lkg.CurrentToday || result.Conflicts.Count30Days >= 3 || RecentSuccessfulRecovery(result.LastRecoveryStatus, result.LastRecoveryAt))
+            else if (newTrainingAwaitingLkg || schema.Status == "previous" || !result.Lkg.CurrentToday || result.Conflicts.Count30Days >= 3 || RecentSuccessfulRecovery(result.LastRecoveryStatus, result.LastRecoveryAt))
             {
                 result.Severity = "yellow";
                 result.StatusLabel = "Attention";
-                result.Summary = schema.Status == "previous" ? "A controlled schema migration is pending." :
+                result.Summary = newTrainingAwaitingLkg ? "Training is valid and writable, but today's suite snapshot predates this new file. Recovery from LKG will become available after the next daily snapshot." :
+                    schema.Status == "previous" ? "A controlled schema migration is pending." :
                     !result.Lkg.CurrentToday ? "A valid LKG exists, but it is older than today." :
                     result.Conflicts.Count30Days >= 3 ? "The 30-day stale-write threshold has been reached." :
                     "A recent recovery event requires review.";
@@ -497,16 +504,24 @@ namespace PWADC.SecurityOperationsSuite
             {
                 string path = SchemaMigrationHistoryPath();
                 if (!File.Exists(path)) return;
-                foreach (string line in File.ReadLines(path).Reverse())
+                int invalidRecords = 0;
+                foreach (string line in ReadJsonHistoryRecords(path).Reverse())
                 {
-                    using JsonDocument doc = JsonDocument.Parse(line);
-                    JsonElement root = doc.RootElement;
-                    if (!string.Equals(JsonString(root, "module"), module, StringComparison.OrdinalIgnoreCase)) continue;
-                    bool success = root.TryGetProperty("success", out JsonElement ok) && ok.ValueKind == JsonValueKind.True;
-                    status = success ? "Succeeded" : "Failed: " + JsonString(root, "error");
-                    at = JsonString(root, "at");
-                    return;
+                    if (string.IsNullOrWhiteSpace(line)) continue;
+                    try
+                    {
+                        using JsonDocument doc = JsonDocument.Parse(line);
+                        JsonElement root = doc.RootElement;
+                        if (!string.Equals(JsonString(root, "module"), module, StringComparison.OrdinalIgnoreCase)) continue;
+                        bool success = root.TryGetProperty("success", out JsonElement ok) && ok.ValueKind == JsonValueKind.True;
+                        status = success ? "Succeeded" : "Failed: " + JsonString(root, "error");
+                        if (invalidRecords > 0) status += " (" + invalidRecords + " unreadable history record(s) skipped)";
+                        at = JsonString(root, "at");
+                        return;
+                    }
+                    catch (JsonException) { invalidRecords++; }
                 }
+                if (invalidRecords > 0) status = "No migration recorded; " + invalidRecords + " unreadable history record(s) skipped";
             }
             catch (Exception ex) { status = "History unavailable: " + ex.Message; }
         }
@@ -518,14 +533,18 @@ namespace PWADC.SecurityOperationsSuite
             {
                 string path = Path.Combine(DataHealthDirectory(), "recovery-history.jsonl");
                 if (!File.Exists(path)) return;
-                foreach (string line in File.ReadLines(path).Reverse())
+                foreach (string line in ReadJsonHistoryRecords(path).Reverse())
                 {
-                    using JsonDocument doc = JsonDocument.Parse(line);
-                    JsonElement root = doc.RootElement;
-                    if (!string.Equals(JsonString(root, "module"), module, StringComparison.OrdinalIgnoreCase)) continue;
-                    status = JsonString(root, "outcome");
-                    at = JsonString(root, "at");
-                    return;
+                    try
+                    {
+                        using JsonDocument doc = JsonDocument.Parse(line);
+                        JsonElement root = doc.RootElement;
+                        if (!string.Equals(JsonString(root, "module"), module, StringComparison.OrdinalIgnoreCase)) continue;
+                        status = JsonString(root, "outcome");
+                        at = JsonString(root, "at");
+                        return;
+                    }
+                    catch (JsonException) { }
                 }
             }
             catch { }
@@ -584,7 +603,7 @@ namespace PWADC.SecurityOperationsSuite
         private static void AppendJsonLine(string path, object row)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-            string line = JsonSerializer.Serialize(row, JsonOptions) + Environment.NewLine;
+            string line = JsonSerializer.Serialize(row) + Environment.NewLine;
             using FileStream stream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read, 16 * 1024, FileOptions.WriteThrough);
             byte[] bytes = new UTF8Encoding(false).GetBytes(line);
             stream.Write(bytes, 0, bytes.Length);
@@ -606,7 +625,7 @@ namespace PWADC.SecurityOperationsSuite
                 string eventsPath = Path.Combine(dir, "health-events.jsonl");
                 if (!File.Exists(eventsPath)) return 0;
                 int count = 0;
-                foreach (string line in File.ReadLines(eventsPath))
+                foreach (string line in ReadJsonHistoryRecords(eventsPath))
                 {
                     try
                     {
@@ -659,16 +678,36 @@ namespace PWADC.SecurityOperationsSuite
         {
             var rows = new List<Dictionary<string, object?>>();
             if (!File.Exists(path)) return rows;
-            foreach (string line in File.ReadLines(path).Reverse().Take(limit))
+            foreach (string line in ReadJsonHistoryRecords(path).Reverse())
             {
                 try
                 {
                     Dictionary<string, object?>? row = JsonSerializer.Deserialize<Dictionary<string, object?>>(line, JsonOptions);
                     if (row != null) rows.Add(row);
+                    if (rows.Count >= limit) break;
                 }
                 catch { }
             }
             return rows;
+        }
+
+        // Earlier releases wrote indented JSON into .jsonl files. Reassemble those
+        // top-level objects while also accepting the compact records written now.
+        private static IEnumerable<string> ReadJsonHistoryRecords(string path)
+        {
+            var record = new StringBuilder();
+            foreach (string line in File.ReadLines(path))
+            {
+                if (line.Length > 0 && line[0] == '{') record.Clear();
+                if (record.Length == 0 && (line.Length == 0 || line[0] != '{')) continue;
+                record.AppendLine(line);
+                if (line.Length > 0 && line[^1] == '}' &&
+                    (line[0] == '}' || line[0] == '{'))
+                {
+                    yield return record.ToString();
+                    record.Clear();
+                }
+            }
         }
 
         private Dictionary<string, int> CountModuleRecords(string module, string json)

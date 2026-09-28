@@ -17,7 +17,7 @@ namespace PWADC.SecurityOperationsSuite
         private readonly string appFolder;
         private readonly string indexPath;
 
-        private const string AppVersion = "4.8.1";
+        private const string AppVersion = "4.8.3";
         private const string DefaultRoot = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         private const string SettingsFileName = "suite-settings.json";
         private SuiteSettings settings = new SuiteSettings();
@@ -51,11 +51,17 @@ namespace PWADC.SecurityOperationsSuite
                 try
                 {
                     EnsureFolders();
+                    // A newly introduced governed file must exist before today's suite-wide LKG
+                    // is captured. Existing live Training data is never replaced here.
+                    if (!File.Exists(Path.Combine(settings.DataRoot, "Data", ModuleFileName("training"))))
+                        LoadModuleDataWithSource("training");
                     DailyLkgResult lkg = EnsureDailyLastKnownGoodSnapshot();
                     if (!lkg.Success) MessageBox.Show(lkg.Message, "PWADC Daily Last-Known-Good", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     SchemaInitializationResult schemaInit = EnsureLiveSchemaMetadata();
                     StartupMigrationSummary migrationSummary = ProcessStartupSchemaMigrations();
                     var startupSchemaIssues = new List<string>();
+                    try { AssignCurrentTrainingToCurrentEmployees(); }
+                    catch (Exception ex) { startupSchemaIssues.Add("Training current-roster assignment is pending: " + ex.Message); }
                     startupSchemaIssues.AddRange(schemaInit.Issues);
                     startupSchemaIssues.AddRange(migrationSummary.Warnings);
                     foreach (SchemaMigrationPreview blocked in migrationSummary.Blocked) startupSchemaIssues.Add(blocked.ModuleLabel + ": " + blocked.Message);

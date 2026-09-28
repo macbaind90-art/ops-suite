@@ -1,4 +1,4 @@
-# PWADC Security Operations Suite v4.8.1
+# PWADC Security Operations Suite v4.8.3
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
 ## Versioning Standard - Effective v4.0.0
@@ -7,7 +7,19 @@ PWADC Security Operations Suite now uses a three-part application version: **Maj
 - **Feature** - significant feature upgrade, module rebuild, or new operational capability.
 - **Minor** - fixes and smaller upgrades within the current feature line.
 
-Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.8.1` = the current minor release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+Examples: `4.0.0` = the major baseline; `4.1.0` = a feature-level release; `4.1.3` = a minor upgrade within the 4.1 feature line; `4.8.3` = the current minor release. Windows manifest/file metadata may retain a fourth numeric `0` where Windows requires four-part version metadata, but the PWADC application version remains three-part.
+
+## v4.8.3 - Training on Employee Profiles
+
+- Employee Profiles show each Training assignment and its evidence with direct actions to assign, observe, sign off, change a target date, and inspect history. Role capabilities and independent signoff rules still apply.
+- At the first startup after upgrade, the app assigns every active Training requirement to every current active roster employee. Existing assignments and evidence, including deliberately closed assignments, are preserved; the one-time batch is audited and saved through the governed Training path. Assignment does not establish completion or qualification.
+- New employees and requirements added later continue to use explicit assignment.
+
+## v4.8.2 - Training Data Health & History Fix
+
+- New Training data is created before the first daily suite snapshot when the file is absent. Existing Training data is preserved.
+- If an earlier snapshot from the same day lacks Training, Data Health shows Attention while the live file is valid and writable. LKG recovery for Training becomes available after the next daily snapshot.
+- Data Health and migration history can read earlier indented records; new history entries use one compact JSON record per line.
 
 ## v4.8.1 - Daily Entry RDO Catch-up
 

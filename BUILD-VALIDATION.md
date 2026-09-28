@@ -1,9 +1,24 @@
 # PWADC Security Operations Suite - Current Build Validation
 
 ## Build
-- Version: **4.8.1**
-- Release: **Daily Entry RDO Catch-up**
-- Baseline upgraded: **v4.8.0 - Governed Training & Qualification**
+- Version: **4.8.3**
+- Release: **Training on Employee Profiles**
+- Baseline upgraded: **v4.8.2 - Training Data Health & History Fix**
+
+## Training Profile and Current-Roster Contract
+
+- Profile shows all named Training assignments and protected edit actions: **PASS**
+- One-time bulk enrollment is active-roster/active-requirement scoped and preserves existing pairs: **PASS**
+- New rows contain no evidence or signoff; batch audit and revision-checked save: **PASS**
+- Due-date edits require a reason and preserve event history: **PASS**
+- .NET 10 Windows compile/publish: **PENDING GitHub Actions run**
+
+## Training Data Health & History Contract
+
+- Missing Training seed is initialized before first daily LKG capture: **PASS**
+- Same-day LKG that predates Training shows Attention; recovery unavailable until next daily snapshot: **PASS**
+- Existing multiline JSON history is readable and future history is compact JSONL: **PASS**
+- .NET 10 Windows compile/publish: **PENDING GitHub Actions run**
 
 ## Daily Entry RDO Catch-up Contract
 

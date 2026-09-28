@@ -1,5 +1,15 @@
 # PWADC Security Operations Suite - Changelog
 
+## v4.8.3 - Training on Employee Profiles
+
+- Added direct Training management to Employee Profiles: assignment, observation, independent signoff, due-date edit with reason, evidence history, and print record.
+- Added one-time, revision-checked enrollment of current active Training requirements for current active roster employees at upgrade. Existing assignments are never duplicated or reopened. New assignments start as Assigned with no evidence or signoff.
+
+## v4.8.2 - Training Data Health & History Fix
+
+- Seeded missing Training before a new daily suite snapshot; classified an existing same-day snapshot without Training as Attention, with recovery unavailable until the next daily snapshot.
+- Reassembled prior indented JSON history records for Data Health and migration views, and wrote future history entries as compact JSONL. Existing history is retained.
+
 ## v4.8.1 - Daily Entry RDO Catch-up
 
 - Filled blank RDO cells in the prior 90 days when Daily Entry opens after missed days.

@@ -7,6 +7,7 @@ const need=(hay,needle,msg)=>{if(!hay.includes(needle))throw new Error(msg||`Mis
 
 const registry=read('MainForm.GovernedModules.cs');
 const health=read('MainForm.DataHealthRecovery.cs');
+const migrations=read('MainForm.SchemaMigrations.cs');
 const bridge=read('MainForm.Bridge.cs');
 const reliability=read('MainForm.DataReliability.cs');
 const storage=read('MainForm.Storage.cs');
@@ -26,6 +27,17 @@ need(registry,'One authoritative ownership boundary','Governed registry ownershi
 need(health,'Count30Days','30-day stale-write health count missing.');
 need(health,'Count30Days >= 3','Three-conflict yellow threshold missing.');
 need(health,'ReadLkgModuleState','LKG verification missing.');
+const trainingSeed=main.indexOf('LoadModuleDataWithSource("training");');
+const dailyCapture=main.indexOf('EnsureDailyLastKnownGoodSnapshot();');
+if(trainingSeed<0||dailyCapture<0||trainingSeed>dailyCapture)throw new Error('Missing Training seed must be initialized before the first daily LKG capture.');
+need(health,'newTrainingAwaitingLkg','Same-day snapshot that predates Training needs a distinct Attention state.');
+need(health,'result.Lkg.CurrentToday && result.Lkg.Error == "The module is not present in the current LKG."','Training exception must be limited to the same-day snapshot that predates the new file.');
+need(health,'result.RecoveryAvailable = definition.RecoveryEligible && result.Lkg.Valid','Training without a verified LKG must not be restorable.');
+need(health,'ReadJsonHistoryRecords(path).Reverse()','History summary must read legacy multi-line records.');
+need(health,'ReadJsonHistoryRecords(eventsPath)','Health-event count must read legacy multi-line records.');
+need(health,'JsonSerializer.Serialize(row) + Environment.NewLine','New health/recovery history must use compact JSONL.');
+need(migrations,'ReadJsonHistoryRecords(path).Reverse()','Migration history must read legacy multi-line records.');
+need(migrations,'                });\n\n                for (int attempt','New migration history must use compact JSONL.');
 need(health,'PreviewLastKnownGood','LKG preview backend missing.');
 need(health,'RestoreLastKnownGood','LKG restore backend missing.');
 need(health,'WriteRecoveryAudit','Permanent recovery audit missing.');
@@ -57,3 +69,4 @@ console.log('Data Health & Recovery Dashboard validation PASS');
 console.log('- Admin-only governed health, LKG preview/restore, recovery auditing, and metadata-only diagnostics are wired');
 console.log('- Persistent severity indicator, 30-day conflict threshold, event-driven checks, and specialist-data boundary are enforced');
 console.log('- Restore All is absent and existing live files are never silently replaced from packaged seeds');
+console.log('- New Training LKG timing, same-day Attention state, legacy history reads, and compact JSONL writes are covered');

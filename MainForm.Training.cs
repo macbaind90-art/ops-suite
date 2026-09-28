@@ -9,6 +9,57 @@ namespace PWADC.SecurityOperationsSuite
 {
     public partial class MainForm : Form
     {
+        // One-time release enrollment. This is a governed, revision-checked write;
+        // it never creates observations, signoffs, or qualifications.
+        private void AssignCurrentTrainingToCurrentEmployees()
+        {
+            ModuleLoadResult loaded = LoadModuleDataWithSource("training");
+            if (loaded.Source != "live-shared" && loaded.Source != "packaged-recovery-created")
+                throw new InvalidOperationException("Live Training data is unavailable for current-roster assignment.");
+            if (!EvaluateSchemaCompatibility("training", loaded.Data).WriteAllowed)
+                throw new InvalidOperationException("Training schema is not writable for current-roster assignment.");
+            JsonObject data = JsonNode.Parse(loaded.Data) as JsonObject ?? throw new InvalidDataException("Training data is invalid.");
+            if (data["currentRosterTrainingAssignedAt"] != null) return;
+
+            ModuleLoadResult rosterLoad = LoadModuleDataWithSource("roster");
+            if (rosterLoad.Source != "live-shared" && rosterLoad.Source != "packaged-recovery-created")
+                throw new InvalidOperationException("Live Roster data is unavailable for Training assignment.");
+            JsonObject roster = JsonNode.Parse(rosterLoad.Data) as JsonObject ?? throw new InvalidDataException("Roster data is invalid.");
+            JsonArray employees = roster["employees"] as JsonArray ?? throw new InvalidDataException("Roster employees are missing.");
+            JsonArray requirements = data["requirements"] as JsonArray ?? throw new InvalidDataException("Training requirements are missing.");
+            JsonArray assignments = data["assignments"] as JsonArray ?? throw new InvalidDataException("Training assignments are missing.");
+            JsonArray audit = data["audit"] as JsonArray ?? throw new InvalidDataException("Training audit is missing.");
+            string[] currentEmployees = employees.OfType<JsonObject>()
+                .Where(x => !string.Equals(x["archived"]?.ToString(), "true", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(x["status"]?.ToString(), "archived", StringComparison.OrdinalIgnoreCase))
+                .Select(x => x["id"]?.ToString() ?? "").Where(x => x.Length > 0).Distinct().ToArray();
+            string[] activeRequirements = requirements.OfType<JsonObject>()
+                .Where(x => !string.Equals(x["active"]?.ToString(), "false", StringComparison.OrdinalIgnoreCase))
+                .Select(x => x["id"]?.ToString() ?? "").Where(x => x.Length > 0).Distinct().ToArray();
+            if (currentEmployees.Length == 0 || activeRequirements.Length == 0) return;
+
+            var existing = assignments.OfType<JsonObject>().Select(x =>
+                (Employee: x["employeeId"]?.ToString() ?? "", Requirement: x["requirementId"]?.ToString() ?? "")).ToHashSet();
+            string now = DateTime.UtcNow.ToString("o");
+            int added = 0;
+            foreach (string employeeId in currentEmployees)
+            foreach (string requirementId in activeRequirements)
+            {
+                if (!existing.Add((employeeId, requirementId))) continue;
+                assignments.Add(new JsonObject { ["id"] = Guid.NewGuid().ToString("N"), ["employeeId"] = employeeId,
+                    ["requirementId"] = requirementId, ["assignedAt"] = now, ["dueDate"] = "", ["status"] = "active",
+                    ["assignedBy"] = "system-upgrade-v4.8.3", ["events"] = new JsonArray() });
+                added++;
+            }
+            audit.Add(new JsonObject { ["at"] = now, ["actorId"] = "system-upgrade-v4.8.3",
+                ["action"] = "assign-current-roster", ["employeeCount"] = currentEmployees.Length,
+                ["requirementCount"] = activeRequirements.Length, ["assignmentsAdded"] = added });
+            data["currentRosterTrainingAssignedAt"] = now;
+            data["lastWrittenByAppVersion"] = AppVersion;
+            data["lastSaved"] = now;
+            SaveModuleData("training", data.ToJsonString(JsonOptions), loaded.Revision);
+        }
+
         private static string TrainingText(JsonElement value, string name) => value.TryGetProperty(name, out JsonElement item) && item.ValueKind == JsonValueKind.String ? item.GetString()?.Trim() ?? "" : "";
         private static string TrainingRequired(JsonElement value, string name, int max = 500)
         {
@@ -36,7 +87,7 @@ namespace PWADC.SecurityOperationsSuite
             string action = TrainingRequired(command, "action", 30);
             string capability = action switch
             {
-                "requirement" or "assign" or "archive" or "closeAssignment" => "training.manage",
+                "requirement" or "assign" or "archive" or "closeAssignment" or "updateDueDate" => "training.manage",
                 "record" or "acknowledge" or "retrain" => "training.record",
                 "signoff" or "void" => "training.signoff",
                 _ => throw new InvalidDataException("Unknown training command.")
@@ -108,6 +159,21 @@ namespace PWADC.SecurityOperationsSuite
                 if (assignment["status"]?.ToString() != "active") throw new InvalidDataException("Assignment is already closed.");
                 assignment["status"] = "archived";
                 assignment["closedAt"] = now; assignment["closedBy"] = actor.Id; assignment["closeReason"] = reason;
+                subject = assignment["id"]!.ToString();
+            }
+            else if (action == "updateDueDate")
+            {
+                JsonObject assignment = TrainingFind(assignments, TrainingRequired(command, "assignmentId", 80));
+                if (assignment["status"]?.ToString() != "active") throw new InvalidDataException("Assignment is not active.");
+                string oldDate = assignment["dueDate"]?.ToString() ?? "";
+                string dueDate = TrainingDate(command, "dueDate");
+                string reason = TrainingRequired(command, "notes", 2000);
+                if (reason.Length < 10) throw new InvalidDataException("A reason of at least 10 characters is required.");
+                assignment["dueDate"] = dueDate;
+                (assignment["events"] as JsonArray ?? throw new InvalidDataException("Assignment event history is invalid."))
+                    .Add(new JsonObject { ["id"] = id, ["type"] = "due-date-change", ["date"] = dueDate,
+                        ["at"] = now, ["actorId"] = actor.Id, ["actorName"] = actor.DisplayName,
+                        ["oldDueDate"] = oldDate, ["newDueDate"] = dueDate, ["notes"] = reason });
                 subject = assignment["id"]!.ToString();
             }
             else

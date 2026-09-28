@@ -732,7 +732,7 @@ namespace PWADC.SecurityOperationsSuite
                     recordCounts = preview.RecordCounts,
                     success,
                     error
-                }, JsonOptions);
+                });
 
                 for (int attempt = 0; attempt < 40; attempt++)
                 {
@@ -757,15 +757,13 @@ namespace PWADC.SecurityOperationsSuite
             var rows = new List<Dictionary<string, object?>>();
             if (File.Exists(path))
             {
-                string[] lines = File.ReadAllLines(path);
-                int start = Math.Max(0, lines.Length - 100);
-                for (int i = lines.Length - 1; i >= start; i--)
+                foreach (string line in ReadJsonHistoryRecords(path).Reverse())
                 {
-                    if (string.IsNullOrWhiteSpace(lines[i])) continue;
                     try
                     {
-                        Dictionary<string, object?>? row = JsonSerializer.Deserialize<Dictionary<string, object?>>(lines[i], JsonOptions);
+                        Dictionary<string, object?>? row = JsonSerializer.Deserialize<Dictionary<string, object?>>(line, JsonOptions);
                         if (row != null) rows.Add(row);
+                        if (rows.Count >= 100) break;
                     }
                     catch { }
                 }
