@@ -3,7 +3,7 @@
 ## Build
 - Version: **5.0.0**
 - Release: **Promotion Packets**
-- Validation: promotion bank and frozen issue checks added to Windows Actions; Windows build pending branch CI.
+- Validation: Promotion Packets validator, existing regression suite, .NET build, and Windows publish **PASS** ([run 36458907401](https://github.com/macbaind90-art/ops-suite/actions/runs/36458907401)).
 - Baseline upgraded: **v4.8.3 - Training on Employee Profiles**
 
 ## Training Signoff Policy Contract
