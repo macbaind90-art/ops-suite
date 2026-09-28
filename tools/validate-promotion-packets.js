@@ -3,7 +3,7 @@ const read=p=>fs.readFileSync(p,'utf8');
 const need=(hay,needle,msg)=>{if(!hay.includes(needle))throw new Error(msg||'Missing: '+needle)};
 const seed=JSON.parse(read('app/seed/promotion-packets-data.json'));
 if(seed.schemaVersion!=='promotion-packets-1')throw new Error('Wrong packet schema');
-const expected={'T1-T2':10,'T2-T3':18,'T3-T4':17};
+const expected={'T1-T2':10,'T2-T3':18,'T3-T4':25};
 if(seed.templates.length!==3)throw new Error('Expected exactly three promotion templates');
 for(const template of seed.templates){
   if(template.scenarios.length!==expected[template.tier])throw new Error('Unexpected bank size for '+template.tier);
@@ -13,7 +13,18 @@ for(const template of seed.templates){
   if(template.checklist.some(x=>!x.section||!x.text||x.text.length<55))throw new Error('Checklist needs grouped, substantive standards');
   if(new Set(template.checklist.map(x=>x.id)).size!==template.checklist.length)throw new Error('Duplicate checklist IDs');
 }
+for(const tier of ['T1-T2','T2-T3']){
+  const template=seed.templates.find(x=>x.tier===tier);
+  const fourth=tier==='T1-T2'?'professional':'incident';
+  for(const [category,count] of [['gate',2],['patrol',2],['base',1],[fourth,1]])
+    if(template.scenarios.filter(x=>x.category===category).length<count)throw Error(tier+' missing '+category+' selection coverage');
+  if(template.scenarios.some(x=>x.prompt.length<250||!x.inject||x.inject.length<70))
+    throw Error(tier+' needs detailed prompts and evaluator fact changes');
+}
 const t4=seed.templates.find(x=>x.tier==='T3-T4');
+if(t4.scenarios.length<=seed.templates.find(x=>x.tier==='T2-T3').scenarios.length)throw Error('T4 bank must be larger than lower tiers');
+for(let i=1;i<=8;i++)if(!t4.scenarios.some(x=>x.id==='C-'+String(i).padStart(2,'0')&&x.category==='leadership'))
+  throw Error('Restricted source conduct prompt missing: C-'+i);
 for(const [category,focus] of [['leadership','access'],['leadership','personnel'],['emergency','medicalFire'],['emergency','hazardEvac'],['emergency','compound']])
   if(!t4.scenarios.some(x=>x.category===category&&x.focus===focus))throw Error('T4 bank missing '+category+' '+focus);
 const byTier=Object.fromEntries(seed.templates.map(t=>[t.tier,t]));
@@ -34,6 +45,7 @@ need(host,'["previousVersions"] = history','Bank edits must preserve old templat
 need(browser,'openPromotionBank','Manager must be able to inspect and edit banks');
 need(browser,'p.scenarios.map((x,i)=>','Reprint must use issued questions');
 for(const text of ['Draw("leadership", "access")','Draw("leadership", "personnel")','Draw("emergency", "medicalFire")','Draw("emergency", "hazardEvac")','Draw("emergency", "compound")','All eight T4 evidence gates must be recorded PASS'])need(host,text,'T4 coverage or approval gate missing: '+text);
+for(const text of ['DrawTier("gate", 2)','DrawTier("patrol", 2)','DrawTier("base", 1)','stockSeventeen','system-upgrade-v5.0.3','All evidence gates must be recorded PASS'])need(host,text,'Lower promotion coverage or approval gate missing: '+text);
 need(host,'["trainingEvidence"] = evidence','Issue must capture training evidence');
 for(const marker of ['"delete" or "restore" => "promotion.manage"','["deletedPreviousStatus"]','packet["status"] = "Deleted"','packet["status"] = previous','history.Add(new JsonObject { ["action"] = action','Only the Security Manager/Admin may delete or restore'])need(host,marker,'Packet delete/restore audit or role guard missing: '+marker);
 for(const marker of ['openPromotionDeleteModal','savePromotionDelete','Show deleted packets',"p.status!=='Deleted'",'promotionCommand(action,{packetId:id,notes})'])need(browser,marker,'Packet delete/restore UI missing: '+marker);
@@ -52,12 +64,24 @@ const ctx={console,Date,hasCapability:()=>true,PWADCModuleRegistry:{register(){}
 vm.createContext(ctx);vm.runInContext(browser,ctx);
 for(const tier of Object.keys(expected)){
   ctx.sample={id:'test',tier,status:'Issued',employee:{name:'Candidate',eid:'1'},issuedAt:'2026-09-28',templateRevision:3,
-    checklist:byTier[tier].checklist,scenarios:tier==='T3-T4'?[...byTier[tier].scenarios.filter(x=>x.category==='leadership').slice(0,3),...byTier[tier].scenarios.filter(x=>x.category==='emergency').slice(0,3)]:byTier[tier].scenarios.slice(0,6),trainingEvidence:[]};
+    checklist:byTier[tier].checklist,scenarios:tier==='T3-T4'?[...byTier[tier].scenarios.filter(x=>x.category==='leadership').slice(0,3),...byTier[tier].scenarios.filter(x=>x.category==='emergency').slice(0,3)]:[...byTier[tier].scenarios.filter(x=>x.category==='gate').slice(0,2),...byTier[tier].scenarios.filter(x=>x.category==='patrol').slice(0,2),...byTier[tier].scenarios.filter(x=>x.category==='base').slice(0,1),...byTier[tier].scenarios.filter(x=>x.category===('T1-T2'===tier?'professional':'incident')).slice(0,1)],trainingEvidence:[]};
   vm.runInContext('promotionPackets.packets=[sample];printPromotionPacket("test")',ctx);
   if(!ctx.preview||ctx.preview.auto!==false||ctx.preview.orientation!=='portrait')throw Error('Packet must open in preview before print');
   if((ctx.preview.html.match(/Evaluator grade:/g)||[]).length!==6)throw Error('Packet needs six evaluator grades');
   if(ctx.preview.html.includes('Candidate written scenarios'))throw Error('Verbal answers should not be a written candidate form');
   if(!ctx.preview.html.includes(tier==='T3-T4'?'Security Manager final determination':'Security Manager final decision'))throw Error('Manager approval page missing');
+  if(tier!=='T3-T4'){
+    const gateCount=tier==='T1-T2'?5:6;
+    for(const item of byTier[tier].checklist)if(!ctx.preview.html.includes(item.text))throw Error('Printed workbook omitted '+item.id);
+    if((ctx.preview.html.match(/Evaluator follow-up after initial answer:/g)||[]).length!==6)throw Error('Every lower-tier scenario needs its evaluator follow-up');
+    if(!ctx.preview.html.includes('Evidence extension and reevaluation plan'))throw Error('Lower-tier remediation page missing');
+    if(!ctx.preview.html.includes('Supervisor evidence review and recommendation'))throw Error('Lower-tier supervisor record missing');
+    if((ctx.preview.html.match(/Gate [1-6] ·/g)||[]).length<gateCount)throw Error('Lower-tier evidence gates missing');
+    ctx.sample.status='Reviewed';ctx.sample.review={recommendation:'Recommend',reviewerName:'Supervisor',notes:'Evidence reviewed'};
+    ctx.lastModal='';ctx.showModal=html=>{ctx.lastModal=html};
+    vm.runInContext('promotionPackets.packets=[sample];openPromotionDecisionModal("test")',ctx);
+    if((ctx.lastModal.match(/id="promoGate\d+"/g)||[]).length!==gateCount)throw Error('Manager approval does not assess every gate');
+  }
   if(tier==='T3-T4'){
     if(!ctx.preview.html.includes('Security Manager final candidate interview'))throw Error('T4 Manager interview page missing');
     if((ctx.preview.html.match(/Gate [1-8] ·/g)||[]).length<8)throw Error('All eight evidence gates must be printable');
@@ -66,5 +90,5 @@ for(const tier of Object.keys(expected)){
     if(ctx.preview.html.includes('Expected Decision Points')||ctx.preview.html.includes('Critical Failure Conditions'))throw Error('Restricted evaluator answer keys must not be included in the packet');
   }
 }
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.2</Version>');
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.3</Version>');
 console.log('Promotion Packets validation PASS');

@@ -1,10 +1,10 @@
 {
   "schemaVersion": "promotion-packets-1",
-  "lastWrittenByAppVersion": "5.0.2",
+  "lastWrittenByAppVersion": "5.0.3",
   "templates": [
     {
       "tier": "T1-T2",
-      "revision": 3,
+      "revision": 4,
       "active": true,
       "checklist": [
         {
@@ -101,49 +101,89 @@
       "scenarios": [
         {
           "id": "T1-T2-S01",
-          "prompt": "A driver has no working badge and says Dispatch expects them. As a Trainee, explain your words and actions, how you hold for an Officer or Supervisor, and what you record. What if the driver refuses to wait?"
+          "prompt": "A driver has no working badge and says Dispatch expects them. As a Trainee, explain your words and actions, how you hold for an Officer or Supervisor, and what you record. What if the driver refuses to wait?\n\nAdditional operational facts: The lane is filling. The driver says the delivery is urgent and asks you to wave the truck through while Dispatch sorts out the badge. You are the Trainee with a qualified Officer available by radio.",
+          "title": "Driver without a badge",
+          "category": "gate",
+          "inject": "The driver says they will drive around the lane control and asks for your name. What do you say and whom do you notify?",
+          "active": true
         },
         {
           "id": "T1-T2-S02",
-          "prompt": "A visitor says they have an appointment but cannot be verified through the standard Base process. As a Trainee, explain how you seek qualified assistance and keep the visitor outside pending a decision."
+          "prompt": "A visitor says they have an appointment but cannot be verified through the standard Base process. As a Trainee, explain how you seek qualified assistance and keep the visitor outside pending a decision.\n\nAdditional operational facts: The visitor identifies an employee they are meeting, but that employee has not answered Base's call. A nearby employee says they recognize the visitor and asks you to let them inside while they make another call.",
+          "title": "Visitor with unconfirmed appointment",
+          "category": "gate",
+          "inject": "The visitor asks to wait inside because of the weather. Explain the safe waiting arrangement and who can authorize access.",
+          "active": true
         },
         {
           "id": "T1-T2-S03",
-          "prompt": "A badge reader shows red during a busy arrival period. What can you do as a Trainee to control the immediate situation, and who makes the access decision?"
+          "prompt": "A badge reader shows red during a busy arrival period. What can you do as a Trainee to control the immediate situation, and who makes the access decision?\n\nAdditional operational facts: The person insists the badge worked yesterday. Vehicles are queued and a second officer is occupied at the opposite lane. You have the current Gate Reference, but the reason for the red read is not immediately clear.",
+          "title": "Denied badge in a busy lane",
+          "category": "gate",
+          "inject": "A manager from another department tells you to open the gate. Explain the Trainee's authority limit and the escalation you make.",
+          "active": true
         },
         {
           "id": "T1-T2-S04",
-          "prompt": "While accompanying a qualified officer on patrol, you find a propped exterior door. Describe safe observations, radio notification, and factual documentation without assuming authority to clear the area alone."
+          "prompt": "While accompanying a qualified officer on patrol, you find a propped exterior door. Describe safe observations, radio notification, and factual documentation without assuming authority to clear the area alone.\n\nAdditional operational facts: You and the qualified patrol officer see an exterior door propped open near active truck movement. There is no visible person nearby, and the area beyond the doorway is not in your direct line of sight.",
+          "title": "Propped door on a supervised patrol",
+          "category": "patrol",
+          "inject": "You hear movement inside before the qualified officer reaches the door. Explain where you stand, what you radio, and what you avoid doing alone.",
+          "active": true
         },
         {
           "id": "T1-T2-S05",
-          "prompt": "At post relief, the outgoing officer mentions an unresolved alarm without a location or disposition. What facts do you ask for, and when do you involve the Lead or Supervisor before accepting the assignment?"
+          "prompt": "At post relief, the outgoing officer mentions an unresolved alarm without a location or disposition. What facts do you ask for, and when do you involve the Lead or Supervisor before accepting the assignment?\n\nAdditional operational facts: The outgoing officer is leaving quickly and says only that the alarm was probably false. You have not been told when it occurred, where it happened, whether anyone responded, or what remains open.",
+          "title": "Incomplete alarm pass-down",
+          "category": "professional",
+          "inject": "The officer says, 'Just write resolved in the log so I can leave.' Explain the accurate handoff and when the Lead or Supervisor gets involved.",
+          "active": true
         },
         {
           "id": "T1-T2-S06",
-          "prompt": "During a supervised patrol, a forklift approaches a pedestrian. Describe immediate safe warning, where you position yourself, whom you notify, and the facts to document."
+          "prompt": "During a supervised patrol, a forklift approaches a pedestrian. Describe immediate safe warning, where you position yourself, whom you notify, and the facts to document.\n\nAdditional operational facts: During a supervised round, a forklift approaches a blind intersection while a pedestrian starts across. You are several steps away and cannot safely stop the equipment yourself.",
+          "title": "Forklift and pedestrian near miss",
+          "category": "patrol",
+          "inject": "After the immediate hazard passes, the operator disputes what you saw. Explain how you record firsthand facts and whom you inform.",
+          "active": true
         },
         {
           "id": "T1-T2-S07",
-          "prompt": "While observing at Base, you hear a report of an injury with an unclear location. Explain the information you relay, when 911 may be called, and why a qualified Base officer or Supervisor directs the response."
+          "prompt": "While observing at Base, you hear a report of an injury with an unclear location. Explain the information you relay, when 911 may be called, and why a qualified Base officer or Supervisor directs the response.\n\nAdditional operational facts: At Base familiarization, you hear 'someone is hurt in the warehouse' over the radio. The qualified Base officer is taking another urgent call; you do not yet know the exact location, injury type, or immediate hazards.",
+          "title": "Injury report with uncertain location",
+          "category": "base",
+          "inject": "A second caller says the person may be unresponsive. Explain what you relay and whether a clear emergency permits an immediate 911 call.",
+          "active": true
         },
         {
           "id": "T1-T2-S08",
-          "prompt": "During Base familiarization, a critical camera view fails. What information do you pass to the qualified Base officer and Supervisor, and what system actions are outside Trainee authority?"
+          "prompt": "During Base familiarization, a critical camera view fails. What information do you pass to the qualified Base officer and Supervisor, and what system actions are outside Trainee authority?\n\nAdditional operational facts: A critical camera image goes black while the qualified Base officer is coordinating a separate incident. You can see a system warning but do not know whether recording has stopped.",
+          "title": "Critical camera view unavailable",
+          "category": "base",
+          "inject": "Another employee asks you to change system settings to restore the view. Explain what you report, how you preserve the time, and the authority boundary.",
+          "active": true
         },
         {
           "id": "T1-T2-S09",
-          "prompt": "A driver presents information that conflicts with the current Gate Reference. Explain how a Trainee holds for a qualified Officer or Supervisor and avoids making an independent exception."
+          "prompt": "A driver presents information that conflicts with the current Gate Reference. Explain how a Trainee holds for a qualified Officer or Supervisor and avoids making an independent exception.\n\nAdditional operational facts: The paperwork, driver name, and expected delivery details do not agree. The driver says Receiving can fix the record after entry, and a line of trucks is backing up behind them.",
+          "title": "Gate information conflicts with reference",
+          "category": "gate",
+          "inject": "A warehouse employee says the driver is familiar. Explain what a Trainee may do to maintain a safe hold and who resolves the discrepancy.",
+          "active": true
         },
         {
           "id": "T1-T2-S10",
-          "prompt": "A coworker asks you to omit a required log entry because the shift is busy. Explain how you make a truthful entry and escalate pressure to change the record."
+          "prompt": "A coworker asks you to omit a required log entry because the shift is busy. Explain how you make a truthful entry and escalate pressure to change the record.\n\nAdditional operational facts: A coworker asks you to leave out an access delay so that the shift report looks clean. You saw the delay yourself and have enough information to make a factual time-stamped record.",
+          "title": "Pressure to omit a log entry",
+          "category": "professional",
+          "inject": "The coworker says the Supervisor asked them to handle it informally. Explain how you verify direction without changing facts or accusing anyone.",
+          "active": true
         }
       ]
     },
     {
       "tier": "T2-T3",
-      "revision": 3,
+      "revision": 4,
       "active": true,
       "checklist": [
         {
@@ -265,81 +305,153 @@
       "scenarios": [
         {
           "id": "T2-T3-S01",
-          "prompt": "A known employee receives a denied badge read in a busy lane. Explain the current Gate Reference check, safe lane control, decision authority, Base escalation if unresolved, and documentation."
+          "prompt": "A known employee receives a denied badge read in a busy lane. Explain the current Gate Reference check, safe lane control, decision authority, Base escalation if unresolved, and documentation.\n\nAdditional operational facts: The employee says they need to clock in and claims the reader has failed before. The Gate Reference does not yet explain the denied read, and inbound traffic is rising.",
+          "title": "Denied employee badge at Gate",
+          "category": "gate",
+          "inject": "A department supervisor says the employee is scheduled. Explain the authorized verification, the safe lane action, and the record you make.",
+          "active": true
         },
         {
           "id": "T2-T3-S02",
-          "prompt": "A PWADC / Pig driver presents a Gate Pass whose trailer or seal number does not match. Explain badge and pass checks, routing the truck back to Dispatch, and what Security records without reconciling the load."
+          "prompt": "A PWADC / Pig driver presents a Gate Pass whose trailer or seal number does not match. Explain badge and pass checks, routing the truck back to Dispatch, and what Security records without reconciling the load.\n\nAdditional operational facts: A PWADC/Pig driver badges for exit. The pass lists a different seal number than the trailer displays. The driver says Dispatch already knows and asks you to fix the number by hand so the line keeps moving.",
+          "title": "Mismatched PWADC Gate Pass",
+          "category": "gate",
+          "inject": "Dispatch is occupied and the driver says they will leave anyway. Explain your Security role, the return routing, and the notification.",
+          "active": true
         },
         {
           "id": "T2-T3-S03",
-          "prompt": "While authorized at Base, a fire alarm activates. Describe immediate EAP and 911 decisions, notifications, radio traffic, log entries, and qualified coverage of Base."
+          "prompt": "While authorized at Base, a fire alarm activates. Describe immediate EAP and 911 decisions, notifications, radio traffic, log entries, and qualified coverage of Base.\n\nAdditional operational facts: You are the qualified Base officer when the fire signal activates. A warehouse employee calls and says they smell smoke, while radio traffic from Gate requests an unrelated badge verification.",
+          "title": "Fire alarm while operating Base",
+          "category": "base",
+          "inject": "The first responding officer reports no visible fire. Explain how new reports affect the EAP response, communications, and qualified Base coverage.",
+          "active": true
         },
         {
           "id": "T2-T3-S04",
-          "prompt": "On solo patrol you notice an unfamiliar vehicle by a perimeter access point. Explain your safe observations, Base and Supervisor notifications, and factual record."
+          "prompt": "On solo patrol you notice an unfamiliar vehicle by a perimeter access point. Explain your safe observations, Base and Supervisor notifications, and factual record.\n\nAdditional operational facts: During an independent round you see an unfamiliar parked vehicle near a perimeter access point. A person is beside it, and you cannot confirm from your location whether they have entered a restricted area.",
+          "title": "Vehicle near perimeter access",
+          "category": "patrol",
+          "inject": "The person begins moving toward the fence. Explain safe observation distance, radio information, Supervisor direction, and factual documentation.",
+          "active": true
         },
         {
           "id": "T2-T3-S05",
-          "prompt": "A visitor claims a supervisor approved access but the standard Base verification has not confirmed it. Explain how you hold or deny entry under the current Gate Reference without inventing an exception."
+          "prompt": "A visitor claims a supervisor approved access but the standard Base verification has not confirmed it. Explain how you hold or deny entry under the current Gate Reference without inventing an exception.\n\nAdditional operational facts: The visitor names a warehouse supervisor who is unavailable for verification. Another department employee says the supervisor would approve it and asks you to accept their assurance.",
+          "title": "Visitor claims verbal approval",
+          "category": "gate",
+          "inject": "The visitor becomes loud and a second visitor arrives behind them. Describe safe traffic management, access decision authority, and escalation.",
+          "active": true
         },
         {
           "id": "T2-T3-S06",
-          "prompt": "You observe possible smoke in a warehouse area while Gate traffic continues. Explain safe withdrawal and fire procedure, who receives the report, and how you avoid leaving Gate without qualified relief."
+          "prompt": "You observe possible smoke in a warehouse area while Gate traffic continues. Explain safe withdrawal and fire procedure, who receives the report, and how you avoid leaving Gate without qualified relief.\n\nAdditional operational facts: While working Gate you notice a possible smoke condition near a warehouse entrance. You cannot identify its source and the qualified relief officer is not yet on scene.",
+          "title": "Possible smoke with ongoing Gate traffic",
+          "category": "incident",
+          "inject": "A second employee reports an odor of burning. Explain the emergency action, 911/EAP judgment, Gate control, and how you obtain qualified relief.",
+          "active": true
         },
         {
           "id": "T2-T3-S07",
-          "prompt": "An inbound vendor presents an email appointment after hours. Describe verification through the current vendor program, routing, access decision, and escalation if authorization remains unclear."
+          "prompt": "An inbound vendor presents an email appointment after hours. Describe verification through the current vendor program, routing, access decision, and escalation if authorization remains unclear.\n\nAdditional operational facts: A vendor shows a forwarded email with a time and door number, but the current appointment program does not yet confirm the load. The driver wants to park inside while a warehouse contact is reached.",
+          "title": "Vendor's after-hours appointment",
+          "category": "gate",
+          "inject": "A warehouse worker recognizes the carrier but does not have the required verification. Explain routing, authorization, and documentation.",
+          "active": true
         },
         {
           "id": "T2-T3-S08",
-          "prompt": "An injury is reported while Patrol is on another assignment. As the authorized Base officer, explain emergency call, notifications and dispatch within your authority, and what you ask the Supervisor to decide."
+          "prompt": "An injury is reported while Patrol is on another assignment. As the authorized Base officer, explain emergency call, notifications and dispatch within your authority, and what you ask the Supervisor to decide.\n\nAdditional operational facts: You are the authorized Base officer. A rover reports an employee injury at a dock but cannot yet describe how serious it is. Gate is requesting an access decision at the same time.",
+          "title": "Injury while Base has competing work",
+          "category": "base",
+          "inject": "The rover now reports severe pain and loss of sensation. Reprioritize life safety, radio traffic, responders, Gate hold, and Supervisor notification.",
+          "active": true
         },
         {
           "id": "T2-T3-S09",
-          "prompt": "Another department requests video of a possible incident. Explain bookmarking with at least 30 seconds before and after, preserving the request and event times, and who may authorize or perform an export."
+          "prompt": "Another department requests video of a possible incident. Explain bookmarking with at least 30 seconds before and after, preserving the request and event times, and who may authorize or perform an export.\n\nAdditional operational facts: A department manager requests a video clip of a possible incident. You locate the event while assigned to Base, but the manager wants a copy before the shift ends.",
+          "title": "Request for incident video",
+          "category": "base",
+          "inject": "A second caller gives a different event time. Explain the time check, bookmark range, request log, evidence protection, and Lead export boundary.",
+          "active": true
         },
         {
           "id": "T2-T3-S10",
-          "prompt": "A patrol alarm arrives while a vehicle queue builds. Explain your own assigned-post actions, prompt coordination with Base and the Supervisor, and the need for qualified Gate and Base relief."
+          "prompt": "A patrol alarm arrives while a vehicle queue builds. Explain your own assigned-post actions, prompt coordination with Base and the Supervisor, and the need for qualified Gate and Base relief.\n\nAdditional operational facts: An alarm requires attention during an active vehicle queue. You are at your assigned post, and the nearest officer is approaching a break. You do not know whether qualified Gate or Base relief is available.",
+          "title": "Patrol alarm and Gate queue",
+          "category": "patrol",
+          "inject": "A warehouse employee asks you to leave immediately to inspect the alarm. Explain coordination, post coverage, and who decides competing assignments.",
+          "active": true
         },
         {
           "id": "T2-T3-S11",
-          "prompt": "Two shift records conflict about an access event. Explain how you preserve each original account, verify times and facts, and submit a correction with attribution."
+          "prompt": "Two shift records conflict about an access event. Explain how you preserve each original account, verify times and facts, and submit a correction with attribution.\n\nAdditional operational facts: Two officers describe the same access event with different times and different accounts of who granted authorization. A supervisor wants one clean report for review.",
+          "title": "Conflicting shift records",
+          "category": "incident",
+          "inject": "One officer asks you to rewrite their entry to match the other. Explain how you preserve original accounts and make a traceable, attributed correction.",
+          "active": true
         },
         {
           "id": "T2-T3-S12",
-          "prompt": "A junior officer repeatedly overlooks a hazard. Explain immediate safety notification and factual coaching within T2 authority, including when the Lead or Supervisor must address performance."
+          "prompt": "A junior officer repeatedly overlooks a hazard. Explain immediate safety notification and factual coaching within T2 authority, including when the Lead or Supervisor must address performance.\n\nAdditional operational facts: A junior officer fails to notice an obstructed emergency exit while accompanying you. You point it out; later in the shift the same officer again walks past an obvious safety concern.",
+          "title": "Repeatedly missed hazard",
+          "category": "patrol",
+          "inject": "The officer says you are acting like a Supervisor. Explain the immediate safety response, factual coaching, and escalation within T2 authority.",
+          "active": true
         },
         {
           "id": "T2-T3-S13",
-          "prompt": "An ammonia alarm sounds near your patrol area. Explain withdrawal, 911 and notifications under the EAP, how you keep others away, and why a detector reading alone cannot authorize re-entry."
+          "prompt": "An ammonia alarm sounds near your patrol area. Explain withdrawal, 911 and notifications under the EAP, how you keep others away, and why a detector reading alone cannot authorize re-entry.\n\nAdditional operational facts: You are near the reported area when an ammonia-related alarm activates. An employee says it is likely a sensor issue, and no visible cloud is apparent from your safe location.",
+          "title": "Ammonia alarm on patrol",
+          "category": "incident",
+          "inject": "Another report describes a strong odor or visible vapor. Explain how you update the EAP response, keep others away, and avoid unauthorized re-entry.",
+          "active": true
         },
         {
           "id": "T2-T3-S14",
-          "prompt": "Severe weather information arrives during post relief. Describe your handoff, radio and log facts, and how you confirm qualified coverage without changing assignments on your own."
+          "prompt": "Severe weather information arrives during post relief. Describe your handoff, radio and log facts, and how you confirm qualified coverage without changing assignments on your own.\n\nAdditional operational facts: A severe weather notice arrives while Gate and Base are changing officers. The incoming qualified Base officer has not received the notice, and one patrol assignment is late.",
+          "title": "Severe weather at post relief",
+          "category": "incident",
+          "inject": "A radio caller asks which area to evacuate. Explain current EAP direction, handoff facts, qualified coverage, and who directs an assignment change.",
+          "active": true
         },
         {
           "id": "T2-T3-S15",
-          "prompt": "While authorized at Base, you see an unknown person entering a restricted area. Explain safe dispatch within Base authority, Supervisor notification, event bookmarking, and factual documentation."
+          "prompt": "While authorized at Base, you see an unknown person entering a restricted area. Explain safe dispatch within Base authority, Supervisor notification, event bookmarking, and factual documentation.\n\nAdditional operational facts: An active camera shows an unknown person moving toward a restricted area. You are the qualified Base officer and have only a partial description; another radio channel has routine traffic.",
+          "title": "Unknown person in a restricted area",
+          "category": "base",
+          "inject": "The person disappears from that camera. Explain dispatch within Base authority, evidence preservation, Supervisor updates, and escalation.",
+          "active": true
         },
         {
           "id": "T2-T3-S16",
-          "prompt": "You hear a post instruction has changed but have not seen the controlled update. Explain how you verify current direction and communicate it without inventing policy."
+          "prompt": "You hear a post instruction has changed but have not seen the controlled update. Explain how you verify current direction and communicate it without inventing policy.\n\nAdditional operational facts: A coworker says a Gate step changed today, but you have not seen the approved update. A driver arrives with a case that would be handled differently if the change is real.",
+          "title": "Unverified post instruction change",
+          "category": "incident",
+          "inject": "The coworker says everyone has already adopted the new practice. Explain how to verify controlling direction and communicate an unresolved case.",
+          "active": true
         },
         {
           "id": "T2-T3-S17",
-          "prompt": "A third-party outbound truck requests release while a designated Gate Pass check is in progress. Explain which carriers receive routine outbound checks and how you keep the lane moving without a new routine stop."
+          "prompt": "A third-party outbound truck requests release while a designated Gate Pass check is in progress. Explain which carriers receive routine outbound checks and how you keep the lane moving without a new routine stop.\n\nAdditional operational facts: A designated carrier is receiving its required Gate Pass check while a third-party outbound truck queues behind it. Someone suggests you begin checking every outbound truck to be safe.",
+          "title": "Outbound truck during designated pass check",
+          "category": "gate",
+          "inject": "The third-party driver protests the delay. Explain which carriers have designated checks, lane control, and any reason to escalate an actual concern.",
+          "active": true
         },
         {
           "id": "T2-T3-S18",
-          "prompt": "During patrol you find an apparent seal or cargo concern by a dock. Explain observations and notifications to Base, the Supervisor, and responsible Dispatch or warehouse staff; identify who owns load and release decisions."
+          "prompt": "During patrol you find an apparent seal or cargo concern by a dock. Explain observations and notifications to Base, the Supervisor, and responsible Dispatch or warehouse staff; identify who owns load and release decisions.\n\nAdditional operational facts: During an independent patrol you observe an apparent seal discrepancy near an active dock. You do not know whether Dispatch is already addressing it, and the trailer is preparing to leave.",
+          "title": "Seal or cargo concern by a dock",
+          "category": "patrol",
+          "inject": "A warehouse employee asks you to release the load because they are behind schedule. Explain the factual notification chain and decision owner.",
+          "active": true
         }
       ]
     },
     {
       "tier": "T3-T4",
-      "revision": 4,
+      "revision": 5,
       "active": true,
       "checklist": [
         {
@@ -543,6 +655,70 @@
           "category": "leadership",
           "focus": "injury",
           "active": true
+        },
+        {
+          "id": "C-01",
+          "title": "Your Friend Is Wrong",
+          "prompt": "An officer you are personally close with is working Gate. During review of a situation, you determine the officer allowed someone through without completing the required verification process. The officer tells you privately, “Nothing happened. Don’t make this into a thing. Just tell the Supervisor everything checked out.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "access"
+        },
+        {
+          "id": "C-02",
+          "title": "Between You and Me",
+          "prompt": "A Supervisor tells you an officer is being reviewed over a personnel matter because you may need to assist with coverage. Later another officer asks, “What’s going on with him? Everybody says he’s about to get written up.” What do you say?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-03",
+          "title": "Public Challenge",
+          "prompt": "You give an authorized operational direction. The officer responds in front of the team, “That’s stupid. You don’t know what you’re doing.” What happens next?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-04",
+          "title": "The Candidate Gets Corrected",
+          "prompt": "You make an operational decision. The Supervisor says, “That’s not how we’re handling this. Reverse it and do it this way.” You believe your original decision was better. What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-05",
+          "title": "Officer Complains About Another Officer",
+          "prompt": "An officer approaches privately and says, “Don’t tell anybody I said this, but Officer Smith has been sleeping on patrol.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-06",
+          "title": "Break Rotation and Favoritism",
+          "prompt": "Two officers want the same break period. One is your close friend. The other has been covering a difficult post longer and operationally should probably receive relief first. Your friend says, “Come on. You’re about to be Lead. Take care of me.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-07",
+          "title": "Bad-Mouthing Leadership",
+          "prompt": "Several officers start criticizing the Supervisor during downtime. One turns to you and says, “You know we’re right. He doesn’t know how to run this shift.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
+        },
+        {
+          "id": "C-08",
+          "title": "Employee Tries to Bait Security",
+          "prompt": "An employee who was denied access to an area becomes verbally insulting. No threat is made. The employee says, “You rent-a-cops are all useless. You’re only acting tough because of that uniform.” What do you do?",
+          "category": "leadership",
+          "active": true,
+          "focus": "personnel"
         },
         {
           "id": "E-01",

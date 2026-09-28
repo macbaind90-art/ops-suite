@@ -1,5 +1,12 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.0.3 - Complete Evidence Workbooks for All Promotions
+
+- T1→T2 prints a five-gate workbook with probation, signed OJT/PMC records, observed supervised Gate and Patrol practicals, BASE/EAP awareness, pass-down and professional readiness.
+- T2→T3 prints a six-gate workbook with signed post qualifications, the 60-day documentation and patrol review, independent Gate/Patrol/BASE practicals, incident report and EAP judgment, and shift coverage handoff.
+- T1 and T2 banks retain ten and eighteen scenarios respectively, now with operational context and evaluator follow-up facts. T4 includes the eight original conduct prompts from the restricted source, expanding its selectable bank to 25 without importing evaluator answer keys. Each issued packet freezes six randomly selected prompts with balanced Gate, Patrol, BASE and professional/incident coverage.
+- All tiers require explicit PASS on every level-specific evidence gate before Manager approval. Previously issued questions remain unchanged, and manager-customized banks remain intact with revision history.
+
 ## v5.0.2 - Evidence-Based T3 to T4 Evaluator Workbook
 
 - T3 to T4 print preview follows the eight evidence gates, two BASE practicals, three operational leadership observations, candidate report and shadow reviews, controlled EAP practical, factual 360 input, nine interview prompts, remediation, final decision, and package completion record from the supplied v1.1 controlled drafts.
