@@ -1,6 +1,14 @@
-# PWADC Security Operations Suite v4.8.4
+# PWADC Security Operations Suite v5.0.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
+## v5.0.0 - Promotion Packets
+
+- Separate governed `promotion-packets-data.json` (`promotion-packets-1`) with protected issue, supervisor review, and Security Manager decision commands.
+- The Security Manager issues a printable packet for T1→T2, T2→T3, or T3→T4. Each issue randomly draws six unique scenarios from a bank of 10, 18, or 24 prompts respectively; T4 emphasizes leadership.
+- Issued packets freeze the selected questions, checklist revision, employee identity, and Training evidence snapshot. Reprints use exactly the same six questions.
+- Printed packets contain candidate answer space, supervisor competency assessment, recommendations and signatures, and Security Manager / HR follow-up. Signed paper or scanned original remains the source of written answers; the app records its reference and decision history.
+- A packet decision does not change roster rank or pay.
+
 ## Versioning Standard - Effective v4.0.0
 PWADC Security Operations Suite now uses a three-part application version: **Major.Feature.Minor**.
 - **Major** - major revision of the overall suite.

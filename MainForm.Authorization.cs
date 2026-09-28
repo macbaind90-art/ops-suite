@@ -19,6 +19,9 @@ namespace PWADC.SecurityOperationsSuite
                 matrix.TryGetValue(role ?? "", out assigned);
             }
             return assigned != null && (assigned.Contains("*") || assigned.Contains(capability, StringComparer.OrdinalIgnoreCase) ||
+                (string.Equals(role, "Supervisor", StringComparison.OrdinalIgnoreCase) &&
+                 (capability == "promotion.view" || capability == "promotion.review") &&
+                 assigned.Contains("training.manage", StringComparer.OrdinalIgnoreCase)) ||
                 ((capability == "training.record" || capability == "training.signoff") &&
                  assigned.Contains("training.manage", StringComparer.OrdinalIgnoreCase)));
         }
@@ -62,6 +65,7 @@ namespace PWADC.SecurityOperationsSuite
                 "attendance" => RequireAnyCapabilityCredentials(userId, pin, "attendance.edit", "attendance.adjustPoints", "attendance.correctiveAction", "attendance.managePolicy"),
                 "roster" => RequireAnyCapabilityCredentials(userId, pin, "roster.edit", "schedule.edit", "schedule.publish", "training.manage", "uniforms.manage", "supplies.manage"),
                 "training" => throw new UnauthorizedAccessException("Training changes must use protected training commands."),
+                "promotion-packets" => throw new UnauthorizedAccessException("Promotion changes must use protected packet commands."),
                 "tasks" => RequireCapabilityCredentials(userId, pin, "tasks.manage"),
                 "shift-reports" => RequireCapabilityCredentials(userId, pin, "shiftReports.manage"),
                 "shift-intelligence" => RequireCapabilityCredentials(userId, pin, "shiftIntelligence.manage"),

@@ -109,7 +109,7 @@ namespace PWADC.SecurityOperationsSuite
             {
                 "attendance.view", "attendance.edit", "attendance.adjustPoints", "attendance.correctiveAction",
                 "roster.view", "roster.edit", "schedule.view", "schedule.edit",
-                "training.view", "training.manage", "training.record", "training.signoff", "uniforms.view", "uniforms.manage",
+                "training.view", "training.manage", "training.record", "training.signoff", "promotion.view", "promotion.review", "uniforms.view", "uniforms.manage",
                 "supplies.view", "supplies.manage", "shiftReports.view", "shiftReports.manage",
                 "shiftIntelligence.view", "shiftIntelligence.manage", "tasks.view", "tasks.manage",
                 "reports.view", "programs.launch", "audit.view"

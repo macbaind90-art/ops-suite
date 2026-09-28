@@ -109,6 +109,9 @@ namespace PWADC.SecurityOperationsSuite
                     case "suite:trainingCommand":
                         await Respond(requestId, true, RunTrainingCommand(root));
                         break;
+                    case "suite:promotionPacketCommand":
+                        await Respond(requestId, true, RunPromotionPacketCommand(root));
+                        break;
                     case "suite:resetModuleFromSeed":
                         string resetModule = root.TryGetProperty("module", out JsonElement rm) ? rm.GetString() ?? "" : "";
                         if (!root.TryGetProperty("payload", out JsonElement resetPayload)) throw new InvalidOperationException("Missing packaged recovery approval payload.");
