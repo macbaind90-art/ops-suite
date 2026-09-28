@@ -68,7 +68,28 @@ namespace PWADC.SecurityOperationsSuite
                         ["scenarios"] = priorBank!.DeepClone(), ["checklist"] = leadTemplate["checklist"]?.DeepClone(),
                         ["replacedAt"] = now, ["replacedBy"] = "system-upgrade-v5.0.2" });
                     leadTemplate["scenarios"] = leadSeed["scenarios"]?.DeepClone();
-                    leadTemplate["revision"] = Math.Max(revision + 1, 4);
+                    leadTemplate["revision"] = Math.Max(revision + 1, 5);
+                    changed++;
+                }
+            }
+            // Enrich an unmodified v5.0.2 T4 bank with the eight original conduct prompts.
+            // Previously issued six-question packets remain frozen.
+            if (leadTemplate != null && leadSeed != null)
+            {
+                JsonArray? bank = leadTemplate["scenarios"] as JsonArray;
+                int revision = int.TryParse(leadTemplate["revision"]?.ToString(), out int parsedT4) ? parsedT4 : 1;
+                bool stockSeventeen = bank?.Count == 17 && revision == 4 &&
+                    bank.OfType<JsonObject>().Select((x, i) => x["id"]?.ToString() ==
+                        (i < 10 ? "L-" + (i + 1).ToString("D2") : "E-" + (i - 9).ToString("D2"))).All(x => x);
+                if (stockSeventeen)
+                {
+                    JsonArray versions = leadTemplate["previousVersions"] as JsonArray ?? new JsonArray();
+                    if (leadTemplate["previousVersions"] == null) leadTemplate["previousVersions"] = versions;
+                    versions.Add(new JsonObject { ["revision"] = revision, ["scenarios"] = bank!.DeepClone(),
+                        ["checklist"] = leadTemplate["checklist"]?.DeepClone(), ["replacedAt"] = now,
+                        ["replacedBy"] = "system-upgrade-v5.0.3" });
+                    leadTemplate["scenarios"] = leadSeed["scenarios"]?.DeepClone();
+                    leadTemplate["revision"] = revision + 1;
                     changed++;
                 }
             }
