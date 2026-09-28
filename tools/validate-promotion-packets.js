@@ -3,7 +3,7 @@ const read=p=>fs.readFileSync(p,'utf8');
 const need=(hay,needle,msg)=>{if(!hay.includes(needle))throw new Error(msg||'Missing: '+needle)};
 const seed=JSON.parse(read('app/seed/promotion-packets-data.json'));
 if(seed.schemaVersion!=='promotion-packets-1')throw new Error('Wrong packet schema');
-const expected={'T1-T2':10,'T2-T3':18,'T3-T4':17};
+const expected={'T1-T2':10,'T2-T3':18,'T3-T4':25};
 if(seed.templates.length!==3)throw new Error('Expected exactly three promotion templates');
 for(const template of seed.templates){
   if(template.scenarios.length!==expected[template.tier])throw new Error('Unexpected bank size for '+template.tier);
@@ -22,6 +22,9 @@ for(const tier of ['T1-T2','T2-T3']){
     throw Error(tier+' needs detailed prompts and evaluator fact changes');
 }
 const t4=seed.templates.find(x=>x.tier==='T3-T4');
+if(t4.scenarios.length<=seed.templates.find(x=>x.tier==='T2-T3').scenarios.length)throw Error('T4 bank must be larger than lower tiers');
+for(let i=1;i<=8;i++)if(!t4.scenarios.some(x=>x.id==='C-'+String(i).padStart(2,'0')&&x.category==='leadership'))
+  throw Error('Restricted source conduct prompt missing: C-'+i);
 for(const [category,focus] of [['leadership','access'],['leadership','personnel'],['emergency','medicalFire'],['emergency','hazardEvac'],['emergency','compound']])
   if(!t4.scenarios.some(x=>x.category===category&&x.focus===focus))throw Error('T4 bank missing '+category+' '+focus);
 const byTier=Object.fromEntries(seed.templates.map(t=>[t.tier,t]));
@@ -42,7 +45,7 @@ need(host,'["previousVersions"] = history','Bank edits must preserve old templat
 need(browser,'openPromotionBank','Manager must be able to inspect and edit banks');
 need(browser,'p.scenarios.map((x,i)=>','Reprint must use issued questions');
 for(const text of ['Draw("leadership", "access")','Draw("leadership", "personnel")','Draw("emergency", "medicalFire")','Draw("emergency", "hazardEvac")','Draw("emergency", "compound")','All eight T4 evidence gates must be recorded PASS'])need(host,text,'T4 coverage or approval gate missing: '+text);
-for(const text of ['DrawTier("gate", 2)','DrawTier("patrol", 2)','DrawTier("base", 1)','system-upgrade-v5.0.3','All evidence gates must be recorded PASS'])need(host,text,'Lower promotion coverage or approval gate missing: '+text);
+for(const text of ['DrawTier("gate", 2)','DrawTier("patrol", 2)','DrawTier("base", 1)','stockSeventeen','system-upgrade-v5.0.3','All evidence gates must be recorded PASS'])need(host,text,'Lower promotion coverage or approval gate missing: '+text);
 need(host,'["trainingEvidence"] = evidence','Issue must capture training evidence');
 for(const marker of ['"delete" or "restore" => "promotion.manage"','["deletedPreviousStatus"]','packet["status"] = "Deleted"','packet["status"] = previous','history.Add(new JsonObject { ["action"] = action','Only the Security Manager/Admin may delete or restore'])need(host,marker,'Packet delete/restore audit or role guard missing: '+marker);
 for(const marker of ['openPromotionDeleteModal','savePromotionDelete','Show deleted packets',"p.status!=='Deleted'",'promotionCommand(action,{packetId:id,notes})'])need(browser,marker,'Packet delete/restore UI missing: '+marker);
