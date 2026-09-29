@@ -35,8 +35,10 @@ for(const [tier,terms] of Object.entries({
   'T3-T4':['Acting Supervisor','explicit Supervisor communication','mentoring','Security Manager']
 }))for(const term of terms)need(content(tier),term,tier+' missing current policy: '+term);
 const host=read('MainForm.PromotionPackets.cs'),auth=read('MainForm.Authorization.cs'),registry=read('MainForm.GovernedModules.cs');
-const browser=read('app/js/74-promotion-packets.js'),bootstrap=read('app/js/10-bootstrap.js');
+const digitalHost=read('MainForm.PromotionPackets.Digital.cs');
+const browser=read('app/js/74-promotion-packets.js'),digital=read('app/js/75-promotion-digital.js'),bootstrap=read('app/js/10-bootstrap.js');
 new vm.Script(browser,{filename:'app/js/74-promotion-packets.js'});
+new vm.Script(digital,{filename:'app/js/75-promotion-digital.js'});
 need(host,'RandomNumberGenerator.GetInt32(i, available.Length)','Selection must use unbiased per-issue randomness');
 need(host,'for (int i = 0; i < 6; i++)','Each packet must freeze exactly six questions');
 need(host,'["scenarios"] = chosen','Frozen questions must be saved with packet');
@@ -51,17 +53,21 @@ for(const marker of ['"delete" or "restore" => "promotion.manage"','["deletedPre
 for(const marker of ['openPromotionDeleteModal','savePromotionDelete','Show deleted packets',"p.status!=='Deleted'",'promotionCommand(action,{packetId:id,notes})'])need(browser,marker,'Packet delete/restore UI missing: '+marker);
 
 for(const s of ['promotion.manage','promotion.review','promotion.decide'])need(host,s);
-need(host,'candidate cannot review or decide','Candidate self review denial missing');
+need(host,'AssertPromotionEvaluatorIsNotCandidate(actor, packet)','Candidate self assessment denial missing');
+need(digitalHost,'The candidate cannot assess their own promotion packet.','Candidate self assessment guard missing');
+for(const marker of ['"review" or "assessment" => "promotion.review"','NormalizePromotionDigitalAssessment(command, packet, actor, now)','ValidatePromotionDigitalCompletion(packet, recommendation)','ValidatePromotionDigitalCompletion(packet, "Recommend")'])need(host,marker,'Digital assessment write or approval guard missing: '+marker);
+for(const marker of ['checklistIds.Contains(row.Name)','scenarioIds.Contains(row.Name)','missingIds.Contains(row.Name)','PromotionPracticalIds(tier)','PromotionGateAllowsSimulation(tier, number)','Only an issued packet can be edited.','Complete each checklist result','Grade all six oral scenarios','Complete each live or simulated practical','T4 BASE practicals must occur on different dates or shifts.','Resolve and cite each missing training record'])need(host+digitalHost,marker,'Digital packet validation missing: '+marker);
 need(auth,'"promotion-packets" => throw','Generic writes must not bypass the packet command');
 need(registry,'Id = "promotion-packets"');
 need(bootstrap,"await loadPromotionPackets()");
 need(read('app/index.html'),'js/74-promotion-packets.js');
+need(read('app/index.html'),'js/75-promotion-digital.js');
 for(const term of ['UpgradePromotionPacketChecklists','current.Count != oldCount','["checklist"] = current.DeepClone()','template["checklist"] = replacement.DeepClone()','SaveModuleData("promotion-packets", data.ToJsonString(JsonOptions), loaded.Revision)'])need(host,term,'Live checklist upgrade must preserve prior revisions and issued packets: '+term);
 need(read('MainForm.cs'),'UpgradePromotionPacketChecklists();');
 for(const term of ['"Approve promotion"','recordsVerified','checklistReviewed','scenariosReviewed','interviewDate','interviewOutcome != "Meets standard"','interviewNotes.Length < 20'])need(host,term,'Manager approval gate missing: '+term);
 for(const term of ['openReportWindow(style+header+evidence+checklist+scenarios+supervisor+interview+decision,false','Six verbal scenarios','Evaluator grade:','Security Manager interview'])need(browser,term,'Verbal evaluation or preview missing: '+term);
-const ctx={console,Date,hasCapability:()=>true,PWADCModuleRegistry:{register(){}},esc:x=>String(x??''),openReportWindow:(html,auto,orientation)=>{ctx.preview={html,auto,orientation}},toast:()=>{}};
-vm.createContext(ctx);vm.runInContext(browser,ctx);
+const ctx={console,Date,window:{},document:{getElementById:()=>null},activeModule:'promotion-packets',safeRenderPages:()=>{},hasCapability:()=>true,PWADCModuleRegistry:{register(){}},esc:x=>String(x??''),openReportWindow:(html,auto,orientation)=>{ctx.preview={html,auto,orientation}},toast:()=>{}};
+vm.createContext(ctx);vm.runInContext(browser,ctx);vm.runInContext(digital,ctx);
 const exerciseIds={
   'T1-T2':['T1-BASE','T1-COACH'],
   'T2-T3':['T2-REPORT1','T2-REPORT2','T2-REPORT3','T2-INCIDENT','T2-COACH'],
@@ -111,5 +117,32 @@ for(const tier of Object.keys(expected)){
     if(ctx.preview.html.includes('Expected Decision Points')||ctx.preview.html.includes('Critical Failure Conditions'))throw Error('Restricted evaluator answer keys must not be included in the packet');
   }
 }
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.5</Version>');
+for(const tier of Object.keys(expected)){
+  ctx.sample={id:'digital-test',tier,status:'Issued',employee:{name:'Candidate',eid:'1'},issuedAt:'2026-09-28',templateRevision:3,
+    checklist:byTier[tier].checklist,scenarios:byTier[tier].scenarios.slice(0,6),trainingEvidence:[{assignmentId:'missing-1',requirement:'Missing requirement',signoffId:''}]};
+  vm.runInContext('promotionPackets.packets=[sample];openPromotionDigitalPacket("digital-test","overview")',ctx);
+  if(!ctx.window._promotionDigitalOpen)throw Error('Digital packet does not open');
+  const overview=vm.runInContext('renderPromotionDigitalPacket("digital-test")',ctx);
+  if(!overview.includes('Missing requirement')||!overview.includes('Save Progress'))throw Error('Digital issue snapshot or save action missing');
+  for(const [tab,phrase] of [['checklist',byTier[tier].checklist[0].text],['gates','Gate 1'],['scenarios','Oral Scenario 1 of 6'],['recommendation','Submit to Security Manager']]){
+    ctx.window._promotionDigitalTab=tab;
+    if(!vm.runInContext('renderPromotionDigitalPacket("digital-test")',ctx).includes(phrase))throw Error(tier+' digital '+tab+' is incomplete');
+  }
+  ctx.window._promotionDigitalTab='gates';
+  const gateHtml=vm.runInContext('renderPromotionDigitalPacket("digital-test")',ctx);
+  for(const id of exerciseIds[tier])if(!gateHtml.includes(id+' · '))throw Error('Digital gate omitted the provided '+id+' practical');
+  if((gateHtml.match(/Practical method/g)||[]).length!==exerciseIds[tier].length)throw Error('Every practical needs an independent digital evaluation');
+  if(gateHtml.slice(gateHtml.indexOf('Gate 1 ·'),gateHtml.indexOf('Gate 2 ·')).includes('value="Simulated"')&&tier!=='T3-T4')throw Error('Eligibility gate cannot use simulated source records');
+  vm.runInContext('promotionDigitalSet("gates","1","status","PASS")',ctx);
+  if(!vm.runInContext('promotionDigitalSession.assessment.gates["1"].status',ctx).includes('PASS'))throw Error('Digital gate edits do not stay in the draft');
+  vm.runInContext('sample.digitalAssessment=promotionDigitalSession.assessment',ctx);
+  ctx.sample.status='Reviewed';ctx.sample.review={mode:'digital',recommendation:'Recommend',notes:'Complete review'};
+  ctx.window._promotionDigitalTab='scenarios';
+  if(vm.runInContext('renderPromotionDigitalPacket("digital-test")',ctx).includes('Save Progress'))throw Error('Submitted assessment should be read-only');
+  vm.runInContext('printPromotionDigitalRecord("digital-test")',ctx);
+  if(!ctx.preview||ctx.preview.auto!==false||!ctx.preview.html.includes('Digital Promotion Assessment'))throw Error('Completed digital record must preview before print');
+  ctx.window._promotionDigitalOpen='';
+  vm.runInContext('promotionDigitalSession=null',ctx);
+}
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.1.0</Version>');
 console.log('Promotion Packets validation PASS');
