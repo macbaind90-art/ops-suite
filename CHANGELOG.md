@@ -1,5 +1,10 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.2.1 - Guided Offline Evaluation
+
+- The portable HTML packet is a step-by-step evaluator walkthrough. Checklist sections, evidence gates, each practical simulation, and each of the six issued oral questions appear on separate steps with their relevant prompt and recording fields.
+- Added step navigation, progress counts, final review, return to incomplete items, and resume at the saved step. Printing includes every step. A behavioral validator checks the offline packet for all three promotion levels.
+
 ## v5.2.0 - Portable Supervisor Promotion Packet
 
 - Managers can export a standalone HTML packet for each issued candidate and send it to a supervisor who has no Suite access. It works offline in a standard browser and includes the issued checklist, gates, provided practical simulations, and the same six oral scenarios. Supervisors can save progress to JSON, resume, print, and export a completed evaluation JSON.
