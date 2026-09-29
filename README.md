@@ -1,6 +1,12 @@
-# PWADC Security Operations Suite v5.0.5
+# PWADC Security Operations Suite v5.1.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
+## v5.1.0 - Digital promotion assessments
+
+- Issue a promotion packet, then choose **Issue and Open Digital** or **Issue and Preview Print**. Existing active packets have an **Open Digital** action in the packet register and employee profile.
+- The supervisor works through the issued checklist, evidence gates, individual live or simulated practicals, and six fixed oral questions. **Save Progress** persists the assessment in the governed shared-folder data; **Submit to Security Manager** validates completeness and freezes the supervisor record.
+- The Security Manager opens the submitted digital assessment, verifies signed qualifications and eligibility, records every final gate status, and completes the T4 interview where required. **Completed Record Preview** prints or saves the recorded answers and decisions to PDF. The blank printable workbook remains available.
+
 ## v5.0.1 - Promotion approval packet
 
 - Expanded tier-specific eligibility and competency checks, grouped by operational area and documented evidence.
