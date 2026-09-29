@@ -1,6 +1,10 @@
-# PWADC Security Operations Suite v5.2.2
+# PWADC Security Operations Suite v5.2.3
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
+## v5.2.3 - Supervisor export filenames
+
+- Supervisor HTML exports now use `PWADC_PROMOTION_T1-to-T2_LASTNAME_FIRSTNAME.html` (and the corresponding T2-to-T3/T3-to-T4 level). Windows does not permit the `>` character, so the level transition is written `-to-`. Newly issued packets retain separate first and last names for accurate filenames, including compound surnames.
+
 ## v5.2.2 - Offline evaluator workspace
 
 - Refined the exported supervisor packet with PWADC branding, an evaluation roadmap, focused assessment cards, clearer field prompts and save guidance, responsive layout, and a compact final review of recorded results and gaps. The logo is embedded in the HTML, so the packet still works offline.

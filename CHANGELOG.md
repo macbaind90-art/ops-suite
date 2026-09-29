@@ -1,5 +1,9 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.2.3 - Supervisor Export Filename
+
+- Name exported supervisor HTML by promotion level and candidate surname/given name, using a Windows-safe `-to-` level separator. New packets freeze separate name components; earlier packets use their frozen display name as a fallback.
+
 ## v5.2.2 - Offline Evaluator Workspace
 
 - Redesigned the standalone supervisor HTML with embedded approved PWADC logo, guided phase navigation, responsive layout, clearer evidence fields, progress and save feedback, and a structured final review. Offline export, resume, printing, validation and manager import remain compatible.

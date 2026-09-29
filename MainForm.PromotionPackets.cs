@@ -308,6 +308,7 @@ namespace PWADC.SecurityOperationsSuite
                 {
                     ["id"] = subject, ["employeeId"] = employeeId,
                     ["employee"] = new JsonObject { ["name"] = ((employee["first"]?.ToString() ?? "") + " " + (employee["last"]?.ToString() ?? "")).Trim(),
+                        ["first"] = employee["first"]?.ToString() ?? "", ["last"] = employee["last"]?.ToString() ?? "",
                         ["eid"] = employee["eid"]?.ToString() ?? "", ["rank"] = employee["rank"]?.ToString() ?? "", ["shift"] = employee["shift"]?.ToString() ?? "" },
                     ["tier"] = tier, ["templateRevision"] = template["revision"]?.DeepClone(),
                     ["checklist"] = checklist.DeepClone(), ["scenarios"] = chosen,

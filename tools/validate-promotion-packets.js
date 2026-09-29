@@ -160,5 +160,10 @@ for(const tier of Object.keys(expected)){
   const escaped=vm.runInContext('promotionPortableHtml(sample)',ctx);
   if(escaped.includes('</script><script>alert(1)</script>'))throw Error('Untrusted scenario prompt escaped the data script');
 }
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.2.2</Version>');
+ctx.sample={tier:'T2-T3',employee:{first:'Mary',last:'De la Torre',name:'Mary De la Torre'}};
+if(vm.runInContext('promotionPortableExportFileName(sample)',ctx)!=='PWADC_PROMOTION_T2-to-T3_DE_LA_TORRE_MARY.html')throw Error('Export filename must use frozen first and compound last name');
+ctx.sample={tier:'T3-T4',employee:{name:'Alicia Smith'}};
+if(vm.runInContext('promotionPortableExportFileName(sample)',ctx)!=='PWADC_PROMOTION_T3-to-T4_SMITH_ALICIA.html')throw Error('Historical packet filename fallback is wrong');
+need(read('MainForm.PromotionPackets.cs'),'["first"] = employee["first"]','New packets must freeze name components');
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.2.3</Version>');
 console.log('Promotion Packets validation PASS');
