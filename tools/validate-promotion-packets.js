@@ -68,6 +68,14 @@ for(const tier of Object.keys(expected)){
   vm.runInContext('promotionPackets.packets=[sample];printPromotionPacket("test")',ctx);
   if(!ctx.preview||ctx.preview.auto!==false||ctx.preview.orientation!=='portrait')throw Error('Packet must open in preview before print');
   if((ctx.preview.html.match(/Evaluator grade:/g)||[]).length!==6)throw Error('Packet needs six evaluator grades');
+  if(ctx.preview.html.includes('Missing training at issue'))throw Error('Do not show missing training when no requirements are missing');
+  if(!ctx.preview.html.includes('□ Simulated exercise'))throw Error('Evaluations must permit a documented simulation');
+  ctx.sample.trainingEvidence=[{requirement:'SIGNED-CURRENT-TRAINING',signoffId:'signed-1',signoffDate:'2026-09-01'}];
+  vm.runInContext('promotionPackets.packets=[sample];printPromotionPacket("test")',ctx);
+  if(ctx.preview.html.includes('Missing training at issue')||ctx.preview.html.includes('SIGNED-CURRENT-TRAINING'))throw Error('Signed training must not appear in the missing training section');
+  ctx.sample.trainingEvidence.push({requirement:'MISSING-CURRENT-TRAINING',signoffId:'',signoffDate:''});
+  vm.runInContext('promotionPackets.packets=[sample];printPromotionPacket("test")',ctx);
+  if(!ctx.preview.html.includes('Missing training at issue')||!ctx.preview.html.includes('MISSING-CURRENT-TRAINING')||ctx.preview.html.includes('SIGNED-CURRENT-TRAINING'))throw Error('Show only training without a current signoff');
   if(ctx.preview.html.includes('Candidate written scenarios'))throw Error('Verbal answers should not be a written candidate form');
   if(!ctx.preview.html.includes(tier==='T3-T4'?'Security Manager final determination':'Security Manager final decision'))throw Error('Manager approval page missing');
   if(tier!=='T3-T4'){
@@ -77,6 +85,8 @@ for(const tier of Object.keys(expected)){
     if(!ctx.preview.html.includes('Evidence extension and reevaluation plan'))throw Error('Lower-tier remediation page missing');
     if(!ctx.preview.html.includes('Supervisor evidence review and recommendation'))throw Error('Lower-tier supervisor record missing');
     if((ctx.preview.html.match(/Gate [1-6] ·/g)||[]).length<gateCount)throw Error('Lower-tier evidence gates missing');
+    if(tier==='T1-T2'&&!ctx.preview.html.includes('Coaching and response practical'))throw Error('T1 coaching practical must allow simulation');
+    if(tier==='T2-T3'&&(!ctx.preview.html.includes('controlled simulated cases')||!ctx.preview.html.includes('Corrective coaching practical')))throw Error('T2 incident and coaching evaluations must allow simulation');
     ctx.sample.status='Reviewed';ctx.sample.review={recommendation:'Recommend',reviewerName:'Supervisor',notes:'Evidence reviewed'};
     ctx.lastModal='';ctx.showModal=html=>{ctx.lastModal=html};
     vm.runInContext('promotionPackets.packets=[sample];openPromotionDecisionModal("test")',ctx);
@@ -87,8 +97,10 @@ for(const tier of Object.keys(expected)){
     if((ctx.preview.html.match(/Gate [1-8] ·/g)||[]).length<8)throw Error('All eight evidence gates must be printable');
     for(const term of ['two successful practicals','Three shadow report reviews','Targeted factual 360 input','Remediation and reevaluation plan','Package completion checklist'])
       if(!ctx.preview.html.toLowerCase().includes(term.toLowerCase()))throw Error('T4 workbook missing '+term);
+    for(const term of ['controlled role-play','controlled simulations','controlled simulated cases','live/simulated, case ID'])
+      if(!ctx.preview.html.includes(term))throw Error('T4 coaching and incident simulation evidence missing: '+term);
     if(ctx.preview.html.includes('Expected Decision Points')||ctx.preview.html.includes('Critical Failure Conditions'))throw Error('Restricted evaluator answer keys must not be included in the packet');
   }
 }
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.3</Version>');
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.4</Version>');
 console.log('Promotion Packets validation PASS');
