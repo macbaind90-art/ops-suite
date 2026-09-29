@@ -17,8 +17,8 @@ const dataCore=read('app/js/20-data-core.js');
 const workflow=read('.github/workflows/build-windows.yml');
 const csproj=read('SecurityOperationsSuite.csproj');
 
-need(main,'private const string AppVersion = "5.0.4";','AppVersion must be 5.0.4.');
-need(csproj,'<Version>5.0.4</Version>','Project package version must be 5.0.4.');
+need(main,'private const string AppVersion = "5.0.5";','AppVersion must be 5.0.5.');
+need(csproj,'<Version>5.0.5</Version>','Project package version must be 5.0.5.');
 need(main,'EnsureDailyLastKnownGoodSnapshot();','Daily LKG must remain part of startup.');
 need(main,'EnsureLiveSchemaMetadata();','Schema metadata initialization must remain part of startup.');
 need(main,'ProcessStartupSchemaMigrations();','Controlled schema migration processing must run at startup.');

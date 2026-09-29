@@ -1,5 +1,10 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.0.5 - Provided Simulation Exercises in Promotion Packets
+
+- Each coaching or incident gate now prints a specific optional simulated exercise with a candidate situation, evaluator follow-up fact, and grading focus. T1→T2 has two, T2→T3 has five, and T3→T4 has thirteen exercises covering BASE, FTO coaching, leadership decisions, authored reports, shadow review and a flawed report.
+- The six randomly issued verbal promotion questions remain separate. A live event may still be used, while signed post qualifications and actual review-window records remain required where specified.
+
 ## v5.0.4 - Simulated Evaluations and Missing Training Only
 
 - Printable promotion packets accept documented live or simulated coaching, incident, report review, and leadership practicals at the same standard. Each applicable evaluation records its method, case, evaluator and date. Signed post qualifications and actual review-window conduct remain separate evidence.
