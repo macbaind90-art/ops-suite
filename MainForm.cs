@@ -17,7 +17,7 @@ namespace PWADC.SecurityOperationsSuite
         private readonly string appFolder;
         private readonly string indexPath;
 
-        private const string AppVersion = "5.2.1";
+        private const string AppVersion = "5.2.2";
         private const string DefaultRoot = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         private const string SettingsFileName = "suite-settings.json";
         private SuiteSettings settings = new SuiteSettings();
