@@ -18,7 +18,7 @@ const csproj=read('SecurityOperationsSuite.csproj');
 const manifest=read('app.manifest');
 const globalJson=read('global.json');
 
-need(main,'private const string AppVersion = "5.2.0";','AppVersion must be 5.2.0 for this maintenance release.');
+need(main,'private const string AppVersion = "5.2.1";','AppVersion must be 5.2.1 for this maintenance release.');
 need(main,'EnsureLiveSchemaMetadata();','Startup schema metadata initialization is missing.');
 for(const [id,revision] of [['attendance',3],['roster',1],['tasks',1],['shift-reports',1],['shift-intelligence',1],['suite-settings',3]]){
   need(registry,`Id = "${id}"`,`${id} governed-module registration missing.`);
@@ -53,10 +53,10 @@ need(dataCore,'if(info.writeAllowed===false)','Browser save path does not honor 
 need(shell,'<th>Schema</th>','Data Health live-file table does not display schema state.');
 need(workflow,'node tools/validate-schema-compatibility.js','Windows workflow does not run schema compatibility validation.');
 need(csproj,'<TargetFramework>net10.0-windows</TargetFramework>','Project must target net10.0-windows.');
-need(csproj,'<Version>5.2.0</Version>','Visible application package version must be 5.2.0.');
-need(csproj,'<FileVersion>5.2.0.0</FileVersion>','Windows file metadata must be 5.2.0.0.');
-need(csproj,'<AssemblyVersion>5.2.0.0</AssemblyVersion>','Windows assembly metadata must be 5.2.0.0.');
-need(manifest,'version="5.2.0.0"','Windows manifest identity must be four-part 4.7.0.0.');
+need(csproj,'<Version>5.2.1</Version>','Visible application package version must be 5.2.1.');
+need(csproj,'<FileVersion>5.2.1.0</FileVersion>','Windows file metadata must be 5.2.1.0.');
+need(csproj,'<AssemblyVersion>5.2.1.0</AssemblyVersion>','Windows assembly metadata must be 5.2.1.0.');
+need(manifest,'version="5.2.1.0"','Windows manifest identity must be four-part 4.7.0.0.');
 const sdk=JSON.parse(globalJson).sdk||{};
 if(sdk.version!=='10.0.400'||sdk.rollForward!=='latestPatch')throw new Error('global.json must pin the suite to .NET SDK 10.0.400 with latestPatch roll-forward.');
 need(csproj,'RemoveUnusedWebView2WpfReference','WinForms build must remove the unused WebView2 WPF reference before assembly resolution.');
