@@ -1,5 +1,11 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.2.0 - Portable Supervisor Promotion Packet
+
+- Managers can export a standalone HTML packet for each issued candidate and send it to a supervisor who has no Suite access. It works offline in a standard browser and includes the issued checklist, gates, provided practical simulations, and the same six oral scenarios. Supervisors can save progress to JSON, resume, print, and export a completed evaluation JSON.
+- Managers import the completed file with a preview. The protected import checks identity of the issued packet and validates the full digital assessment and recommendation before filing an audited, read-only supervisor review. The Security Manager retains final approval, source verification, and the required T4 interview.
+- Exported files contain personnel assessment information and should be shared in the approved personnel workflow. Saved JSON and HTML are editable outside the Suite, so the manager verifies the evaluator and source documents before approving.
+
 ## v5.1.0 - Digital Promotion Packet
 
 - Supervisors can open a saved, on-screen packet for each issued promotion. It records every checklist standard, evidence gate, six spoken scenario grades and evaluator notes, and resolution references for Training gaps. Provided simulation prompts are available within their gates. Progress saves to the governed shared-folder module with role checks, revision protection and audit history.
