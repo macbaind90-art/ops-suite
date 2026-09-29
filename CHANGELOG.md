@@ -1,5 +1,11 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.1.0 - Digital Promotion Packet
+
+- Supervisors can open a saved, on-screen packet for each issued promotion. It records every checklist standard, evidence gate, six spoken scenario grades and evaluator notes, and resolution references for Training gaps. Provided simulation prompts are available within their gates. Progress saves to the governed shared-folder module with role checks, revision protection and audit history.
+- Digital submission validates a complete assessment before the supervisor recommendation; a recommended promotion requires passed gates, verified checklist evidence, no unresolved critical scenario, and referenced Training resolutions. The Security Manager reviews the digital evidence and retains the final gate, signed qualification and T4 interview controls.
+- Paper packets remain available. A completed digital record opens in preview for printing or PDF filing. Existing issued packets can start a digital assessment without changing their six frozen questions.
+
 ## v5.0.5 - Provided Simulation Exercises in Promotion Packets
 
 - Each coaching or incident gate now prints a specific optional simulated exercise with a candidate situation, evaluator follow-up fact, and grading focus. T1→T2 has two, T2→T3 has five, and T3→T4 has thirteen exercises covering BASE, FTO coaching, leadership decisions, authored reports, shadow review and a flawed report.
