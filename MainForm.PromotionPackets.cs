@@ -142,7 +142,7 @@ namespace PWADC.SecurityOperationsSuite
             string capability = action switch
             {
                 "issue" or "scenario" or "delete" or "restore" => "promotion.manage",
-                "review" => "promotion.review",
+                "review" or "assessment" => "promotion.review",
                 "decide" => "promotion.decide",
                 _ => throw new InvalidDataException("Unknown promotion packet action.")
             };
@@ -315,17 +315,22 @@ namespace PWADC.SecurityOperationsSuite
                     ["status"] = "Issued", ["issuedAt"] = now, ["issuedBy"] = actor.Id, ["history"] = new JsonArray()
                 });
             }
+            else if (action == "assessment")
+            {
+                JsonObject packet = PacketFind(packets, PacketText(command, "packetId", 80, true));
+                subject = packet["id"]?.ToString() ?? "";
+                AssertPromotionEvaluatorIsNotCandidate(actor, packet);
+                if (packet["status"]?.ToString() != "Issued")
+                    throw new InvalidOperationException("Only an issued packet can be edited.");
+                packet["digitalAssessment"] = NormalizePromotionDigitalAssessment(command, packet, actor, now);
+                JsonArray history = packet["history"] as JsonArray ?? throw new InvalidDataException("Packet history is invalid.");
+                history.Add(new JsonObject { ["action"] = "assessment", ["at"] = now, ["actorId"] = actor.Id });
+            }
             else
             {
                 JsonObject packet = PacketFind(packets, PacketText(command, "packetId", 80, true));
                 subject = packet["id"]?.ToString() ?? "";
-                JsonObject? person = packet["employee"] as JsonObject;
-                string name = person?["name"]?.ToString() ?? "";
-                if (string.Equals(actor.Id, packet["employeeId"]?.ToString(), StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(actor.Id, person?["eid"]?.ToString(), StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(actor.Username, name, StringComparison.OrdinalIgnoreCase) ||
-                    string.Equals(actor.DisplayName, name, StringComparison.OrdinalIgnoreCase))
-                    throw new UnauthorizedAccessException("The candidate cannot review or decide their own packet.");
+                AssertPromotionEvaluatorIsNotCandidate(actor, packet);
                 JsonArray history = packet["history"] as JsonArray ?? throw new InvalidDataException("Packet history is invalid.");
                 if (action == "delete" || action == "restore")
                 {
@@ -355,7 +360,9 @@ namespace PWADC.SecurityOperationsSuite
                 }
                 else
                 {
-                string reference = PacketText(command, "reference", 300, true);
+                string mode = action == "review" ? PacketText(command, "mode", 20) : "";
+                if (mode != "" && mode != "digital") throw new InvalidDataException("Unknown packet review mode.");
+                string reference = mode == "digital" ? "Digital packet " + subject : PacketText(command, "reference", 300, true);
                 string notes = PacketText(command, "notes", 2000, true);
                 if (action == "review")
                 {
@@ -363,9 +370,11 @@ namespace PWADC.SecurityOperationsSuite
                     string recommendation = PacketText(command, "recommendation", 25, true);
                     if (recommendation != "Recommend" && recommendation != "Return for development")
                         throw new InvalidDataException("Unknown supervisor recommendation.");
+                    if (mode == "digital") ValidatePromotionDigitalCompletion(packet, recommendation);
                     packet["status"] = "Reviewed";
                     packet["review"] = new JsonObject { ["recommendation"] = recommendation, ["notes"] = notes,
-                        ["paperReference"] = reference, ["reviewedAt"] = now, ["reviewedBy"] = actor.Id, ["reviewerName"] = actor.DisplayName };
+                        ["paperReference"] = reference, ["mode"] = mode == "digital" ? "digital" : "paper",
+                        ["reviewedAt"] = now, ["reviewedBy"] = actor.Id, ["reviewerName"] = actor.DisplayName };
                     history.Add(new JsonObject { ["action"] = "review", ["at"] = now, ["actorId"] = actor.Id,
                         ["recommendation"] = recommendation, ["notes"] = notes, ["paperReference"] = reference });
                 }
@@ -411,6 +420,12 @@ namespace PWADC.SecurityOperationsSuite
                             : "All evidence gates must be recorded PASS before promotion approval.");
                     if (decision == "Approve promotion" && (!recordsVerified || !checklistReviewed || !scenariosReviewed))
                         throw new InvalidDataException("Confirm signed qualifications, the completed checklist, and all six verbal scenario evaluations before approval.");
+                    if (decision == "Approve promotion" && packet["review"]?["mode"]?.ToString() == "digital")
+                    {
+                        ValidatePromotionDigitalCompletion(packet, "Recommend");
+                        if (packet["review"]?["recommendation"]?.ToString() != "Recommend")
+                            throw new InvalidDataException("A digital promotion approval requires a supervisor recommendation to promote.");
+                    }
                     if (packet["tier"]?.ToString() == "T3-T4" && decision == "Approve promotion" &&
                         (interviewDate.Length == 0 || interviewOutcome != "Meets standard" || interviewNotes.Length < 20))
                         throw new InvalidDataException("T4 approval requires a dated Security Manager interview rated Meets standard with a documented assessment.");
