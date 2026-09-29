@@ -1,6 +1,13 @@
-# PWADC Security Operations Suite v5.1.0
+# PWADC Security Operations Suite v5.2.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
+## v5.2.0 - Offline supervisor promotion packets
+
+- **Issue and Export Supervisor HTML** writes a standalone, self-contained packet to the shared `Exports/Promotion Packets` folder. Send that HTML file to the supervisor; they can open it in a normal browser without installing or signing into the Suite. The issued checklist, evidence gates, practical simulation prompts and six frozen oral scenarios are included.
+- The supervisor records observations and grades, downloads **Save Progress JSON** when pausing, and loads that file to resume. **Export Completed Evaluation JSON** checks the assessment and produces the file to return to the Security Manager. The candidate answers the six questions verbally.
+- In Promotion Packets, use **Import Supervisor Evaluation** on the returned JSON. The Suite checks the packet ID, issue time, tier, issued checklist and six question IDs, then validates every assessment field and completion gate before recording an audited supervisor review. The Security Manager verifies the evaluator and original signed records, then makes the final decision, including the T4 interview. Offline files and imported statements are not signatures or independent proof of source records.
+- Printable blank packets and the Suite's digital packet remain available.
+
 ## v5.1.0 - Digital promotion assessments
 
 - Issue a promotion packet, then choose **Issue and Open Digital** or **Issue and Preview Print**. Existing active packets have an **Open Digital** action in the packet register and employee profile.
