@@ -232,9 +232,16 @@ function promotionPortableRuntime(){
   }catch(e){message('Could not load progress: '+e.message,'error')}event.target.value=''};
   if(typeof window.addEventListener==='function')window.addEventListener('beforeunload',event=>{if(!dirty)return;event.preventDefault();event.returnValue=''});
 }
+function promotionPortableExportFileName(p){
+  const full=String(p.employee?.name||'').trim().split(/\s+/).filter(Boolean);
+  const first=p.employee?.first||full[0]||'UNKNOWN';
+  const last=p.employee?.last||full.slice(1).join(' ')||'UNKNOWN';
+  const safe=value=>String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]+/g,'_').replace(/^_+|_+$/g,'')||'UNKNOWN';
+  return 'PWADC_PROMOTION_'+safe(p.tier).replace(/_(?=T\d+$)/,'-to-')+'_'+safe(last)+'_'+safe(first)+'.html';
+}
 async function exportPromotionPortablePacket(id){
   const p=promotionPacket(id);if(!p||p.status!=='Issued'||!promotionPacketCan('issue'))return;
-  try{const fileName='PWADC_Promotion_'+String(p.id).replace(/[^a-z0-9_-]/gi,'_')+'_Supervisor.html';
+  try{const fileName=promotionPortableExportFileName(p);
     const result=await SuiteBridge.send('suite:writeExport',promotionPortableHtml(p),{module:'promotion-packets',fileName});
     window._promotionPortableExportPath=result.path;
     showModal(`<div class="modal-head"><div class="modal-title">Supervisor packet exported</div><button onclick="closeModal()">Close</button></div><p>Send this HTML file to the supervisor. It opens offline in a browser and needs no Suite access. The supervisor returns a Completed Evaluation JSON file for import.</p><p><strong>Saved at</strong><br><code style="overflow-wrap:anywhere">${esc(result.path)}</code></p><p class="notice">Contains employee promotion and Training gap details. Share and retain it in the approved personnel location.</p><div class="modal-actions"><button onclick="openPromotionPortableExportFolder()">Open Export Folder</button><button class="primary" onclick="closeModal()">Done</button></div>`);
