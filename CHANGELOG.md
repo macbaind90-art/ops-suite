@@ -1,5 +1,10 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.0.4 - Simulated Evaluations and Missing Training Only
+
+- Printable promotion packets accept documented live or simulated coaching, incident, report review, and leadership practicals at the same standard. Each applicable evaluation records its method, case, evaluator and date. Signed post qualifications and actual review-window conduct remain separate evidence.
+- The issue-time Training section prints only assigned requirements without a current signoff. It is omitted when the packet snapshot has none.
+
 ## v5.0.3 - Complete Evidence Workbooks for All Promotions
 
 - T1→T2 prints a five-gate workbook with probation, signed OJT/PMC records, observed supervised Gate and Patrol practicals, BASE/EAP awareness, pass-down and professional readiness.
