@@ -62,6 +62,13 @@ for(const term of ['"Approve promotion"','recordsVerified','checklistReviewed','
 for(const term of ['openReportWindow(style+header+evidence+checklist+scenarios+supervisor+interview+decision,false','Six verbal scenarios','Evaluator grade:','Security Manager interview'])need(browser,term,'Verbal evaluation or preview missing: '+term);
 const ctx={console,Date,hasCapability:()=>true,PWADCModuleRegistry:{register(){}},esc:x=>String(x??''),openReportWindow:(html,auto,orientation)=>{ctx.preview={html,auto,orientation}},toast:()=>{}};
 vm.createContext(ctx);vm.runInContext(browser,ctx);
+const exerciseIds={
+  'T1-T2':['T1-BASE','T1-COACH'],
+  'T2-T3':['T2-REPORT1','T2-REPORT2','T2-REPORT3','T2-INCIDENT','T2-COACH'],
+  'T3-T4':['T4-BASE1','T4-BASE2','T4-COACH','T4-LEAD1','T4-LEAD2','T4-LEAD3','T4-REPORT1','T4-REPORT2','T4-REPORT3','T4-SHADOW1','T4-SHADOW2','T4-SHADOW3','T4-FLAWED']
+};
+ctx.exerciseIds=exerciseIds;
+vm.runInContext('for(const id of Object.values(exerciseIds).flat()){const x=promotionGateExercises[id];if(!x||x.prompt.length<170||x.inject.length<80||x.task.length<45)throw Error("Incomplete provided simulation: "+id)}',ctx);
 for(const tier of Object.keys(expected)){
   ctx.sample={id:'test',tier,status:'Issued',employee:{name:'Candidate',eid:'1'},issuedAt:'2026-09-28',templateRevision:3,
     checklist:byTier[tier].checklist,scenarios:tier==='T3-T4'?[...byTier[tier].scenarios.filter(x=>x.category==='leadership').slice(0,3),...byTier[tier].scenarios.filter(x=>x.category==='emergency').slice(0,3)]:[...byTier[tier].scenarios.filter(x=>x.category==='gate').slice(0,2),...byTier[tier].scenarios.filter(x=>x.category==='patrol').slice(0,2),...byTier[tier].scenarios.filter(x=>x.category==='base').slice(0,1),...byTier[tier].scenarios.filter(x=>x.category===('T1-T2'===tier?'professional':'incident')).slice(0,1)],trainingEvidence:[]};
@@ -70,6 +77,8 @@ for(const tier of Object.keys(expected)){
   if((ctx.preview.html.match(/Evaluator grade:/g)||[]).length!==6)throw Error('Packet needs six evaluator grades');
   if(ctx.preview.html.includes('Missing training at issue'))throw Error('Do not show missing training when no requirements are missing');
   if(!ctx.preview.html.includes('□ Simulated exercise'))throw Error('Evaluations must permit a documented simulation');
+  for(const id of exerciseIds[tier])if(!ctx.preview.html.includes('Provided simulation '+id+' ·'))throw Error('Packet omitted provided gate exercise '+id);
+  if((ctx.preview.html.match(/Provided simulation /g)||[]).length!==exerciseIds[tier].length)throw Error('Wrong number of provided gate exercises for '+tier);
   ctx.sample.trainingEvidence=[{requirement:'SIGNED-CURRENT-TRAINING',signoffId:'signed-1',signoffDate:'2026-09-01'}];
   vm.runInContext('promotionPackets.packets=[sample];printPromotionPacket("test")',ctx);
   if(ctx.preview.html.includes('Missing training at issue')||ctx.preview.html.includes('SIGNED-CURRENT-TRAINING'))throw Error('Signed training must not appear in the missing training section');
@@ -102,5 +111,5 @@ for(const tier of Object.keys(expected)){
     if(ctx.preview.html.includes('Expected Decision Points')||ctx.preview.html.includes('Critical Failure Conditions'))throw Error('Restricted evaluator answer keys must not be included in the packet');
   }
 }
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.4</Version>');
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.0.5</Version>');
 console.log('Promotion Packets validation PASS');
