@@ -160,5 +160,5 @@ for(const tier of Object.keys(expected)){
   const escaped=vm.runInContext('promotionPortableHtml(sample)',ctx);
   if(escaped.includes('</script><script>alert(1)</script>'))throw Error('Untrusted scenario prompt escaped the data script');
 }
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.2.0</Version>');
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.2.1</Version>');
 console.log('Promotion Packets validation PASS');
