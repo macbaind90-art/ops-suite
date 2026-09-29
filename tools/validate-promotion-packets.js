@@ -36,9 +36,10 @@ for(const [tier,terms] of Object.entries({
 }))for(const term of terms)need(content(tier),term,tier+' missing current policy: '+term);
 const host=read('MainForm.PromotionPackets.cs'),auth=read('MainForm.Authorization.cs'),registry=read('MainForm.GovernedModules.cs');
 const digitalHost=read('MainForm.PromotionPackets.Digital.cs');
-const browser=read('app/js/74-promotion-packets.js'),digital=read('app/js/75-promotion-digital.js'),bootstrap=read('app/js/10-bootstrap.js');
+const browser=read('app/js/74-promotion-packets.js'),digital=read('app/js/75-promotion-digital.js'),portable=read('app/js/76-promotion-portable.js'),bootstrap=read('app/js/10-bootstrap.js');
 new vm.Script(browser,{filename:'app/js/74-promotion-packets.js'});
 new vm.Script(digital,{filename:'app/js/75-promotion-digital.js'});
+new vm.Script(portable,{filename:'app/js/76-promotion-portable.js'});
 need(host,'RandomNumberGenerator.GetInt32(i, available.Length)','Selection must use unbiased per-issue randomness');
 need(host,'for (int i = 0; i < 6; i++)','Each packet must freeze exactly six questions');
 need(host,'["scenarios"] = chosen','Frozen questions must be saved with packet');
@@ -49,7 +50,7 @@ need(browser,'p.scenarios.map((x,i)=>','Reprint must use issued questions');
 for(const text of ['Draw("leadership", "access")','Draw("leadership", "personnel")','Draw("emergency", "medicalFire")','Draw("emergency", "hazardEvac")','Draw("emergency", "compound")','All eight T4 evidence gates must be recorded PASS'])need(host,text,'T4 coverage or approval gate missing: '+text);
 for(const text of ['DrawTier("gate", 2)','DrawTier("patrol", 2)','DrawTier("base", 1)','stockSeventeen','system-upgrade-v5.0.3','All evidence gates must be recorded PASS'])need(host,text,'Lower promotion coverage or approval gate missing: '+text);
 need(host,'["trainingEvidence"] = evidence','Issue must capture training evidence');
-for(const marker of ['"delete" or "restore" => "promotion.manage"','["deletedPreviousStatus"]','packet["status"] = "Deleted"','packet["status"] = previous','history.Add(new JsonObject { ["action"] = action','Only the Security Manager/Admin may delete or restore'])need(host,marker,'Packet delete/restore audit or role guard missing: '+marker);
+for(const marker of ['"delete" or "restore" or "import" => "promotion.manage"','["deletedPreviousStatus"]','packet["status"] = "Deleted"','packet["status"] = previous','history.Add(new JsonObject { ["action"] = action','Only the Security Manager/Admin may delete or restore'])need(host,marker,'Packet delete/restore audit or role guard missing: '+marker);
 for(const marker of ['openPromotionDeleteModal','savePromotionDelete','Show deleted packets',"p.status!=='Deleted'",'promotionCommand(action,{packetId:id,notes})'])need(browser,marker,'Packet delete/restore UI missing: '+marker);
 
 for(const s of ['promotion.manage','promotion.review','promotion.decide'])need(host,s);
@@ -62,12 +63,15 @@ need(registry,'Id = "promotion-packets"');
 need(bootstrap,"await loadPromotionPackets()");
 need(read('app/index.html'),'js/74-promotion-packets.js');
 need(read('app/index.html'),'js/75-promotion-digital.js');
+need(read('app/index.html'),'js/76-promotion-portable.js');
+for(const marker of ['Only the Security Manager/Admin can import a supervisor evaluation.','RequireIssuedIds("checklistIds", "checklist")','RequireIssuedIds("scenarioIds", "scenarios")','NormalizePromotionDigitalAssessment(evaluation, packet, actor, now)','ValidatePromotionDigitalCompletion(packet, recommendation)','["source"] = "offline-html"'])need(host,marker,'Offline import must validate the issued packet and assessment: '+marker);
+for(const marker of ['Export Supervisor HTML','Import Supervisor Evaluation',"issuePromotionPacket('portable')"])need(browser,marker,'Portable packet action missing: '+marker);
 for(const term of ['UpgradePromotionPacketChecklists','current.Count != oldCount','["checklist"] = current.DeepClone()','template["checklist"] = replacement.DeepClone()','SaveModuleData("promotion-packets", data.ToJsonString(JsonOptions), loaded.Revision)'])need(host,term,'Live checklist upgrade must preserve prior revisions and issued packets: '+term);
 need(read('MainForm.cs'),'UpgradePromotionPacketChecklists();');
 for(const term of ['"Approve promotion"','recordsVerified','checklistReviewed','scenariosReviewed','interviewDate','interviewOutcome != "Meets standard"','interviewNotes.Length < 20'])need(host,term,'Manager approval gate missing: '+term);
 for(const term of ['openReportWindow(style+header+evidence+checklist+scenarios+supervisor+interview+decision,false','Six verbal scenarios','Evaluator grade:','Security Manager interview'])need(browser,term,'Verbal evaluation or preview missing: '+term);
 const ctx={console,Date,window:{},document:{getElementById:()=>null},activeModule:'promotion-packets',safeRenderPages:()=>{},hasCapability:()=>true,PWADCModuleRegistry:{register(){}},esc:x=>String(x??''),openReportWindow:(html,auto,orientation)=>{ctx.preview={html,auto,orientation}},toast:()=>{}};
-vm.createContext(ctx);vm.runInContext(browser,ctx);vm.runInContext(digital,ctx);
+vm.createContext(ctx);vm.runInContext(browser,ctx);vm.runInContext(digital,ctx);vm.runInContext(portable,ctx);
 const exerciseIds={
   'T1-T2':['T1-BASE','T1-COACH'],
   'T2-T3':['T2-REPORT1','T2-REPORT2','T2-REPORT3','T2-INCIDENT','T2-COACH'],
@@ -144,5 +148,17 @@ for(const tier of Object.keys(expected)){
   ctx.window._promotionDigitalOpen='';
   vm.runInContext('promotionDigitalSession=null',ctx);
 }
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.1.0</Version>');
+for(const tier of Object.keys(expected)){
+  ctx.sample={id:'offline-test',tier,status:'Issued',employee:{name:'Candidate',eid:'9',shift:'Nights'},issuedAt:'2026-09-29T10:00:00Z',
+    checklist:byTier[tier].checklist,scenarios:byTier[tier].scenarios.slice(0,6),trainingEvidence:[]};
+  const html=vm.runInContext('promotionPortableHtml(sample)',ctx);
+  if(!html.includes('Export Completed Evaluation JSON')||!html.includes('Save Progress JSON')||!html.includes('Load Saved Progress'))throw Error('Offline browser workflow missing');
+  const data=JSON.parse(html.match(/<script id="packet-data" type="application\/json">([^<]+)<\/script>/)[1]);
+  if(data.scenarios.length!==6||data.checklist.length!==byTier[tier].checklist.length||data.exercises.length!==exerciseIds[tier].length)throw Error('Offline packet snapshot incomplete for '+tier);
+  new vm.Script(html.match(/<script>\(([\s\S]+)\)\(\);<\/script>/)[1]);
+  ctx.sample.scenarios[0]={...ctx.sample.scenarios[0],prompt:'Read aloud: </script><script>alert(1)</script> and document the response.'};
+  const escaped=vm.runInContext('promotionPortableHtml(sample)',ctx);
+  if(escaped.includes('</script><script>alert(1)</script>'))throw Error('Untrusted scenario prompt escaped the data script');
+}
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.2.0</Version>');
 console.log('Promotion Packets validation PASS');
