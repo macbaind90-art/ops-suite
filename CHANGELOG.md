@@ -1,5 +1,9 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.2.2 - Offline Evaluator Workspace
+
+- Redesigned the standalone supervisor HTML with embedded approved PWADC logo, guided phase navigation, responsive layout, clearer evidence fields, progress and save feedback, and a structured final review. Offline export, resume, printing, validation and manager import remain compatible.
+
 ## v5.2.1 - Guided Offline Evaluation
 
 - The portable HTML packet is a step-by-step evaluator walkthrough. Checklist sections, evidence gates, each practical simulation, and each of the six issued oral questions appear on separate steps with their relevant prompt and recording fields.

@@ -152,7 +152,7 @@ for(const tier of Object.keys(expected)){
   ctx.sample={id:'offline-test',tier,status:'Issued',employee:{name:'Candidate',eid:'9',shift:'Nights'},issuedAt:'2026-09-29T10:00:00Z',
     checklist:byTier[tier].checklist,scenarios:byTier[tier].scenarios.slice(0,6),trainingEvidence:[]};
   const html=vm.runInContext('promotionPortableHtml(sample)',ctx);
-  if(!html.includes('Export Completed Evaluation JSON')||!html.includes('Save Progress JSON')||!html.includes('Load Saved Progress'))throw Error('Offline browser workflow missing');
+  if(!html.includes('Download completed evaluation')||!html.includes('Download progress')||!html.includes('Resume from file'))throw Error('Offline browser workflow missing');
   const data=JSON.parse(html.match(/<script id="packet-data" type="application\/json">([^<]+)<\/script>/)[1]);
   if(data.scenarios.length!==6||data.checklist.length!==byTier[tier].checklist.length||data.exercises.length!==exerciseIds[tier].length)throw Error('Offline packet snapshot incomplete for '+tier);
   new vm.Script(html.match(/<script>\(([\s\S]+)\)\(\);<\/script>/)[1]);
@@ -160,5 +160,5 @@ for(const tier of Object.keys(expected)){
   const escaped=vm.runInContext('promotionPortableHtml(sample)',ctx);
   if(escaped.includes('</script><script>alert(1)</script>'))throw Error('Untrusted scenario prompt escaped the data script');
 }
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.2.1</Version>');
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.2.2</Version>');
 console.log('Promotion Packets validation PASS');

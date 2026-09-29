@@ -7,11 +7,12 @@ vm.createContext(suite);
 for(const path of ['app/js/74-promotion-packets.js','app/js/75-promotion-digital.js','app/js/76-promotion-portable.js'])vm.runInContext(read(path),suite);
 
 class Element {
-  constructor(tag='div'){this.tag=tag;this.children=[];this.dataset={};this.value='';this.checked=false;this.hidden=false;this.events={};this.textContent=''}
+  constructor(tag='div'){this.tag=tag;this.children=[];this.dataset={};this.style={};this.attributes={};this.value='';this.checked=false;this.hidden=false;this.events={};this.textContent=''}
   appendChild(child){this.children.push(child);return child}
   remove(){}
   click(){if(this.onclick)this.onclick()}
   addEventListener(event,handler){this.events[event]=handler}
+  setAttribute(name,value){this.attributes[name]=value}
   querySelectorAll(selector){const matches=[];const visit=node=>{for(const child of node.children){if(selector==='[data-section]'&&child.dataset.section)matches.push(child);visit(child)}};visit(this);return matches}
 }
 function find(root,id){if(root.id===id)return root;for(const child of root.children){const match=find(child,id);if(match)return match}return null}
@@ -24,8 +25,8 @@ function flatten(root){return [root,...root.children.flatMap(flatten)]}
     const html=vm.runInContext('promotionPortableHtml(sample)',suite);
     const packet=html.match(/<script id="packet-data" type="application\/json">([^<]+)<\/script>/)?.[1];
     const runtime=html.match(/<script>\(([\s\S]+)\)\(\);<\/script>/)?.[1];
-    if(!packet||!runtime)throw Error('Offline packet is not self-contained');
-    const nodes=Object.fromEntries(['identity','sections','status','packet-data','stepProgress','stepPicker','previous','next','save','resume','resumeFile'].map(id=>[id,new Element()]));
+    if(!packet||!runtime||!html.includes('data:image/png;base64,')||!html.includes('alt="PWADC logo"'))throw Error('Offline packet branding or runtime is not self-contained');
+    const nodes=Object.fromEntries(['identity','sections','status','feedback','packet-data','phaseNav','phaseLabel','stepProgress','progressDetail','progressTrack','progressFill','stepPicker','previous','next','save','resume','resumeFile'].map(id=>[id,new Element()]));
     for(const [id,node] of Object.entries(nodes))node.id=id;
     nodes['packet-data'].textContent=packet;
     const document={body:new Element('body'),createElement:tag=>new Element(tag),getElementById:id=>nodes[id]||find(nodes.sections,id)};
@@ -55,11 +56,11 @@ function flatten(root){return [root,...root.children.flatMap(flatten)]}
     document.getElementById('recommendation').value='Recommend';
     document.getElementById('notes').value='All issued standards were evaluated with supporting evidence.';
     nodes.stepPicker.value=String(cards.length-1);nodes.stepPicker.onchange();
-    if(!cards.at(-1).children[0].textContent.includes('Review and return')||!nodes.stepProgress.textContent.includes('Oral 6/6'))throw Error('Final review or progress is missing');
+    if(!cards.at(-1).children[0].textContent.includes('Review and return')||!nodes.progressDetail.textContent.includes('6/6 oral scenarios')||nodes.phaseNav.children.length<6||!nodes.phaseNav.children.at(-1).attributes['aria-current'])throw Error('Final review, roadmap, or progress is missing');
     const firstOral=nodes.sections.querySelectorAll('[data-section]').find(x=>x.dataset.section==='scenarios'&&x.dataset.key==='response');
     const original=firstOral.value;firstOral.value='';firstOral.events.input();
     document.getElementById('submit').click();
-    if(nodes.stepPicker.value===String(cards.length-1)||!nodes.status.textContent.includes('oral scenario'))throw Error('Incomplete response did not return to the relevant question');
+    if(nodes.stepPicker.value===String(cards.length-1)||!nodes.feedback.textContent.includes('oral scenario'))throw Error('Incomplete response did not return to the relevant question');
     firstOral.value=original;firstOral.events.input();
     nodes.stepPicker.value=String(cards.length-1);nodes.stepPicker.onchange();
     document.getElementById('submit').click();

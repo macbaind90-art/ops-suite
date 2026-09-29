@@ -1,6 +1,11 @@
-# PWADC Security Operations Suite v5.2.1
+# PWADC Security Operations Suite v5.2.2
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
+## v5.2.2 - Offline evaluator workspace
+
+- Refined the exported supervisor packet with PWADC branding, an evaluation roadmap, focused assessment cards, clearer field prompts and save guidance, responsive layout, and a compact final review of recorded results and gaps. The logo is embedded in the HTML, so the packet still works offline.
+- The completion action takes the evaluator to the question requiring attention. The same issued six scenarios, evidence rules, progress JSON, and manager import format continue to apply.
+
 ## v5.2.1 - Guided offline evaluation
 
 - The exported supervisor HTML now walks the evaluator through an introduction, each checklist section, missing Training when present, each evidence gate, each practical, the six issued oral scenarios, the recommendation and final review. The current question or provided simulation is displayed directly on its assessment step.
