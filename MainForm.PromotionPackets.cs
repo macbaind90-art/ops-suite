@@ -141,7 +141,7 @@ namespace PWADC.SecurityOperationsSuite
             string action = PacketText(command, "action", 30, true);
             string capability = action switch
             {
-                "issue" or "scenario" or "delete" or "restore" => "promotion.manage",
+                "issue" or "scenario" or "delete" or "restore" or "import" => "promotion.manage",
                 "review" or "assessment" => "promotion.review",
                 "decide" => "promotion.decide",
                 _ => throw new InvalidDataException("Unknown promotion packet action.")
@@ -325,6 +325,54 @@ namespace PWADC.SecurityOperationsSuite
                 packet["digitalAssessment"] = NormalizePromotionDigitalAssessment(command, packet, actor, now);
                 JsonArray history = packet["history"] as JsonArray ?? throw new InvalidDataException("Packet history is invalid.");
                 history.Add(new JsonObject { ["action"] = "assessment", ["at"] = now, ["actorId"] = actor.Id });
+            }
+            else if (action == "import")
+            {
+                JsonObject packet = PacketFind(packets, PacketText(command, "packetId", 80, true));
+                subject = packet["id"]?.ToString() ?? "";
+                AssertPromotionEvaluatorIsNotCandidate(actor, packet);
+                if (!string.Equals(actor.Role, "Admin", StringComparison.OrdinalIgnoreCase))
+                    throw new UnauthorizedAccessException("Only the Security Manager/Admin can import a supervisor evaluation.");
+                if (packet["status"]?.ToString() != "Issued")
+                    throw new InvalidOperationException("Only an issued packet can receive a supervisor evaluation.");
+                if (!command.TryGetProperty("evaluation", out JsonElement evaluation) || evaluation.ValueKind != JsonValueKind.Object ||
+                    evaluation.GetRawText().Length > 180000 || PacketText(evaluation, "format", 50, true) != "PWADC-promotion-evaluation-1" ||
+                    !evaluation.TryGetProperty("completed", out JsonElement completed) || completed.ValueKind != JsonValueKind.True ||
+                    PacketText(evaluation, "packetId", 80, true) != subject ||
+                    PacketText(evaluation, "tier", 20, true) != packet["tier"]?.ToString() ||
+                    PacketText(evaluation, "issuedAt", 50, true) != packet["issuedAt"]?.ToString())
+                    throw new InvalidDataException("Returned evaluation does not match this issued packet.");
+                void RequireIssuedIds(string field, string packetField)
+                {
+                    if (!evaluation.TryGetProperty(field, out JsonElement ids) || ids.ValueKind != JsonValueKind.Array ||
+                        !ids.EnumerateArray().Select(x => x.ValueKind == JsonValueKind.String ? x.GetString() : null)
+                            .SequenceEqual(((JsonArray)packet[packetField]!).OfType<JsonObject>().Select(x => x["id"]?.ToString())))
+                        throw new InvalidDataException("Returned evaluation has different issued " + packetField + ".");
+                }
+                RequireIssuedIds("checklistIds", "checklist");
+                RequireIssuedIds("scenarioIds", "scenarios");
+                string evaluatorName = PacketText(evaluation, "evaluatorName", 120, true);
+                if (evaluatorName.Length < 3) throw new InvalidDataException("Supervisor name is required.");
+                if (string.Equals(evaluatorName, packet["employee"]?["name"]?.ToString(), StringComparison.OrdinalIgnoreCase))
+                    throw new UnauthorizedAccessException("The candidate cannot assess their own promotion packet.");
+                string recommendation = PacketText(evaluation, "recommendation", 25, true);
+                if (recommendation != "Recommend" && recommendation != "Return for development")
+                    throw new InvalidDataException("Unknown supervisor recommendation.");
+                string notes = PacketText(evaluation, "notes", 2000, true);
+                if (notes.Length < 20) throw new InvalidDataException("Supervisor assessment requires specific notes.");
+                string submittedAt = PacketText(evaluation, "submittedAt", 50, true);
+                if (!DateTimeOffset.TryParse(submittedAt, out _))
+                    throw new InvalidDataException("Supervisor submission timestamp is invalid.");
+                packet["digitalAssessment"] = NormalizePromotionDigitalAssessment(evaluation, packet, actor, now);
+                ValidatePromotionDigitalCompletion(packet, recommendation);
+                packet["status"] = "Reviewed";
+                packet["review"] = new JsonObject { ["recommendation"] = recommendation, ["notes"] = notes,
+                    ["paperReference"] = "Offline evaluation " + subject, ["mode"] = "digital",
+                    ["reviewedAt"] = now, ["reviewedBy"] = actor.Id, ["reviewerName"] = evaluatorName,
+                    ["offlineSubmittedAt"] = submittedAt, ["importedBy"] = actor.Id, ["source"] = "offline-html" };
+                JsonArray history = packet["history"] as JsonArray ?? throw new InvalidDataException("Packet history is invalid.");
+                history.Add(new JsonObject { ["action"] = "import", ["at"] = now, ["actorId"] = actor.Id,
+                    ["evaluatorName"] = evaluatorName, ["recommendation"] = recommendation });
             }
             else
             {
