@@ -28,6 +28,9 @@ try
     Func<string,bool> supplies = c => c is "supplies.view" or "supplies.manage";
     var restricted = ModuleWritePolicy.Project("roster", live, supplies);
     Check(restricted["employees"] == null && restricted["schedule"] == null, "Supplies reader receives no employee or schedule records");
+    restricted["officeSupplies"]!.AsArray().Add(JsonNode.Parse("{\"id\":1,\"name\":\"Paper\"}"));restricted["nextOfficeSupplyId"]=2;
+    var supplySave=ModuleWritePolicy.Apply("roster",live,restricted,supplies);
+    Check(supplySave["officeSupplies"]!.AsArray().Count==1 && supplySave["employees"]![0]!["rate"]!.ToString()=="22", "Supplies edit preserves hidden employee data and tolerates normalized counters");
     var attack = (JsonObject)live.DeepClone();attack["employees"]![0]!["rate"] = 99;
     Check(Denied(() => ModuleWritePolicy.Apply("roster",live,attack,supplies)), "Supplies writer cannot alter employee pay");
     Func<string,bool> roster = c => c is "roster.view" or "roster.edit";

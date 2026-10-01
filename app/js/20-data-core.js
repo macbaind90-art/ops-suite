@@ -352,8 +352,9 @@ const moduleSaveQueues=new Map(),moduleSaveStates=new Map();
 function coordinateModuleSave(module,operation){
  const state=moduleSaveStates.get(module)||{pending:0,generation:0,status:'saved'};
  state.pending++;state.generation++;state.status='pending';moduleSaveStates.set(module,state);
+ const queuedToken=hostSessionToken;
  const previous=moduleSaveQueues.get(module)||Promise.resolve();
- const work=previous.catch(()=>{}).then(()=>{state.status='saving';return operation();});
+ const work=previous.catch(()=>{}).then(()=>{if(queuedToken&&queuedToken!==hostSessionToken)return false;state.status='saving';return operation();});
  moduleSaveQueues.set(module,work);
  return work.then(result=>{state.pending--;state.status=state.pending?'pending':'saved';return result;},error=>{state.pending--;state.status='failed';throw error;});
 }

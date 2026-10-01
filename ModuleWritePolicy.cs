@@ -35,6 +35,13 @@ internal static class ModuleWritePolicy
                     if ((PayFields.Contains(key) && !can("reports.viewPay")) ||
                         (IsUniform(key) && !can("uniforms.view")) ||
                         (!RosterFields.Contains(key) && !PayFields.Contains(key) && !IsUniform(key))) employee.Remove(key);
+        // Match browser normalization without turning absent counters into writes.
+        foreach (var (counter, collection) in new[] { ("nextId", "employees"), ("nextTrainingTopicId", "trainingTopics"), ("nextTrainingRecordId", "trainingRecords"), ("nextOfficeSupplyId", "officeSupplies") })
+            if (result[counter] == null)
+            {
+                var rows = result[collection] as JsonArray ?? new();
+                result[counter] = rows.OfType<JsonObject>().Select(x => int.TryParse(x["id"]?.ToString(), out int id) ? id : 0).DefaultIfEmpty(0).Max() + 1;
+            }
         return result;
     }
     public static JsonObject Apply(string module, JsonObject live, JsonObject incoming, Func<string, bool> can)

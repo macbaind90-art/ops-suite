@@ -43,6 +43,9 @@ internal static class Program
             Check(Fails(()=>Call(host,"RequireModuleReadCapability","attendance")),"Supplies-only account cannot read Attendance");
             File.WriteAllText(Path.Combine(root,"Data","roster-data.json"),"{\"schemaVersion\":\"roster-1\",\"employees\":[{\"id\":1,\"rate\":22}],\"schedule\":[],\"officeSupplies\":[],\"audit\":[]}");
             var roster=Element(Call(host,"LoadModuleDataEnvelope","roster")!);Check(!roster.GetProperty("data").GetString()!.Contains("rate"),"Host module projection removes individual pay and employee data");
+            var supplyData=JsonNode.Parse(roster.GetProperty("data").GetString()!)!.AsObject();supplyData["officeSupplies"]!.AsArray().Add(JsonNode.Parse("{\"id\":1,\"name\":\"Paper\"}"));supplyData["nextOfficeSupplyId"]=2;
+            Call(host,"SaveModuleData","roster",supplyData.ToJsonString(),roster.GetProperty("revision").GetString(),settings.Users[1]);
+            Check(JsonNode.Parse(File.ReadAllText(Path.Combine(root,"Data","roster-data.json")))!["employees"]![0]!["rate"]!.ToString()=="22","Native supplies edit retains hidden employee pay");
             string tasksPath=Path.Combine(root,"Data","tasks-data.json"),baseline="{\"schemaVersion\":\"tasks-1\",\"tasks\":[],\"audit\":[]}";File.WriteAllText(tasksPath,baseline);
             var loaded=Element(Call(host,"LoadModuleDataWithSource","tasks")!);Check(loaded.GetProperty("Revision").GetString()==Hash(tasksPath),"Loaded data and revision derive from the same byte buffer");
             string backup=Path.Combine(root,"Backups","Task Tracker","test.json");Directory.CreateDirectory(Path.GetDirectoryName(backup)!);File.WriteAllText(backup,baseline);

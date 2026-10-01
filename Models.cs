@@ -82,6 +82,7 @@ namespace PWADC.SecurityOperationsSuite
 
     public class SuiteSettings
     {
+        public string SchemaVersion { get; set; } = "suite-settings-3";
         public string Theme { get; set; } = "dark";
         public string DefaultModule { get; set; } = "home";
         public string Pin { get; set; } = "";
