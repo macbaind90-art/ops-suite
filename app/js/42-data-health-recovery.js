@@ -4,17 +4,17 @@
 let dataHealthDashboard=null,dataHealthLoading=false,dataHealthError='',dataHealthSelectedModule='',dataHealthLkgPreview=null;
 let healthIndicator={severity:'gray',unreviewedEvents:0,checkedAt:''};
 
-function dataHealthAdminAuth(){return{adminUserId:String(currentUser?.id||''),adminPin:String(currentUser?.pin||'')}}
+function dataHealthAdminAuth(){return{adminUserId:String(currentUser?.id||''),adminPin:''}}
 function packagedRecoveryApproval(module,label){
   const activeAdmin=canRestoreData()&&currentUser;
   const adminUserId=activeAdmin?String(currentUser.id||''):String(prompt('Administrator user ID required for governed recovery:','admin')||'').trim();
   if(!adminUserId)return null;
-  const adminPin=activeAdmin?String(currentUser.pin||''):String(prompt('Administrator PIN required for governed recovery:','')||'');
-  if(!adminPin)return null;
+  const adminPin=activeAdmin?hostSessionToken:String(prompt('Administrator PIN required for governed recovery:','')||'');
+  if(!activeAdmin){toast('Sign in with recovery permission first.');return null;}
   const reason=String(prompt(`Document the reason for replacing ${label||module} with packaged recovery data:`,'')||'').trim();
   if(!reason){toast('A recovery reason is required');return null;}
   if(!confirm(`Replace live ${label||module} data with the packaged recovery seed? The desktop bridge will create a pre-recovery backup and permanently audit the outcome.`))return null;
-  return{adminUserId,adminPin,reason};
+  return{adminUserId,adminPin,reason,expectedRevision:moduleLoadInfo[module]?.revision||''};
 }
 function dataHealthSeverityLabel(s){return({green:'Healthy',yellow:'Attention',red:'Blocked',gray:'Not in Use / No Data Yet'})[s]||'Unknown'}
 function dataHealthBytes(n){n=Number(n||0);if(!n)return 'Not reported';const units=['B','KB','MB','GB','TB'];let i=0;while(n>=1024&&i<units.length-1){n/=1024;i++;}return n.toFixed(i?1:0)+' '+units[i]}
@@ -77,7 +77,7 @@ async function restoreModuleLkg(module){
   if(!reason){toast('Recovery reason is required');return;}
   if(!confirm(`Restore ${p.label||module} from the LKG created ${p.lkgTimestamp||'at the displayed time'}? The current live file will be backed up first.`))return;
   try{
-    const r=await SuiteBridge.send('suite:restoreLastKnownGood',{...dataHealthAdminAuth(),module,reason,expectedRevision:p.currentRevision||''});
+    const r=await SuiteBridge.send('suite:restoreLastKnownGood',{...dataHealthAdminAuth(),module,reason,expectedRevision:p.currentRevision||'',expectedBackupHash:p.backupHash||''});
     applyRecoveredModule(module,r);
     closeModal();toast((p.label||module)+' restored from Last Known Good');await refreshDataHealth('restore');
   }catch(e){toast('LKG restore failed: '+e.message);await refreshDataHealth('restore-failure');}
@@ -87,10 +87,13 @@ function applyRecoveredModule(module,r){
   const parsed=JSON.parse(r.data||'{}');
   if(module==='attendance'){attendance=parsed;normalizeAttendance();}
   else if(module==='roster'){roster=parsed;normalizeRoster();}
+  else if(module==='training'){training=parsed;}
+  else if(module==='promotion-packets'){promotionPackets=parsed;promotionDigitalResetDrafts();}
   else if(module==='tasks'){tasks=parsed;normalizeTasks();}
   else if(module==='shift-reports'){shiftReports=parsed;normalizeShiftReports();}
   else if(module==='shift-intelligence'){shiftIntel=parsed;normalizeShiftIntel();}
-  else if(module==='suite-settings'){settings=normalizeSettings(parsed);applyTheme();}
+  else if(module==='suite-settings'){settings=normalizeSettings(parsed);applyTheme();lockSuite();}
+  if(r.auditWarning)toast(r.auditWarning);
   recordModuleLoadInfo(module,{...r,source:'restored-last-known-good',sourceDetail:'Restored through Data Health & Recovery with permanent recovery audit.',loadedAt:new Date().toLocaleString(),dataRoot:settings.dataRoot});
 }
 
@@ -128,7 +131,7 @@ renderDataHealth=function(){
 const mockResponseV420=mockResponse;
 mockResponse=async function(type,payload,extra){
   if(type==='suite:getDataHealthSummary')return{severity:'yellow',label:'Preview Mode',unreviewedEvents:1,checkedAt:new Date().toLocaleString()};
-  if(type==='suite:getDataHealth')return{checkedAt:new Date().toLocaleString(),overallSeverity:'yellow',overallLabel:'Attention',unreviewedEvents:1,sharedStorage:{severity:'green',reachable:true,readAllowed:true,writeAllowed:true,lastChecked:new Date().toLocaleString(),freeSpaceBytes:0,dataMode:'Browser preview',path:settings.dataRoot},modules:['attendance','roster','tasks','shift-reports','shift-intelligence','suite-settings'].map((module,i)=>({module,label:moduleLabel(module),severity:i?'green':'yellow',statusLabel:i?'Healthy':'Attention',accessState:'Writable',schemaVersion:module==='attendance'?'attendance-3':module+'-1',expectedSchemaVersion:module==='attendance'?'attendance-3':module+'-1',lastSuccessfulSave:'Preview',lkg:{available:true,valid:true,currentToday:true,snapshotDate:new Date().toISOString().slice(0,10)},lastMigrationStatus:'No migration recorded',recoveryAvailable:true,summary:i?'Healthy preview module.':'Preview attention state.',conflicts:{count30Days:i?0:3,trend:i?'None':'Increasing'},technical:{integrityStatus:'valid'}})),specialistData:[],healthEvents:[],migrationHistory:[],recoveryHistory:[]};
+  if(type==='suite:getDataHealth')return{checkedAt:new Date().toLocaleString(),overallSeverity:'yellow',overallLabel:'Attention',unreviewedEvents:1,sharedStorage:{severity:'green',reachable:true,readAllowed:true,writeAllowed:true,lastChecked:new Date().toLocaleString(),freeSpaceBytes:0,dataMode:'Browser preview',path:settings.dataRoot},modules:['attendance','roster','tasks','shift-reports','shift-intelligence','suite-settings'].map((module,i)=>({module,label:moduleLabel(module),severity:i?'green':'yellow',statusLabel:i?'Healthy':'Attention',accessState:'Writable',schemaVersion:module==='attendance'?'attendance-3':module+'-1',expectedSchemaVersion:module==='attendance'?'attendance-3':module+'-1',lastSuccessfulSave:'Preview',lkg:{available:true,valid:true,currentToday:true,snapshotDate:facilityToday()},lastMigrationStatus:'No migration recorded',recoveryAvailable:true,summary:i?'Healthy preview module.':'Preview attention state.',conflicts:{count30Days:i?0:3,trend:i?'None':'Increasing'},technical:{integrityStatus:'valid'}})),specialistData:[],healthEvents:[],migrationHistory:[],recoveryHistory:[]};
   if(type==='suite:reviewHealthEvents')return{unreviewedEvents:0,reviewedAt:new Date().toISOString()};
   if(type==='suite:previewLastKnownGood')return{module:payload.module,label:moduleLabel(payload.module),currentTimestamp:'Preview',lkgTimestamp:'Preview',currentSchema:'preview-1',lkgSchema:'preview-1',currentRecordCount:10,lkgRecordCount:10,lkgValid:true,recoveryAvailable:true,differenceSummary:'Record-count totals match.',currentRevision:'preview',technical:{}};
   if(type==='suite:exportDataHealthDiagnostics')return{path:'Preview',fileName:'PWADC-Data-Health-Diagnostics-Preview.zip',metadataOnly:true};

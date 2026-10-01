@@ -346,7 +346,7 @@ namespace PWADC.SecurityOperationsSuite
                 JsonElement root = manifest.RootElement;
                 result.SnapshotDate = JsonString(root, "snapshotDate");
                 result.CreatedAt = JsonString(root, "createdAt");
-                result.CurrentToday = string.Equals(result.SnapshotDate, DateTime.Now.ToString("yyyy-MM-dd"), StringComparison.Ordinal);
+                result.CurrentToday = string.Equals(result.SnapshotDate, FacilityCalendar.Today(), StringComparison.Ordinal);
                 string relative = definition.FileName.Replace('\\', '/');
                 string expectedHash = "";
                 long expectedSize = 0;
@@ -603,6 +603,7 @@ namespace PWADC.SecurityOperationsSuite
         private static void AppendJsonLine(string path, object row)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            using var lease = SharedFileLease.Acquire(path);
             string line = JsonSerializer.Serialize(row) + Environment.NewLine;
             using FileStream stream = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.Read, 16 * 1024, FileOptions.WriteThrough);
             byte[] bytes = new UTF8Encoding(false).GetBytes(line);
@@ -723,11 +724,15 @@ namespace PWADC.SecurityOperationsSuite
             LkgModuleState lkg = ReadLkgModuleState(definition);
             string livePath = Path.Combine(settings.DataRoot, "Data", definition.FileName);
             if (!File.Exists(livePath)) throw new FileNotFoundException("The live module file does not exist.");
-            string liveJson = File.ReadAllText(livePath);
+            byte[] liveBytes = File.ReadAllBytes(livePath);
+            string liveRevision = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(liveBytes)).ToLowerInvariant();
+            string liveJson = System.Text.Encoding.UTF8.GetString(liveBytes).TrimStart('\ufeff');
             string lkgJson = lkg.Available ? File.ReadAllText(lkg.Path) : "{}";
             SchemaCompatibilityInfo liveSchema = EvaluateSchemaCompatibility(module, liveJson);
             SchemaCompatibilityInfo lkgSchema = EvaluateSchemaCompatibility(module, lkgJson);
-            Dictionary<string, int> liveCounts = CountModuleRecords(module, liveJson);
+            Dictionary<string, int> liveCounts;
+            try { liveCounts = CountModuleRecords(module, liveJson); }
+            catch { liveCounts = new Dictionary<string, int> { ["unreadable"] = 0 }; }
             Dictionary<string, int> lkgCounts = CountModuleRecords(module, lkgJson);
             int liveTotal = liveCounts.Values.Sum(), lkgTotal = lkgCounts.Values.Sum();
             string difference = liveTotal == lkgTotal ? "Record-count totals match. No record-by-record comparison was performed." :
@@ -747,12 +752,13 @@ namespace PWADC.SecurityOperationsSuite
                 lkgValid = lkg.Valid,
                 recoveryAvailable = lkg.Valid && string.Equals(lkgSchema.SchemaVersion, CurrentSchemaVersion(module), StringComparison.OrdinalIgnoreCase),
                 differenceSummary = difference,
-                currentRevision = GetDataRevision(livePath).Token,
-                technical = new { currentPath = livePath, currentHash = Sha256File(livePath), lkgPath = lkg.Path, lkgHash = lkg.Sha256, lkgSizeBytes = lkg.SizeBytes, validationError = lkg.Error }
+                currentRevision = liveRevision,
+                backupHash = Sha256Text(lkgJson),
+                technical = new { currentPath = livePath, currentHash = liveRevision, lkgPath = lkg.Path, lkgHash = lkg.Sha256, lkgSizeBytes = lkg.SizeBytes, validationError = lkg.Error }
             };
         }
 
-        private object RestoreLastKnownGood(string module, string reason, string expectedRevision, string userId, string pin)
+        private object RestoreLastKnownGood(string module, string reason, string expectedRevision, string userId, string pin, string expectedBackupHash)
         {
             SuiteUser admin = RequireDataHealthAdmin(userId, pin);
             if (string.IsNullOrWhiteSpace(reason)) throw new InvalidOperationException("A recovery reason is required.");
@@ -761,24 +767,29 @@ namespace PWADC.SecurityOperationsSuite
             LkgModuleState lkg = ReadLkgModuleState(definition);
             if (!lkg.Valid) throw new InvalidDataException("The selected LKG is not valid. " + lkg.Error);
             string sourceJson = File.ReadAllText(lkg.Path);
+            if (!string.Equals(Sha256Text(sourceJson), expectedBackupHash, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("Last-Known-Good changed after preview. Preview again.");
+            sourceJson = PrepareRecoveryCandidate(module, sourceJson);
             SchemaCompatibilityInfo sourceSchema = EvaluateSchemaCompatibility(module, sourceJson);
             if (!string.Equals(sourceSchema.SchemaVersion, CurrentSchemaVersion(module), StringComparison.OrdinalIgnoreCase))
                 throw new InvalidDataException("Direct LKG restore requires the current supported schema. Preview the LKG and use Backup Manager for manual review.");
             string livePath = Path.GetFullPath(Path.Combine(settings.DataRoot, "Data", definition.FileName));
+            using var lease = SharedFileLease.Acquire(livePath);
             DataWriteOutcome? outcome = null;
             string validation = "not-run";
             try
             {
                 outcome = WriteJsonAtomically(module, livePath, sourceJson, "restore-last-known-good", "pre-lkg-restore", expectedRevision);
+                lastRecoveryRevision = outcome.Sha256;
                 string restored = File.ReadAllText(livePath);
                 ValidateJsonPayload(restored, definition.Label + " post-restore verification");
                 SchemaCompatibilityInfo restoredSchema = EvaluateSchemaCompatibility(module, restored);
                 if (!restoredSchema.WriteAllowed || restoredSchema.Status != "current") throw new InvalidDataException("Post-restore schema verification failed. " + restoredSchema.Message);
                 validation = "passed";
                 WriteRecoveryAudit(module, "Last Known Good", lkg.CreatedAt, admin, reason, outcome.BackupPath, validation, "Succeeded");
-                AppendHealthEvent(module, "recovery-in-progress", "yellow", "LKG restore succeeded and requires administrative review.", "restore");
+                try { AppendHealthEvent(module, "recovery-in-progress", "yellow", "LKG restore succeeded and requires administrative review.", "restore"); } catch { recoveryAuditWarning = "Data restored; health-event audit was unavailable."; }
                 TryRefreshDataHealth("restore");
-                return new { module, data = restored, restoredFrom = lkg.Path, sourceTimestamp = lkg.CreatedAt, preRestoreBackupPath = outcome.BackupPath, validationResult = validation, outcome = "Succeeded", revision = GetDataRevision(livePath).Token, schemaVersion = CurrentSchemaVersion(module), expectedSchemaVersion = CurrentSchemaVersion(module), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true };
+                if (module == "suite-settings") { settings = LoadSettingsFromDisk(); restored = JsonSerializer.Serialize(PublicSettings()); }
+                return new { module, data = restored, restoredFrom = lkg.Path, sourceTimestamp = lkg.CreatedAt, preRestoreBackupPath = outcome.BackupPath, validationResult = validation, outcome = "Succeeded", auditWarning = recoveryAuditWarning, revision = outcome.Sha256, schemaVersion = CurrentSchemaVersion(module), expectedSchemaVersion = CurrentSchemaVersion(module), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true };
             }
             catch (Exception ex)
             {
@@ -789,11 +800,13 @@ namespace PWADC.SecurityOperationsSuite
             }
         }
 
+        private string recoveryAuditWarning = "", lastRecoveryRevision = "";
         private void WriteRecoveryAudit(string module, string source, string sourceTimestamp, SuiteUser admin, string reason, string preRestoreBackupPath, string validationResult, string outcome)
         {
             string path = Path.Combine(DataHealthDirectory(), "recovery-history.jsonl");
             var row = new { id = Guid.NewGuid().ToString("N"), at = DateTime.Now.ToString("O"), appVersion = AppVersion, module, recoverySource = source, sourceTimestamp, admin = admin.DisplayName, adminUserId = admin.Id, workstation = Environment.MachineName, reason, preRestoreBackupPath, preRestoreBackupResult = string.IsNullOrWhiteSpace(preRestoreBackupPath) ? "not-created" : "created", validationResult, outcome };
-            AppendJsonLine(path, row);
+            recoveryAuditWarning = "";
+            try { AppendJsonLine(path, row); } catch { recoveryAuditWarning = "Data restored; recovery audit could not be recorded. Review storage access."; }
         }
 
         private object ExportDataHealthDiagnostics(string userId, string pin)

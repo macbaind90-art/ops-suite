@@ -82,9 +82,10 @@ namespace PWADC.SecurityOperationsSuite
 
     public class SuiteSettings
     {
+        public string SchemaVersion { get; set; } = "suite-settings-3";
         public string Theme { get; set; } = "dark";
         public string DefaultModule { get; set; } = "home";
-        public string Pin { get; set; } = "1234";
+        public string Pin { get; set; } = "";
         public string DataRoot { get; set; } = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         public int BackupRetentionDays { get; set; } = 180;
         public double FtLoadedRate { get; set; } = 0.33;
@@ -140,7 +141,9 @@ namespace PWADC.SecurityOperationsSuite
         public string Username { get; set; } = "";
         public string DisplayName { get; set; } = "";
         public string Role { get; set; } = "Viewer";
-        public string Pin { get; set; } = "1234";
+        public string Pin { get; set; } = "";
+        public string PinHash { get; set; } = "";
+        public int PinLength { get; set; } = 4;
         public bool Active { get; set; } = true;
     }
 }

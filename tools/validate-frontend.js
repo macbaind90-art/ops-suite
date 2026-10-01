@@ -39,14 +39,14 @@ const reliabilitySource=fs.readFileSync(reliabilityPath,'utf8');
 const storageSource=fs.readFileSync(path.join(root,'MainForm.Storage.cs'),'utf8');
 const backupSource=fs.readFileSync(path.join(root,'MainForm.Backups.cs'),'utf8');
 const programsSource=fs.readFileSync(path.join(root,'MainForm.Programs.cs'),'utf8');
-for(const token of ['WriteJsonAtomically','FileOptions.WriteThrough','stream.Flush(true)','File.Replace(tempPath, fullTarget','Sha256File(tempPath)','Sha256File(fullTarget)','CreateSafetyBackup','WriteDataReliabilityAudit']){
+for(const token of ['WriteJsonAtomically','FileOptions.WriteThrough','stream.Flush(true)','GuardedFileCommit.Commit','Sha256File(tempPath)','SHA256.HashData(finalBytes)','CreateSafetyBackup','WriteDataReliabilityAudit']){
   if(!reliabilitySource.includes(token))throw new Error('Atomic persistence contract missing: '+token);
 }
 if(!reliabilitySource.includes('Normal save is blocked so damaged data is not silently overwritten'))throw new Error('Malformed-live-file overwrite guard missing.');
 if(!storageSource.includes('WriteJsonAtomically("suite-settings"'))throw new Error('Settings save is not routed through atomic persistence.');
 if(!storageSource.includes('DataWriteOutcome result = WriteJsonAtomically(module, path, json, "module-save"'))throw new Error('Module save is not routed through atomic persistence.');
 if(!storageSource.includes('Source = "live-invalid"'))throw new Error('Invalid live JSON load status is not preserved.');
-if(!backupSource.includes('WriteJsonAtomically(module, livePath, json, "restore-backup", "pre-restore")'))throw new Error('Restore path is not routed through atomic persistence.');
+if(!backupSource.includes('WriteJsonAtomically(module, livePath, json, "restore-backup", "pre-restore", expectedRevision)'))throw new Error('Restore path is not routed through atomic persistence.');
 if(!programsSource.includes('integrityStatus = integrity.Status')||!programsSource.includes('sha256 = integrity.Sha256'))throw new Error('Data Health integrity status contract missing.');
 if(storageSource.includes('File.Copy(tempPath, path, true)'))throw new Error('Legacy temp-file copy-over-live persistence returned.');
 
@@ -63,13 +63,13 @@ for(const token of ['GetDataRevision','VerifyExpectedRevision','STALE_WRITE_CONF
   if(!conflictSource.includes(token))throw new Error('Stale-write contract missing: '+token);
 }
 if(!storageSource.includes('revision = info.Revision'))throw new Error('Module load envelope does not expose a revision fingerprint.');
-if(!storageSource.includes('SaveModuleData(string module, string json, string expectedRevision)'))throw new Error('Module save does not accept an expected revision.');
-if(!reliabilitySource.includes('VerifyExpectedRevision(module, fullTarget, expectedRevision, operation)'))throw new Error('Atomic write path does not enforce the loaded revision.');
-const revGateIndex=reliabilitySource.indexOf('VerifyExpectedRevision(module, fullTarget, expectedRevision, operation)');
+if(!storageSource.includes('SaveModuleData(string module, string json, string expectedRevision, SuiteUser? actor'))throw new Error('Module save does not accept an expected revision.');
+if(!reliabilitySource.includes('VerifyExpectedRevision(module, fullTarget, operation == "packaged-recovery-create" ? "missing" : expectedRevision, operation)'))throw new Error('Atomic write path does not enforce the loaded revision.');
+const revGateIndex=reliabilitySource.indexOf('VerifyExpectedRevision(module, fullTarget, operation == "packaged-recovery-create" ? "missing" : expectedRevision, operation)');
 const backupIndex=reliabilitySource.indexOf('backupPath = CreateSafetyBackup(module, fullTarget, backupKind)');
 if(revGateIndex<0||backupIndex<0||revGateIndex>backupIndex)throw new Error('Stale-write gate must run before the live-file safety backup/replacement path.');
 if(!bridgeSource.includes('expectedRevision2 = savePayload.TryGetProperty("expectedRevision"'))throw new Error('Desktop bridge does not receive the browser loaded revision.');
-if(!bridgeSource.includes('revision = GetDataRevision(restoredLivePath).Token'))throw new Error('Restore response does not refresh the revision token.');
+if(!bridgeSource.includes('revision = lastRecoveryRevision'))throw new Error('Restore response does not refresh the revision token.');
 if(!dataCoreSource.includes("SuiteBridge.send('suite:saveModuleData2',{module,json,expectedRevision},{authorization:authorizationEnvelope()})"))throw new Error('Browser save path does not send expectedRevision and signed-in authorization.');
 if(!dataCoreSource.includes('showDataConflictModal')||!dataCoreSource.includes('exportConflictCopy')||!dataCoreSource.includes('reloadModuleAfterConflict'))throw new Error('Controlled stale-conflict recovery UI is incomplete.');
 if(!shiftOpsSource.includes("saveModuleDataStrict('shift-reports',shiftReports)")||!shiftOpsSource.includes("saveModuleDataStrict('shift-intelligence',shiftIntel)"))throw new Error('Shift Operations bypasses revision-aware persistence.');

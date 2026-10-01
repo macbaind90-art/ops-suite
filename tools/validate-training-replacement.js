@@ -7,7 +7,7 @@ const profile=fs.readFileSync('app/js/20-data-core.js','utf8');
 const registry=fs.readFileSync('MainForm.GovernedModules.cs','utf8');
 const authorization=fs.readFileSync('MainForm.Authorization.cs','utf8');
 const seed=JSON.parse(fs.readFileSync('app/seed/training-data.json','utf8'));
-const context={console,Date,trainingSeed:seed,roster:{employees:[{id:1,first:'Alex',last:'Sample',shift:'Gate'}]},window:{},PWADCModuleRegistry:{register(){}},
+const context={console,Date,facilityToday:()=>new Date().toISOString().slice(0,10),trainingSeed:seed,roster:{employees:[{id:1,first:'Alex',last:'Sample',shift:'Gate'}]},window:{},PWADCModuleRegistry:{register(){}},
   isArchivedEmployee:()=>false,fullName:e=>(e.first||'')+' '+(e.last||''),esc:s=>String(s??''),rosterEmployeeProfileLink:e=>e.first,
   screenGuide:()=>'',renderPeopleWorkflowNav:()=>'',hasCapability:()=>true,canAdmin:()=>true,showModal:html=>{context.modalHtml=html}};
 vm.createContext(context);vm.runInContext(source,context);

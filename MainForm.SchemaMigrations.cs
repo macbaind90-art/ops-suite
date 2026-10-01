@@ -377,6 +377,7 @@ namespace PWADC.SecurityOperationsSuite
                 string dataDir = Path.GetFullPath(Path.Combine(settings.DataRoot, "Data"));
                 string livePath = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(definition.Module)));
                 if (!IsPathUnder(livePath, dataDir)) throw new InvalidOperationException("Migration target resolved outside the suite Data folder.");
+                using var moduleCoordination = SharedFileLease.Acquire(livePath);
                 if (!File.Exists(livePath)) throw new FileNotFoundException("Migration source file was not found: " + livePath);
 
                 string sourceRaw = File.ReadAllText(livePath);

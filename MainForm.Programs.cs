@@ -22,7 +22,23 @@ namespace PWADC.SecurityOperationsSuite
                 CopyPackagedProgramsToShared(false);
             }
             if (!File.Exists(expanded) && !Directory.Exists(expanded)) throw new FileNotFoundException("Path was not found: " + expanded);
+            if (!Directory.Exists(expanded)) throw new UnauthorizedAccessException("Open Path accepts folders only. Use a registered program ID to launch a tool.");
             Process.Start(new ProcessStartInfo(expanded) { UseShellExecute = true });
+        }
+
+        private void LaunchProgram(string programId)
+        {
+            string relative = programId switch
+            {
+                "badge" => Path.Combine("Badge Audit", "PWADC_Badge_Audit_Tool.html"),
+                "amag" => Path.Combine("AMAG Audit", "PWADC_AMAG_Audit_Tool.html"),
+                "access" => Path.Combine("Access Audit", "PWADC_Access_Audit_Tool.html"),
+                _ => throw new UnauthorizedAccessException("Program ID is not registered.")
+            };
+            string packaged = Path.Combine(appFolder, "programs", relative);
+            if (!File.Exists(packaged)) throw new FileNotFoundException("Packaged tool is unavailable.");
+            // Open the trusted packaged tool rather than executable content from the share.
+            Process.Start(new ProcessStartInfo(packaged) { UseShellExecute = true });
         }
 
         private void CopyPackagedProgramsToShared(bool overwrite)

@@ -17,8 +17,8 @@ const dataCore=read('app/js/20-data-core.js');
 const workflow=read('.github/workflows/build-windows.yml');
 const csproj=read('SecurityOperationsSuite.csproj');
 
-need(main,'private const string AppVersion = "5.2.3";','AppVersion must be 5.2.3.');
-need(csproj,'<Version>5.2.3</Version>','Project package version must be 5.2.3.');
+need(main,'private const string AppVersion = "5.3.0";','AppVersion must be 5.3.0.');
+need(csproj,'<Version>5.3.0</Version>','Project package version must be 5.3.0.');
 need(main,'EnsureDailyLastKnownGoodSnapshot();','Daily LKG must remain part of startup.');
 need(main,'EnsureLiveSchemaMetadata();','Schema metadata initialization must remain part of startup.');
 need(main,'ProcessStartupSchemaMigrations();','Controlled schema migration processing must run at startup.');
@@ -31,7 +31,7 @@ need(schema,'result.Status = "previous"','Immediately previous schema state miss
 need(schema,'result.Status = "legacy-too-old"','Older-than-previous schemas must be blocked for manual review.');
 need(schema,'actualRevision == expectedRevision - 1','Current + immediately previous support policy missing.');
 need(schema,'compatibility.Status == "previous" && IsSchemaMigrationOperation(operation)','Atomic target guard does not allow only controlled previous-schema migration replacement.');
-need(reliability,'IsSchemaMigrationOperation(operation)','Migration writes are not revision guarded by the atomic persistence service.');
+need(reliability,'VerifyExpectedRevision(module, fullTarget','Migration writes are not revision guarded by the atomic persistence service.');
 
 need(migration,'private sealed class SchemaMigrationDefinition','Migration definition contract missing.');
 need(migration,'public string Risk { get; init; } = "minor"','Minor/major migration risk classification missing.');

@@ -56,8 +56,9 @@ namespace PWADC.SecurityOperationsSuite
         {
             if (!IsKnownJsonModule(module)) throw new InvalidOperationException("Atomic JSON write module is not approved: " + module);
             string fullTarget = Path.GetFullPath(targetPath);
+            using var coordination = SharedFileLease.Acquire(fullTarget);
             EnsureExistingTargetSchemaCompatibleForWrite(module, fullTarget, operation);
-            json = PrepareJsonForWrite(module, json);
+            json = IsExplicitInvalidJsonRecoveryOperation(operation) ? PrepareRecoveryCandidate(module, json) : PrepareJsonForWrite(module, json);
             ValidateJsonPayload(json, ModuleFolder(module));
             string? parent = Path.GetDirectoryName(fullTarget);
             if (string.IsNullOrWhiteSpace(parent)) throw new InvalidOperationException("JSON target folder could not be resolved.");
@@ -87,51 +88,34 @@ namespace PWADC.SecurityOperationsSuite
 
                 // v3.4.1.0 stale-write gate. This runs after staging/validation but before
                 // the safety backup or live replacement so a conflict does not touch live data.
-                if (operation == "module-save" || operation == "schema-metadata-initialize" || operation == "restore-last-known-good" || operation == "reset-from-packaged-seed" || IsSchemaMigrationOperation(operation))
-                    VerifyExpectedRevision(module, fullTarget, expectedRevision, operation);
+                // Every writer, including creation, settings, migration and recovery, uses
+                // the same coordinator and compares the revision while it is held.
+                VerifyExpectedRevision(module, fullTarget, operation == "packaged-recovery-create" ? "missing" : expectedRevision, operation);
 
                 existed = File.Exists(fullTarget);
                 if (existed) backupPath = CreateSafetyBackup(module, fullTarget, backupKind);
 
-                if (existed)
+                string finalHash = "";
+                long finalSize = 0;
+                method = GuardedFileCommit.Commit(tempPath, fullTarget, backupPath, existed, () =>
                 {
-                    try
-                    {
-                        File.Replace(tempPath, fullTarget, null, true);
-                        method = "File.Replace";
-                    }
-                    catch (PlatformNotSupportedException)
-                    {
-                        File.Move(tempPath, fullTarget, true);
-                        method = "File.Move(overwrite-fallback)";
-                    }
-                    catch (IOException) when (File.Exists(tempPath))
-                    {
-                        File.Move(tempPath, fullTarget, true);
-                        method = "File.Move(overwrite-fallback)";
-                    }
-                }
-                else
-                {
-                    File.Move(tempPath, fullTarget);
-                    method = "File.Move(create)";
-                }
+                    if (!File.Exists(fullTarget)) throw new IOException("Atomic write completed without a live file present.");
+                    byte[] finalBytes = File.ReadAllBytes(fullTarget);
+                    finalSize = finalBytes.LongLength;
+                    string finalJson = Encoding.UTF8.GetString(finalBytes).TrimStart('\ufeff');
+                    ValidateJsonPayload(finalJson, ModuleFolder(module) + " final verification");
+                    finalHash = Convert.ToHexString(SHA256.HashData(finalBytes)).ToLowerInvariant();
+                    if (!string.Equals(expectedHash, finalHash, StringComparison.OrdinalIgnoreCase))
+                        throw new IOException("Final live-file hash did not match the validated temporary write.");
+                });
 
-                if (!File.Exists(fullTarget)) throw new IOException("Atomic write completed without a live file present.");
-                string finalJson = File.ReadAllText(fullTarget);
-                ValidateJsonPayload(finalJson, ModuleFolder(module) + " final verification");
-                string finalHash = Sha256File(fullTarget);
-                if (!string.Equals(expectedHash, finalHash, StringComparison.OrdinalIgnoreCase))
-                    throw new IOException("Final live-file hash did not match the validated temporary write.");
-
-                FileInfo info = new FileInfo(fullTarget);
                 var outcome = new DataWriteOutcome
                 {
                     Module = module,
                     Operation = operation,
-                    Path = info.FullName,
+                    Path = fullTarget,
                     SavedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                    SizeBytes = info.Length,
+                    SizeBytes = finalSize,
                     BackupPath = backupPath,
                     Sha256 = finalHash,
                     Method = method,

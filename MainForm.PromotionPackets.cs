@@ -215,6 +215,11 @@ namespace PWADC.SecurityOperationsSuite
                         activeScenarios.Count(x => x["category"]?.ToString() == fourth) < 1)
                         throw new InvalidDataException("Keep two Gate, two Patrol, one Base, and one " + fourth + " active scenario.");
                 }
+                if (tier == "T3-T4" && (activeScenarios.Count(x => x["category"]?.ToString() == "leadership") < 3 ||
+                    !activeScenarios.Any(x => x["category"]?.ToString() == "leadership" && x["focus"]?.ToString() == "access") ||
+                    !activeScenarios.Any(x => x["category"]?.ToString() == "leadership" && x["focus"]?.ToString() == "personnel") ||
+                    new[] { "medicalFire", "hazardEvac", "compound" }.Any(f => !activeScenarios.Any(x => x["category"]?.ToString() == "emergency" && x["focus"]?.ToString() == f))))
+                    throw new InvalidDataException("T4 bank must preserve three leadership scenarios, access and personnel leadership, and all three emergency focus groups.");
                 template["revision"] = currentRevision + 1;
                 subject = scenarioId;
             }
@@ -294,12 +299,8 @@ namespace PWADC.SecurityOperationsSuite
                 {
                     string requirementId = assignment["requirementId"]?.ToString() ?? "";
                     string title = requirements.OfType<JsonObject>().FirstOrDefault(x => x["id"]?.ToString() == requirementId)?["title"]?.ToString() ?? requirementId;
-                    JsonObject[] events = (assignment["events"] as JsonArray)?.OfType<JsonObject>().ToArray() ?? Array.Empty<JsonObject>();
-                    JsonObject? sign = events.LastOrDefault(x => x["type"]?.ToString() == "signoff" &&
-                        !events.Any(v => v["type"]?.ToString() == "void" && v["reference"]?.ToString() == x["id"]?.ToString()));
-                    int signedIndex = sign == null ? -1 : Array.IndexOf(events, sign);
-                    if (signedIndex >= 0 && events.Skip(signedIndex + 1).Any(x => x["type"]?.ToString() == "retrain" ||
-                        x["type"]?.ToString() == "record")) sign = null;
+                    JsonObject? requirement = requirements.OfType<JsonObject>().FirstOrDefault(x => x["id"]?.ToString() == requirementId);
+                    JsonObject? sign = requirement == null ? null : TrainingQualification.CurrentSignoff(assignment, requirement, FacilityCalendar.Today());
                     evidence.Add(new JsonObject { ["assignmentId"] = assignment["id"]?.ToString(), ["requirement"] = title,
                         ["signoffId"] = sign?["id"]?.ToString() ?? "", ["signoffDate"] = sign?["date"]?.ToString() ?? "" });
                 }

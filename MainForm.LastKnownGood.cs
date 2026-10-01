@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Windows.Forms;
@@ -54,7 +55,8 @@ namespace PWADC.SecurityOperationsSuite
                     };
                 }
 
-                string today = DateTime.Now.ToString("yyyy-MM-dd");
+                ReconcileInterruptedLkgPromotion(backupRoot, currentDir);
+                string today = FacilityCalendar.Today();
                 if (DailyLkgSnapshotMatchesDate(currentDir, today))
                 {
                     return new DailyLkgResult
@@ -80,6 +82,28 @@ namespace PWADC.SecurityOperationsSuite
             finally
             {
                 coordination?.Dispose();
+            }
+        }
+
+        private void ReconcileInterruptedLkgPromotion(string backupRoot, string currentDir)
+        {
+            if (Directory.Exists(currentDir)) return;
+            foreach (string candidate in Directory.GetDirectories(backupRoot, ".previous-*").OrderByDescending(Directory.GetLastWriteTimeUtc))
+            {
+                try
+                {
+                    using var doc = JsonDocument.Parse(File.ReadAllText(Path.Combine(candidate, "manifest.json")));
+                    if (doc.RootElement.GetProperty("status").GetString() != "verified") continue;
+                    bool valid = true;
+                    foreach (JsonElement item in doc.RootElement.GetProperty("files").EnumerateArray())
+                    {
+                        string relative = item.GetProperty("relativePath").GetString() ?? "";
+                        string path = Path.GetFullPath(Path.Combine(candidate, "Data", relative));
+                        if (!IsPathUnder(path, Path.Combine(candidate, "Data")) || !File.Exists(path) || Sha256File(path) != item.GetProperty("sha256").GetString()) { valid = false; break; }
+                    }
+                    if (valid) { Directory.Move(candidate, currentDir); return; }
+                }
+                catch { }
             }
         }
 
@@ -222,6 +246,7 @@ namespace PWADC.SecurityOperationsSuite
             foreach (string path in Directory.GetFiles(dataDir, "*", SearchOption.AllDirectories))
             {
                 string name = Path.GetFileName(path);
+                if (name.EndsWith(".write-lock", StringComparison.OrdinalIgnoreCase)) continue;
                 if (name.Equals(".write-test.tmp", StringComparison.OrdinalIgnoreCase)) continue;
                 if (name.Contains(".txn-", StringComparison.OrdinalIgnoreCase) && name.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase)) continue;
                 if (IsBackupArtifactUnderData(dataDir, path)) continue;

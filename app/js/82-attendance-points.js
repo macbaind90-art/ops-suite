@@ -219,7 +219,7 @@ function backfillHistoricalRdos(today=attendanceLocalToday()){
   }
   return {changed,first,last,source:'roster-rdo-history'};
 }
-function pointSystemAsOf(){return isIsoDateKey(gridEnd)?gridEnd:(latestAttendanceDataDate(attendance)||new Date().toISOString().slice(0,10));}
+function pointSystemAsOf(){return isIsoDateKey(gridEnd)?gridEnd:(latestAttendanceDataDate(attendance)||facilityToday());}
 function dayDiff(a,b){return Math.round((parseISO(b)-parseISO(a))/86400000);}
 function pointCodeLabel(code){
   const fixed={CO1:'Call Off - 1st in 14 Days',CO2:'Call Off - Additional in 14 Days',U:'Legacy Unexcused - Review'};
@@ -308,7 +308,7 @@ function correctiveActionWorkflow(empId,snap=attendancePointSnapshot(empId)){
   const required=attendanceCanonicalActionLevel(snap.level);
   const requiredRank=attendanceActionRank(required);
   if(!requiredRank)return {required:'None',requiredRank,status:'None',record:null,due:false};
-  const records=(attendance.correctiveActions||[]).filter(a=>String(a.empId)===String(empId)).sort((a,b)=>String(b.generatedAt||b.at||'').localeCompare(String(a.generatedAt||a.at||'')));
+  const records=(attendance.correctiveActions||[]).filter(a=>String(a.empId)===String(empId)&&String(a.generatedAt||a.at||'').slice(0,10)<=snap.asOf).sort((a,b)=>String(b.generatedAt||b.at||'').localeCompare(String(a.generatedAt||a.at||'')));
   const record=records.find(a=>attendanceActionRank(a.noticeType||a.level)>=requiredRank)||null;
   return {required,requiredRank,status:record?(record.status||'Recorded'):'Due',record,due:!record};
 }
@@ -340,7 +340,7 @@ function attendanceMedicalMatchingEvents(note){
 function attendanceMedicalNoteStatus(note){return note&&note.voided?'Voided':'Active';}
 function attendanceMedicalPointMultiplier(_note){return Number((attendanceDoctorNoteChargePercent()/100).toFixed(4));}
 function attendanceMedicalFirstMatchingEvent(note){
-  const rows=attendanceMedicalMatchingEvents(note);
+  const rows=attendanceMedicalMatchingEvents(note).filter(e=>e.date>=attendancePolicyEffectiveDate()&&attendanceMedicalCoverageFor(note.empId,e.date,e.code)?.id===note.id);
   return rows.length?rows[0]:null;
 }
 function attendanceMedicalIsPrimaryEvent(note,date,code){
@@ -387,6 +387,8 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
   const maxCredits=Number(attendance.pointSystem&&attendance.pointSystem.policy&&attendance.pointSystem.policy.maxPositiveCredits||3);
   const adjustment=latestPointAdjustment(empId,asOf);
   const adjustmentExpires=adjustment?addDays(adjustment.effectiveDate,89):'';
+  const adjustments=(attendance.pointAdjustments||[]).filter(a=>String(a.empId)===String(empId)&&isIsoDateKey(a.effectiveDate)&&a.effectiveDate>=policyEffectiveDate&&a.effectiveDate<=asOf).sort((a,b)=>String(a.effectiveDate).localeCompare(String(b.effectiveDate))||String(a.at||'').localeCompare(String(b.at||'')));
+  let adjustmentCursor=0,currentAdjustment=null;
   let bank=0,cleanWorkingDays=0,adjustmentOutstanding=0,adjustmentActivated=false;
   const earned=[],issues=[],chargedMedicalNotes=new Set();
 
@@ -397,13 +399,16 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
     }
   }
   function activateAdjustmentIfNeeded(nextDate='9999-12-31'){
-    if(!adjustment||adjustmentActivated||nextDate<=adjustment.effectiveDate)return;
-    adjustmentActivated=true;
-    if(asOf<=adjustmentExpires)adjustmentOutstanding=Math.max(0,Number(adjustment.newActivePoints)||0);
+    while(adjustmentCursor<adjustments.length&&adjustments[adjustmentCursor].effectiveDate<nextDate){
+      currentAdjustment=adjustments[adjustmentCursor++];
+      adjustmentActivated=true;
+      adjustmentOutstanding=Math.max(0,Number(currentAdjustment.newActivePoints)||0);
+    }
+    if(currentAdjustment&&(nextDate===addDays(asOf,1)?asOf:nextDate)>addDays(currentAdjustment.effectiveDate,89))adjustmentOutstanding=0;
   }
   function activeIssueBalance(issue,onDate){
     if(!issue||issue.date<addDays(onDate,-89))return 0;
-    if(adjustmentActivated&&adjustment&&issue.date<=adjustment.effectiveDate)return 0;
+    if(adjustmentActivated&&adjustment&&issue.date<=currentAdjustment.effectiveDate)return 0;
     return Math.max(0,Number(issue.net)||0);
   }
   function applyPositiveAward(onDate,amount=1){
@@ -412,7 +417,7 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
     activateAdjustmentIfNeeded(onDate);
     expireIssueBalances(onDate);
 
-    if(adjustmentActivated&&adjustmentOutstanding>0&&onDate>adjustment.effectiveDate){
+    if(adjustmentActivated&&adjustmentOutstanding>0&&onDate>currentAdjustment.effectiveDate){
       const used=Math.min(remaining,adjustmentOutstanding);
       adjustmentOutstanding=Number((adjustmentOutstanding-used).toFixed(2));
       remaining=Number((remaining-used).toFixed(2));
@@ -497,7 +502,8 @@ function attendancePointSnapshot(empId,asOf=pointSystemAsOf()){
     if(ATT_NEUTRAL_CODES.has(code))continue;
   }
 
-  activateAdjustmentIfNeeded('9999-12-31');
+  activateAdjustmentIfNeeded(addDays(asOf,1));
+  if(currentAdjustment&&asOf>addDays(currentAdjustment.effectiveDate,89))adjustmentOutstanding=0;
   const rollingStart=addDays(asOf,-89);
   const start90=rollingStart<policyEffectiveDate?policyEffectiveDate:rollingStart;
   const rawActiveIssues=issues.filter(x=>x.date>=start90&&x.date<=asOf);

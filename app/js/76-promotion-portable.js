@@ -181,13 +181,33 @@ function promotionPortableRuntime(){
     evaluatorName:document.getElementById('evaluatorName').value.trim(),recommendation:document.getElementById('recommendation').value,
     notes:document.getElementById('notes').value.trim(),stepIndex:currentStep,completed,submittedAt:completed?new Date().toISOString():''}}
   function download(payload,label){const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='PWADC_Promotion_'+p.packetId+'_'+label+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),60000);dirty=false;status.className='save-state';status.textContent=label==='Progress'?'Progress file downloaded':'Completed evaluation downloaded';message(label==='Progress'?'Keep this JSON file. Select Resume from file when you return.':'Send the completed JSON file to the Security Manager for import.')}
+  function validateAssessmentShape(input){
+    if(!input||JSON.stringify(input).length>160000)throw Error('Assessment is too large or invalid.');
+    const sets={checklist:new Set(p.checklist.map(x=>x.id)),gates:new Set(p.gateNames.map((_,i)=>String(i+1))),scenarios:new Set(p.scenarios.map(x=>x.id)),practicals:new Set(p.exercises.map(x=>x.id)),training:new Set(p.missingTraining.map(x=>x.assignmentId))};
+    const choices={checklist:{status:['','Verified','Gap','Not observed']},gates:{status:['','PASS','REMEDIATE','HOLD','NOT ELIGIBLE'],method:['','Records','Live','Simulated']},scenarios:{grade:['','MEETS','COACHING','REMEDIATE']},practicals:{method:['','Live','Simulated'],result:['','MEETS','COACHING','REMEDIATE']}};
+    const limits={checklist:{status:20,evidence:1200},gates:{status:20,method:20,date:10,caseRef:300,evidence:2500},scenarios:{grade:20,response:2500,followUp:1500,critical:0},practicals:{method:20,result:20,date:10,shift:80,caseRef:300,evidence:1800,managerReviewed:0},training:{resolved:0,reference:500}};
+    for(const section of Object.keys(sets)){
+      const rows=input[section];if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('The progress file is incomplete.');
+      for(const [id,row] of Object.entries(rows)){
+        if(!sets[section].has(id)||!row||typeof row!=='object'||Array.isArray(row))throw Error('Unknown '+section+' assessment row.');
+        for(const [key,value] of Object.entries(row)){
+          if(!Object.prototype.hasOwnProperty.call(limits[section],key))throw Error('Unknown assessment field.');
+          const limit=limits[section][key];if(limit===0?typeof value!=='boolean':typeof value!=='string'||value.trim().length>limit)throw Error('Invalid '+section+' field '+key+'.');
+          if(choices[section]?.[key]&&!choices[section][key].includes(value.trim()))throw Error('Unknown '+section+' result.');
+          if(key==='date'&&value&&(!/^\d{4}-\d{2}-\d{2}$/.test(value)||value<'0001-01-01'||!Number.isFinite(Date.parse(value+'T00:00:00Z'))||new Date(value+'T00:00:00Z').toISOString().slice(0,10)!==value))throw Error('Assessment date must be an ISO date.');
+        }
+        if(section==='gates'&&row.method==='Simulated'&&!(p.tier==='T1-T2'?[4,5]:p.tier==='T2-T3'?[5,6]:[1,4,5,6,7]).includes(Number(id)))throw Error('This gate requires signed records or live observation.');
+      }
+    }
+  }
   function validate(){const a=assessment,r=document.getElementById('recommendation').value;
-    if(document.getElementById('evaluatorName').value.trim().length<3||document.getElementById('notes').value.trim().length<20||!r)return 'Enter evaluator name, recommendation and assessment notes (20+ characters).';
+    try{validateAssessmentShape(a)}catch(e){return e.message;}
+    if(document.getElementById('evaluatorName').value.trim().length<3||document.getElementById('notes').value.trim().length<20||document.getElementById('evaluatorName').value.trim().length>120||document.getElementById('notes').value.trim().length>2000||!['Recommend','Return for development'].includes(r))return 'Enter evaluator name, recommendation and assessment notes (20+ characters).';
     for(const x of p.checklist){const v=a.checklist[x.id]||{};if(!v.status||(v.status==='Verified'&&(v.evidence||'').trim().length<10))return 'Complete checklist '+x.id+' with evidence.';if(r==='Recommend'&&v.status!=='Verified')return 'Resolve checklist gaps before recommending promotion.'}
     for(let i=0;i<p.gateNames.length;i++){const v=a.gates[String(i+1)]||{};if(!v.status||!v.method||!v.date||(v.evidence||'').trim().length<20||(v.method!=='Records'&&(v.caseRef||'').trim().length<3))return 'Complete evidence gate '+(i+1)+'.';if(r==='Recommend'&&v.status!=='PASS')return 'All gates must PASS for a recommendation.'}
     for(const x of p.exercises){const v=a.practicals[x.id]||{};if(!v.method||!v.result||!v.date||(v.caseRef||'').trim().length<3||(v.evidence||'').trim().length<20)return 'Complete practical '+x.id+'.';if(r==='Recommend'&&v.result==='REMEDIATE')return 'Resolve practical remediation first.'}
     for(const x of p.scenarios){const v=a.scenarios[x.id]||{};if(!v.grade||(v.response||'').trim().length<20||(v.followUp||'').trim().length<10)return 'Grade and document oral scenario '+x.id+'.';if(r==='Recommend'&&(v.grade==='REMEDIATE'||v.critical))return 'Resolve oral scenario remediation or critical failure.'}
-    if(p.tier==='T3-T4'){const x=a.practicals['T4-BASE1'],y=a.practicals['T4-BASE2'];if(x.date===y.date&&(!x.shift||x.shift===y.shift))return 'T4 BASE practicals require different dates or shifts.';if(r==='Recommend'&&!x.managerReviewed&&!y.managerReviewed)return 'Security Manager must review one T4 BASE practical.'}
+    if(p.tier==='T3-T4'){const x=a.practicals['T4-BASE1'],y=a.practicals['T4-BASE2'];if(x.date===y.date&&(!String(x.shift||'').trim()||String(x.shift).trim().toUpperCase()===String(y.shift||'').trim().toUpperCase()))return 'T4 BASE practicals require different dates or shifts.';if(r==='Recommend'&&!x.managerReviewed&&!y.managerReviewed)return 'Security Manager must review one T4 BASE practical.'}
     if(r==='Recommend')for(const x of p.missingTraining){const v=a.training[x.assignmentId]||{};if(!v.resolved||(v.reference||'').trim().length<10)return 'Resolve missing Training '+x.requirement+' against its signed source.'}
     return ''}
   function stepForIssue(error){
@@ -224,7 +244,17 @@ function promotionPortableRuntime(){
   document.getElementById('submit').onclick=()=>{const error=validate();if(error){const target=stepForIssue(error);showStep(target<0?steps.length-1:target);message(error,'error');return}download(envelope(true),'Completed_Evaluation')};
   document.getElementById('resume').onclick=()=>document.getElementById('resumeFile').click();
   document.getElementById('resumeFile').onchange=async event=>{try{const file=event.target.files[0];if(!file)return;const saved=JSON.parse(await file.text());if(saved.format!=='PWADC-promotion-evaluation-1'||saved.packetId!==p.packetId||saved.tier!==p.tier||saved.issuedAt!==p.issuedAt||JSON.stringify(saved.checklistIds)!==JSON.stringify(p.checklist.map(x=>x.id))||JSON.stringify(saved.scenarioIds)!==JSON.stringify(p.scenarios.map(x=>x.id)))throw Error('This progress file belongs to a different or changed packet.');
-    for(const section of ['checklist','gates','scenarios','practicals','training']){if(!saved.assessment?.[section]||typeof saved.assessment[section]!=='object')throw Error('The progress file is incomplete.');assessment[section]=saved.assessment[section]}
+    validateAssessmentShape(saved.assessment);
+    const candidate={};
+    for(const section of ['checklist','gates','scenarios','practicals','training']){
+      const rows=saved.assessment?.[section];if(!rows||typeof rows!=='object'||Array.isArray(rows))throw Error('The progress file is incomplete.');
+      candidate[section]={};
+      for(const [id,row] of Object.entries(rows)){
+        if(['__proto__','constructor','prototype'].includes(id)||!row||typeof row!=='object'||Array.isArray(row))throw Error('Invalid assessment row.');
+        const clean={};for(const [key,value] of Object.entries(row)){if(['__proto__','constructor','prototype'].includes(key)||!['string','boolean'].includes(typeof value)||typeof value==='string'&&value.length>2500)throw Error('Invalid assessment field.');clean[key]=value;}candidate[section][id]=clean;
+      }
+    }
+    for(const section of ['checklist','gates','scenarios','practicals','training'])assessment[section]=candidate[section];
     for(const el of root.querySelectorAll('[data-section]')){const value=assessment[el.dataset.section]?.[el.dataset.id]?.[el.dataset.key];if(el.type==='checkbox')el.checked=value===true;else el.value=value||''}
     for(const id of ['evaluatorName','recommendation','notes'])document.getElementById(id).value=saved[id]||'';
     showStep(Number.isInteger(saved.stepIndex)?saved.stepIndex:0);
