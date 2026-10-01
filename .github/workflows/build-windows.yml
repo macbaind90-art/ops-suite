@@ -9,6 +9,13 @@ on:
     branches:
       - main
 
+concurrency:
+  group: windows-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
   build-windows:
     runs-on: windows-latest
@@ -22,89 +29,12 @@ jobs:
         with:
           node-version: '20.x'
 
-      - name: Validate modular front end
-        run: node tools/validate-frontend.js
+      - name: Validate all browser and release contracts
+        run: node tools/validate-all.js
 
-      - name: Validate missed RDO backfill
-        run: node tools/validate-attendance-rdo-backfill.js
-
-      - name: Validate governed Training replacement
-        run: node tools/validate-training-replacement.js
-
-      - name: Validate Promotion Packets
-        run: node tools/validate-promotion-packets.js
-
-      - name: Validate portable promotion walkthrough
-        run: node tools/validate-promotion-portable-wizard.js --write-fixtures
-
-      - name: Validate Task Tracker print regression
-        run: node tools/validate-task-print.js
-
-      - name: Validate Attendance Point System
-        run: node tools/validate-attendance-points.js
-
-      - name: Validate Positive Credit Paydown
-        run: node tools/validate-positive-credit-paydown.js
-
-      - name: Validate Roster to Attendance population
-        run: node tools/validate-roster-attendance-sync.js
-
-      - name: Validate Attendance Live Schedule authority
-        run: node tools/validate-attendance-schedule-authority.js
-
-      - name: Validate suite-wide Live Schedule coverage authority
-        run: node tools/validate-live-schedule-coverage-authority.js
-
-      - name: Validate Home Attendance workflow
-        run: node tools/validate-home-attendance-workflow.js
-
-      - name: Validate Attendance legacy retirement
-        run: node tools/validate-attendance-legacy-retirement.js
-
-      - name: Validate browser startup bindings
-        run: node tools/validate-browser-startup-bindings.js
-
-      - name: Validate Attendance point-value editor
-        run: node tools/validate-point-value-editor.js
-
-      - name: Validate doctor-note attendance coverage
-        run: node tools/validate-doctor-note-coverage.js
-
-      - name: Validate suspended attendance status
-        run: node tools/validate-suspended-attendance.js
-
-      - name: Validate attendance notice lifecycle
-        run: node tools/validate-corrective-action-notices.js
-
-      - name: Validate Attendance Action Report
-        run: node tools/validate-attendance-action-report.js
-
-      - name: Validate Attendance Trend and Risk Report
-        run: node tools/validate-attendance-trend-risk-report.js
-
-      - name: Validate standardized report controls and attendance effective date
-        run: node tools/validate-standardized-report-controls.js
-
-      - name: Validate Daily Last-Known-Good snapshot
-        run: node tools/validate-daily-lkg.js
-
-      - name: Validate schema compatibility guarding
-        run: node tools/validate-schema-compatibility.js
-
-      - name: Validate controlled schema migration framework
-        run: node tools/validate-schema-migrations.js
-
-      - name: Validate Data Health and Recovery Dashboard
-        run: node tools/validate-data-health-recovery.js
-
-      - name: Validate employee profile navigation and sticky Attendance dates
-        run: node tools/validate-employee-profile-navigation.js
-
-      - name: Validate role capabilities and Preview as Role
-        run: node tools/validate-role-capabilities.js
-
-      - name: Validate approved audit fixes
-        run: node tools/validate-approved-fixes.js
+      - name: Read release version
+        shell: pwsh
+        run: '"SUITE_VERSION=$(Get-Content VERSION -Raw | ForEach-Object { $_.Trim() })" >> $env:GITHUB_ENV'
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -126,12 +56,16 @@ jobs:
       - name: Test native Windows authorization and recovery
         run: dotnet run --project tests/WindowsHostTests/Suite.WindowsHostTests.csproj --configuration Release
 
+      - name: Test actual WebView2 navigation and input
+        timeout-minutes: 3
+        run: dotnet run --project tests/WebViewTests/Suite.WebViewTests.csproj --configuration Release
+
       - name: Publish self-contained Windows x64 EXE
         run: dotnet publish SecurityOperationsSuite.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output publish
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v5-3-0-Windows
+          name: PWADC-Security-Operations-Suite-v${{ env.SUITE_VERSION }}-Windows
           path: publish/**
           retention-days: 7

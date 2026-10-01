@@ -1,3 +1,4 @@
+const releaseVersion=require('fs').readFileSync(require('path').join(__dirname,'..','VERSION'),'utf8').trim();
 const fs=require('fs'),vm=require('vm');
 const read=p=>fs.readFileSync(p,'utf8');
 const need=(hay,needle,msg)=>{if(!hay.includes(needle))throw new Error(msg||'Missing: '+needle)};
@@ -165,5 +166,5 @@ if(vm.runInContext('promotionPortableExportFileName(sample)',ctx)!=='PWADC_PROMO
 ctx.sample={tier:'T3-T4',employee:{name:'Alicia Smith'}};
 if(vm.runInContext('promotionPortableExportFileName(sample)',ctx)!=='PWADC_PROMOTION_T3-to-T4_SMITH_ALICIA.html')throw Error('Historical packet filename fallback is wrong');
 need(read('MainForm.PromotionPackets.cs'),'["first"] = employee["first"]','New packets must freeze name components');
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.3.0</Version>');
+need(read('SecurityOperationsSuite.csproj'),`<Version>${releaseVersion}</Version>`);
 console.log('Promotion Packets validation PASS');

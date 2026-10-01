@@ -1,3 +1,4 @@
+const releaseVersion=require('fs').readFileSync(require('path').join(__dirname,'..','VERSION'),'utf8').trim();
 'use strict';
 const fs=require('fs');
 const path=require('path');
@@ -17,8 +18,8 @@ const dataCore=read('app/js/20-data-core.js');
 const workflow=read('.github/workflows/build-windows.yml');
 const csproj=read('SecurityOperationsSuite.csproj');
 
-need(main,'private const string AppVersion = "5.3.0";','AppVersion must be 5.3.0.');
-need(csproj,'<Version>5.3.0</Version>','Project package version must be 5.3.0.');
+need(main,`private const string AppVersion = "${releaseVersion}";`,`AppVersion must be ${releaseVersion}.`);
+need(csproj,`<Version>${releaseVersion}</Version>`,`Project package version must be ${releaseVersion}.`);
 need(main,'EnsureDailyLastKnownGoodSnapshot();','Daily LKG must remain part of startup.');
 need(main,'EnsureLiveSchemaMetadata();','Schema metadata initialization must remain part of startup.');
 need(main,'ProcessStartupSchemaMigrations();','Controlled schema migration processing must run at startup.');
@@ -100,7 +101,7 @@ need(bootstrap,'handlePendingSchemaMigrationsAfterLogin','Login does not surface
 need(bootstrap,"SuiteBridge.send('suite:getMigrationStatus')",'Startup UI does not retrieve migration state.');
 
 need(storage,'Schema migration framework active','Data health check does not verify migration framework presence.');
-need(workflow,'node tools/validate-schema-migrations.js','Windows workflow does not run migration regression validation.');
+need(workflow,'node tools/validate-all.js','Windows workflow does not run migration regression validation.');
 
 console.log('Controlled Schema Migration Framework validation PASS');
 console.log('- Startup order: Daily LKG -> schema metadata -> one-at-a-time migration queue');

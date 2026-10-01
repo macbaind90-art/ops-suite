@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v5.0.1 | governed Training */
+/* PWADC Security Operations Suite v5.4.0 | governed Training */
 let training={schemaVersion:'training-1',requirements:[],assignments:[],audit:[]};
 const TRAINING_POSTS=[{key:'Gate',label:'Gate'},{key:'Patrol',label:'Patrol'},{key:'Base/EOC',label:'Base / EOC'}];
 async function loadTraining(){
@@ -7,13 +7,20 @@ async function loadTraining(){
     if(!Array.isArray(training.requirements)||!Array.isArray(training.assignments)||!Array.isArray(training.audit))throw new Error('Training arrays are missing');
   }catch(e){training={schemaVersion:'training-1',requirements:[],assignments:[],audit:[]};toast('Training load failed: '+e.message)}
 }
-function trainingRequirement(id){return (training.requirements||[]).find(r=>String(r.id)===String(id))}
-function trainingAssignment(id){return (training.assignments||[]).find(a=>String(a.id)===String(id))}
-function trainingEmployee(id){return (roster.employees||[]).find(e=>String(e.id)===String(id))}
+function trainingMemo(group,key,calculate){return typeof calculationMemo==='function'?calculationMemo(group,key,calculate):calculate()}
+function trainingRequirement(id){return trainingMemo('trainingRequirement','index',()=>{const map=new Map();for(const item of (training.requirements||[]))if(!map.has(String(item.id)))map.set(String(item.id),item);return map;}).get(String(id))}
+function trainingAssignment(id){return trainingMemo('trainingAssignment','index',()=>{const map=new Map();for(const item of (training.assignments||[]))if(!map.has(String(item.id)))map.set(String(item.id),item);return map;}).get(String(id))}
+function trainingEmployee(id){return trainingMemo('trainingEmployee','index',()=>{const map=new Map();for(const item of (roster.employees||[]))if(!map.has(String(item.id)))map.set(String(item.id),item);return map;}).get(String(id))}
 function trainingEvents(a){return Array.isArray(a?.events)?a.events:[]}
 function trainingLatest(a,type){return trainingEvents(a).filter(e=>e.type===type).at(-1)||null}
-function trainingEventVoided(a,event){return trainingEvents(a).some(e=>e.type==='void'&&e.reference===event?.id)}
-function trainingEffective(a,type){return trainingEvents(a).filter(e=>e.type===type&&!trainingEventVoided(a,e)).at(-1)||null}
+function trainingEventIndex(a){return trainingMemo('trainingEvents',a,()=>{
+  const events=trainingEvents(a),voided=new Set(events.filter(e=>e.type==='void').map(e=>e.reference)),effective=new Map();
+  for(const event of events)if(!voided.has(event.id))effective.set(event.type,event);
+  return {voided,effective};
+})}
+function trainingEventVoided(a,event){return trainingEventIndex(a).voided.has(event?.id)}
+function trainingEffective(a,type){return trainingEventIndex(a).effective.get(type)||null}
+
 function trainingDue(a,r){const sign=trainingEffective(a,'signoff'),record=trainingEffective(a,'record'),retrain=trainingEffective(a,'retrain');if(!sign||(record&&record.at>sign.at)||(retrain&&retrain.at>sign.at))return a.dueDate||'';const days=Number(r?.renewalDays||0);if(!days)return '';const d=new Date((sign.date||'')+'T12:00:00Z');if(!Number.isFinite(d.getTime()))return '';d.setUTCDate(d.getUTCDate()+days);return d.toISOString().slice(0,10)}
 function trainingAssignmentStatus(a,r){if(a.status!=='active')return 'Archived';const sign=trainingEffective(a,'signoff');const record=trainingEffective(a,'record');const retrain=trainingEffective(a,'retrain');const due=trainingDue(a,r);const today=facilityToday();
   if(sign&&(!retrain||retrain.at<sign.at)&&(!record||record.at<sign.at)){if(due&&due<today)return 'Expired';if(due&&((new Date(due)-new Date(today))/86400000)<=30)return 'Expiring Soon';return 'Qualified'}
@@ -22,7 +29,7 @@ function trainingStatusIssue(status){return ['Missing','Assigned','In Progress',
 function activeTrainingTopics(){return (training.requirements||[]).filter(r=>r.active!==false).map(r=>({...r,name:r.title,requirementGroup:r.category==='NEO'?'All':r.category,intervalDays:r.renewalDays,warningDays:30,required:true}))}
 function trainingRequirementLabel(group){return group==='All'?'Assigned employees':group||'Assigned employees'}
 function intervalLabel(n){return Number(n)?'Every '+Number(n)+' days':'No automatic renewal'}
-function trainingRows(includeArchived=false){return (training.assignments||[]).filter(a=>includeArchived||a.status==='active').map(a=>({a,emp:trainingEmployee(a.employeeId),requirement:trainingRequirement(a.requirementId)})).filter(x=>x.emp&&x.requirement).map(x=>({...x,status:trainingAssignmentStatus(x.a,x.requirement)}))}
+function trainingRows(includeArchived=false){return trainingMemo('trainingRows',includeArchived,()=>(training.assignments||[]).filter(a=>includeArchived||a.status==='active').map(a=>({a,emp:trainingEmployee(a.employeeId),requirement:trainingRequirement(a.requirementId)})).filter(x=>x.emp&&x.requirement).map(x=>({...x,status:trainingAssignmentStatus(x.a,x.requirement)})))}
 function trainingReadinessForEmployee(emp){const rows=trainingRows().filter(x=>String(x.emp.id)===String(emp.id)).map(x=>{const event=trainingEffective(x.a,'signoff'),record=trainingEffective(x.a,'record');return {topic:{name:x.requirement.title,requirementGroup:x.requirement.category},status:x.status==='Qualified'?'Current':x.status==='Assigned'||x.status==='In Progress'||x.status==='Awaiting Signoff'||x.status==='Needs Practice'?'Missing':x.status,completed:event?.date||'',due:trainingDue(x.a,x.requirement),trainer:record?.actorName||'',assignment:x.a};});
   const current=rows.filter(r=>r.status==='Current').length,expiring=rows.filter(r=>r.status==='Expiring Soon').length,expired=rows.filter(r=>r.status==='Expired'||r.status==='Overdue').length,missing=rows.length-current-expiring-expired;
   return {rows,total:rows.length,current,expiring,expired,missing,score:rows.length?Math.round(current/rows.length*100):100};}

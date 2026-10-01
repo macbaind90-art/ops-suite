@@ -98,6 +98,17 @@ internal static class Program
                 Process Start(string name,string op){var i=new ProcessStartInfo(Environment.ProcessPath!){UseShellExecute=false};if(Path.GetFileNameWithoutExtension(Environment.ProcessPath)=="dotnet")i.ArgumentList.Add(Assembly.GetExecutingAssembly().Location);foreach(string a in new[]{"writer",root,expected,gate+name,name,op})i.ArgumentList.Add(a);return Process.Start(i)!;}
                 using var one=Start("one","module-save");using var two=Start("two",operation);var clock=Stopwatch.StartNew();while(!File.Exists(gate+"one.ready")||!File.Exists(gate+"two.ready")){if(clock.ElapsedMilliseconds>20000)throw new Exception("Native writer startup timeout");Thread.Sleep(10);}File.WriteAllText(gate+"one","");File.WriteAllText(gate+"two","");one.WaitForExit();two.WaitForExit();Check(new[]{one.ExitCode,two.ExitCode}.Order().SequenceEqual(new[]{0,20}),"Actual host simultaneous save versus "+operation+" permits one writer");
             }
+            Call(host,"GetDataHealthSummary");
+            object? priorHealth=typeof(MainForm).GetField("cachedDataHealth",Flags)!.GetValue(host);
+            Set(host,"fullHealthRefreshPending",false);
+            ((HashSet<string>)typeof(MainForm).GetField("pendingHealthModules",Flags)!.GetValue(host)!).Clear();
+            object Module(object snapshot,string id)=>((System.Collections.IEnumerable)snapshot.GetType().GetProperty("Modules")!.GetValue(snapshot)!).Cast<object>().Single(m=>(string)m.GetType().GetProperty("Module")!.GetValue(m)! == id);
+            Call(host,"TryRefreshDataHealth","save","tasks");
+            Check(ReferenceEquals(priorHealth,typeof(MainForm).GetField("cachedDataHealth",Flags)!.GetValue(host)),"Save queues diagnostics instead of scanning health inside the write");
+            Call(host,"FlushPendingDataHealth");
+            object? nextHealth=typeof(MainForm).GetField("cachedDataHealth",Flags)!.GetValue(host);
+            Check(nextHealth!=null&&!ReferenceEquals(priorHealth,nextHealth),"Queued diagnostics refresh the health snapshot");
+            Check(ReferenceEquals(Module(priorHealth!,"roster"),Module(nextHealth!,"roster"))&&!ReferenceEquals(Module(priorHealth!,"tasks"),Module(nextHealth!,"tasks")),"Affected-module diagnostics reuse unrelated module checks");
             Console.WriteLine("Windows host behavioral tests passed.");return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e);return 1;}

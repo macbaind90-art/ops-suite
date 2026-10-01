@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v5.0.1 | module: shell-audits */
+/* PWADC Security Operations Suite v5.4.0 | module: shell-audits */
 function navModule(id){return MODULES.find(m=>m.id===id)}
 function navGroupFor(id){return NAV_GROUPS.find(g=>(g.items||[]).includes(id))}
 function navDisplayLabel(m){return m.id==='data-health'&&typeof dataHealthNavLabel==='function'?dataHealthNavLabel():m.label}
@@ -7,7 +7,11 @@ function renderNavGroup(g,visible){const items=(g.items||[]).map(id=>visible.fin
 function renderShell(){const visible=visibleModules();const groupedIds=new Set(NAV_GROUPS.flatMap(g=>g.items||[]));const grouped=NAV_GROUPS.map(g=>renderNavGroup(g,visible)).join('');const ungrouped=visible.filter(m=>!groupedIds.has(m.id)).map(m=>`<button class="nav-single${navHealthClass(m)}" data-module="${m.id}" onclick="navigate('${m.id}')">${esc(navDisplayLabel(m))}</button>`).join('');document.getElementById('nav').innerHTML=grouped+ungrouped;updateNavActive();updateUserStatus()}
 function updateNavActive(){document.querySelectorAll('.nav button[data-module]').forEach(b=>b.classList.toggle('active',b.dataset.module===activeModule));document.querySelectorAll('.nav-group').forEach(g=>{const active=!!g.querySelector(`button[data-module="${activeModule}"]`);const btn=g.querySelector('.nav-group-btn');if(btn)btn.classList.toggle('active',active);});}
 function navigate(id){if(!canAccessModule(id)){toast('Access denied for '+id);id='home';}activeModule=id;updateNavActive();document.getElementById('moduleStatus').textContent=MODULES.find(m=>m.id===id)?.label||id;updateUserStatus();safeRenderPages();if(id==='data-health'&&hasCapability('dataHealth.view')&&typeof openDataHealthDashboard==='function')openDataHealthDashboard()}
-function renderPages(){ensureAllowedModule();const p=document.getElementById('pages');p.innerHTML=rolePreviewBanner()+visibleModules().map(m=>`<section class="page ${activeModule===m.id?'active':''}" id="page-${m.id}">${renderModule(m.id)}</section>`).join('')}
+function renderPages(){
+  ensureAllowedModule();
+  const page=visibleModules().find(m=>m.id===activeModule);
+  document.getElementById('pages').innerHTML=rolePreviewBanner()+(page?`<section class="page active" id="page-${page.id}">${renderModule(page.id)}</section>`:'');
+}
 function renderModule(id){if(id==='home')return renderHome();if(id==='start-here')return renderStartHere();if(id==='attendance')return renderAttendance();if(id==='roster')return renderRoster();if(id==='employee-profile')return renderEmployeeProfile();if(id==='training')return renderTrainingPage();if(id==='promotion-packets')return renderPromotionPackets();if(id==='office-supplies')return renderOfficeSupplies();if(id==='shift-reports')return renderShiftReports();if(id==='shift-intelligence')return renderShiftIntelligence();if(id==='reports')return renderReports();if(id==='settings')return renderSettingsPage();if(id==='tasks')return renderTasks();if(id==='data-health')return renderDataHealth();if(id==='restore')return renderRestoreCenter();if(id==='change-log')return renderChangeLog();if(id==='other-programs')return renderOtherPrograms();return `<div class="page-head"><div><div class="page-title">${MODULES.find(m=>m.id===id)?.label||id}</div><div class="page-sub">Module not available.</div></div></div>`}
 
 function renderAuditTool(id){

@@ -1,3 +1,4 @@
+const releaseVersion=require('fs').readFileSync(require('path').join(__dirname,'..','VERSION'),'utf8').trim();
 'use strict';
 const fs=require('fs');
 const path=require('path');
@@ -36,7 +37,7 @@ for(const token of [
   'Employee Comments',
   'This Confirming Notice serves as a Written Warning',
   'This Final Warning documents that your attendance has reached 9 or more active points.',
-  'PWADC Security Operations Suite v5.0.1'
+  `PWADC Security Operations Suite v${releaseVersion}`
 ])need(attendance,token,`Attendance notice contract missing: ${token}`);
 
 if(attendance.includes("{points:3,level:'Verbal Counseling'}"))throw new Error('Retired 3-point corrective threshold is still active.');
@@ -49,7 +50,7 @@ need(migration,'Module = "attendance"','Attendance migration registration missin
 need(migration,'FromRevision = 2','Attendance 2->3 migration source missing.');
 need(migration,'ToRevision = 3','Attendance 2->3 migration target missing.');
 need(migration,'action["status"] = "Recorded"','Legacy corrective actions are not preserved as Recorded.');
-need(workflow,'node tools/validate-corrective-action-notices.js','Windows workflow does not run notice lifecycle validation.');
+need(workflow,'node tools/validate-all.js','Windows workflow does not run notice lifecycle validation.');
 
 const seed=JSON.parse(read('app/seed/attendance-data.json'));
 if(seed.schemaVersion!=='attendance-3')throw new Error('Attendance seed must ship at attendance-3.');

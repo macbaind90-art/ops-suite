@@ -1,6 +1,13 @@
-# PWADC Security Operations Suite v5.3.0
+# PWADC Security Operations Suite v5.4.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
+## v5.4.0 - Core performance and maintenance
+
+- Render only the selected screen and retain search focus/caret. Reuse Attendance snapshots and indexed schedule/Training calculations within each render/report, with explicit disposal afterward.
+- Queue affected-module health diagnostics after writes; reuse recent indicator results and retain full dashboard checks.
+- Make `VERSION` authoritative, synchronize native and printed version fields, discover all validators through one command, and add actual WebView2 navigation/input checks to Windows CI.
+- Refresh architecture, validation and roadmap documentation. Add-on Access/Badge program work is excluded at the user's request; those files are unchanged.
+
 ## v5.3.0 - Approved audit batches 1–3
 
 - Host sign-in now owns session authentication and rechecks permissions on protected requests. Existing PINs migrate to salted PBKDF2 hashes. Module reads remove unauthorized data, and saves preserve redacted fields while rejecting unauthorized field changes. Exports and specialist tool launches use host allowlists.

@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v5.0.1 | module: bootstrap */
+/* PWADC Security Operations Suite v5.4.0 | module: bootstrap */
 
 'use strict';
 const MODULES=[{id:'home',label:'Home'},{id:'start-here',label:'Start Here'},{id:'attendance',label:'Attendance'},{id:'roster',label:'Roster'},{id:'employee-profile',label:'Employee Profile'},{id:'training',label:'Training'},{id:'promotion-packets',label:'Promotion Packets'},{id:'office-supplies',label:'Office Supplies'},{id:'shift-reports',label:'Shift Reports'},{id:'shift-intelligence',label:'Shift Intelligence'},{id:'reports',label:'Reports'},{id:'settings',label:'Settings'},{id:'tasks',label:'Task Tracker'},{id:'data-health',label:'Data Health & Recovery'},{id:'restore',label:'Restore Center'},{id:'change-log',label:'Change Log'},{id:'other-programs',label:'Other Programs'}];
@@ -212,14 +212,36 @@ async function init(){
     document.getElementById('moduleStatus').textContent=MODULES.find(m=>m.id===activeModule)?.label||activeModule;
   }catch(e){showStartupError(e);}
 }
+// A calculation context lives for one synchronous render/report only. Discarding
+// it in finally is explicit invalidation: saves, date changes and in-place edits
+// cannot reuse values from a previous view.
+let calculationContext = null;
+function withCalculationContext(action) {
+  if (calculationContext) return action();
+  calculationContext = new Map();
+  try { return action(); } finally { calculationContext = null; }
+}
+function calculationMemo(group, key, calculate) {
+  if (!calculationContext) return calculate();
+  if (!calculationContext.has(group)) calculationContext.set(group, new Map());
+  const cache = calculationContext.get(group);
+  if (!cache.has(key)) cache.set(key, calculate());
+  return cache.get(key);
+}
+
 function safeRenderPages(options){
   const preserveScroll = options===true || (options && options.preserveScroll);
   const sx = window.scrollX || 0, sy = window.scrollY || 0;
+  const focused = document.activeElement;
+  const focusId = focused?.id;
+  const focusHandler = focused?.getAttribute?.('oninput');
+  const selection = focused && typeof focused.selectionStart === 'number' ? [focused.selectionStart,focused.selectionEnd] : null;
   try{
-    validateRequiredFunctions('render');
-    renderPages();
+    withCalculationContext(() => renderPages());
     applyCapabilityVisibility();
     enhanceSortableTables();
+    const replacement = focusId ? document.getElementById(focusId) : focusHandler ? [...document.querySelectorAll('[oninput]')].find(el=>el.getAttribute('oninput')===focusHandler) : null;
+    if(replacement){replacement.focus({preventScroll:true});if(selection && replacement.setSelectionRange)replacement.setSelectionRange(...selection);}
     if(preserveScroll){setTimeout(()=>window.scrollTo(sx,sy),0);}
   }
   catch(e){showStartupError(e,'Page render failed');}
