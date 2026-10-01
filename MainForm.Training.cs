@@ -209,9 +209,9 @@ namespace PWADC.SecurityOperationsSuite
                     if (requirement["active"]?.ToString() == "false")
                         throw new InvalidDataException("An archived requirement cannot be signed off.");
                     JsonArray events = assignment["events"] as JsonArray ?? throw new InvalidDataException("Assignment event history is invalid.");
-                    JsonObject? latestPass = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "record" && x["outcome"]?.ToString() == "Pass" &&
-                        !events.OfType<JsonObject>().Any(c => c["type"]?.ToString() == "void" && c["reference"]?.ToString() == x["id"]?.ToString()));
-                    JsonObject? latestRetrain = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "retrain");
+                    JsonObject? latestPass = TrainingQualification.LatestEffective(events, "record");
+                    if (latestPass?["outcome"]?.ToString() != "Pass") latestPass = null;
+                    JsonObject? latestRetrain = TrainingQualification.LatestEffective(events, "retrain");
                     JsonObject? latestSignoff = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "signoff" &&
                         !events.OfType<JsonObject>().Any(c => c["type"]?.ToString() == "void" && c["reference"]?.ToString() == x["id"]?.ToString()));
                     if (!managerOverride && (latestPass == null ||
@@ -259,9 +259,9 @@ namespace PWADC.SecurityOperationsSuite
                 {
                     if (managerOverride && !string.Equals(actor.Role, "Admin", StringComparison.OrdinalIgnoreCase))
                         throw new UnauthorizedAccessException("Only the Security Manager/Admin may sign off without a passing observation.");
-                    JsonObject? latestPass = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "record" && x["outcome"]?.ToString() == "Pass" &&
-                        !events.OfType<JsonObject>().Any(c => c["type"]?.ToString() == "void" && c["reference"]?.ToString() == x["id"]?.ToString()));
-                    JsonObject? latestRetrain = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "retrain");
+                    JsonObject? latestPass = TrainingQualification.LatestEffective(events, "record");
+                    if (latestPass?["outcome"]?.ToString() != "Pass") latestPass = null;
+                    JsonObject? latestRetrain = TrainingQualification.LatestEffective(events, "retrain");
                     if (!managerOverride && (latestPass == null || (latestRetrain != null && string.CompareOrdinal(latestRetrain["at"]?.ToString(), latestPass["at"]?.ToString()) > 0)))
                         throw new InvalidDataException("A passing observation after any retraining is required before signoff.");
                     JsonObject? latestSignoff = events.OfType<JsonObject>().LastOrDefault(x => x["type"]?.ToString() == "signoff" &&

@@ -1,6 +1,16 @@
-# PWADC Security Operations Suite v5.2.3
+# PWADC Security Operations Suite v5.3.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
+## v5.3.0 - Approved audit batches 1–3
+
+- Host sign-in now owns session authentication and rechecks permissions on protected requests. Existing PINs migrate to salted PBKDF2 hashes. Module reads remove unauthorized data, and saves preserve redacted fields while rejecting unauthorized field changes. Exports and specialist tool launches use host allowlists.
+- All writers coordinate through a shared per-file lease and compare the loaded revision while holding it. Loads hash the bytes actually returned. Failed post-replacement verification restores the prior file; recovery binds both the live revision and previewed backup hash, migrates supported older candidates before replacement, and preserves corrupt originals.
+- Browser saves are serialized using immutable snapshots. Failed saves keep editors open; newer promotion edits survive an earlier save response; recovery clears stale drafts. Shift Intelligence task handoffs retry without duplicating tasks.
+- Attendance replays manual adjustments and credit consumption chronologically, excludes future warnings from historical reports, aligns doctor-note coloring with the policy date, and uses inclusive profile windows and current codes. Operational date defaults use America/Chicago. Training and promotion qualification use effective non-voided observations and signoffs, including renewal expiry. Portable resume validates every section before applying it, and offline/native completion rules agree.
+- Validation includes the front-end regression validators, cross-process persistence tests, and native Windows authorization, recovery, Training and all three portable promotion levels.
+
+Upgrade: replace the application files together, retain the existing shared Data folder and backups, and have each user sign in with their existing PIN. Saving account or role settings requires signing in again. Keep the executable at the package root with its `app` folder alongside it.
+
 ## v5.2.3 - Supervisor export filenames
 
 - Supervisor HTML exports now use `PWADC_PROMOTION_T1-to-T2_LASTNAME_FIRSTNAME.html` (and the corresponding T2-to-T3/T3-to-T4 level). Windows does not permit the `>` character, so the level transition is written `-to-`. Newly issued packets retain separate first and last names for accurate filenames, including compound surnames.

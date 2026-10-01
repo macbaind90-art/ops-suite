@@ -14,12 +14,18 @@ namespace PWADC.SecurityOperationsSuite
     {
         private SuiteSettings LoadSettingsFromDisk()
         {
-            string path = Path.Combine(DefaultRoot, "Data", SettingsFileName);
+            string rootPath = DefaultRoot;
+            string pointer = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PWADC", "suite-root.txt");
+            if (File.Exists(pointer)) rootPath = File.ReadAllText(pointer).Trim();
+            string path = Path.Combine(rootPath, "Data", SettingsFileName);
+            settingsRevision = GetDataRevision(path).Token;
             try
             {
                 if (File.Exists(path))
                 {
-                    string raw = File.ReadAllText(path);
+                    byte[] bytes = File.ReadAllBytes(path);
+                    settingsRevision = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant();
+                    string raw = System.Text.Encoding.UTF8.GetString(bytes).TrimStart('\ufeff');
                     SchemaCompatibilityInfo compatibility = EvaluateSchemaCompatibility("suite-settings", raw);
                     bool runtimeReadable = compatibility.ReadAllowed && (compatibility.Status == "current" || compatibility.Status == "legacy-missing" || compatibility.Status == "previous");
                     if (!runtimeReadable)
@@ -33,17 +39,23 @@ namespace PWADC.SecurityOperationsSuite
                 }
             }
             catch (SchemaCompatibilityException) { throw; }
-            catch { }
+            catch (Exception ex) { throw new IOException("Suite Settings could not be read. Sign-in is blocked until storage is available.", ex); }
             return new SuiteSettings();
         }
 
+        private string settingsSaveWarning = "";
         private void SaveSettingsToDisk()
         {
             string dataFolder = Path.Combine(settings.DataRoot, "Data");
             Directory.CreateDirectory(dataFolder);
             string path = Path.GetFullPath(Path.Combine(dataFolder, SettingsFileName));
             if (!IsPathUnder(path, dataFolder)) throw new InvalidOperationException("Resolved settings path is outside the suite Data folder.");
-            WriteJsonAtomically("suite-settings", path, JsonSerializer.Serialize(settings, JsonOptions), "settings-save", "auto-before-settings-save");
+            var saved = WriteJsonAtomically("suite-settings", path, JsonSerializer.Serialize(settings, JsonOptions), "settings-save", "auto-before-settings-save", settingsRevision);
+            settingsRevision = saved.Sha256;
+            string pointer = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "PWADC", "suite-root.txt");
+            settingsSaveWarning = "";
+            try { Directory.CreateDirectory(Path.GetDirectoryName(pointer)!); File.WriteAllText(pointer, settings.DataRoot); }
+            catch (Exception ex) { settingsSaveWarning = "Settings were committed, but this workstation could not remember the selected root: " + ex.Message; }
         }
 
         private void EnsureFolders()
@@ -135,6 +147,10 @@ namespace PWADC.SecurityOperationsSuite
         {
             ModuleLoadResult info = LoadModuleDataWithSource(module);
             SchemaCompatibilityInfo schema = EvaluateSchemaCompatibility(module, info.Data);
+            SuiteUser actor = RequireSession();
+            if (module == "suite-settings") info.Data = JsonSerializer.Serialize(PublicSettings());
+            else if (actor.Role != "Admin" && module == "roster")
+                info.Data = ModuleWritePolicy.Project(module, System.Text.Json.Nodes.JsonNode.Parse(info.Data)!.AsObject(), c => RoleHasCapability(actor.Role, c)).ToJsonString(JsonOptions);
             return new
             {
                 module = info.Module,
@@ -175,8 +191,12 @@ namespace PWADC.SecurityOperationsSuite
 
             if (File.Exists(fullPath))
             {
-                string existingJson = File.ReadAllText(fullPath);
-                JsonIntegrityInfo liveIntegrity = JsonIntegrityStatus(fullPath);
+                byte[] bytes = File.ReadAllBytes(fullPath);
+                string existingJson = System.Text.Encoding.UTF8.GetString(bytes).TrimStart('\ufeff');
+                string revision = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)).ToLowerInvariant();
+                JsonIntegrityInfo liveIntegrity;
+                try { ValidateJsonPayload(existingJson, module); liveIntegrity = new JsonIntegrityInfo { Status = "valid", Sha256 = revision }; }
+                catch (Exception ex) { liveIntegrity = new JsonIntegrityInfo { Status = "invalid", Error = ex.Message }; }
                 if (!string.Equals(liveIntegrity.Status, "valid", StringComparison.OrdinalIgnoreCase))
                 {
                     FileInfo badInfo = new FileInfo(fullPath);
@@ -184,7 +204,7 @@ namespace PWADC.SecurityOperationsSuite
                     result.Source = "live-invalid";
                     result.SourceDetail = "The live JSON file failed integrity validation and was not replaced automatically. Use Data Health / Backup & Restore before making changes. " + liveIntegrity.Error;
                     result.FileModified = badInfo.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                    result.Revision = GetDataRevision(fullPath).Token;
+                    result.Revision = revision;
                     return result;
                 }
                 // Existing valid live data is never replaced automatically. Empty or
@@ -193,7 +213,7 @@ namespace PWADC.SecurityOperationsSuite
                 result.Source = "live-shared";
                 result.SourceDetail = "Loaded existing JSON from the configured shared Data folder.";
                 result.FileModified = new FileInfo(fullPath).LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                result.Revision = GetDataRevision(fullPath).Token;
+                result.Revision = revision;
                 return result;
             }
 
@@ -203,12 +223,8 @@ namespace PWADC.SecurityOperationsSuite
                 Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
                 WriteJsonAtomically(module, fullPath, seedJson, "packaged-recovery-create", "pre-recovery-atomic");
                 FileInfo info = new FileInfo(fullPath);
-                result.Data = seedJson;
-                result.Source = "packaged-recovery-created";
-                result.SourceDetail = "No live JSON file existed, so packaged recovery JSON was copied into the shared Data folder.";
-                result.FileModified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss");
-                result.Revision = GetDataRevision(fullPath).Token;
-                return result;
+                return LoadModuleDataWithSource(module);
+
             }
 
             result.Data = "{}";
@@ -218,7 +234,7 @@ namespace PWADC.SecurityOperationsSuite
             return result;
         }
 
-        private string ResetModuleFromSeed(string module, string reason, string adminUserId, string adminPin)
+        private string ResetModuleFromSeed(string module, string reason, string adminUserId, string adminPin, string expectedRevision)
         {
             SuiteUser admin = RequireDataHealthAdmin(adminUserId, adminPin);
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Recovery module was not defined.");
@@ -233,11 +249,12 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(dataDir);
             string path = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
             if (!IsPathUnder(path, dataDir)) throw new InvalidOperationException("Resolved recovery path is outside the suite Data folder.");
+            using var lease = SharedFileLease.Acquire(path);
             DataWriteOutcome? outcome = null;
             try
             {
-                string expectedRevision = GetDataRevision(path).Token;
                 outcome = WriteJsonAtomically(module, path, seedJson, "reset-from-packaged-seed", "pre-recovery", expectedRevision);
+                lastRecoveryRevision = outcome.Sha256;
                 string restored = File.ReadAllText(path);
                 ValidateJsonPayload(restored, ModuleFolder(module) + " packaged recovery verification");
                 WriteRecoveryAudit(module, seedPath, File.GetLastWriteTime(seedPath).ToString("yyyy-MM-dd HH:mm:ss"), admin, reason, outcome.BackupPath, "passed", "Succeeded");
@@ -252,7 +269,7 @@ namespace PWADC.SecurityOperationsSuite
             }
         }
 
-        private object SaveModuleData(string module, string json, string expectedRevision)
+        private object SaveModuleData(string module, string json, string expectedRevision, SuiteUser? actor = null)
         {
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Save failed because module was not defined.");
             if (!IsKnownJsonModule(module)) throw new InvalidOperationException("Save failed because module is not approved for JSON persistence: " + module);
@@ -267,6 +284,14 @@ namespace PWADC.SecurityOperationsSuite
                 string path = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
                 if (!IsPathUnder(path, dataDir)) throw new InvalidOperationException("Resolved save path is outside the suite Data folder.");
 
+                using var lease = SharedFileLease.Acquire(path);
+                VerifyExpectedRevision(module, path, expectedRevision, "module-save");
+                if (actor != null && actor.Role != "Admin")
+                {
+                    var live = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(path))!.AsObject();
+                    var candidate = System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject();
+                    json = ModuleWritePolicy.Apply(module, live, candidate, c => RoleHasCapability(actor.Role, c)).ToJsonString(JsonOptions);
+                }
                 DataWriteOutcome result = WriteJsonAtomically(module, path, json, "module-save", "auto-before-save", expectedRevision);
                 return new
                 {

@@ -187,7 +187,7 @@ namespace PWADC.SecurityOperationsSuite
                 JsonObject second = (JsonObject)practicals["T4-BASE2"]!;
                 if (first["date"]?.ToString() == second["date"]?.ToString() &&
                     (string.IsNullOrWhiteSpace(first["shift"]?.ToString()) ||
-                     string.Equals(first["shift"]?.ToString(), second["shift"]?.ToString(), StringComparison.OrdinalIgnoreCase)))
+                     string.Equals(first["shift"]?.ToString()?.Trim(), second["shift"]?.ToString()?.Trim(), StringComparison.OrdinalIgnoreCase)))
                     throw new InvalidDataException("T4 BASE practicals must occur on different dates or shifts.");
                 if (recommendation == "Recommend" && first["managerReviewed"]?.ToString() != "true" &&
                     second["managerReviewed"]?.ToString() != "true")

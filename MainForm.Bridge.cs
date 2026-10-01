@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -17,28 +18,41 @@ namespace PWADC.SecurityOperationsSuite
             string requestId = "";
             try
             {
+                if (!string.Equals(e.Source, new Uri(indexPath).AbsoluteUri, StringComparison.OrdinalIgnoreCase))
+                    throw new UnauthorizedAccessException("Bridge requests are accepted only from the trusted Suite document.");
                 using JsonDocument doc = JsonDocument.Parse(e.WebMessageAsJson);
                 JsonElement root = doc.RootElement;
                 requestId = root.TryGetProperty("id", out JsonElement idElement) ? idElement.GetString() ?? "" : "";
                 string type = root.TryGetProperty("type", out JsonElement typeElement) ? typeElement.GetString() ?? "" : "";
+                if (type != "suite:getSettings" && type != "suite:login") RequireRequestSession(root);
+                string required = type switch
+                {
+                    "suite:getMigrationStatus" or "suite:getMigrationHistory" or "suite:approveSchemaMigration" => "schema.manage",
+                    "suite:getDataHealthSummary" or "suite:getDataHealth" or "suite:reviewHealthEvents" or "suite:exportDataHealthDiagnostics" or "suite:healthCheck" => "dataHealth.view",
+                    "suite:previewLastKnownGood" or "suite:restoreLastKnownGood" or "suite:resetModuleFromSeed" or "suite:restoreBackup" or "suite:readBackupSummary" or "suite:listBackups" or "suite:backupInventory" or "suite:previewBackupCleanup" or "suite:cleanupBackups" or "suite:backupPrograms" => "data.restore",
+                    "suite:refreshPrograms" => "users.manage",
+                    "suite:openPath" or "suite:launchProgram" => "programs.launch",
+                    _ => ""
+                };
+                if (required.Length > 0) RequireBridgeCapability(root, required);
                 switch (type)
                 {
                     case "suite:getSettings":
-                        await Respond(requestId, true, new { settings, environment = GetEnvironmentInfo() });
+                        await Respond(requestId, true, new { settings = sessionToken.Length > 0 ? PublicSettings() : new { theme = settings.Theme, users = settings.Users.Where(u => u.Active).Select(PublicUser) }, settingsRevision, environment = GetEnvironmentInfo() });
+                        break;
+                    case "suite:login":
+                        await Respond(requestId, true, Authenticate(root.GetProperty("payload")));
+                        break;
+                    case "suite:logout":
+                        sessionToken = ""; sessionUserId = "";
+                        await Respond(requestId, true, new { loggedOut = true });
                         break;
                     case "suite:saveSettings":
                         RequireBridgeCapability(root, "users.manage");
-                        if (root.TryGetProperty("payload", out JsonElement settingsPayload))
-                        {
-                            SuiteSettings candidateSettings = JsonSerializer.Deserialize<SuiteSettings>(settingsPayload.GetRawText(), JsonOptions) ?? new SuiteSettings();
-                            ValidateAndNormalizeSettingsForSave(candidateSettings);
-                            if (string.IsNullOrWhiteSpace(candidateSettings.DataRoot)) candidateSettings.DataRoot = DefaultRoot;
-                            settings = candidateSettings;
-                            EnsureFolders();
-                            SaveSettingsToDisk();
-                            await Respond(requestId, true, new { settings });
-                        }
-                        else await Respond(requestId, false, new { error = "Missing settings payload." });
+                        string settingsExpected = root.TryGetProperty("expectedRevision", out var se) ? se.GetString() ?? "" : "";
+                        SaveSettingsCandidate(root.GetProperty("payload"), settingsExpected);
+                        await Respond(requestId, true, new { settings = PublicSettings(), settingsRevision, warning = settingsSaveWarning, reauthenticate = true });
+                        sessionToken = "";
                         break;
                     case "suite:getMigrationStatus":
                         await Respond(requestId, true, GetSchemaMigrationStatus());
@@ -85,7 +99,7 @@ namespace PWADC.SecurityOperationsSuite
                         string lkgRestoreRevision = lkgRestorePayload.TryGetProperty("expectedRevision", out JsonElement lrev) ? lrev.GetString() ?? "" : "";
                         string lkgRestoreAdminId = lkgRestorePayload.TryGetProperty("adminUserId", out JsonElement lrai) ? lrai.GetString() ?? "" : "";
                         string lkgRestoreAdminPin = lkgRestorePayload.TryGetProperty("adminPin", out JsonElement lrap) ? lrap.GetString() ?? "" : "";
-                        await Respond(requestId, true, RestoreLastKnownGood(lkgRestoreModule, lkgRestoreReason, lkgRestoreRevision, lkgRestoreAdminId, lkgRestoreAdminPin));
+                        await Respond(requestId, true, RestoreLastKnownGood(lkgRestoreModule, lkgRestoreReason, lkgRestoreRevision, lkgRestoreAdminId, lkgRestoreAdminPin, TrainingRequired(lkgRestorePayload, "expectedBackupHash", 200)));
                         break;
                     case "suite:exportDataHealthDiagnostics":
                         if (!root.TryGetProperty("payload", out JsonElement diagnosticsPayload)) throw new InvalidOperationException("Missing diagnostics credentials.");
@@ -104,6 +118,7 @@ namespace PWADC.SecurityOperationsSuite
                         break;
                     case "suite:loadModuleData":
                         string loadModule = root.TryGetProperty("module", out JsonElement lm) ? lm.GetString() ?? "" : "";
+                        RequireModuleReadCapability(loadModule);
                         await Respond(requestId, true, LoadModuleDataEnvelope(loadModule));
                         break;
                     case "suite:trainingCommand":
@@ -118,16 +133,17 @@ namespace PWADC.SecurityOperationsSuite
                         string resetReason = resetPayload.TryGetProperty("reason", out JsonElement rr) ? rr.GetString() ?? "" : "";
                         string resetAdminId = resetPayload.TryGetProperty("adminUserId", out JsonElement rai2) ? rai2.GetString() ?? "" : "";
                         string resetAdminPin = resetPayload.TryGetProperty("adminPin", out JsonElement rap2) ? rap2.GetString() ?? "" : "";
-                        string resetJson = ResetModuleFromSeed(resetModule, resetReason, resetAdminId, resetAdminPin);
+                        string resetJson = ResetModuleFromSeed(resetModule, resetReason, resetAdminId, resetAdminPin, TrainingRequired(resetPayload, "expectedRevision", 200));
+                        if (resetModule == "suite-settings") { settings = LoadSettingsFromDisk(); resetJson = JsonSerializer.Serialize(PublicSettings()); }
                         string resetPath = Path.Combine(settings.DataRoot, "Data", ModuleFileName(resetModule));
-                        await Respond(requestId, true, new { module = resetModule, data = resetJson, revision = GetDataRevision(resetPath).Token, schemaVersion = CurrentSchemaVersion(resetModule), expectedSchemaVersion = CurrentSchemaVersion(resetModule), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true });
+                        await Respond(requestId, true, new { module = resetModule, data = resetJson, revision = lastRecoveryRevision, auditWarning = recoveryAuditWarning, schemaVersion = CurrentSchemaVersion(resetModule), expectedSchemaVersion = CurrentSchemaVersion(resetModule), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true });
                         break;
                     case "suite:saveModuleData":
                         string saveModule = root.TryGetProperty("module", out JsonElement sm) ? sm.GetString() ?? "" : "";
-                        RequireModuleWriteCapability(root, saveModule);
+                        SuiteUser saveActor = RequireModuleWriteCapability(root, saveModule);
                         string json = root.TryGetProperty("payload", out JsonElement dataPayload) ? dataPayload.GetRawText() : "{}";
                         string expectedRevision = root.TryGetProperty("expectedRevision", out JsonElement er) ? er.GetString() ?? "" : "";
-                        var saveInfo = SaveModuleData(saveModule, json, expectedRevision);
+                        var saveInfo = SaveModuleData(saveModule, json, expectedRevision, saveActor);
                         await Respond(requestId, true, saveInfo);
                         break;
                     case "suite:saveModuleData2":
@@ -137,22 +153,28 @@ namespace PWADC.SecurityOperationsSuite
                         string expectedRevision2 = savePayload.TryGetProperty("expectedRevision", out JsonElement er2) ? er2.GetString() ?? "" : "";
                         if (string.IsNullOrWhiteSpace(saveModule2)) throw new InvalidOperationException("Save module was not defined by the interface.");
                         if (string.IsNullOrWhiteSpace(json2) || json2 == "undefined") throw new InvalidOperationException("Save JSON payload was undefined before write.");
-                        RequireModuleWriteCapability(root, saveModule2);
-                        var saveInfo2 = SaveModuleData(saveModule2, json2, expectedRevision2);
+                        SuiteUser saveActor2 = RequireModuleWriteCapability(root, saveModule2);
+                        var saveInfo2 = SaveModuleData(saveModule2, json2, expectedRevision2, saveActor2);
                         await Respond(requestId, true, saveInfo2);
                         break;
                     case "suite:createBackup":
                         string backupModule = root.TryGetProperty("module", out JsonElement bm) ? bm.GetString() ?? "" : "";
+                        RequireModuleReadCapability(backupModule);
                         string backupJson = root.TryGetProperty("payload", out JsonElement bp) ? bp.GetRawText() : "{}";
-                        string backupPath = CreateBackup(backupModule, backupJson);
+                        string backupPath = CreateBackup(backupModule, LoadModuleDataWithSource(backupModule).Data);
                         await Respond(requestId, true, new { module = backupModule, path = backupPath });
                         break;
                     case "suite:writeExport":
                         string exportModule = root.TryGetProperty("module", out JsonElement em) ? em.GetString() ?? "" : "";
+                        RequireModuleReadCapability(exportModule);
                         string fileName = root.TryGetProperty("fileName", out JsonElement fn) ? fn.GetString() ?? "export.txt" : "export.txt";
                         string content = root.TryGetProperty("payload", out JsonElement cp) ? cp.GetString() ?? "" : "";
                         string exportPath = WriteExport(exportModule, fileName, content);
                         await Respond(requestId, true, new { module = exportModule, path = exportPath });
+                        break;
+                    case "suite:launchProgram":
+                        LaunchProgram(root.GetProperty("payload").GetProperty("programId").GetString() ?? "");
+                        await Respond(requestId, true, new { launched = true });
                         break;
                     case "suite:openPath":
                         if (!root.TryGetProperty("payload", out JsonElement openPayload)) throw new InvalidOperationException("Missing open path payload.");
@@ -200,9 +222,10 @@ namespace PWADC.SecurityOperationsSuite
                         string restoreReason = restorePayload.TryGetProperty("reason", out JsonElement rsr) ? rsr.GetString() ?? "" : "";
                         string restoreAdminId = restorePayload.TryGetProperty("adminUserId", out JsonElement rsai) ? rsai.GetString() ?? "" : "";
                         string restoreAdminPin = restorePayload.TryGetProperty("adminPin", out JsonElement rsap) ? rsap.GetString() ?? "" : "";
-                        string restoredJson = RestoreBackup(restoreModule, restorePath, restoreReason, restoreAdminId, restoreAdminPin);
+                        string restoredJson = RestoreBackup(restoreModule, restorePath, restoreReason, restoreAdminId, restoreAdminPin, TrainingRequired(restorePayload, "expectedRevision", 200), TrainingRequired(restorePayload, "expectedBackupHash", 200));
+                        if (restoreModule == "suite-settings") { settings = LoadSettingsFromDisk(); restoredJson = JsonSerializer.Serialize(PublicSettings()); }
                         string restoredLivePath = Path.Combine(settings.DataRoot, "Data", ModuleFileName(restoreModule));
-                        await Respond(requestId, true, new { module = restoreModule, data = restoredJson, restoredFrom = restorePath, revision = GetDataRevision(restoredLivePath).Token, schemaVersion = CurrentSchemaVersion(restoreModule), expectedSchemaVersion = CurrentSchemaVersion(restoreModule), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true });
+                        await Respond(requestId, true, new { module = restoreModule, data = restoredJson, restoredFrom = restorePath, revision = lastRecoveryRevision, auditWarning = recoveryAuditWarning, schemaVersion = CurrentSchemaVersion(restoreModule), expectedSchemaVersion = CurrentSchemaVersion(restoreModule), lastWrittenByAppVersion = AppVersion, schemaStatus = "current", schemaMessage = "Schema is current.", writeAllowed = true });
                         break;
                     default:
                         await Respond(requestId, false, new { error = "Unknown message type: " + type });

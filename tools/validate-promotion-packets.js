@@ -60,7 +60,7 @@ for(const marker of ['"review" or "assessment" => "promotion.review"','Normalize
 for(const marker of ['checklistIds.Contains(row.Name)','scenarioIds.Contains(row.Name)','missingIds.Contains(row.Name)','PromotionPracticalIds(tier)','PromotionGateAllowsSimulation(tier, number)','Only an issued packet can be edited.','Complete each checklist result','Grade all six oral scenarios','Complete each live or simulated practical','T4 BASE practicals must occur on different dates or shifts.','Resolve and cite each missing training record'])need(host+digitalHost,marker,'Digital packet validation missing: '+marker);
 need(auth,'"promotion-packets" => throw','Generic writes must not bypass the packet command');
 need(registry,'Id = "promotion-packets"');
-need(bootstrap,"await loadPromotionPackets()");
+need(bootstrap,"['promotion-packets',loadPromotionPackets,'promotion.view']");
 need(read('app/index.html'),'js/74-promotion-packets.js');
 need(read('app/index.html'),'js/75-promotion-digital.js');
 need(read('app/index.html'),'js/76-promotion-portable.js');
@@ -165,5 +165,5 @@ if(vm.runInContext('promotionPortableExportFileName(sample)',ctx)!=='PWADC_PROMO
 ctx.sample={tier:'T3-T4',employee:{name:'Alicia Smith'}};
 if(vm.runInContext('promotionPortableExportFileName(sample)',ctx)!=='PWADC_PROMOTION_T3-to-T4_SMITH_ALICIA.html')throw Error('Historical packet filename fallback is wrong');
 need(read('MainForm.PromotionPackets.cs'),'["first"] = employee["first"]','New packets must freeze name components');
-need(read('SecurityOperationsSuite.csproj'),'<Version>5.2.3</Version>');
+need(read('SecurityOperationsSuite.csproj'),'<Version>5.3.0</Version>');
 console.log('Promotion Packets validation PASS');

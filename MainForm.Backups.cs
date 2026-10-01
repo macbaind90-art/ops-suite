@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Diagnostics;
+using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -33,6 +34,9 @@ namespace PWADC.SecurityOperationsSuite
         private string WriteExport(string module, string fileName, string content)
         {
             if (!IsKnownModule(module)) throw new InvalidOperationException("Export module is not approved: " + module);
+            if (!new[] { ".html", ".txt", ".csv", ".json", ".pdf" }.Contains(Path.GetExtension(fileName).ToLowerInvariant()))
+                throw new UnauthorizedAccessException("Export file type is not approved.");
+            if (module == "suite-settings") throw new UnauthorizedAccessException("Settings exports are available only through protected backups.");
             EnsureFolders();
             string safeName = string.Join("_", Path.GetFileName(fileName).Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries));
             if (string.IsNullOrWhiteSpace(safeName)) safeName = "export.txt";
@@ -271,7 +275,8 @@ namespace PWADC.SecurityOperationsSuite
                 }
             }
             string lastSaved = root.ValueKind == JsonValueKind.Object && root.TryGetProperty("lastSaved", out JsonElement ls) ? ls.GetString() ?? "" : "";
-            return new { module, name = info.Name, path = info.FullName, modified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"), sizeBytes = info.Length, employees, schedule, tasks, audit, attendanceRecords, lastSaved };
+            return new { module, name = info.Name, path = info.FullName, modified = info.LastWriteTime.ToString("yyyy-MM-dd HH:mm:ss"), sizeBytes = info.Length, employees, schedule, tasks, audit, attendanceRecords, lastSaved,
+                currentRevision = GetDataRevision(Path.Combine(settings.DataRoot, "Data", ModuleFileName(module))).Token, backupHash = Sha256Text(json) };
         }
 
         private static int CountArray(JsonElement root, string property)
@@ -280,7 +285,7 @@ namespace PWADC.SecurityOperationsSuite
             return 0;
         }
 
-        private string RestoreBackup(string module, string backupPath, string reason, string adminUserId, string adminPin)
+        private string RestoreBackup(string module, string backupPath, string reason, string adminUserId, string adminPin, string expectedRevision, string expectedBackupHash)
         {
             SuiteUser admin = RequireDataHealthAdmin(adminUserId, adminPin);
             if (string.IsNullOrWhiteSpace(module)) throw new InvalidOperationException("Restore module was not defined.");
@@ -293,16 +298,19 @@ namespace PWADC.SecurityOperationsSuite
             if (!IsPathUnder(fullBackupPath, allowedRoot)) throw new InvalidOperationException("Restore path is outside the selected module backup folder.");
             if (!File.Exists(fullBackupPath)) throw new FileNotFoundException("Backup file was not found: " + fullBackupPath);
             string json = File.ReadAllText(fullBackupPath);
-            JsonDocument.Parse(json).Dispose();
+            if (!string.Equals(Sha256Text(json), expectedBackupHash, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("The selected backup changed after preview. Preview it again.");
+            json = PrepareRecoveryCandidate(module, json);
             string dataDir = Path.Combine(settings.DataRoot, "Data");
             Directory.CreateDirectory(dataDir);
             string livePath = Path.GetFullPath(Path.Combine(dataDir, ModuleFileName(module)));
             if (!IsPathUnder(livePath, dataDir)) throw new InvalidOperationException("Resolved restore target is outside the suite Data folder.");
+            using var lease = SharedFileLease.Acquire(livePath);
             DataWriteOutcome? outcome = null;
             string sourceTimestamp = File.GetLastWriteTime(fullBackupPath).ToString("yyyy-MM-dd HH:mm:ss");
             try
             {
-                outcome = WriteJsonAtomically(module, livePath, json, "restore-backup", "pre-restore");
+                outcome = WriteJsonAtomically(module, livePath, json, "restore-backup", "pre-restore", expectedRevision);
+                lastRecoveryRevision = outcome.Sha256;
                 string restored = File.ReadAllText(livePath);
                 ValidateJsonPayload(restored, ModuleFolder(module) + " post-restore verification");
                 SchemaCompatibilityInfo restoredSchema = EvaluateSchemaCompatibility(module, restored);

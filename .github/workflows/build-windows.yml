@@ -35,7 +35,7 @@ jobs:
         run: node tools/validate-promotion-packets.js
 
       - name: Validate portable promotion walkthrough
-        run: node tools/validate-promotion-portable-wizard.js
+        run: node tools/validate-promotion-portable-wizard.js --write-fixtures
 
       - name: Validate Task Tracker print regression
         run: node tools/validate-task-print.js
@@ -103,6 +103,9 @@ jobs:
       - name: Validate role capabilities and Preview as Role
         run: node tools/validate-role-capabilities.js
 
+      - name: Validate approved audit fixes
+        run: node tools/validate-approved-fixes.js
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -117,12 +120,18 @@ jobs:
       - name: Build
         run: dotnet build SecurityOperationsSuite.csproj --configuration Release --no-restore
 
+      - name: Test persistence and qualification behavior
+        run: dotnet run --project tests/CoreTests/Suite.CoreTests.csproj --configuration Release
+
+      - name: Test native Windows authorization and recovery
+        run: dotnet run --project tests/WindowsHostTests/Suite.WindowsHostTests.csproj --configuration Release
+
       - name: Publish self-contained Windows x64 EXE
         run: dotnet publish SecurityOperationsSuite.csproj --configuration Release --runtime win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true --output publish
 
       - name: Upload Windows artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PWADC-Security-Operations-Suite-v5-2-3-Windows
+          name: PWADC-Security-Operations-Suite-v5-3-0-Windows
           path: publish/**
           retention-days: 7

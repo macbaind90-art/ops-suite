@@ -1,0 +1,39 @@
+'use strict';
+const assert=require('assert/strict'),fs=require('fs'),vm=require('vm');
+const nodes=new Map();const node=id=>{if(!nodes.has(id))nodes.set(id,{textContent:'',innerHTML:'',value:'',classList:{add(){},remove(){},toggle(){}},setAttribute(){}});return nodes.get(id)};
+const ctx={console,Date,Intl,Map,Set,JSON,Promise,setTimeout,clearTimeout,window:{addEventListener(){},scrollX:0,scrollY:0},document:{getElementById:node,addEventListener(){},querySelectorAll(){return[]},documentElement:{setAttribute(){}}},PWADCModuleRegistry:{register(){}},confirm:()=>true,prompt:()=>'',fetch:async()=>({text:async()=>'{}'})};
+vm.createContext(ctx);for(const f of ['10-bootstrap','20-data-core','82-attendance-points','72-training-replacement','74-promotion-packets','75-promotion-digital','42-data-health-recovery','40-reports-governance','90-shift-operations','50-workflows-home'])vm.runInContext(fs.readFileSync('app/js/'+f+'.js','utf8'),ctx);
+const run=s=>vm.runInContext(s,ctx);const check=(value,message)=>{assert.ok(value,message);console.log('PASS '+message)};
+run(`normalizeAttendance=()=>{};attendanceCleanWorkdayEligible=()=>true;safeRenderPages=()=>{};closeModal=()=>{};showModal=()=>{};showDataConflictModal=()=>{};toast=()=>{};recordConflictResolution=async()=>{};`);
+function attendance(events,adjustments=[]){ctx.fixture={employees:[{id:'e',name:'Employee'}],attendance:{e:events},notes:{},audit:[],medicalNotes:[],pointAdjustments:adjustments,correctiveActions:[],pointSystem:{migrationPending:false,policy:{effectiveDate:'2026-01-01',maxPositiveCredits:3}}};run('attendance=fixture');}
+function work(events,start,count){for(let i=0;i<count;i++){ctx.start=start;ctx.offset=i;events[run('addDays(start,offset)')]='P'}}
+(async()=>{
+ check(run("facilityToday(new Date('2026-10-02T00:15:00Z'))")==='2026-10-01','Operational date stays on the Bessemer calendar after UTC midnight');
+ let events={};work(events,'2026-07-02',12);events['2026-07-14']='LE';attendance(events,[{empId:'e',effectiveDate:'2026-07-01',newActivePoints:8,at:'2026-07-01T12:00:00Z'}]);
+ check(run("attendancePointSnapshot('e','2026-09-30').activePoints")===1,'An expired manual balance does not return a previously consumed credit');
+ events={};work(events,'2026-07-02',12);events['2026-08-02']='LE';attendance(events,[{empId:'e',effectiveDate:'2026-07-01',newActivePoints:8,at:'2026-07-01T12:00:00Z'},{empId:'e',effectiveDate:'2026-08-01',newActivePoints:4,at:'2026-08-01T12:00:00Z'}]);
+ check(run("attendancePointSnapshot('e','2026-08-02').activePoints")===5,'Successive adjustments replay credit consumption chronologically');
+ attendance({'2026-10-01':'NCNS'});run("attendance.correctiveActions=[{empId:'e',noticeType:'Final Warning',status:'Recorded',generatedAt:'2027-02-01T10:00:00Z'}]");
+ check(run("correctiveActionWorkflow('e',attendancePointSnapshot('e','2026-10-01')).due"),'Historical Attendance does not use a future warning');
+ attendance({'2026-09-27':'CO1','2026-09-28':'CO2'});run("attendance.pointSystem.policy.effectiveDate='2026-09-28';attendance.medicalNotes=[{id:'n',empId:'e',startDate:'2026-09-27',endDate:'2026-09-28',coveredCodes:['CO'],at:'2026-10-01T10:00:00Z'}]");
+ check(run("attendanceMedicalDisplayPoints('e','2026-09-28','CO2')")===run("attendancePointSnapshot('e','2026-09-28').gross90"),'Doctor-note grid and point snapshot agree at the fresh-start boundary');
+ attendance({});const end=run('facilityToday()'),start=run('addDays(facilityToday(),-29)');ctx.boundary=start;run("attendance.attendance.e[boundary]='T5-14'");
+ check(run("profileAttendanceCounts({id:'e'},30)['T5-14']")===1,'Employee profile includes the first advertised calendar day');
+ check(run("profileCountLine('Counts',{'T5-14':1,'CO2':1})").includes('CO2'),'Employee profile displays current Attendance codes');
+ const sent=[];run("moduleLoadInfo.tasks={revision:'r0',writeAllowed:true};");ctx.testSend=async(type,payload)=>{sent.push({...payload});await new Promise(r=>setTimeout(r,10));return {revision:'r'+sent.length,verified:true}};run('SuiteBridge.send=testSend');
+ const original={tasks:[{id:1,project:'First'}]},a=ctx.saveModuleDataStrict('tasks',original);original.tasks[0].project='Second';const b=ctx.saveModuleDataStrict('tasks',original);await Promise.all([a,b]);
+ check(sent.length===2&&sent[0].expectedRevision==='r0'&&sent[1].expectedRevision==='r1','Module save queue obtains the updated revision before dispatch');
+ check(JSON.parse(sent[0].json).tasks[0].project==='First'&&JSON.parse(sent[1].json).tasks[0].project==='Second','Overlapping saves retain immutable request snapshots');
+ run("moduleLoadInfo.tasks={revision:'r0',writeAllowed:true};");let calls=0;ctx.testSend=async()=>{calls++;throw Error('STALE_WRITE_CONFLICT: external writer')};run('SuiteBridge.send=testSend');
+ await Promise.allSettled([ctx.saveModuleDataStrict('tasks',{}),ctx.saveModuleDataStrict('tasks',{})]);check(calls===1,'A detected conflict stops queued requests from writing stale data');
+ run("promotionPackets={templates:[],audit:[],packets:[{id:'p',tier:'T1-T2',status:'Issued',digitalAssessment:{checklist:{},gates:{},scenarios:{},practicals:{},training:{}}}]};currentUser={id:'admin',role:'Admin'};moduleLoadInfo['promotion-packets']={revision:'p0',writeAllowed:true};promotionDigitalSession=null;");
+ ctx.testSend=async()=>{await new Promise(r=>setTimeout(r,20));const p=run('promotionPacket("p")');p.digitalAssessment={checklist:{x:{status:'Verified',evidence:'original'}},gates:{},scenarios:{},practicals:{},training:{}};return{data:JSON.stringify(run('promotionPackets')),save:{revision:'p1'}}};run('SuiteBridge.send=testSend');
+ run("promotionDigitalDraft(promotionPacket('p'));promotionDigitalSet('checklist','x','evidence','original')");const saving=ctx.savePromotionDigitalPacket('p');run("promotionDigitalSet('checklist','x','evidence','typed while saving')");await saving;
+ check(run("promotionDigitalSession.dirty&&promotionDigitalSession.assessment.checklist.x.evidence==='typed while saving'"),'Typing during Save Progress remains in the unsaved draft');
+ run("loadPromotionPackets=async()=>{promotionDigitalResetDrafts();moduleLoadInfo['promotion-packets']={revision:'latest'};}");await ctx.reloadModuleAfterConflict('promotion-packets');check(run('promotionDigitalSession===null'),'Reload latest discards the stale promotion draft');
+ run("promotionDigitalSession={id:'stale',assessment:{},dirty:true};applyRecoveredModule('promotion-packets',{data:JSON.stringify({templates:[],packets:[],audit:[]}),revision:'recovered'})");check(run("promotionDigitalSession===null&&moduleLoadInfo['promotion-packets'].revision==='recovered'"),'Promotion recovery replaces browser data and clears drafts together');
+ run("shiftReports={issues:[{id:1,title:'Issue'}],reports:[],audit:[]};val=()=>'';saveShiftReportsNow=async()=>false;");let closed=0;ctx.closeModal=()=>{closed++};await ctx.saveShiftIssueModal(1);check(closed===0,'Failed Shift Report save leaves its editor open');
+ run("shiftIntel={issues:[{id:1,title:'Issue',category:'Test'}],intake:[],reference:[],audit:[]};tasks={tasks:[],audit:[],nextId:1};normalizeTasks=()=>{};taskAudit=()=>{};siRecommendedAction=()=>'';saveTasksNow=async()=>true;saveShiftIntelNow=async()=>false;");
+ await ctx.createTaskFromShiftIntelIssue(1);await ctx.createTaskFromShiftIntelIssue(1);check(run('tasks.tasks.length')===1,'Retrying a partially saved Intelligence task does not create a duplicate');
+ console.log('Approved browser behavioral tests passed.');
+})().catch(e=>{console.error(e);process.exitCode=1});

@@ -18,7 +18,7 @@ const csproj=read('SecurityOperationsSuite.csproj');
 const manifest=read('app.manifest');
 const globalJson=read('global.json');
 
-need(main,'private const string AppVersion = "5.2.3";','AppVersion must be 5.2.3 for this maintenance release.');
+need(main,'private const string AppVersion = "5.3.0";','AppVersion must be 5.3.0 for this maintenance release.');
 need(main,'EnsureLiveSchemaMetadata();','Startup schema metadata initialization is missing.');
 for(const [id,revision] of [['attendance',3],['roster',1],['tasks',1],['shift-reports',1],['shift-intelligence',1],['suite-settings',3]]){
   need(registry,`Id = "${id}"`,`${id} governed-module registration missing.`);
@@ -41,11 +41,11 @@ need(schema,'root["lastWrittenByAppVersion"] = AppVersion;','Writer-version meta
 if(schema.includes('Unregistered live JSON file requires a schema registration before use'))throw new Error('Schema startup scan still treats external/specialist JSON as suite-owned live modules.');
 if(schema.includes('Directory.GetFiles(dataDir'))throw new Error('Schema startup initialization must not recursively scan unrelated/external JSON under Data.');
 need(schema,'Schema compatibility guarding owns only JSON files registered to the core suite modules above.','Schema ownership boundary comment missing.');
-need(reliability,'json = PrepareJsonForWrite(module, json);','Atomic write path does not enforce schema metadata.');
+need(reliability,'PrepareJsonForWrite(module, json)','Atomic write path does not enforce schema metadata.');
 need(reliability,'EnsureExistingTargetSchemaCompatibleForWrite(module, fullTarget, operation);','Atomic write path does not protect an existing incompatible live schema.');
 need(schema,'SCHEMA_TARGET_BLOCK','Existing incompatible live schema target guard missing.');
 need(schema,'IsExplicitInvalidJsonRecoveryOperation','Explicit malformed-JSON recovery exception is not constrained.');
-need(reliability,'operation == "module-save" || operation == "schema-metadata-initialize"','Schema initialization is not revision guarded.');
+need(reliability,'VerifyExpectedRevision(module, fullTarget','Schema initialization is not revision guarded.');
 need(storage,'schemaVersion = schema.SchemaVersion','Load envelope does not expose schema version.');
 need(storage,'writeAllowed = schema.WriteAllowed','Load envelope does not expose write permission.');
 need(programs,'expectedSchemaVersion = schema?.ExpectedSchemaVersion','Health status does not expose expected schema.');
@@ -53,10 +53,10 @@ need(dataCore,'if(info.writeAllowed===false)','Browser save path does not honor 
 need(shell,'<th>Schema</th>','Data Health live-file table does not display schema state.');
 need(workflow,'node tools/validate-schema-compatibility.js','Windows workflow does not run schema compatibility validation.');
 need(csproj,'<TargetFramework>net10.0-windows</TargetFramework>','Project must target net10.0-windows.');
-need(csproj,'<Version>5.2.3</Version>','Visible application package version must be 5.2.3.');
-need(csproj,'<FileVersion>5.2.3.0</FileVersion>','Windows file metadata must be 5.2.3.0.');
-need(csproj,'<AssemblyVersion>5.2.3.0</AssemblyVersion>','Windows assembly metadata must be 5.2.3.0.');
-need(manifest,'version="5.2.3.0"','Windows manifest identity must be four-part 4.7.0.0.');
+need(csproj,'<Version>5.3.0</Version>','Visible application package version must be 5.3.0.');
+need(csproj,'<FileVersion>5.3.0.0</FileVersion>','Windows file metadata must be 5.3.0.0.');
+need(csproj,'<AssemblyVersion>5.3.0.0</AssemblyVersion>','Windows assembly metadata must be 5.3.0.0.');
+need(manifest,'version="5.3.0.0"','Windows manifest identity must be four-part 5.3.0.0.');
 const sdk=JSON.parse(globalJson).sdk||{};
 if(sdk.version!=='10.0.400'||sdk.rollForward!=='latestPatch')throw new Error('global.json must pin the suite to .NET SDK 10.0.400 with latestPatch roll-forward.');
 need(csproj,'RemoveUnusedWebView2WpfReference','WinForms build must remove the unused WebView2 WPF reference before assembly resolution.');

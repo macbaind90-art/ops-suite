@@ -71,7 +71,7 @@ function exportAttendanceCSV(){
       rows.push([e.name,e.shift,e.title,d,c,pts,n].map(x=>'"'+String(x??'').replace(/"/g,'""')+'"').join(','));
     }
   }
-  SuiteBridge.send('suite:writeExport',rows.join('\n'),{module:'attendance',fileName:'attendance-export-'+new Date().toISOString().slice(0,10)+'.csv'}).then(()=>toast('CSV exported')).catch(e=>toast('Export failed: '+e.message));
+  SuiteBridge.send('suite:writeExport',rows.join('\n'),{module:'attendance',fileName:'attendance-export-'+facilityToday()+'.csv'}).then(()=>toast('CSV exported')).catch(e=>toast('Export failed: '+e.message));
 }
 
 PWADCModuleRegistry.register('attendance');

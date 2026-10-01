@@ -18,6 +18,7 @@ class Element {
 function find(root,id){if(root.id===id)return root;for(const child of root.children){const match=find(child,id);if(match)return match}return null}
 function flatten(root){return [root,...root.children.flatMap(flatten)]}
 
+const fixtures=[];
 (async()=>{
   for(const template of templates){
     suite.sample={id:'portable-'+template.tier,tier:template.tier,issuedAt:'2026-09-29T10:00:00Z',
@@ -44,7 +45,7 @@ function flatten(root){return [root,...root.children.flatMap(flatten)]}
       const {section,key,id}=field.dataset;let value='';
       if(key==='managerReviewed'){if(id==='T4-BASE1')field.checked=true;value=true}
       else if(key==='status')value=section==='checklist'?'Verified':'PASS';
-      else if(key==='method')value='Records';
+      else if(key==='method')value=section==='practicals'?'Simulated':'Records';
       else if(key==='result'||key==='grade')value='MEETS';
       else if(key==='date')value='2026-09-29';
       else if(key==='shift')value=id==='T4-BASE2'?'Night':'Day';
@@ -66,11 +67,24 @@ function flatten(root){return [root,...root.children.flatMap(flatten)]}
     document.getElementById('submit').click();
     if(!download)throw Error('Completed evaluation did not download for '+template.tier+': '+nodes.status.textContent);
     const exported=JSON.parse(await download.text());
+    fixtures.push({packet:suite.sample,evaluation:exported});
     if(!exported.completed||exported.scenarioIds.length!==6||exported.assessment.scenarios[template.scenarios[0].id].grade!=='MEETS')throw Error('Completed export omitted issued scenario evidence');
+    const beforeMalformed=firstOral.value;const malformed=JSON.parse(JSON.stringify(exported));
+    malformed.assessment.checklist[exported.checklistIds[0]].evidence='Malformed import must not apply';delete malformed.assessment.training;
+    nodes.resumeFile.files=[{text:async()=>JSON.stringify(malformed)}];await nodes.resumeFile.onchange({target:nodes.resumeFile});
+    nodes.save.click();const retained=JSON.parse(await download.text());
+    if(retained.assessment.checklist[exported.checklistIds[0]].evidence==='Malformed import must not apply'||firstOral.value!==beforeMalformed)throw Error('Malformed Resume partially changed assessment state');
+    if(template.tier==='T3-T4'){
+      const shift=nodes.sections.querySelectorAll('[data-section]').find(x=>x.dataset.id==='T4-BASE2'&&x.dataset.key==='shift');
+      shift.value=' DAY ';shift.events.input();download=null;document.getElementById('submit').click();
+      if(download||!nodes.feedback.textContent.includes('different dates or shifts'))throw Error('Portable completion accepted equivalent Day/DAY BASE shifts');
+      shift.value='Night';shift.events.input();
+    }
     const first=firstOral;first.value='Changed after export';first.events.input();
     nodes.resumeFile.files=[{text:async()=>JSON.stringify(exported)}];
     await nodes.resumeFile.onchange({target:nodes.resumeFile});
     if(first.value==='Changed after export'||nodes.stepPicker.value!==String(cards.length-1))throw Error('Resume did not restore answers and step');
   }
+  if(process.argv.includes('--write-fixtures')){fs.mkdirSync('tests/fixtures',{recursive:true});fs.writeFileSync('tests/fixtures/portable-completed.json',JSON.stringify(fixtures,null,2));}
   console.log('Portable promotion wizard validation PASS');
 })().catch(error=>{console.error(error);process.exitCode=1});

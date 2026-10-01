@@ -191,6 +191,29 @@ namespace PWADC.SecurityOperationsSuite
                 "SCHEMA_TARGET_BLOCK: Existing " + ModuleFolder(module) + " data cannot be replaced by this operation. " + compatibility.Message);
         }
 
+        private string PrepareRecoveryCandidate(string module, string json)
+        {
+            ValidateJsonPayload(json, "Recovery candidate");
+            SchemaCompatibilityInfo compatibility = EvaluateSchemaCompatibility(module, json);
+            if (compatibility.Status == "legacy-missing") json = PrepareJsonForWrite(module, json);
+            compatibility = EvaluateSchemaCompatibility(module, json);
+            if (compatibility.Status == "previous")
+            {
+                var definition = FindMigrationDefinition(module, CurrentSchemaRevision(module) - 1, CurrentSchemaRevision(module))
+                    ?? throw new InvalidDataException("No supported migration exists for this recovery candidate.");
+                var before = BuildMigrationFingerprint(module, json);
+                var node = System.Text.Json.Nodes.JsonNode.Parse(json)!.AsObject();
+                var migrated = definition.Transform(node);
+                migrated["schemaVersion"] = CurrentSchemaVersion(module);
+                migrated["lastWrittenByAppVersion"] = AppVersion;
+                json = migrated.ToJsonString(JsonOptions);
+                if (definition.PreserveRecordIdentity) VerifyMigrationFingerprintPreserved(module, before, BuildMigrationFingerprint(module, json));
+            }
+            json = PrepareJsonForWrite(module, json);
+            if (EvaluateSchemaCompatibility(module, json).Status != "current") throw new InvalidDataException("Recovery candidate is not current schema.");
+            return json;
+        }
+
         private string PrepareJsonForWrite(string module, string json)
         {
             SchemaCompatibilityInfo compatibility = EvaluateSchemaCompatibility(module, json);

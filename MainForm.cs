@@ -17,7 +17,7 @@ namespace PWADC.SecurityOperationsSuite
         private readonly string appFolder;
         private readonly string indexPath;
 
-        private const string AppVersion = "5.2.3";
+        private const string AppVersion = "5.3.0";
         private const string DefaultRoot = @"\\pig-fs\Security\MacBain\Security Operations Suite";
         private const string SettingsFileName = "suite-settings.json";
         private SuiteSettings settings = new SuiteSettings();
@@ -94,6 +94,15 @@ namespace PWADC.SecurityOperationsSuite
                 CreateSuiteLockFile();
                 await webView.EnsureCoreWebView2Async();
                 webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+                webView.CoreWebView2.NavigationStarting += (_, nav) =>
+                {
+                    if (!string.Equals(nav.Uri, new Uri(indexPath).AbsoluteUri, StringComparison.OrdinalIgnoreCase)) nav.Cancel = true;
+                };
+                // Print previews are created in blank windows; never attach the native bridge.
+                webView.CoreWebView2.NewWindowRequested += (_, window) =>
+                {
+                    if (window.Uri != "about:blank") window.Handled = true;
+                };
                 if (!File.Exists(indexPath))
                 {
                     MessageBox.Show("Missing app\\index.html. The suite interface was not found.", "PWADC Security Operations Suite", MessageBoxButtons.OK, MessageBoxIcon.Error);

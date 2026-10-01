@@ -1,4 +1,14 @@
-# PWADC Security Operations Suite Architecture - v5.0.1
+# PWADC Security Operations Suite Architecture - v5.3.0
+
+## v5.3.0 Authentication and persistence boundary
+
+The trusted packaged WebView authenticates through host sign-in and receives a random session token. Protected bridge requests require that token and revalidate the settings-file revision; account or permission edits invalidate the session. Browser settings never contain PINs or hashes. Existing plaintext PINs migrate to salted PBKDF2-SHA256 hashes on successful sign-in. Roster projections remove unauthorized employee, pay, schedule, supply, uniform and legacy Training fields. Non-Admin saves merge permitted changes against current host data, preserving fields the browser cannot read.
+
+`SharedFileLease` holds an exclusive per-target file handle from revision comparison through verification or rollback, including module saves, settings, migrations and recovery. Lock files remain present; process exit releases the handle. `GuardedFileCommit` restores the preserved prior bytes if verification after replacement fails. A failed rollback returns an explicit unknown-outcome error. Loads parse and hash one byte buffer. Recovery checks the previewed live revision and candidate hash, migrates supported older candidates before committing, and treats unavailable audit storage as a separate warning after a verified commit.
+
+The browser queues immutable save snapshots per module and chooses the expected revision when each request starts. A conflict or unknown outcome blocks queued mutations until reload. Promotion draft generations preserve edits made during a save; recovery and reload clear obsolete drafts. Shift Intelligence handoffs use a stable source reference to avoid duplicate tasks on retry.
+
+Operational dates use the Bessemer America/Chicago calendar. Native Training qualification excludes voided events and expired signoffs and uses the latest effective observation. Completed portable assessments for all three promotion levels pass through the actual native validator in Windows CI.
 
 ## v5.0.1 Promotion Packet Ownership
 
@@ -74,7 +84,7 @@ Attendance schema revision 3 adds lifecycle metadata without changing prior reco
 
 The browser resolves module visibility through `moduleCapability()` / `hasCapability()`, so unauthorized modules are omitted from navigation and page construction. Selected action controls use `data-capability` and direct function guards. Pay/cost fields retain a separate capability check. **Preview as Role** is available only to a signed-in Admin, can reduce the visible interface to Supervisor/Lead/Viewer, displays a persistent banner, and never replaces the actual signed-in identity.
 
-`MainForm.Authorization.cs` is the shared host authorization boundary. Protected bridge operations revalidate an active user ID, exact PIN, and required capability against the host-loaded settings. Settings save and backup cleanup call the host guard directly; schema migration and recovery/reset/restore flows use the same centralized credential resolver. Browser visibility is therefore not the security boundary for high-impact operations.
+`MainForm.Authorization.cs` is the shared host authorization boundary. Protected bridge operations validate the host session token, active account, settings revision and required capability against host-loaded settings. Settings save and backup cleanup call the host guard directly; schema migration and recovery/reset/restore flows use the same centralized credential resolver. Browser visibility is therefore not the security boundary for high-impact operations.
 
 Suite Settings schema revision 3 adds the capability matrix. The `suite-settings-2` -> `suite-settings-3` migration is low-risk, backup-first, and preserves users, PINs, data-root configuration, and labor assumptions. Governed module saves include the signed-in authorization envelope, and the Windows host requires a matching module-family write capability before persistence.
 
@@ -231,7 +241,7 @@ At minimum, future changes should continue to run:
 - Clean repository and ZIP integrity checks.
 
 ## Current Architecture Risk
-The primary platform risks are controlled evolution of shared JSON schemas, recovery clarity, and long-term maintainability. Atomic persistence and stale-write detection remain the production concurrency controls. Shared-file locking is deferred unless production evidence justifies it. Database migration is not an active option in the current PWADC environment.
+The primary platform risks are controlled evolution of shared JSON schemas, recovery clarity, and long-term maintainability. Atomic persistence and stale-write detection remain the production concurrency controls. Per-file shared leases coordinate all governed writers during the revision check, commit, verification and rollback. Database migration is not an active option in the current PWADC environment.
 
 
 ## v3.4 Persistence Contract
@@ -249,7 +259,7 @@ Rules:
 
 
 ## v3.4 Data Reliability Boundary
-Operational shared JSON modules load through the Windows host and receive a revision fingerprint. Normal saves return that expected revision through the existing bridge payload and are rejected when the live shared file no longer matches. v3.4.0 provides validated atomic replacement; v3.4.1 adds stale-write blocking. No feature module should bypass `saveModuleDataStrict` for operational shared JSON. Save coordination/short-duration live-data locks remain deferred unless production conflict evidence shows the current controls are insufficient.
+Operational shared JSON modules load through the Windows host and receive a revision fingerprint. Normal saves return that expected revision through the existing bridge payload and are rejected when the live shared file no longer matches. v3.4.0 provides validated atomic replacement; v3.4.1 adds stale-write blocking. No feature module should bypass `saveModuleDataStrict` for operational shared JSON. Per-module browser save queues and shared host file leases now coordinate concurrent writes.
 
 
 ## v3.5.0.11 Attendance Point Policy Configuration
