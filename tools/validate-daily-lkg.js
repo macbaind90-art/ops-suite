@@ -1,3 +1,4 @@
+const releaseVersion=require('fs').readFileSync(require('path').join(__dirname,'..','VERSION'),'utf8').trim();
 const fs=require('fs');
 const path=require('path');
 const root=path.resolve(__dirname,'..');
@@ -33,6 +34,6 @@ need(lkg,'status = "verified"','Verified manifest state missing.');
 need(lkg,'files = manifestFiles','Per-file manifest metadata missing.');
 need(lkg,'daily-last-known-good-snapshot','LKG success audit missing.');
 need(lkg,'previousSnapshotPreserved = true','LKG failure preservation record missing.');
-need(workflow,'node tools/validate-daily-lkg.js','Windows workflow does not execute daily LKG validator.');
-need(main,'private const string AppVersion = "5.3.0";','Application version is not 5.3.0.');
+need(workflow,'node tools/validate-all.js','Windows workflow does not execute daily LKG validator.');
+need(main,`private const string AppVersion = "${releaseVersion}";`,`Application version is not ${releaseVersion}.`);
 console.log('Daily Last-Known-Good validation PASS');

@@ -1,3 +1,4 @@
+const releaseVersion=require('fs').readFileSync(require('path').join(__dirname,'..','VERSION'),'utf8').trim();
 'use strict';
 const fs=require('fs');
 const path=require('path');
@@ -39,7 +40,7 @@ for(const token of forbidden){if(src.includes(token))throw new Error('Legacy att
 if(!/correctiveDue/.test(src)||!/correctiveActionWorkflow\(emp\.id,snap\)\.due/.test(src))throw new Error('Home attendance-notice due metric is not lifecycle-aware.');
 if(!/missingToday/.test(src)||!/attendanceScheduleStatus\(emp,asOf\)/.test(src))throw new Error('Home daily attendance completion is not schedule-aware.');
 if(!/totalPositiveBank/.test(src)||!/positiveEmployees/.test(src))throw new Error('Home positive attendance credit summary missing.');
-if(!src.includes('v5.0.1'))throw new Error('Home release version not updated to v5.0.1.');
+if(!src.includes(`v${releaseVersion}`))throw new Error(`Home release version not updated to v${releaseVersion}.`);
 
 console.log('Home Attendance Workflow validation PASS');
 console.log('- Legacy pattern/notice Home queues removed');

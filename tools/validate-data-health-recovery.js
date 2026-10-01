@@ -47,8 +47,8 @@ need(health,'RestoreLastKnownGood','LKG restore backend missing.');
 need(health,'WriteRecoveryAudit','Permanent recovery audit missing.');
 need(health,'Metadata only. Operational record contents are intentionally excluded.','Diagnostics metadata-only boundary missing.');
 need(health,'Specialist files are checked for presence and JSON validity only.','Specialist-data informational boundary missing.');
-need(reliability,'TryRefreshDataHealth("save")','Successful saves do not trigger a health refresh.');
-need(reliability,'TryRefreshDataHealth("save-failure")','Failed saves do not trigger a health refresh.');
+need(reliability,'TryRefreshDataHealth("save", module)','Successful saves do not trigger a health refresh.');
+need(reliability,'TryRefreshDataHealth("save-failure", module)','Failed saves do not trigger a health refresh.');
 if(storage.includes('ShouldReplaceWithSeed'))throw new Error('Existing live files can still be silently replaced from packaged seeds.');
 need(main,'no automatic restore will run','Startup warning must explicitly preserve the no-auto-restore boundary.');
 for(const endpoint of ['suite:getDataHealthSummary','suite:getDataHealth','suite:reviewHealthEvents','suite:previewLastKnownGood','suite:restoreLastKnownGood','suite:exportDataHealthDiagnostics','suite:recordConflictResolution'])need(bridge,endpoint,`Bridge endpoint missing: ${endpoint}`);
@@ -66,7 +66,7 @@ for(const token of ['Preview Last Known Good','Restore Last Known Good','Open Ba
 need(dashboard,'PWADCModuleRegistry.register(\'data-health-recovery\')','Data Health front-end module is not registered.');
 need(styles,'v4.7.0 Data Health & Recovery','Data Health dashboard styling missing.');
 need(html,'js/42-data-health-recovery.js','Data Health script is not loaded.');
-need(workflow,'node tools/validate-data-health-recovery.js','GitHub workflow does not enforce this regression validator.');
+need(workflow,'node tools/validate-all.js','GitHub workflow does not enforce this regression validator.');
 need(workflow,'retention-days: 7','GitHub artifact retention is not bounded.');
 
 console.log('Data Health & Recovery Dashboard validation PASS');

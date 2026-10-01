@@ -45,7 +45,7 @@ if(reports.includes('doctorNote.reference')||reports.includes('doctorNote.note')
 need(reports,"id==='attendance-actions'?attendanceActionReportControlsHtml()",'Report Center does not display Attendance Action Report filters.');
 need(reports,"reportControlEmployeeValue('attendance-actions')",'Attendance Action Report does not apply employee scope.');
 need(reports,"showReport('Attendance Action Report'",'Attendance Action Report print/PDF preview is not wired.');
-need(workflow,'node tools/validate-attendance-action-report.js','Windows workflow does not run Attendance Action Report validation.');
+need(workflow,'node tools/validate-all.js','Windows workflow does not run Attendance Action Report validation.');
 
 console.log('Attendance Action Report validation PASS');
 console.log('- Current attention queue uses Due, Generated, and Issued lifecycle states');

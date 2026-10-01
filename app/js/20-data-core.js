@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v5.0.1 | module: data-core */
+/* PWADC Security Operations Suite v5.4.0 | module: data-core */
 async function loadAttendance(){try{const res=await SuiteBridge.send('suite:loadModuleData',{}, {module:'attendance'});recordModuleLoadInfo('attendance',res);let raw=res.data;if(typeof raw==='string')attendance=JSON.parse(raw||'{}');else attendance=raw||{};normalizeAttendance();}catch(e){toast('Attendance load failed: '+e.message);normalizeAttendance()}}
 function normalizeAttendance(){attendance.employees=Array.isArray(attendance.employees)?attendance.employees:[];attendance.attendance=attendance.attendance&&typeof attendance.attendance==='object'?attendance.attendance:{};attendance.notes=attendance.notes&&typeof attendance.notes==='object'?attendance.notes:{};attendance.audit=Array.isArray(attendance.audit)?attendance.audit:[];attendance.correctiveActions=Array.isArray(attendance.correctiveActions)?attendance.correctiveActions:[];attendance.recordEdits=Array.isArray(attendance.recordEdits)?attendance.recordEdits:[];attendance.pointAdjustments=Array.isArray(attendance.pointAdjustments)?attendance.pointAdjustments:[];attendance.tardyReclassifications=attendance.tardyReclassifications&&typeof attendance.tardyReclassifications==='object'?attendance.tardyReclassifications:{};attendance.autoOff=attendance.autoOff&&typeof attendance.autoOff==='object'?attendance.autoOff:{};attendance.workdayBasis=attendance.workdayBasis&&typeof attendance.workdayBasis==='object'?attendance.workdayBasis:{};attendance.pointSystem=attendance.pointSystem&&typeof attendance.pointSystem==='object'?attendance.pointSystem:{};/* Historical Pattern/Notice fields are preserved if present in older JSON, but no current workflow reads or creates them. */if(attendance.flagActions!==undefined&&(!attendance.flagActions||typeof attendance.flagActions!=='object'))attendance.flagActions={};if(attendance.patternActions!==undefined&&(!attendance.patternActions||typeof attendance.patternActions!=='object'))attendance.patternActions={};if(attendance.notices!==undefined&&!Array.isArray(attendance.notices))attendance.notices=[];}
 function isIsoDateKey(d){return /^\d{4}-\d{2}-\d{2}$/.test(String(d||'')) && !Number.isNaN(Date.parse(String(d)+'T00:00:00'))}
@@ -117,7 +117,22 @@ function scheduleCellIsOpen(val){let low=String(val||'').trim().toLowerCase();re
 function scheduleCellIsBlank(val){let low=String(val||'').trim().toLowerCase();return !low||low==='none'||low==='closed'}
 function scheduleSectionShift(section){section=String(section||'Unassigned');if(section.includes('1st'))return '1st';if(section.includes('2nd'))return '2nd';if(section.includes('3rd'))return '3rd';if(section.toLowerCase().includes('gate'))return 'Gate';if(section.toLowerCase().includes('dock'))return 'Dock';if(section.toLowerCase().includes('crosswalk'))return 'Crosswalk';if(section.toLowerCase().includes('reception'))return 'Reception';return section.split('—')[0].trim()||'Unassigned'}
 function scheduleNameMatchesEmployee(raw,e){const cleaned=schedulePersonName(raw);if(!cleaned||!e)return false;const p=attendanceNameParts(cleaned);const sl=normalizeNameKey(p.last),sf=normalizeNameKey(p.first);const rp=attendanceNameParts(rosterEmployeeAttendanceName(e));const rl=normalizeNameKey(rp.last),rf=normalizeNameKey(rp.first);return !!(rl&&sl&&rl===sl&&firstNameCompatible(rf,sf))}
-function employeeScheduledHours(e){let hours=0;for(const row of (roster.schedule||[])){let hrs=Number(row.hrs||8);for(const cell of (row.days||[])){if(!scheduleCellIsBlank(cell)&&!scheduleCellIsOpen(cell)&&scheduleNameMatchesEmployee(cell,e))hours+=hrs;}}return hours}
+function employeeScheduledHours(e){
+  if(typeof calculationContext==='undefined'||!calculationContext){let hours=0;for(const row of (roster.schedule||[]))for(const cell of (row.days||[]))if(!scheduleCellIsBlank(cell)&&!scheduleCellIsOpen(cell)&&scheduleNameMatchesEmployee(cell,e))hours+=Number(row.hrs||8);return hours;}
+  const index=calculationMemo('scheduleHours','all',()=>{
+    const totals=new Map(),matches=new Map(),employees=roster.employees||[];
+    for(const row of (roster.schedule||[]))for(const cell of (row.days||[])){
+      if(scheduleCellIsBlank(cell)||scheduleCellIsOpen(cell))continue;
+      if(!matches.has(cell))matches.set(cell,employees.filter(emp=>scheduleNameMatchesEmployee(cell,emp)));
+      for(const emp of matches.get(cell))totals.set(emp,(totals.get(emp)||0)+Number(row.hrs||8));
+    }
+    return totals;
+  });
+  // Some report callers pass a projected employee object rather than the roster object.
+  if(index.has(e))return index.get(e);
+  const original=(roster.employees||[]).find(emp=>String(emp.id)===String(e.id));
+  return index.get(original)||0;
+}
 function employeeExpectedFallbackHours(e){let cls=employmentClass(e);if(cls==='PT')return 24;return 40}
 function employeeCostProfile(e){let hours=employeeScheduledHours(e);let source='schedule only';let baseWeek=(Number(e&&e.rate||0)||0)*hours;let loadedWeek=loadedHourlyRate(e)*hours;let baseMonth=baseWeek*Number(settings.monthlyMultiplier||4.333),loadedMonth=loadedWeek*Number(settings.monthlyMultiplier||4.333),baseYear=baseWeek*Number(settings.annualMultiplier||52),loadedYear=loadedWeek*Number(settings.annualMultiplier||52);return{hours,source,baseWeek,loadedWeek,baseMonth,loadedMonth,baseYear,loadedYear,loadedAddOn:loadedWeek-baseWeek}}
 function employeeCostRows(list){return (list||[]).slice().sort((a,b)=>fullName(a).localeCompare(fullName(b))).map(e=>{const c=employeeCostProfile(e);return{id:e.id,employee:fullName(e),eid:e.eid||'',shift:e.shift||'',rank:e.rank||'',class:employmentClass(e),rate:Number(e.rate||0),hours:c.hours,source:c.source,baseWeek:c.baseWeek,loadedWeek:c.loadedWeek,baseMonth:c.baseMonth,loadedMonth:c.loadedMonth,baseYear:c.baseYear,loadedYear:c.loadedYear}})}

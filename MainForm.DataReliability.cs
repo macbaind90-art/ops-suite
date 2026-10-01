@@ -122,7 +122,7 @@ namespace PWADC.SecurityOperationsSuite
                     Verified = true
                 };
                 WriteDataReliabilityAudit(outcome, true, "");
-                TryRefreshDataHealth("save");
+                TryRefreshDataHealth("save", module);
                 return outcome;
             }
             catch (Exception ex)
@@ -139,7 +139,7 @@ namespace PWADC.SecurityOperationsSuite
                     Verified = false
                 };
                 WriteDataReliabilityAudit(failed, false, ex.Message);
-                TryRefreshDataHealth("save-failure");
+                TryRefreshDataHealth("save-failure", module);
                 throw;
             }
             finally

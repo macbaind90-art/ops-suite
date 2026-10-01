@@ -160,7 +160,14 @@ namespace PWADC.SecurityOperationsSuite
             return result;
         }
 
-        private DataHealthSnapshot EvaluateDataHealth(string trigger, bool recordEvents)
+        private DataHealthSnapshot? cachedDataHealth;
+        private string cachedHealthRoot = "";
+        private DateTime cachedHealthAt = DateTime.MinValue;
+        private readonly HashSet<string> pendingHealthModules = new(StringComparer.OrdinalIgnoreCase);
+        private System.Windows.Forms.Timer? healthRefreshTimer;
+        private bool fullHealthRefreshPending;
+
+        private DataHealthSnapshot EvaluateDataHealth(string trigger, bool recordEvents, string? affectedModule = null)
         {
             var snapshot = new DataHealthSnapshot
             {
@@ -191,6 +198,11 @@ namespace PWADC.SecurityOperationsSuite
             {
                 foreach (GovernedModuleDefinition definition in GovernedModuleRegistry())
                 {
+                    if (affectedModule != null && cachedHealthRoot == settings.DataRoot && cachedDataHealth != null && definition.Id != affectedModule)
+                    {
+                        ModuleHealthInfo? prior = cachedDataHealth.Modules.FirstOrDefault(x => x.Module == definition.Id);
+                        if (prior != null) { snapshot.Modules.Add(prior); continue; }
+                    }
                     try
                     {
                         ModuleHealthInfo module = EvaluateModuleHealth(definition);
@@ -218,7 +230,8 @@ namespace PWADC.SecurityOperationsSuite
                         });
                     }
                 }
-                try { snapshot.SpecialistData = EvaluateSpecialistData(); }
+                try { snapshot.SpecialistData = affectedModule != null && cachedHealthRoot == settings.DataRoot && cachedDataHealth != null
+                    ? cachedDataHealth.SpecialistData : EvaluateSpecialistData(); }
                 catch (Exception ex) { snapshot.SpecialistData.Add(new SpecialistHealthInfo { Name = "Specialist data inventory", Error = ex.Message }); }
                 snapshot.OverallSeverity = HighestSeverity(snapshot.Modules.Select(x => x.Severity));
                 snapshot.OverallLabel = SeverityLabel(snapshot.OverallSeverity);
@@ -231,6 +244,9 @@ namespace PWADC.SecurityOperationsSuite
             }
             if (recordEvents && snapshot.SharedStorage.Reachable) RecordMeaningfulHealthEvents(snapshot);
             snapshot.UnreviewedEvents = CountUnreviewedHealthEvents();
+            cachedDataHealth = snapshot;
+            cachedHealthRoot = settings.DataRoot;
+            if (affectedModule == null) cachedHealthAt = DateTime.UtcNow;
             return snapshot;
         }
 
@@ -651,7 +667,9 @@ namespace PWADC.SecurityOperationsSuite
 
         private object GetDataHealthSummary()
         {
-            DataHealthSnapshot snapshot = EvaluateDataHealth("indicator", false);
+            DataHealthSnapshot snapshot = cachedDataHealth != null && cachedHealthRoot == settings.DataRoot
+                ? cachedDataHealth : EvaluateDataHealth("indicator", false);
+            if (DateTime.UtcNow - cachedHealthAt > TimeSpan.FromMinutes(1)) TryRefreshDataHealth("periodic");
             return new { severity = snapshot.OverallSeverity, label = snapshot.OverallLabel, unreviewedEvents = snapshot.UnreviewedEvents, checkedAt = snapshot.CheckedAt };
         }
 
@@ -841,9 +859,36 @@ namespace PWADC.SecurityOperationsSuite
             return new { path = zipPath, fileName = Path.GetFileName(zipPath), metadataOnly = true };
         }
 
-        private void TryRefreshDataHealth(string trigger)
+        private void TryRefreshDataHealth(string trigger, string? affectedModule = null)
         {
-            try { EvaluateDataHealth(trigger, true); } catch { }
+            // Queue diagnostics after the write response and shared-file lease finish.
+            // The WinForms idle timer keeps all settings/root access on the UI thread.
+            if (affectedModule == null) fullHealthRefreshPending = true;
+            else pendingHealthModules.Add(affectedModule);
+            if (IsDisposed || !IsHandleCreated) return;
+            if (healthRefreshTimer == null)
+            {
+                healthRefreshTimer = new System.Windows.Forms.Timer { Interval = 500 };
+                healthRefreshTimer.Tick += (_, _) => FlushPendingDataHealth();
+                Disposed += (_, _) => healthRefreshTimer?.Dispose();
+            }
+            healthRefreshTimer.Stop();
+            healthRefreshTimer.Start();
+        }
+
+        private void FlushPendingDataHealth()
+        {
+            healthRefreshTimer?.Stop();
+            bool full = fullHealthRefreshPending || cachedDataHealth == null || cachedHealthRoot != settings.DataRoot;
+            string[] modules = pendingHealthModules.ToArray();
+            fullHealthRefreshPending = false;
+            pendingHealthModules.Clear();
+            try
+            {
+                if (full) EvaluateDataHealth("idle-diagnostics", true);
+                else foreach (string module in modules) EvaluateDataHealth("saved-module", true, module);
+            }
+            catch { /* Diagnostics cannot change a completed save outcome. */ }
         }
     }
 }

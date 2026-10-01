@@ -47,7 +47,7 @@ for(const token of [
 
 need(reports,"id==='attendance-trends'?attendanceTrendReportControlsHtml()",'Report Center does not display Attendance Trend & Risk controls.');
 need(reports,"if(id==='attendance-trends')",'Report Center does not explain aggregate trend scope.');
-need(workflow,'node tools/validate-attendance-trend-risk-report.js','Windows workflow does not run Attendance Trend & Risk Report validation.');
+need(workflow,'node tools/validate-all.js','Windows workflow does not run Attendance Trend & Risk Report validation.');
 
 const start=reports.indexOf('function reportAttendanceTrendRisk(');
 const end=reports.indexOf('function attendanceTrendReportCsvRows()',start);

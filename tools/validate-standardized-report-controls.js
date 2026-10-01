@@ -39,7 +39,7 @@ for(const token of [
 
 for(const token of ["reportShiftFilter='All'","reportEmployeeFilter='All'","reportStatusFilter='All'"])need(bootstrap,token,`Shared report state missing: ${token}`);
 for(const token of ['.report-standard-controls{','.report-specialized-controls{','.report-control-footer{','.report-output-actions{'])need(styles,token,`Report-control CSS missing: ${token}`);
-need(workflow,'node tools/validate-standardized-report-controls.js','Windows workflow does not run standardized report-controls validation.');
+need(workflow,'node tools/validate-all.js','Windows workflow does not run standardized report-controls validation.');
 
 if(seed.pointSystem?.policy?.effectiveDate!=='2026-09-28')throw new Error('Packaged Attendance seed does not carry the 2026-09-28 fresh-start boundary.');
 const attendance=read('app/js/82-attendance-points.js');
