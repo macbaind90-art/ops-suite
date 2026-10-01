@@ -354,7 +354,7 @@ function coordinateModuleSave(module,operation){
  state.pending++;state.generation++;state.status='pending';moduleSaveStates.set(module,state);
  const queuedToken=hostSessionToken;
  const previous=moduleSaveQueues.get(module)||Promise.resolve();
- const work=previous.catch(()=>{}).then(()=>{if(queuedToken&&queuedToken!==hostSessionToken)return false;state.status='saving';return operation();});
+ const work=previous.catch(()=>{}).then(()=>{if(queuedToken&&queuedToken!==hostSessionToken)throw new Error('Save canceled because the signed-in account changed.');state.status='saving';return operation();});
  moduleSaveQueues.set(module,work);
  return work.then(result=>{state.pending--;state.status=state.pending?'pending':'saved';return result;},error=>{state.pending--;state.status='failed';throw error;});
 }

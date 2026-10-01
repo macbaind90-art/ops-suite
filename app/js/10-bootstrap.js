@@ -186,6 +186,9 @@ function normalizeSettings(x){
 }
 function clearPrivateData(){
  attendance={employees:[],attendance:{},notes:{},audit:[]};roster={employees:[],schedule:[],audit:[]};training={requirements:[],assignments:[],audit:[]};promotionPackets={templates:[],packets:[],audit:[]};tasks={tasks:[],audit:[]};shiftReports={reports:[],issues:[],audit:[]};shiftIntel={issues:[],intake:[],reference:[],audit:[]};moduleLoadInfo={};
+ schemaMigrationStatus={pending:[],blocked:[],completedAutomatically:[],warnings:[]};restoreBackups=[];restorePreview=null;backupManager=null;backupCleanupPreview=null;backupStatusRows=null;moduleFileStatusRows=null;shiftReportLastImport=null;
+ if(typeof dataHealthDashboard!=='undefined'){dataHealthDashboard=null;dataHealthLkgPreview=null;healthIndicator={severity:'gray',unreviewedEvents:0,checkedAt:''};}
+ document.querySelectorAll('.print-overlay').forEach(el=>el.remove());
  if(typeof promotionDigitalResetDrafts==='function')promotionDigitalResetDrafts();
  document.querySelectorAll('.page').forEach(el=>{el.innerHTML='';});closeModal();
 }

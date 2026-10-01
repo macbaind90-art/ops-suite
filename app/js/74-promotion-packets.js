@@ -20,7 +20,7 @@ function promotionEmployee(id){return (roster.employees||[]).find(e=>String(e.id
 function promotionPacketCan(action){return hasCapability(action==='issue'||action==='scenario'||action==='delete'||action==='restore'||action==='import'?'promotion.manage':action==='review'||action==='assessment'?'promotion.review':'promotion.decide')}
 function promotionCommand(action,fields){
  const snapshot=JSON.parse(JSON.stringify(fields||{}));
- return coordinateModuleSave('promotion-packets',()=>dispatchPromotionCommand(action,snapshot));
+ return coordinateModuleSave('promotion-packets',()=>dispatchPromotionCommand(action,snapshot)).catch(e=>{toast(e.message);return null});
 }
 async function dispatchPromotionCommand(action,fields){
   if(!promotionPacketCan(action)){toast('Promotion packet permission is required.');return null}
