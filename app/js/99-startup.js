@@ -1,5 +1,5 @@
-/* PWADC Security Operations Suite v5.4.0 | startup gate + Task Tracker print extension */
-const taskPrintColumnNames=['Project','Status','Priority','Category','Assigned To','Due','Follow-up','Blocked By','Next Action','Last Update'];
+/* PWADC Security Operations Suite v5.4.1 | startup gate + Task Tracker print extension */
+const taskPrintColumnNames=['Project','Status','Priority','Category','Due','Current Updates'];
 
 function taskPrintFilterSummary(){
   const bits=[taskStatusFilter==='all'?'Status: Open':`Status: ${taskStatusFilter}`];
@@ -19,11 +19,11 @@ function openTaskPrintModal(){
   showModal(`<div class="modal-head"><div><div class="modal-title">Print Task Tracker</div><div class="mini-note">Choose the task scope and exactly which Task Tracker columns to include.</div></div><button onclick="closeModal()">Close</button></div><div class="notice">Current filtered view preserves the Task Tracker search, status, priority, and category filters. All task records prints the full tracker, including completed and archived records.</div><div class="form-grid"><div class="full"><label>Rows to Print</label><select id="tpScope"><option value="filtered">Current filtered view</option><option value="all">All task records</option></select></div><div class="full"><label>Columns</label><div class="day-grid">${cols.map(c=>`<label class="day-check"><input type="checkbox" class="tpCol" value="${esc(c)}" checked> ${esc(c)}</label>`).join('')}</div></div></div><div class="modal-actions"><button onclick="setTaskPrintCols('basic')">Basic</button><button onclick="setTaskPrintCols('all')">All Columns</button><button onclick="setTaskPrintCols('none')">Clear</button><button onclick="closeModal()">Cancel</button><button class="primary" onclick="printTaskTrackerCustom()">Print</button></div>`);
 }
 function setTaskPrintCols(mode){
-  const basic=new Set(['Project','Status','Priority','Category','Assigned To','Due','Next Action','Last Update']);
+  const basic=new Set(['Project','Status','Due','Current Updates']);
   document.querySelectorAll('.tpCol').forEach(x=>x.checked=mode==='all'||(mode==='basic'&&basic.has(x.value)));
 }
 function taskPrintCell(t,c){
-  return ({Project:t.project,Status:t.status,Priority:t.priority,Category:t.category,'Assigned To':t.assignedTo||t.owner,Due:taskDateShort(t.dueDate),'Follow-up':taskDateShort(t.followUpDate),'Blocked By':t.blockedBy,'Next Action':t.nextAction,'Last Update':t.lastUpdate||t.update}[c]||'');
+  return ({Project:t.project,Status:t.status,Priority:t.priority,Category:t.category,Due:taskDateShort(t.dueDate),'Current Updates':t.lastUpdate||t.update}[c]||'');
 }
 function printTaskTrackerCustom(){
   const scope=val('tpScope')||'filtered';
@@ -32,7 +32,7 @@ function printTaskTrackerCustom(){
   const list=scope==='all'?taskPrintSort(tasks.tasks||[]):filteredTasks();
   const scopeLabel=scope==='all'?'All task records':'Current filtered view';
   const filterDetail=scope==='all'?'':taskPrintFilterSummary();
-  const body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Task Tracker</h1><div class="print-note">${esc(scopeLabel)} · ${list.length} task(s)${filterDetail?` · ${esc(filterDetail)}`:''}</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v5.4.0</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list.map(t=>`<tr>${cols.map(c=>`<td>${esc(taskPrintCell(t,c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}">No task records match the selected scope.</td></tr>`}</tbody></table>`;
+  const body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Task Tracker</h1><div class="print-note">${esc(scopeLabel)} · ${list.length} task(s)${filterDetail?` · ${esc(filterDetail)}`:''}</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v5.4.1</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list.map(t=>`<tr>${cols.map(c=>`<td>${esc(taskPrintCell(t,c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}">No task records match the selected scope.</td></tr>`}</tbody></table>`;
   closeModal();
   printHtmlDirect('PWADC Security Task Tracker',body,cols.length>6?'landscape':'portrait');
 }

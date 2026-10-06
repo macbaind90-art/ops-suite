@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v5.4.0 | module: roster-schedule */
+/* PWADC Security Operations Suite v5.4.1 | module: roster-schedule */
 function programBasePath(){return String(settings.dataRoot||DEFAULT_SETTINGS.dataRoot)+'\\Programs'}
 function programPath(p){return programBasePath()+'\\'+p.folder+'\\'+p.file}
 function programFolderPath(p){return programBasePath()+'\\'+p.folder}
@@ -245,7 +245,7 @@ function printRosterCustom(){
     const selected=new Set(ids.map(String));list=(roster.employees||[]).filter(e=>selected.has(String(e.id))).sort((a,b)=>fullName(a).localeCompare(fullName(b)));scopeLabel=list.length===1?fullName(list[0]):`Selected employees (${list.length})`;
   }else list=filteredRoster();
   let cell=(e,c)=>({Name:fullName(e),EID:e.eid,Rank:e.rank,Shift:e.shift,'Gate Shift':e.gateShift,Rate:money(e.rate),Type:e.type,'PT/FT/Temp':employmentClass(e),HPW:employeeCostProfile(e).hours,'Base Week':money(employeeCostProfile(e).baseWeek),'Loaded Week':money(employeeCostProfile(e).loadedWeek),'Base Month':money(employeeCostProfile(e).baseMonth),'Loaded Month':money(employeeCostProfile(e).loadedMonth),'Base Year':money(employeeCostProfile(e).baseYear),'Loaded Year':money(employeeCostProfile(e).loadedYear),RDO:(e.rdo||[]).join('/'),Uniform:['shirt','pants','jacket'].map(k=>`${k}:${e[k]||''} ${e[k+'Status']||''}`).join(' | '),DOH:fmtDate(e.doh),DOP:fmtDate(e.dop),Notes:e.notes}[c]||'');
-  let body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Roster</h1><div class="print-note">${esc(scopeLabel)} · ${list.length} employee(s)</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v5.4.0</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list.map(e=>`<tr>${cols.map(c=>`<td>${esc(cell(e,c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}">No roster records match the selected scope.</td></tr>`}</tbody></table>`;closeModal();printHtmlDirect('PWADC Security Roster',body,cols.length>8?'landscape':'portrait')
+  let body=`<div class="print-header"><div><div class="print-brand">PWADC Security Operations Suite</div><h1>PWADC Security Roster</h1><div class="print-note">${esc(scopeLabel)} · ${list.length} employee(s)</div></div><div class="print-meta">Generated ${esc(new Date().toLocaleString())}<br>Version v5.4.1</div></div><table><thead><tr>${cols.map(c=>`<th>${esc(c)}</th>`).join('')}</tr></thead><tbody>${list.map(e=>`<tr>${cols.map(c=>`<td>${esc(cell(e,c))}</td>`).join('')}</tr>`).join('')||`<tr><td colspan="${cols.length}">No roster records match the selected scope.</td></tr>`}</tbody></table>`;closeModal();printHtmlDirect('PWADC Security Roster',body,cols.length>8?'landscape':'portrait')
 }
 function cloneScheduleRows(rows){return JSON.parse(JSON.stringify(Array.isArray(rows)?rows:[]))}
 function scheduleDraftList(){roster.scheduleDrafts=Array.isArray(roster.scheduleDrafts)?roster.scheduleDrafts:[];return roster.scheduleDrafts}
@@ -280,7 +280,12 @@ function normalizeScheduleNameKey(cell){
 const SCHEDULE_COLOR_PALETTE=['#f65555','#1c38ec','#54ec1c','#1caeec','#bc1cec','#f6c555','#55f6e0','#ff8fd1','#a0e060','#e08a2f','#4a90d9','#c6b273','#ff6f91','#845ec2','#00c9a7','#ffc75f','#008f7a','#b39cd0','#4d8076','#d65db1','#7b61ff','#00a6a6','#e76f51','#2a9d8f','#e9c46a','#9b5de5','#00bbf9','#f15bb5','#43aa8b','#f8961e','#577590','#90be6d','#ef476f','#118ab2','#06d6a0','#ffd166'];
 let scheduleColorCache=null;
 function scheduleColorKey(cell){const x=String(cell||'').trim();if(!x||['none','open','pending','closed'].includes(x.toLowerCase()))return '';return normalizeScheduleNameKey(x)}
-function scheduleColorMatrix(rows=scheduleWorkspaceRows()){
+function scheduleRowGroups(rows=scheduleWorkspaceRows()){
+  const groups=new Map();
+  for(const row of rows){const section=row.section||'Unsectioned';if(!groups.has(section))groups.set(section,[]);groups.get(section).push(row);}
+  return [...groups];
+}
+function scheduleColorMatrix(rows=scheduleRowGroups().flatMap(([,group])=>group)){
   return (rows||[]).map(row=>{
     const days=(Array.isArray(row.days)?row.days:[]).slice(0,7);while(days.length<7)days.push('None');
     return days.map(cell=>scheduleColorKey(cell));
@@ -291,8 +296,20 @@ function scheduleColorConnect(graph,a,b){
   if(!graph[a])graph[a]=new Set();if(!graph[b])graph[b]=new Set();
   graph[a].add(b);graph[b].add(a);
 }
+// Compare perceived color differences instead of only unequal hex strings.
+const scheduleColorLabCache=new Map();
+function scheduleColorLab(hex){
+  if(scheduleColorLabCache.has(hex))return scheduleColorLabCache.get(hex);
+  const [r,g,b]=[1,3,5].map(i=>{const v=parseInt(hex.slice(i,i+2),16)/255;return v<=.04045?v/12.92:((v+.055)/1.055)**2.4;});
+  const l=Math.cbrt(.4122214708*r+.5363325363*g+.0514459929*b);
+  const m=Math.cbrt(.2119034982*r+.6806995451*g+.1073969566*b);
+  const s=Math.cbrt(.0883024619*r+.2817188376*g+.6299787005*b);
+  const lab=[.2104542553*l+.793617785*m-.0040720468*s,1.9779984951*l-2.428592205*m+.4505937099*s,.0259040371*l+.7827717662*m-.808675766*s];
+  scheduleColorLabCache.set(hex,lab);return lab;
+}
+function scheduleColorDistance(a,b){const x=scheduleColorLab(a),y=scheduleColorLab(b);return Math.hypot(...x.map((v,i)=>v-y[i]));}
 function buildScheduleColorCache(){
-  const rows=scheduleWorkspaceRows();
+  const rows=scheduleRowGroups().flatMap(([,group])=>group);
   const matrix=scheduleColorMatrix(rows);
   const graph={},firstSeen={},preferred={},keys=[];
   let seq=0;
@@ -303,25 +320,30 @@ function buildScheduleColorCache(){
       if(firstSeen[key]===undefined){firstSeen[key]=seq++;keys.push(key);graph[key]=graph[key]||new Set();}
       if(!preferred[key]&&fixed[key])preferred[key]=fixed[key];
       if(d<6)scheduleColorConnect(graph,key,matrix[r][d+1]);
-      if(r<matrix.length-1)scheduleColorConnect(graph,key,matrix[r+1][d]);
+      if(r<matrix.length-1)for(let offset=-1;offset<=1;offset++)scheduleColorConnect(graph,key,matrix[r+1][d+offset]);
     }
   }
-  const order=[...keys].sort((a,b)=>((graph[b]?.size||0)-(graph[a]?.size||0))||(firstSeen[a]-firstSeen[b]));
   const assigned={},usage={};
-  for(const key of order){
-    const blocked=new Set([...(graph[key]||[])].map(n=>assigned[n]).filter(Boolean));
-    const candidates=[];
-    if(preferred[key])candidates.push(preferred[key]);
-    for(const c of SCHEDULE_COLOR_PALETTE)if(!candidates.includes(c))candidates.push(c);
-    let color=candidates.find(c=>!blocked.has(c)&&!(usage[c]>0));
-    if(!color){
-      color=candidates.filter(c=>!blocked.has(c)).sort((a,b)=>(usage[a]||0)-(usage[b]||0))[0];
-    }
-    if(!color){
-      let h=0;for(let i=0;i<key.length;i++)h=(h*31+key.charCodeAt(i))>>>0;
-      color=SCHEDULE_COLOR_PALETTE[h%SCHEDULE_COLOR_PALETTE.length];
-    }
+  const remaining=new Set(keys);
+  const neighborColors=key=>[...new Set([...graph[key]].map(n=>assigned[n]).filter(Boolean))];
+  const separation=(color,neighbors)=>neighbors.length?Math.min(...neighbors.map(n=>scheduleColorDistance(color,n))):1;
+  while(remaining.size){
+    // Assign the most constrained employee first; use the same color wherever they appear.
+    const key=[...remaining].sort((a,b)=>neighborColors(b).length-neighborColors(a).length||graph[b].size-graph[a].size||firstSeen[a]-firstSeen[b])[0];
+    const neighbors=neighborColors(key);
+    const candidates=SCHEDULE_COLOR_PALETTE.filter(c=>!neighbors.includes(c));
+    // Extend only for unusually dense schedules; never fall back to a neighbor's exact color.
+    if(!candidates.length)for(let n=1;candidates.length<64;n++){const c='#'+((n*2654435761)>>>0).toString(16).slice(-6).padStart(6,'0');if(!neighbors.includes(c))candidates.push(c);}
+    candidates.sort((a,b)=>separation(b,neighbors)-separation(a,neighbors)||(usage[a]||0)-(usage[b]||0)||Number(b===preferred[key])-Number(a===preferred[key])||a.localeCompare(b));
+    const color=candidates[0];
     assigned[key]=color;usage[color]=(usage[color]||0)+1;
+    remaining.delete(key);
+  }
+  // Improve crowded boundaries after every neighbor has a color, without reducing separation.
+  for(let pass=0;pass<3;pass++)for(const key of keys){
+    const neighbors=neighborColors(key);let best=assigned[key],distance=separation(best,neighbors);
+    for(const color of SCHEDULE_COLOR_PALETTE){const next=separation(color,neighbors);if(next>distance+.000001){best=color;distance=next;}}
+    assigned[key]=best;
   }
   scheduleColorCache={byEmployee:assigned,graph};
 }
@@ -332,13 +354,13 @@ function empColorFromCell(cell,section){
 }
 function scheduleAdjacentColorConflicts(){
   if(!scheduleColorCache)buildScheduleColorCache();
-  const rows=scheduleWorkspaceRows(),matrix=scheduleColorMatrix(rows),out=[];
+  const matrix=scheduleColorMatrix(),out=[];
   const inspect=(r1,d1,r2,d2)=>{
     const a=matrix[r1]?.[d1]||'',b=matrix[r2]?.[d2]||'';if(!a||!b||a===b)return;
     const ca=scheduleColorCache.byEmployee[a],cb=scheduleColorCache.byEmployee[b];
     if(ca&&cb&&ca===cb)out.push({a,b,color:ca,from:`${r1}:${d1}`,to:`${r2}:${d2}`});
   };
-  for(let r=0;r<matrix.length;r++)for(let d=0;d<7;d++){if(d<6)inspect(r,d,r,d+1);if(r<matrix.length-1)inspect(r,d,r+1,d);}
+  for(let r=0;r<matrix.length;r++)for(let d=0;d<7;d++){if(d<6)inspect(r,d,r,d+1);if(r<matrix.length-1)for(let offset=-1;offset<=1;offset++)inspect(r,d,r+1,d+offset);}
   return out;
 }
 function scheduleCellParts(cell){
@@ -366,7 +388,7 @@ function renderScheduleCell(name,sec,idx,day,forExport=false){
  if(p.special==='None') return `<div class="${cls}" ${forExport?'':`onclick="openScheduleCellModal(${idx},${day})"`}><div class="sch-name none">Closed</div>${forExport?'':'<div class="sch-edit-badge">EDIT</div>'}</div>`;
  if(p.special==='Open'||p.special==='Pending') return `<div class="sch-cell" ${forExport?'':`onclick="openScheduleCellModal(${idx},${day})"`}><div class="sch-name ${p.special.toLowerCase()}">${p.display}</div>${forExport?'':'<div class="sch-edit-badge">EDIT</div>'}</div>`;
  const personClass=color?'sch-cell sch-person-cell':'sch-cell';
- const style=color?`style="--emp-color:${color};--emp-bg:${color}28;background:${color}28;border-left:3px solid ${color};padding-left:5px;"`:'';
+ const style=color?`style="--emp-color:${color};--emp-bg:${color}45;background:${color}45;border-left:5px solid ${color};padding-left:5px;"`:'';
  const rank=p.rank?`<span class="sch-rank-abbr" style="color:${forExport?'#fff':(color||'var(--muted)')}">${esc(p.rank)}</span>`:'';
  return `<div class="${personClass}" ${style} ${forExport?'':`onclick="openScheduleCellModal(${idx},${day})"`}><div class="sch-person-name" style="color:${forExport?'#fff':'var(--text)'};font-weight:700;font-size:11px;line-height:1.3;">${forExport?esc(p.display):employeeProfileLinkByName(p.display)}${rank}</div>${forExport?'':'<div class="sch-edit-badge">EDIT</div>'}</div>`
 }
@@ -547,7 +569,7 @@ function setScheduleCellSpecial(v){const hidden=document.getElementById('schedCe
 function confirmScheduleCell(){if(!scheduleEditContext)return;const {idx,day}=scheduleEditContext;const row=scheduleWorkspaceRows()[idx];if(!row)return;const selected=String(val('schedCellAssign')||'').trim();const typed=String(val('schedCellSearch')||'').trim();if(!selected){toast(typed?'Choose an employee from the dropdown or select Closed/Open/Pending.':'Choose an employee or status.');return;}row.days=row.days||['None','None','None','None','None','None','None'];while(row.days.length<7)row.days.push('None');row.days[day]=selected;touchScheduleDraft();scheduleColorCache=null;scheduleWorkspaceAudit(scheduleWorkspaceIsDraft()?'Mock schedule cell reassigned':'Schedule cell reassigned',scheduleWorkspaceDetail((row.section||'')+' · '+(row.post||'')+' · '+(DAYS[day]||day)+' -> '+row.days[day]));saveRoster('schedule-cell-edit');closeModal();safeRenderPages();toast(scheduleWorkspaceIsDraft()?'Mock schedule updated':'Schedule updated')}
 
 function removeScheduleRow(idx){if(!hasCapability('schedule.edit')){toast('Schedule editing is Admin-only');return;}const rows=scheduleWorkspaceRows();const row=rows[idx];if(!row)return;if(!confirm('Remove schedule row: '+(row.section||'')+' / '+(row.post||'')+'?'))return;rows.splice(idx,1);touchScheduleDraft();scheduleColorCache=null;scheduleWorkspaceAudit(scheduleWorkspaceIsDraft()?'Mock schedule row removed':'Schedule row removed',scheduleWorkspaceDetail((row.section||'')+' · '+(row.post||'')));saveRoster('schedule-row-remove');safeRenderPages();toast(scheduleWorkspaceIsDraft()?'Mock schedule row removed':'Schedule row removed')}
-function scheduleSections(){scheduleColorCache=null;buildScheduleColorCache();let groups={};for(const r of scheduleWorkspaceRows()){(groups[r.section||'Unsectioned']=groups[r.section||'Unsectioned']||[]).push(r)}return Object.entries(groups)}
+function scheduleSections(){scheduleColorCache=null;buildScheduleColorCache();return scheduleRowGroups()}
 function scheduleHtmlSnapshot(){return scheduleSections().map(([sec,rows])=>renderScheduleSection(sec,rows,true)).join('')}
 function schedulePrintSummaryHtml(){
   const m=scheduleMetrics(scheduleWorkspaceRows());

@@ -1,5 +1,11 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.4.1 - Schedule colors and simpler Task Tracker
+
+- Choose schedule colors by perceptual separation using the displayed section/row order, including diagonal neighbors. Keep each employee's color consistent across cells and strengthen the cell tint and accent border.
+- Remove Assigned To, Follow-up, Blocked By and Next Action from task editing, tables, print controls, CSV exports and weekly/status reports. Rename Last Update to Current Updates. Existing stored fields remain preserved when editing; hidden legacy fields no longer influence searches or weekly report grouping.
+- Keep Shift Intelligence recommendations visible in Current Updates when creating a task. Add regression checks for displayed schedule adjacency, new/edit task saves, retained historical fields and actual WebView form controls.
+
 ## v5.4.0 - Core performance and maintenance
 
 - Render only the selected screen and retain search focus/caret. Reuse Attendance snapshots and indexed schedule/Training calculations within each render/report, with explicit disposal afterward.
