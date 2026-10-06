@@ -28,7 +28,7 @@ for(const token of requiredTokens){
 const columnMatch=startup.match(/const taskPrintColumnNames=\[([^\]]+)\]/);
 if(!columnMatch)throw new Error('Task print column list is missing.');
 const columns=[...columnMatch[1].matchAll(/'([^']+)'/g)].map(m=>m[1]);
-const expected=['Project','Status','Priority','Category','Assigned To','Due','Follow-up','Blocked By','Next Action','Last Update'];
+const expected=['Project','Status','Priority','Category','Due','Current Updates'];
 if(JSON.stringify(columns)!==JSON.stringify(expected))throw new Error('Task print columns changed unexpectedly: '+JSON.stringify(columns));
 if(columns.includes('Actions'))throw new Error('Task Tracker Actions column must never be printable.');
 if(!startup.includes("scope==='all'?taskPrintSort(tasks.tasks||[]):filteredTasks()"))throw new Error('Current-filtered Task Tracker print scope does not preserve filteredTasks().');

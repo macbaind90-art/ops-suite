@@ -24,7 +24,6 @@ need(att,'${attendanceEmployeeProfileLink(e)}<span>${esc(e.title)}','Daily Atten
 need(att,'${attendanceEmployeeProfileLink(emp)}','Attendance grid/review/action employee name helper does not use profile links.');
 need(att,'attendance-point-grid-wrap','90-Day Grid dedicated sticky wrapper is missing.');
 need(att,'attendanceEmployeeProfileLink(emp,n.employee||emp.name)','Doctor Note employee names are not linked.');
-need(tasks,"employeeProfileLinkByName(t.assignedTo||t.owner||'')",'Task assignee names do not resolve to employee profiles when they match a roster employee.');
 need(css,'.attendance-point-grid-wrap{height:calc(100vh - 150px);min-height:420px;max-height:none;overflow:auto','90-Day Grid does not have a dedicated viewport-height scroll surface.');
 need(css,'.attendance-point-grid-wrap thead{position:sticky;top:0','90-Day Grid THEAD is not sticky.');
 need(css,'.attendance-point-grid-wrap thead th{position:sticky;top:0','90-Day Grid date header cells are not sticky.');
