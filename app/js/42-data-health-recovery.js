@@ -1,4 +1,4 @@
-/* PWADC Security Operations Suite v5.4.1 | Data Health & Recovery */
+/* PWADC Security Operations Suite v5.5.0 | Data Health & Recovery */
 'use strict';
 
 let dataHealthDashboard=null,dataHealthLoading=false,dataHealthError='',dataHealthSelectedModule='',dataHealthLkgPreview=null;
@@ -89,7 +89,6 @@ function applyRecoveredModule(module,r){
   else if(module==='roster'){roster=parsed;normalizeRoster();}
   else if(module==='training'){training=parsed;}
   else if(module==='promotion-packets'){promotionPackets=parsed;promotionDigitalResetDrafts();}
-  else if(module==='tasks'){tasks=parsed;normalizeTasks();}
   else if(module==='shift-reports'){shiftReports=parsed;normalizeShiftReports();}
   else if(module==='shift-intelligence'){shiftIntel=parsed;normalizeShiftIntel();}
   else if(module==='suite-settings'){settings=normalizeSettings(parsed);applyTheme();lockSuite();}
@@ -131,7 +130,7 @@ renderDataHealth=function(){
 const mockResponseV420=mockResponse;
 mockResponse=async function(type,payload,extra){
   if(type==='suite:getDataHealthSummary')return{severity:'yellow',label:'Preview Mode',unreviewedEvents:1,checkedAt:new Date().toLocaleString()};
-  if(type==='suite:getDataHealth')return{checkedAt:new Date().toLocaleString(),overallSeverity:'yellow',overallLabel:'Attention',unreviewedEvents:1,sharedStorage:{severity:'green',reachable:true,readAllowed:true,writeAllowed:true,lastChecked:new Date().toLocaleString(),freeSpaceBytes:0,dataMode:'Browser preview',path:settings.dataRoot},modules:['attendance','roster','tasks','shift-reports','shift-intelligence','suite-settings'].map((module,i)=>({module,label:moduleLabel(module),severity:i?'green':'yellow',statusLabel:i?'Healthy':'Attention',accessState:'Writable',schemaVersion:module==='attendance'?'attendance-3':module+'-1',expectedSchemaVersion:module==='attendance'?'attendance-3':module+'-1',lastSuccessfulSave:'Preview',lkg:{available:true,valid:true,currentToday:true,snapshotDate:facilityToday()},lastMigrationStatus:'No migration recorded',recoveryAvailable:true,summary:i?'Healthy preview module.':'Preview attention state.',conflicts:{count30Days:i?0:3,trend:i?'None':'Increasing'},technical:{integrityStatus:'valid'}})),specialistData:[],healthEvents:[],migrationHistory:[],recoveryHistory:[]};
+  if(type==='suite:getDataHealth')return{checkedAt:new Date().toLocaleString(),overallSeverity:'yellow',overallLabel:'Attention',unreviewedEvents:1,sharedStorage:{severity:'green',reachable:true,readAllowed:true,writeAllowed:true,lastChecked:new Date().toLocaleString(),freeSpaceBytes:0,dataMode:'Browser preview',path:settings.dataRoot},modules:['attendance','roster','shift-reports','shift-intelligence','suite-settings'].map((module,i)=>({module,label:moduleLabel(module),severity:i?'green':'yellow',statusLabel:i?'Healthy':'Attention',accessState:'Writable',schemaVersion:module==='attendance'?'attendance-3':module+'-1',expectedSchemaVersion:module==='attendance'?'attendance-3':module+'-1',lastSuccessfulSave:'Preview',lkg:{available:true,valid:true,currentToday:true,snapshotDate:facilityToday()},lastMigrationStatus:'No migration recorded',recoveryAvailable:true,summary:i?'Healthy preview module.':'Preview attention state.',conflicts:{count30Days:i?0:3,trend:i?'None':'Increasing'},technical:{integrityStatus:'valid'}})),specialistData:[],healthEvents:[],migrationHistory:[],recoveryHistory:[]};
   if(type==='suite:reviewHealthEvents')return{unreviewedEvents:0,reviewedAt:new Date().toISOString()};
   if(type==='suite:previewLastKnownGood')return{module:payload.module,label:moduleLabel(payload.module),currentTimestamp:'Preview',lkgTimestamp:'Preview',currentSchema:'preview-1',lkgSchema:'preview-1',currentRecordCount:10,lkgRecordCount:10,lkgValid:true,recoveryAvailable:true,differenceSummary:'Record-count totals match.',currentRevision:'preview',technical:{}};
   if(type==='suite:exportDataHealthDiagnostics')return{path:'Preview',fileName:'PWADC-Data-Health-Diagnostics-Preview.zip',metadataOnly:true};

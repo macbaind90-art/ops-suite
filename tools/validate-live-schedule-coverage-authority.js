@@ -9,7 +9,7 @@ const reject=(hay,needle,msg)=>{if(hay.includes(needle))throw new Error(msg||`Un
 const analytics=read('app/js/70-training-uniforms.js');
 const reports=read('app/js/40-reports-governance.js');
 const home=read('app/js/50-workflows-home.js');
-const settings=read('app/js/95-tasks-settings.js');
+const settings=read('app/js/95-settings.js');
 const bootstrap=read('app/js/10-bootstrap.js');
 const models=read('Models.cs');
 const migration=read('MainForm.SchemaMigrations.cs');

@@ -1,6 +1,12 @@
-# PWADC Security Operations Suite v5.4.1
+# PWADC Security Operations Suite v5.5.0
 
 - Windows application baseline: **.NET 10 / `net10.0-windows` / SDK `10.0.400`**, published self-contained for x64.
+## v5.5.0 - Migrated modules removed
+
+- Removed Task Tracker and Other Programs from navigation, Home, reports, Settings, backup controls, and Shift Intelligence handoffs.
+- Existing Task Tracker data, specialist files, and backups remain untouched. The suite no longer loads, governs, launches, copies, or packages those modules.
+- Old landing-page preferences for either module open Home. Existing accounts, PINs, active module data, and the v5.4.1 schedule color improvements remain in place.
+
 ## v5.4.0 - Core performance and maintenance
 
 - Render only the selected screen and retain search focus/caret. Reuse Attendance snapshots and indexed schedule/Training calculations within each render/report, with explicit disposal afterward.
@@ -294,7 +300,7 @@ The Home / Command Center uses the current Attendance Point System as its people
 
 Home now prioritizes **missing scheduled attendance entries**, **attendance notices due**, **employees at 9+ active points**, overdue tasks, Shift Intelligence intake/action queues, and schedule gaps. The People Workflow provides direct access to **Daily Entry, Point Review, Notice Control, Roster, Training, and Uniforms**. Positive attendance credit balances and the current 3-point bank cap are also visible from Home.
 
-The daily operating sequence is now: complete Daily Attendance → review points/corrective action → confirm Live Schedule/Roster → process Shift Operations → move owned follow-ups to Task Tracker → close with Reports/Data Health. Live Schedule remains the primary scheduled/off authority with Roster RDO fallback.
+The daily operating sequence is now: complete Daily Attendance → review points/corrective action → confirm Live Schedule/Roster → process Shift Operations → close with Reports/Data Health. Live Schedule remains the primary scheduled/off authority with Roster RDO fallback.
 
 ## v3.5.0.7 - Positive Credit Immediate Paydown
 Positive attendance credits now work as an active attendance-credit balance rather than only waiting for the next violation. When an employee earns +1 after 12 clean scheduled working days, the award first reduces any active negative attendance points. Any unused remainder is banked. The positive bank remains capped at **3 at any one time**, not three for the employee's lifetime. After credits are consumed, the employee can earn back up to three again through additional clean 12-workday cycles.
@@ -652,7 +658,7 @@ This architecture release reduces regression risk without intentionally changing
   - `MainForm.Bridge.cs` - WebView message routing / responses
   - `MainForm.Storage.cs` - settings, module load/save, health and storage operations
   - `MainForm.Backups.cs` - backup inventory, retention, cleanup and restore
-  - `MainForm.Programs.cs` - approved path handling, standalone programs, locks, environment and module file status
+  - `MainForm.Programs.cs` - approved path handling, locks, environment and module file status
   - `Models.cs` - settings, users, coverage and backup models
 - Preserves the existing `suite:*` desktop bridge contracts and shared-drive folder model.
 
@@ -799,7 +805,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 - Shift Reports and Shift Intelligence functionality from v3.2.5.5 remains intact.
 - Shift Intelligence operational calibration is intentionally deferred for a later stabilization pass.
 - Emergency procedure and contact documents are not integrated into this release.
-- Other Programs remains the specialist-tool launcher and is not converted into a data-governance module.
+- Other Programs was retired in v5.5.0 after migration to a separate application.
 
 ## Operating Rules Retained
 - Shared data root: `\\pig-fs\Security\MacBain\Security Operations Suite`
@@ -857,7 +863,7 @@ The redesign does not change the shared JSON architecture or introduce a databas
 2. **People Lane:** Attendance Point System, Roster, Employee Profile, Training, and Uniform Accountability operate as a connected workflow.
 3. **Operations Lane:** Shift Reports controls source intake and extraction. Shift Intelligence controls disposition, watchlist management, task handoff, and closure.
 4. **Governance Lane:** Report Center, Data Health, Backup & Restore, Change Log, and Admin Settings follow Report → Verify → Recover → Govern.
-5. **Specialist Tools:** Other Programs launches independent tools without mixing their scripts into the primary suite.
+5. **Migrated Tools:** Task Tracker and Other Programs are maintained outside this suite as of v5.5.0.
 6. **Emergency Response:** The approved PWADC Emergency Response Protocol System remains a planned dispatcher-style guided protocol capability.
 7. **Architecture Continuity:** v4.0.0 established the current major-version baseline; the current C# / WebView2 / HTML / CSS / JavaScript platform remains the supported production architecture.
 

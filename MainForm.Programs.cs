@@ -17,40 +17,14 @@ namespace PWADC.SecurityOperationsSuite
             if (string.IsNullOrWhiteSpace(path)) throw new InvalidOperationException("No path was provided.");
             string expanded = Path.GetFullPath(Environment.ExpandEnvironmentVariables(path));
             if (!IsSafeOpenPath(expanded)) throw new InvalidOperationException("Blocked open-path request outside approved suite folders: " + expanded);
-            if (!File.Exists(expanded) && !Directory.Exists(expanded))
-            {
-                CopyPackagedProgramsToShared(false);
-            }
             if (!File.Exists(expanded) && !Directory.Exists(expanded)) throw new FileNotFoundException("Path was not found: " + expanded);
-            if (!Directory.Exists(expanded)) throw new UnauthorizedAccessException("Open Path accepts folders only. Use a registered program ID to launch a tool.");
+            if (!Directory.Exists(expanded)) throw new UnauthorizedAccessException("Open Path accepts folders only.");
             Process.Start(new ProcessStartInfo(expanded) { UseShellExecute = true });
         }
 
         private void LaunchProgram(string programId)
         {
-            string relative = programId switch
-            {
-                "badge" => Path.Combine("Badge Audit", "PWADC_Badge_Audit_Tool.html"),
-                "amag" => Path.Combine("AMAG Audit", "PWADC_AMAG_Audit_Tool.html"),
-                "access" => Path.Combine("Access Audit", "PWADC_Access_Audit_Tool.html"),
-                _ => throw new UnauthorizedAccessException("Program ID is not registered.")
-            };
-            string packaged = Path.Combine(appFolder, "programs", relative);
-            if (!File.Exists(packaged)) throw new FileNotFoundException("Packaged tool is unavailable.");
-            // Open the trusted packaged tool rather than executable content from the share.
-            Process.Start(new ProcessStartInfo(packaged) { UseShellExecute = true });
-        }
-
-        private void CopyPackagedProgramsToShared(bool overwrite)
-        {
-            try
-            {
-                string source = Path.Combine(appFolder, "programs");
-                string dest = Path.Combine(settings.DataRoot, "Programs");
-                if (!Directory.Exists(source)) return;
-                CopyDirectory(source, dest, overwrite);
-            }
-            catch { }
+            throw new InvalidOperationException("Other Programs has moved out of this suite.");
         }
 
         private static void CopyDirectory(string sourceDir, string destDir, bool overwrite)
@@ -68,20 +42,6 @@ namespace PWADC.SecurityOperationsSuite
                 Directory.CreateDirectory(Path.GetDirectoryName(target)!);
                 if (overwrite || !File.Exists(target)) File.Copy(file, target, true);
             }
-        }
-
-        private string BackupProgramsFolder()
-        {
-            string source = Path.Combine(settings.DataRoot, "Programs");
-            if (!Directory.Exists(source))
-            {
-                CopyPackagedProgramsToShared(false);
-            }
-            if (!Directory.Exists(source)) throw new DirectoryNotFoundException("Programs folder was not found.");
-            string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss_fff");
-            string dest = Path.Combine(settings.DataRoot, "Backups", "Programs", "Programs__manual__" + stamp);
-            CopyDirectory(source, dest, true);
-            return dest;
         }
 
         private void CreateSuiteLockFile()
@@ -162,7 +122,6 @@ namespace PWADC.SecurityOperationsSuite
             var rows = new List<object>();
             foreach (string module in ModuleNames())
             {
-                if (module == "programs") continue;
                 rows.Add(ModuleFileStatus(module));
             }
             return rows;
@@ -209,7 +168,6 @@ namespace PWADC.SecurityOperationsSuite
                 else if (module == "shift-reports") newestDataDate = NewestDatePropertyFromFile(info.FullName, "reports", "issues");
                 else if (module == "shift-intelligence") newestDataDate = NewestDatePropertyFromFile(info.FullName, "issues", "intake", "reference");
                 else if (module == "training") newestDataDate = NewestDatePropertyFromFile(info.FullName, "requirements", "assignments", "audit");
-                else if (module == "tasks") newestDataDate = NewestDatePropertyFromFile(info.FullName, "tasks", "audit");
                 else if (module == "roster") newestDataDate = NewestDatePropertyFromFile(info.FullName, "employees", "schedule", "audit");
             }
             JsonIntegrityInfo integrity = JsonIntegrityStatus(path);

@@ -29,9 +29,9 @@ namespace PWADC.SecurityOperationsSuite
                 {
                     "suite:getMigrationStatus" or "suite:getMigrationHistory" or "suite:approveSchemaMigration" => "schema.manage",
                     "suite:getDataHealthSummary" or "suite:getDataHealth" or "suite:reviewHealthEvents" or "suite:exportDataHealthDiagnostics" or "suite:healthCheck" => "dataHealth.view",
-                    "suite:previewLastKnownGood" or "suite:restoreLastKnownGood" or "suite:resetModuleFromSeed" or "suite:restoreBackup" or "suite:readBackupSummary" or "suite:listBackups" or "suite:backupInventory" or "suite:previewBackupCleanup" or "suite:cleanupBackups" or "suite:backupPrograms" => "data.restore",
+                    "suite:previewLastKnownGood" or "suite:restoreLastKnownGood" or "suite:resetModuleFromSeed" or "suite:restoreBackup" or "suite:readBackupSummary" or "suite:listBackups" or "suite:backupInventory" or "suite:previewBackupCleanup" or "suite:cleanupBackups" => "data.restore",
                     "suite:refreshPrograms" => "users.manage",
-                    "suite:openPath" or "suite:launchProgram" => "programs.launch",
+                    "suite:openPath" => "dataHealth.view",
                     _ => ""
                 };
                 if (required.Length > 0) RequireBridgeCapability(root, required);
@@ -183,13 +183,8 @@ namespace PWADC.SecurityOperationsSuite
                         await Respond(requestId, true, new { path = openPath });
                         break;
                     case "suite:refreshPrograms":
-                        CopyPackagedProgramsToShared(true);
-                        await Respond(requestId, true, new { path = Path.Combine(settings.DataRoot, "Programs") });
-                        break;
                     case "suite:backupPrograms":
-                        string programsBackupPath = BackupProgramsFolder();
-                        await Respond(requestId, true, new { path = programsBackupPath });
-                        break;
+                        throw new InvalidOperationException("Other Programs has moved out of this suite.");
 
                     case "suite:backupInventory":
                         await Respond(requestId, true, BackupInventory());

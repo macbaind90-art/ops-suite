@@ -110,7 +110,6 @@ namespace PWADC.SecurityOperationsSuite
                 "attendance" => new[] { "attendance.view" },
                 "training" => new[] { "training.view", "promotion.view" },
                 "promotion-packets" => new[] { "promotion.view" },
-                "tasks" => new[] { "tasks.view" },
                 "shift-reports" => new[] { "shiftReports.view" },
                 "shift-intelligence" => new[] { "shiftIntelligence.view" },
                 "suite-settings" => new[] { "users.manage" },
@@ -172,7 +171,6 @@ namespace PWADC.SecurityOperationsSuite
                 "roster" => RequireAnyCapabilityCredentials(userId, pin, "roster.edit", "schedule.edit", "schedule.publish", "training.manage", "uniforms.manage", "supplies.manage"),
                 "training" => throw new UnauthorizedAccessException("Training changes must use protected training commands."),
                 "promotion-packets" => throw new UnauthorizedAccessException("Promotion changes must use protected packet commands."),
-                "tasks" => RequireCapabilityCredentials(userId, pin, "tasks.manage"),
                 "shift-reports" => RequireCapabilityCredentials(userId, pin, "shiftReports.manage"),
                 "shift-intelligence" => RequireCapabilityCredentials(userId, pin, "shiftIntelligence.manage"),
                 _ => throw new UnauthorizedAccessException("No governed write capability is registered for module: " + module + ".")

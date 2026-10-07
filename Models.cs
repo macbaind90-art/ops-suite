@@ -112,8 +112,8 @@ namespace PWADC.SecurityOperationsSuite
                 "roster.view", "roster.edit", "schedule.view", "schedule.edit",
                 "training.view", "training.manage", "training.record", "training.signoff", "promotion.view", "promotion.review", "uniforms.view", "uniforms.manage",
                 "supplies.view", "supplies.manage", "shiftReports.view", "shiftReports.manage",
-                "shiftIntelligence.view", "shiftIntelligence.manage", "tasks.view", "tasks.manage",
-                "reports.view", "programs.launch", "audit.view"
+                "shiftIntelligence.view", "shiftIntelligence.manage",
+                "reports.view", "audit.view"
             },
             ["Lead"] = new List<string>
             {
@@ -121,8 +121,7 @@ namespace PWADC.SecurityOperationsSuite
                 "roster.view", "roster.edit", "schedule.view", "schedule.edit",
                 "training.view", "training.manage", "training.record", "training.signoff", "uniforms.view", "uniforms.manage",
                 "supplies.view", "supplies.manage", "shiftReports.view", "shiftReports.manage",
-                "shiftIntelligence.view", "shiftIntelligence.manage", "tasks.view", "tasks.manage",
-                "programs.launch"
+                "shiftIntelligence.view", "shiftIntelligence.manage",
             },
             ["Senior Officer"] = new List<string>
             {
@@ -130,7 +129,7 @@ namespace PWADC.SecurityOperationsSuite
             },
             ["Viewer"] = new List<string>
             {
-                "roster.view", "schedule.view", "training.view", "uniforms.view", "supplies.view", "programs.launch"
+                "roster.view", "schedule.view", "training.view", "uniforms.view", "supplies.view"
             }
         };
     }

@@ -65,7 +65,6 @@ namespace PWADC.SecurityOperationsSuite
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Locks"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports"));
-            Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Programs"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Conflict Audit"));
@@ -76,7 +75,6 @@ namespace PWADC.SecurityOperationsSuite
                 Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups", ModuleFolder(module)));
                 Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports", ModuleFolder(module)));
             }
-            CopyPackagedProgramsToShared(false);
         }
 
         private class ModuleLoadResult
@@ -100,7 +98,6 @@ namespace PWADC.SecurityOperationsSuite
             checks.Add(Check("Can create backups folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Backups")); return true; }));
             checks.Add(Check("Can create exports folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Exports")); return true; }));
             checks.Add(Check("Can create locks folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Locks")); return true; }));
-            checks.Add(Check("Can create programs folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Programs")); return true; }));
             checks.Add(Check("Can create data integrity folder", () => { Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Write Audit"));
             Directory.CreateDirectory(Path.Combine(settings.DataRoot, "Data Integrity", "Conflict Audit")); return true; }));
             checks.Add(Check("Atomic write service active", () => typeof(MainForm).GetMethod("WriteJsonAtomically", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance) != null));

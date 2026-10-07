@@ -1,5 +1,11 @@
 # PWADC Security Operations Suite - Changelog
 
+## v5.5.0 - Remove migrated modules
+
+- Retire Task Tracker and Other Programs from navigation, home, reports, settings, backup controls and Shift Intelligence handoffs. Old landing-page settings fall back to Home.
+- Stop loading, governing, migrating or writing task data and stop copying or launching standalone programs. Existing files and backups remain untouched.
+- Exclude retired program assets and task seeds from new Windows packages. Keep shared-folder browsing available in Data Health and Settings.
+
 ## v5.4.1 - Schedule colors and simpler Task Tracker
 
 - Choose schedule colors by perceptual separation using the displayed section/row order, including diagonal neighbors. Keep each employee's color consistent across cells and strengthen the cell tint and accent border.

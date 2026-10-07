@@ -29,7 +29,6 @@ namespace PWADC.SecurityOperationsSuite
             new GovernedModuleDefinition { Id = "roster", Label = "Roster", FileName = "roster-data.json", SchemaRevision = 1, RecordCountStrategy = "roster" },
             new GovernedModuleDefinition { Id = "training", Label = "Training", FileName = "training-data.json", SchemaRevision = 1, RecordCountStrategy = "training" },
             new GovernedModuleDefinition { Id = "promotion-packets", Label = "Promotion Packets", FileName = "promotion-packets-data.json", SchemaRevision = 1, RecordCountStrategy = "promotion-packets" },
-            new GovernedModuleDefinition { Id = "tasks", Label = "Task Tracker", FileName = "tasks-data.json", SchemaRevision = 1, RecordCountStrategy = "tasks" },
             new GovernedModuleDefinition { Id = "shift-reports", Label = "Shift Reports", FileName = "shift-reports-data.json", SchemaRevision = 1, RecordCountStrategy = "shift-reports" },
             new GovernedModuleDefinition { Id = "shift-intelligence", Label = "Shift Intelligence", FileName = "shift-intelligence-data.json", SchemaRevision = 1, RecordCountStrategy = "shift-intelligence" },
             new GovernedModuleDefinition { Id = "suite-settings", Label = "Suite Settings", FileName = "suite-settings.json", SchemaRevision = 3, RecordCountStrategy = "suite-settings" }
@@ -43,7 +42,7 @@ namespace PWADC.SecurityOperationsSuite
         }
 
         private static string[] GovernedModuleNames() => GovernedModuleRegistry().Select(x => x.Id).ToArray();
-        private static string[] ModuleNames() => GovernedModuleNames().Concat(new[] { "programs" }).ToArray();
+        private static string[] ModuleNames() => GovernedModuleNames();
         private static int CurrentSchemaRevision(string module) => GovernedModule(module)?.SchemaRevision
             ?? throw new InvalidOperationException("No schema revision is registered for module: " + module);
 
@@ -57,10 +56,10 @@ namespace PWADC.SecurityOperationsSuite
         {
             GovernedModuleDefinition? definition = GovernedModule(module);
             if (definition != null) return definition.Label;
-            return string.Equals(module, "programs", StringComparison.OrdinalIgnoreCase) ? "Programs" : module;
+            return module;
         }
 
-        private static bool IsKnownModule(string module) => GovernedModule(module) != null || string.Equals(module, "programs", StringComparison.OrdinalIgnoreCase);
+        private static bool IsKnownModule(string module) => GovernedModule(module) != null;
         private static bool IsKnownJsonModule(string module) => GovernedModule(module) != null;
     }
 }

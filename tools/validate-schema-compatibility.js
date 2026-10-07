@@ -21,7 +21,7 @@ const globalJson=read('global.json');
 
 need(main,`private const string AppVersion = "${releaseVersion}";`,`AppVersion must be ${releaseVersion} for this maintenance release.`);
 need(main,'EnsureLiveSchemaMetadata();','Startup schema metadata initialization is missing.');
-for(const [id,revision] of [['attendance',3],['roster',1],['tasks',1],['shift-reports',1],['shift-intelligence',1],['suite-settings',3]]){
+for(const [id,revision] of [['attendance',3],['roster',1],['shift-reports',1],['shift-intelligence',1],['suite-settings',3]]){
   need(registry,`Id = "${id}"`,`${id} governed-module registration missing.`);
   const line=registry.split(/\r?\n/).find(x=>x.includes(`Id = "${id}"`))||'';
   need(line,`SchemaRevision = ${revision}`,`${id} schema revision ${revision} registration missing.`);
@@ -68,7 +68,6 @@ need(workflow,'Verify .NET 10 SDK selection','Windows workflow must verify the s
 const seeds={
   'attendance-data.json':'attendance-3',
   'roster-data.json':'roster-1',
-  'tasks-data.json':'tasks-1',
   'shift-reports-data.json':'shift-reports-1',
   'shift-intelligence-data.json':'shift-intelligence-1',
   'suite-settings.json':'suite-settings-3'
