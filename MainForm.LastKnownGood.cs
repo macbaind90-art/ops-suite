@@ -245,6 +245,7 @@ namespace PWADC.SecurityOperationsSuite
             var files = new List<string>();
             foreach (string path in Directory.GetFiles(dataDir, "*", SearchOption.AllDirectories))
             {
+                if (Path.GetFullPath(path).Equals(Path.Combine(Path.GetFullPath(dataDir), "tasks-data.json"), StringComparison.OrdinalIgnoreCase)) continue;
                 string name = Path.GetFileName(path);
                 if (name.EndsWith(".write-lock", StringComparison.OrdinalIgnoreCase)) continue;
                 if (name.Equals(".write-test.tmp", StringComparison.OrdinalIgnoreCase)) continue;

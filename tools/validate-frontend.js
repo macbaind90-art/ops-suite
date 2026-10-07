@@ -11,7 +11,7 @@ const expectedRefs=[
   'js/00-module-registry.js','js/10-bootstrap.js','js/20-data-core.js','js/30-shell-audits.js',
   'js/40-reports-governance.js','js/42-data-health-recovery.js','js/50-workflows-home.js','js/60-roster-schedule.js',
   'js/70-training-uniforms.js','js/72-training-replacement.js','js/74-promotion-packets.js','js/75-promotion-digital.js','js/76-promotion-portable.js','js/80-attendance.js','js/82-attendance-points.js','js/90-shift-operations.js',
-  'js/95-tasks-settings.js','js/99-startup.js'
+  'js/95-settings.js','js/99-startup.js'
 ];
 if(JSON.stringify(scriptRefs)!==JSON.stringify(expectedRefs)) throw new Error('Front-end script load order does not match the v4.7.0 architecture contract.');
 for(const ref of scriptRefs){if(!fs.existsSync(path.join(appRoot,ref)))throw new Error('Missing front-end script: '+ref);}
@@ -26,7 +26,7 @@ if(!styles.includes('v3.3.1.0 Suite-wide responsive UI and control normalization
 if(!/input\[type=checkbox\][\s\S]*?width:16px!important/.test(styles)||!/input\[type=radio\][\s\S]*?width:16px!important/.test(styles))throw new Error('Checkbox/radio normalization contract missing.');
 if(!/\.wrap\{width:100%;max-width:min\(var\(--page-max\),calc\(100vw - 20px\)\)/.test(styles))throw new Error('Responsive application wrap contract missing.');
 if(!/\.schedule-grid\{grid-template-columns:minmax\(118px,.9fr\) repeat\(7,minmax\(100px,1fr\)\);min-width:850px/.test(styles))throw new Error('Schedule local resize/scroll contract missing.');
-const taskSettingsSource=fs.readFileSync(path.join(appRoot,'js','95-tasks-settings.js'),'utf8');
+const taskSettingsSource=fs.readFileSync(path.join(appRoot,'js','95-settings.js'),'utf8');
 const resizeHandler=(taskSettingsSource.match(/window\.addEventListener\('resize',[^;]+;/)||[''])[0];
 if(!resizeHandler||resizeHandler.includes('safeRenderPages'))throw new Error('Window resize must not full-render application pages.');
 const mainFormSource=fs.readFileSync(path.join(root,'MainForm.cs'),'utf8');
@@ -89,15 +89,15 @@ const startup='js/99-startup.js';
 for(const rel of scriptRefs.filter(x=>x!==startup)) vm.runInContext(fs.readFileSync(path.join(appRoot,rel),'utf8'),context,{filename:rel});
 const evalx=code=>vm.runInContext(code,context);
 const seed=name=>JSON.parse(fs.readFileSync(path.join(appRoot,'seed',name),'utf8'));
-evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); tasks=${JSON.stringify(seed('tasks-data.json'))}; normalizeTasks(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; training=${JSON.stringify(seed('training-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'4.7.0'}; unlocked=true;`);
+evalx(`attendance=${JSON.stringify(seed('attendance-data.json'))}; normalizeAttendance(); roster=${JSON.stringify(seed('roster-data.json'))}; normalizeRoster(); shiftReports=${JSON.stringify(seed('shift-reports-data.json'))}; normalizeShiftReports(); shiftIntel=${JSON.stringify(seed('shift-intelligence-data.json'))}; training=${JSON.stringify(seed('training-data.json'))}; normalizeShiftIntel(); settings.users=DEFAULT_USERS.map(x=>({...x})); currentUser=settings.users[0]; env={user:'Validation',machine:'Node',version:'4.7.0'}; unlocked=true;`);
 
 const required=evalx('requiredFunctionFailures()');
 if(required.length)throw new Error('Required render/action function failure: '+JSON.stringify(required));
-const expectedModules=['bootstrap','data-core','shell-audits','reports-governance','data-health-recovery','workflows-home','roster-schedule','training-uniforms','training-replacement','promotion-packets','attendance','shift-operations','tasks-settings'];
+const expectedModules=['bootstrap','data-core','shell-audits','reports-governance','data-health-recovery','workflows-home','roster-schedule','training-uniforms','training-replacement','promotion-packets','attendance','shift-operations','settings'];
 const registry=evalx(`PWADCModuleRegistry.validate(${JSON.stringify(expectedModules)})`);
 if(!registry.ok||registry.unexpected.length)throw new Error('Front-end module registry failure: '+JSON.stringify(registry));
 
-const major=['home','start-here','attendance','roster','employee-profile','training','promotion-packets','office-supplies','shift-reports','shift-intelligence','reports','settings','tasks','data-health','restore','change-log','other-programs'];
+const major=['home','start-here','attendance','roster','employee-profile','training','promotion-packets','office-supplies','shift-reports','shift-intelligence','reports','settings','data-health','restore','change-log'];
 for(const id of major){const out=evalx(`renderModule(${JSON.stringify(id)})`);if(typeof out!=='string'||out.length<20)throw new Error('Major module render failed: '+id);}
 
 // v4.7.0: render a real linked Employee Profile, not just the empty profile shell.
@@ -155,18 +155,14 @@ if(!attendanceTrendRiskReportTest.ok)throw new Error('Attendance Trend & Risk Re
 
 const standardizedReportControlsTest=evalx(`(()=>{
   reportCenterSelection='training';const trainingUi=renderReports();
-  reportCenterSelection='tasks';const taskUi=renderReports();
   const first=(attendance.employees||[]).find(e=>!isArchivedAttendanceEmployee(e));
   reportShiftFilter=first&&first.shift||'All';reportEmployeeFilter=first&&first.name||'All';
   const scoped=reportScopedAttendanceEmployees('attendance');
   reportEmployeeFilter='All';reportShiftFilter='All';reportStatusFilter='Waiting';
-  const expected=reportTaskItemsForScope();let exported=[];const oldDownload=downloadCSV,oldToast=toast;
-  downloadCSV=(name,rows)=>{exported=rows;};toast=()=>{};exportReportCSV('tasks');downloadCSV=oldDownload;toast=oldToast;
-  const headerIndex=exported.findIndex(r=>Array.isArray(r)&&r[0]==='Project'&&r[1]==='Status'),data=headerIndex>=0?exported.slice(headerIndex+1):[];
-  const doc=reportDoc('Task Status Report','Validation','<div>Body</div>');
+  const doc=reportDoc('Training Report','Validation','<div>Body</div>');
   reportStatusFilter='All';reportCenterSelection='executive';
-  const checks={trainingShift:trainingUi.includes('Shift Scope'),trainingEmployee:trainingUi.includes('Employee Scope'),trainingStatus:trainingUi.includes('Status Scope'),reset:trainingUi.includes('Reset Scope'),print:trainingUi.includes('Print / Save PDF'),taskStatus:taskUi.includes('Status Scope'),taskNoDate:!taskUi.includes('Reporting Period Start'),attendanceEmployee:scoped.length===1&&String(scoped[0].id)===String(first.id),taskScope:expected.every(t=>t.status==='Waiting'),csvCount:data.length===expected.length,csvScope:data.every(r=>r[1]==='Waiting'),generatedBy:doc.includes('Generated by'),period:doc.includes('Reporting period:'),scope:doc.includes('Scope:')};
-  return {ok:Object.values(checks).every(Boolean),checks,trainingControls:trainingUi.length,taskRows:expected.length,csvRows:data.length};
+  const checks={trainingShift:trainingUi.includes('Shift Scope'),trainingEmployee:trainingUi.includes('Employee Scope'),trainingStatus:trainingUi.includes('Status Scope'),reset:trainingUi.includes('Reset Scope'),print:trainingUi.includes('Print / Save PDF'),attendanceEmployee:scoped.length===1&&String(scoped[0].id)===String(first.id),generatedBy:doc.includes('Generated by'),period:doc.includes('Reporting period:'),scope:doc.includes('Scope:')};
+  return {ok:Object.values(checks).every(Boolean),checks,trainingControls:trainingUi.length};
 })()`);
 if(!standardizedReportControlsTest.ok)throw new Error('Standardized Report Controls runtime validation failed: '+JSON.stringify(standardizedReportControlsTest));
 
@@ -232,6 +228,21 @@ const scheduleColorTest=evalx(`(()=>{
 })()`);
 if(!scheduleColorTest.ok)throw new Error('Schedule adjacency color validation failed: '+JSON.stringify(scheduleColorTest));
 
+const retiredModulesTest=evalx(`(()=>{
+  const previousUser=currentUser;currentUser={id:'admin',role:'Admin'};
+  const checks=['tasks','other-programs'].every(id=>!canAccessModule(id)&&!MODULES.some(m=>m.id===id)&&normalizeSettings({DefaultModule:id}).defaultModule==='home');
+  const pages=[renderHome(),renderStartHere(),renderSettingsPage(),renderReports(),renderRestoreCenter(),renderChangeLog()].join(' ');
+  const noLinks=!/navigate\\('(?:tasks|other-programs)'/.test(pages);
+  const noActions=['renderTasks','openTaskModal','openTaskPrintModal','createTaskFromShiftIssue','createTaskFromShiftIntelIssue','renderOtherPrograms','openProgram'].every(name=>!functionExistsByName(name));
+  const noReport=!REPORT_CATALOG.some(x=>x.id==='tasks');
+  const priorShow=showReport,outputs=[];showReport=(title,subtitle,body)=>outputs.push(body);
+  try{reportExecutiveBriefing();reportWeeklyStaffing();reportOperationsFullSummary();reportComplianceReadiness();}finally{showReport=priorShow;}
+  if(outputs.length!==4||outputs.some(x=>/open task|Overdue Tasks|Open Tasks|undefined/.test(x)))throw new Error('Retired task metrics leaked into aggregate reports');
+  currentUser=previousUser;
+  return checks&&noLinks&&noActions&&noReport;
+})()`);
+if(!retiredModulesTest)throw new Error('Retired modules remain accessible or old startup preferences are not normalized.');
+
 const source=[html,...scriptRefs.map(ref=>fs.readFileSync(path.join(appRoot,ref),'utf8'))].join('\n');
 const declarations=[...source.matchAll(/\bfunction\s+([A-Za-z_$][\w$]*)\s*\(/g)].map(m=>m[1]);
 const counts=new Map();for(const name of declarations)counts.set(name,(counts.get(name)||0)+1);
@@ -249,6 +260,6 @@ const startupSource=fs.readFileSync(path.join(appRoot,startup),'utf8');
 function startupScenario(names){let initCount=0,error='';const c={window:{},console:{error(){}},Error};c.window=c;c.init=()=>{initCount++;};c.showStartupError=e=>{error=e.message;};vm.createContext(c);vm.runInContext(registrySource,c);for(const name of names)c.PWADCModuleRegistry.register(name);vm.runInContext(startupSource,c);return{initCount,error};}
 const full=startupScenario(expectedModules),missing=startupScenario(expectedModules.slice(0,-1));
 if(full.initCount!==1||full.error)throw new Error('Startup gate failed with a complete module set.');
-if(missing.initCount!==0||!missing.error.includes('tasks-settings'))throw new Error('Startup gate did not block an incomplete module set.');
+if(missing.initCount!==0||!missing.error.includes('settings'))throw new Error('Startup gate did not block an incomplete module set.');
 
 console.log(`PWADC front-end validation passed: ${major.length} major modules, 6 attendance views, 5 roster views, ${declarations.length} named functions, ${targets.size} inline action targets, ${registry.loaded.length} registered modules.`);

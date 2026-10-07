@@ -20,8 +20,8 @@ internal static class Program
     {
         if(args.Length>0&&args[0]=="writer")
         {
-            using var host=Host(args[1]);string path=Path.Combine(args[1],"Data","tasks-data.json");File.WriteAllText(args[3]+".ready","");while(!File.Exists(args[3]))Thread.Sleep(10);
-            try{Call(host,"WriteJsonAtomically","tasks",path,"{\"schemaVersion\":\"tasks-1\",\"tasks\":[],\"audit\":[],\"writer\":\""+args[4]+"\"}",args[5],"test",args[2]);return 0;}
+            using var host=Host(args[1]);string path=Path.Combine(args[1],"Data","shift-reports-data.json");File.WriteAllText(args[3]+".ready","");while(!File.Exists(args[3]))Thread.Sleep(10);
+            try{Call(host,"WriteJsonAtomically","shift-reports",path,"{\"schemaVersion\":\"shift-reports-1\",\"reports\":[],\"audit\":[],\"writer\":\""+args[4]+"\"}",args[5],"test",args[2]);return 0;}
             catch(Exception e){return e.Message.Contains("STALE_WRITE_CONFLICT")?20:30;}
         }
         string root=Path.Combine(Path.GetTempPath(),"PWADC-host-tests-"+Guid.NewGuid());Directory.CreateDirectory(Path.Combine(root,"Data"));
@@ -46,15 +46,15 @@ internal static class Program
             var supplyData=JsonNode.Parse(roster.GetProperty("data").GetString()!)!.AsObject();supplyData["officeSupplies"]!.AsArray().Add(JsonNode.Parse("{\"id\":1,\"name\":\"Paper\"}"));supplyData["nextOfficeSupplyId"]=2;
             Call(host,"SaveModuleData","roster",supplyData.ToJsonString(),roster.GetProperty("revision").GetString(),settings.Users[1]);
             Check(JsonNode.Parse(File.ReadAllText(Path.Combine(root,"Data","roster-data.json")))!["employees"]![0]!["rate"]!.ToString()=="22","Native supplies edit retains hidden employee pay");
-            string tasksPath=Path.Combine(root,"Data","tasks-data.json"),baseline="{\"schemaVersion\":\"tasks-1\",\"tasks\":[],\"audit\":[]}";File.WriteAllText(tasksPath,baseline);
-            var loaded=Element(Call(host,"LoadModuleDataWithSource","tasks")!);Check(loaded.GetProperty("Revision").GetString()==Hash(tasksPath),"Loaded data and revision derive from the same byte buffer");
-            string backup=Path.Combine(root,"Backups","Task Tracker","test.json");Directory.CreateDirectory(Path.GetDirectoryName(backup)!);File.WriteAllText(backup,baseline);
+            string reportsPath=Path.Combine(root,"Data","shift-reports-data.json"),baseline="{\"schemaVersion\":\"shift-reports-1\",\"reports\":[],\"audit\":[]}";File.WriteAllText(reportsPath,baseline);
+            var loaded=Element(Call(host,"LoadModuleDataWithSource","shift-reports")!);Check(loaded.GetProperty("Revision").GetString()==Hash(reportsPath),"Loaded data and revision derive from the same byte buffer");
+            string backup=Path.Combine(root,"Backups","Shift Reports","test.json");Directory.CreateDirectory(Path.GetDirectoryName(backup)!);File.WriteAllText(backup,baseline);
             Call(host,"Authenticate",Element(new{userId="admin",pin="626882"}));
-            var preview=Element(Call(host,"ReadBackupSummary","tasks",backup)!);File.WriteAllText(tasksPath,baseline+" ");
-            Check(Fails(()=>Call(host,"RestoreBackup","tasks",backup,"Test reason","admin","",preview.GetProperty("currentRevision").GetString(),preview.GetProperty("backupHash").GetString()),"STALE_WRITE_CONFLICT"),"Recovery rejects a live revision changed since preview");
-            preview=Element(Call(host,"ReadBackupSummary","tasks",backup)!);File.WriteAllText(backup,baseline+" ");
-            Check(Fails(()=>Call(host,"RestoreBackup","tasks",backup,"Test reason","admin","",preview.GetProperty("currentRevision").GetString(),preview.GetProperty("backupHash").GetString()),"changed after preview"),"Recovery rejects a changed backup candidate");
-            Check(Fails(()=>Call(host,"WriteExport","tasks","bad.cmd","echo executable")),"Native exports reject executable scripts");
+            var preview=Element(Call(host,"ReadBackupSummary","shift-reports",backup)!);File.WriteAllText(reportsPath,baseline+" ");
+            Check(Fails(()=>Call(host,"RestoreBackup","shift-reports",backup,"Test reason","admin","",preview.GetProperty("currentRevision").GetString(),preview.GetProperty("backupHash").GetString()),"STALE_WRITE_CONFLICT"),"Recovery rejects a live revision changed since preview");
+            preview=Element(Call(host,"ReadBackupSummary","shift-reports",backup)!);File.WriteAllText(backup,baseline+" ");
+            Check(Fails(()=>Call(host,"RestoreBackup","shift-reports",backup,"Test reason","admin","",preview.GetProperty("currentRevision").GetString(),preview.GetProperty("backupHash").GetString()),"changed after preview"),"Recovery rejects a changed backup candidate");
+            Check(Fails(()=>Call(host,"WriteExport","shift-reports","bad.cmd","echo executable")),"Native exports reject executable scripts");
             Check(Fails(()=>Call(host,"LaunchProgram","arbitrary")),"Native launcher rejects unregistered program IDs");
             string trainingPath=Path.Combine(root,"Data","training-data.json");
             var training=JsonNode.Parse("{\"schemaVersion\":\"training-1\",\"requirements\":[{\"id\":\"neo\",\"title\":\"NEO\",\"active\":true,\"renewalDays\":30}],\"assignments\":[{\"id\":\"a\",\"employeeId\":\"1\",\"requirementId\":\"neo\",\"status\":\"active\",\"events\":[{\"id\":\"pass\",\"type\":\"record\",\"outcome\":\"Pass\",\"date\":\"2026-01-01\",\"at\":\"2026-01-01T10:00:00Z\"},{\"id\":\"fail\",\"type\":\"record\",\"outcome\":\"Needs practice\",\"date\":\"2026-01-02\",\"at\":\"2026-01-02T10:00:00Z\"}]}],\"audit\":[]}")!.AsObject();
@@ -68,13 +68,19 @@ internal static class Program
             var issued=Element(Call(host,"RunPromotionPacketCommand",Element(new{authorization=new{userId="admin"},payload=new{action="issue",employeeId="1",tier="T1-T2",expectedRevision=Hash(packetPath)}}))!);
             var issuedData=JsonNode.Parse(issued.GetProperty("data").GetString()!)!.AsObject();
             Check(issuedData["packets"]!.AsArray().Last()!["trainingEvidence"]![0]!["signoffId"]!.ToString()=="", "Actual promotion issue lists expired Training as missing");
+            string retiredPath=Path.Combine(root,"Data","tasks-data.json");File.WriteAllText(retiredPath,"{retired-external-data");
+            Check(Fails(()=>Call(host,"RequireModuleReadCapability","tasks")),"Retired module is denied even for Admin");
+            Check(Fails(()=>Call(host,"LaunchProgram","badge")),"Former program launchers are disabled");
+            Check(!((List<string>)Call(host,"DailyLkgSourceFiles",Path.Combine(root,"Data"))!).Contains(retiredPath),"Retired data is excluded from new suite snapshots");
+            Check(!Element(Call(host,"EvaluateSpecialistData")!).ToString().Contains("tasks-data.json"),"Retired data is excluded from active health checks");
             var lkg=Element(Call(host,"EnsureDailyLastKnownGoodSnapshot")!);Check(lkg.GetProperty("Success").GetBoolean(),"Native Last-Known-Good snapshot is created before corruption");
-            File.WriteAllText(tasksPath,"{broken-json");
-            var lkgPreview=Element(Call(host,"PreviewLastKnownGood","tasks","admin","")!);
+            Check(File.ReadAllText(retiredPath)=="{retired-external-data","Retired data remains untouched and does not block snapshots");
+            File.WriteAllText(reportsPath,"{broken-json");
+            var lkgPreview=Element(Call(host,"PreviewLastKnownGood","shift-reports","admin","")!);
             Check(lkgPreview.GetProperty("recoveryAvailable").GetBoolean(),"LKG preview remains available when live JSON is corrupt");
-            var recovery=Element(Call(host,"RestoreLastKnownGood","tasks","Corruption recovery test",lkgPreview.GetProperty("currentRevision").GetString(),"admin","",lkgPreview.GetProperty("backupHash").GetString())!);
+            var recovery=Element(Call(host,"RestoreLastKnownGood","shift-reports","Corruption recovery test",lkgPreview.GetProperty("currentRevision").GetString(),"admin","",lkgPreview.GetProperty("backupHash").GetString())!);
             Check(File.ReadAllText(recovery.GetProperty("preRestoreBackupPath").GetString()!)=="{broken-json", "Corrupt original is preserved before native recovery");
-            Check(recovery.GetProperty("revision").GetString()==Hash(tasksPath),"Verified recovery returns its committed revision");
+            Check(recovery.GetProperty("revision").GetString()==Hash(reportsPath),"Verified recovery returns its committed revision");
             string legacyAttendance="{\"employees\":[],\"attendance\":{},\"notes\":{},\"audit\":[]}";
             string migrated=(string)Call(host,"PrepareRecoveryCandidate","attendance",legacyAttendance)!;
             Check(Element(Call(host,"EvaluateSchemaCompatibility","attendance",migrated)!).GetProperty("Status").GetString()=="current","Legacy Attendance recovery candidate is migrated before replacement");
@@ -92,9 +98,9 @@ internal static class Program
                     Check(Fails(()=>Call(host,"ValidatePromotionDigitalCompletion",packet,"Recommend"),"different dates or shifts"),"Native and portable rules both reject equivalent BASE shift labels");
                 }
             }
-            foreach(string operation in new[]{"module-save","restore-backup","schema-migration:tasks-0->tasks-1"})
+            foreach(string operation in new[]{"module-save","restore-backup","schema-migration:shift-reports-0->shift-reports-1"})
             {
-                File.WriteAllText(tasksPath,baseline);string expected=Hash(tasksPath),gate=Path.Combine(root,"go-"+Guid.NewGuid());
+                File.WriteAllText(reportsPath,baseline);string expected=Hash(reportsPath),gate=Path.Combine(root,"go-"+Guid.NewGuid());
                 Process Start(string name,string op){var i=new ProcessStartInfo(Environment.ProcessPath!){UseShellExecute=false};if(Path.GetFileNameWithoutExtension(Environment.ProcessPath)=="dotnet")i.ArgumentList.Add(Assembly.GetExecutingAssembly().Location);foreach(string a in new[]{"writer",root,expected,gate+name,name,op})i.ArgumentList.Add(a);return Process.Start(i)!;}
                 using var one=Start("one","module-save");using var two=Start("two",operation);var clock=Stopwatch.StartNew();while(!File.Exists(gate+"one.ready")||!File.Exists(gate+"two.ready")){if(clock.ElapsedMilliseconds>20000)throw new Exception("Native writer startup timeout");Thread.Sleep(10);}File.WriteAllText(gate+"one","");File.WriteAllText(gate+"two","");one.WaitForExit();two.WaitForExit();Check(new[]{one.ExitCode,two.ExitCode}.Order().SequenceEqual(new[]{0,20}),"Actual host simultaneous save versus "+operation+" permits one writer");
             }
@@ -103,12 +109,12 @@ internal static class Program
             Set(host,"fullHealthRefreshPending",false);
             ((HashSet<string>)typeof(MainForm).GetField("pendingHealthModules",Flags)!.GetValue(host)!).Clear();
             object Module(object snapshot,string id)=>((System.Collections.IEnumerable)snapshot.GetType().GetProperty("Modules")!.GetValue(snapshot)!).Cast<object>().Single(m=>(string)m.GetType().GetProperty("Module")!.GetValue(m)! == id);
-            Call(host,"TryRefreshDataHealth","save","tasks");
+            Call(host,"TryRefreshDataHealth","save","shift-reports");
             Check(ReferenceEquals(priorHealth,typeof(MainForm).GetField("cachedDataHealth",Flags)!.GetValue(host)),"Save queues diagnostics instead of scanning health inside the write");
             Call(host,"FlushPendingDataHealth");
             object? nextHealth=typeof(MainForm).GetField("cachedDataHealth",Flags)!.GetValue(host);
             Check(nextHealth!=null&&!ReferenceEquals(priorHealth,nextHealth),"Queued diagnostics refresh the health snapshot");
-            Check(ReferenceEquals(Module(priorHealth!,"roster"),Module(nextHealth!,"roster"))&&!ReferenceEquals(Module(priorHealth!,"tasks"),Module(nextHealth!,"tasks")),"Affected-module diagnostics reuse unrelated module checks");
+            Check(ReferenceEquals(Module(priorHealth!,"roster"),Module(nextHealth!,"roster"))&&!ReferenceEquals(Module(priorHealth!,"shift-reports"),Module(nextHealth!,"shift-reports")),"Affected-module diagnostics reuse unrelated module checks");
             Console.WriteLine("Windows host behavioral tests passed.");return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e);return 1;}

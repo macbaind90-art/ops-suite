@@ -25,7 +25,6 @@ for(const token of [
   'function reportScopedAttendanceEmployees(id)',
   'function reportScopedRosterEmployees(id)',
   'function reportUniformDetailItems(',
-  'function reportTaskItemsForScope()',
   'function reportSupplyItemsForScope()',
   'function reportShiftIntelIssuesForScope()',
   "reportScopedAttendanceEmployees('attendance')",
@@ -33,7 +32,6 @@ for(const token of [
   'trainingReportRowsForScope()',
   'reportUniformDetailItems()',
   'reportSupplyItemsForScope()',
-  'reportTaskItemsForScope()',
   'reportShiftIntelIssuesForScope()'
 ])need(reports,token,`Standardized report-controls contract missing: ${token}`);
 

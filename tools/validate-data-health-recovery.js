@@ -22,7 +22,7 @@ const dashboard=read('app/js/42-data-health-recovery.js');
 const styles=read('app/assets/styles.css');
 const workflow=read('.github/workflows/build-windows.yml');
 
-for(const id of ['attendance','roster','tasks','shift-reports','shift-intelligence','suite-settings'])need(registry,`Id = "${id}"`,`Governed registry missing ${id}.`);
+for(const id of ['attendance','roster','shift-reports','shift-intelligence','suite-settings'])need(registry,`Id = "${id}"`,`Governed registry missing ${id}.`);
 need(registry,'One authoritative ownership boundary','Governed registry ownership boundary is undocumented.');
 need(health,'Count30Days','30-day stale-write health count missing.');
 need(health,'Count30Days >= 3','Three-conflict yellow threshold missing.');

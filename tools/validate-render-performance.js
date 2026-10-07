@@ -4,8 +4,8 @@ const nodes=new Map(),node=id=>{if(!nodes.has(id))nodes.set(id,{innerHTML:'',tex
 const ctx={console,Date,Intl,Map,Set,JSON,Promise,setTimeout,clearTimeout,window:{addEventListener(){},scrollX:0,scrollY:0},document:{getElementById:node,addEventListener(){},querySelectorAll(){return[]},documentElement:{setAttribute(){}}},PWADCModuleRegistry:{register(){}},confirm:()=>true};vm.createContext(ctx);
 for(const name of ['10-bootstrap','20-data-core','30-shell-audits','72-training-replacement','82-attendance-points'])vm.runInContext(fs.readFileSync('app/js/'+name+'.js','utf8'),ctx);
 const run=s=>vm.runInContext(s,ctx);
-run(`ensureAllowedModule=()=>{};visibleModules=()=>[{id:'tasks'},{id:'attendance'},{id:'training'}];rolePreviewBanner=()=>'';activeModule='tasks';var renders=[];renderModule=id=>{renders.push(id);return 'screen'};renderPages();`);
-assert.equal(run("renders.join(',')"),'tasks');assert.equal((node('pages').innerHTML.match(/<section/g)||[]).length,1);
+run(`ensureAllowedModule=()=>{};visibleModules=()=>[{id:'roster'},{id:'attendance'},{id:'training'}];rolePreviewBanner=()=>'';activeModule='roster';var renders=[];renderModule=id=>{renders.push(id);return 'screen'};renderPages();`);
+assert.equal(run("renders.join(',')"),'roster');assert.equal((node('pages').innerHTML.match(/<section/g)||[]).length,1);
 run(`var snapshotCalls=0;calculateAttendancePointSnapshot=(id,date)=>{snapshotCalls++;return {id,date}};withCalculationContext(()=>{for(let i=0;i<30;i++)attendancePointSnapshot('e','2026-09-30')});`);
 assert.equal(run('snapshotCalls'),1);run("withCalculationContext(()=>attendancePointSnapshot('e','2026-09-30'))");assert.equal(run('snapshotCalls'),2);run("attendancePointSnapshot('e','2026-09-30')");assert.equal(run('snapshotCalls'),3);
 assert.throws(()=>run("withCalculationContext(()=>{throw Error('test')})"));assert.equal(run('calculationContext'),null);

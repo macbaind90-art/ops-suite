@@ -6,7 +6,7 @@ const roster=read('app/js/60-roster-schedule.js');
 const training=read('app/js/70-training-uniforms.js');
 const newTraining=read('app/js/72-training-replacement.js');
 const att=read('app/js/82-attendance-points.js');
-const tasks=read('app/js/95-tasks-settings.js');
+const tasks=read('app/js/95-settings.js');
 const css=read('app/assets/styles.css');
 need(core,'function employeeProfileLink(','Shared employee profile link helper is missing.');
 need(core,'function attendanceEmployeeProfileLink(','Attendance-to-profile helper is missing.');

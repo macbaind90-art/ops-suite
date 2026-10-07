@@ -469,6 +469,7 @@ namespace PWADC.SecurityOperationsSuite
             foreach (string path in Directory.GetFiles(dataDir, "*.json", SearchOption.AllDirectories).OrderBy(x => x, StringComparer.OrdinalIgnoreCase))
             {
                 string full = Path.GetFullPath(path);
+                if (full.Equals(Path.Combine(dataDir, "tasks-data.json"), StringComparison.OrdinalIgnoreCase)) continue;
                 if (governed.Contains(full) || IsBackupArtifactUnderData(dataDir, full)) continue;
                 string relative = Path.GetRelativePath(dataDir, full).Replace('\\', '/');
                 var row = new SpecialistHealthInfo { Name = Path.GetFileName(full), RelativePath = relative, Exists = true, Modified = File.GetLastWriteTime(full).ToString("yyyy-MM-dd HH:mm:ss"), CapturedInLkg = lkgPaths.Contains(relative) };
